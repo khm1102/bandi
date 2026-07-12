@@ -8,9 +8,14 @@
     <c:if test="${not empty title}">
         <header class="flex items-center gap-2 border-b px-5 py-4">
             <h3 class="text-sm font-extrabold"><c:out value="${title}"/></h3>
-            <c:if test="${not empty moreUrl}">
-                <a href="${moreUrl}" class="ml-auto text-xs font-bold text-accent-foreground hover:underline"><c:out value="${empty moreLabel ? '더보기' : moreLabel}"/></a>
-            </c:if>
+            <c:choose>
+                <c:when test="${not empty moreUrl}">
+                    <a href="<c:url value='${moreUrl}'/>" class="ml-auto text-xs font-bold text-accent-foreground hover:underline"><c:out value="${empty moreLabel ? '더보기' : moreLabel}"/></a>
+                </c:when>
+                <c:when test="${not empty moreLabel}">
+                    <span class="ml-auto text-xs font-bold text-muted-foreground"><c:out value="${moreLabel}"/></span>
+                </c:when>
+            </c:choose>
         </header>
     </c:if>
     <div class="${flush ? '' : 'p-5'}">

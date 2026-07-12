@@ -28,6 +28,11 @@ function lookupOpenedModal() {
 }
 
 document.addEventListener('click', (event) => {
+    const opener = event.target.closest('[data-open-modal]');
+    if (opener) {
+        openModal(opener.dataset.openModal);
+        return;
+    }
     const closeButton = event.target.closest('[data-action="close-modal"]');
     if (closeButton) {
         closeModal(closeButton.closest('[data-modal-back]'));

@@ -83,7 +83,7 @@
 |---|---|
 | **토스트** | `js/common/toast.js`의 `showToast(message)` |
 | **flash 메시지** (SSR 표준 흐름) | 컨트롤러에서 `redirectAttributes.addFlashAttribute("toast", "저장되었습니다.")` → 리다이렉트 후 layout이 자동으로 토스트 표시. POST 성공 응답은 이 패턴을 기본으로 한다 |
-| **모달** | `<t:modal>` + `openModal(id)`. ESC·배경 클릭·`data-action="close-modal"` 닫기, 포커스 트랩, 배경 스크롤 잠금 내장 |
+| **모달** | `<t:modal>` + `openModal(id)` 또는 버튼에 `data-open-modal="모달id"`(페이지 JS 불필요). ESC·배경 클릭·`data-action="close-modal"` 닫기, 포커스 트랩, 배경 스크롤 잠금 내장 |
 | **confirm** (파괴적 동작 — 컨벤션 13.3 이행 수단) | 폼 submit 버튼에 `data-confirm="정말 삭제할까요?"` 부착 → 공용 확인 모달(관리자 셸 내장)이 가로채고, 확인 시 폼 제출 |
 | **중복 제출 방지** | 상태 변경 폼에 `data-guard="true"` 기본 부착 → 제출 시 재제출 차단 + submit 버튼 비활성 표시. 제출 버튼의 `name`/`value`에 의존하지 않는다 |
 
