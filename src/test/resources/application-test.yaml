@@ -1,0 +1,7 @@
+# 로컬 Docker MySQL의 테스트 전용 스키마 (컨벤션 17.3 — H2 사용 금지)
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3307/bandi_test?serverTimezone=Asia/Seoul
+    username: bandi
+    password: bandi1234

@@ -1,0 +1,7 @@
+# 로컬 개발 기본 프로파일 — DB 접속값은 .env에서 로딩 (.env.example 참조, 로컬 도커 MySQL은 3307)
+spring:
+  datasource:
+    driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
+    url: jdbc:log4jdbc:mysql://${DB_HOST}:${DB_PORT}/bandi?serverTimezone=Asia/Seoul
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}

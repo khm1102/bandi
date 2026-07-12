@@ -1,0 +1,17 @@
+services:
+  mysql:
+    image: mysql:8.4
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "3307:3306"   # 3306은 로컬의 다른 MySQL과 충돌 방지를 위해 3307로 고정
+    environment:
+      MYSQL_ROOT_PASSWORD: root1234
+      MYSQL_DATABASE: bandi
+      MYSQL_USER: bandi
+      MYSQL_PASSWORD: bandi1234
+    volumes:
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+      - mysql-data:/var/lib/mysql
+
+volumes:
+  mysql-data:
