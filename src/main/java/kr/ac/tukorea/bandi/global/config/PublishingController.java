@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.global.config;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.util.Map;
 import java.util.Set;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Controller;
@@ -19,6 +20,12 @@ public class PublishingController {
 
     private static final Set<String> ROLES = Set.of("member", "leader", "admin");
 
+    /** 화면별 허용 역할 — 미등재 화면은 전체 역할 허용. layout.tag 사이드바의 노출 조건과 같은 정책이다. */
+    private static final Map<String, Set<String>> PAGE_ROLES = Map.of(
+            "/reservations", Set.of("admin"),
+            "/showops", Set.of("admin"),
+            "/members", Set.of("leader", "admin"));
+
     @GetMapping("/login")
     public String login(@RequestParam(defaultValue = "login") String mode, Model model) {
         model.addAttribute("mode", "signup".equals(mode) ? "signup" : "login");
@@ -35,8 +42,14 @@ public class PublishingController {
     public String adminPage(HttpServletRequest request,
                             @RequestParam(defaultValue = "admin") String role,
                             Model model) {
-        model.addAttribute("role", ROLES.contains(role) ? role : "admin");
         String path = request.getRequestURI().substring(request.getContextPath().length());
+        String resolvedRole = ROLES.contains(role) ? role : "admin";
+        Set<String> allowedRoles = PAGE_ROLES.getOrDefault(path, ROLES);
+        if (!allowedRoles.contains(resolvedRole)) {
+            return "redirect:/dashboard?role=" + resolvedRole;
+        }
+        model.addAttribute("role", resolvedRole);
+        model.addAttribute("allowedRoles", allowedRoles);
         return "publishing" + path;
     }
 }

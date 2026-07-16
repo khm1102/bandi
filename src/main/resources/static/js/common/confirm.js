@@ -1,4 +1,4 @@
-import { closeModal, openModal } from '/js/common/modal.js';
+import { closeModal, openModal } from './modal.js';
 
 const CONFIRM_MODAL_ID = 'confirmModal';
 
@@ -7,13 +7,13 @@ let pendingForm = null;
 document.addEventListener('click', (event) => {
     const trigger = event.target.closest('[data-confirm]');
     if (trigger) {
-        const form = trigger.closest('form');
-        if (!form) {
+        const message = document.querySelector(`#${CONFIRM_MODAL_ID} [data-confirm-message]`);
+        if (!message) {
             return;
         }
         event.preventDefault();
-        pendingForm = form;
-        const message = document.querySelector(`#${CONFIRM_MODAL_ID} [data-confirm-message]`);
+        // form 밖의 트리거는 pendingForm이 null — 모달만 띄우고 확인 시 닫기만 한다
+        pendingForm = trigger.closest('form');
         message.textContent = trigger.dataset.confirm;
         openModal(CONFIRM_MODAL_ID);
         return;

@@ -113,12 +113,18 @@
     <div class="min-w-0 flex-1">
         <header class="sticky top-0 z-20 flex items-center gap-3 border-b bg-card/90 px-7 py-3 backdrop-blur">
             <p class="text-xs font-semibold text-muted-foreground">bandi · <b class="font-extrabold text-foreground"><c:out value="${empty crumb ? title : crumb}"/></b></p>
-            <%-- 퍼블리싱 미리보기용 역할 전환 — role 파라미터가 있는 화면에서만 노출 --%>
+            <%-- 퍼블리싱 미리보기용 역할 전환 — 해당 화면이 허용하는 역할만 노출한다(허용 역할 정본: PublishingController.PAGE_ROLES) --%>
             <c:if test="${not empty role and not empty active}">
                 <div class="ml-auto inline-flex rounded-lg border bg-secondary p-0.5">
-                    <a href="<c:url value='/${active}'/>?role=member" class="rounded-md px-3 py-1.5 text-xs font-bold transition-colors ${role == 'member' ? 'border bg-card text-foreground' : 'text-muted-foreground'}">일반 부원</a>
-                    <a href="<c:url value='/${active}'/>?role=leader" class="rounded-md px-3 py-1.5 text-xs font-bold transition-colors ${role == 'leader' ? 'border bg-card text-foreground' : 'text-muted-foreground'}">팀장</a>
-                    <a href="<c:url value='/${active}'/>?role=admin" class="rounded-md px-3 py-1.5 text-xs font-bold transition-colors ${role == 'admin' ? 'border bg-card text-foreground' : 'text-muted-foreground'}">운영진</a>
+                    <c:if test="${empty allowedRoles or allowedRoles.contains('member')}">
+                        <a href="<c:url value='/${active}'/>?role=member" class="rounded-md px-3 py-1.5 text-xs font-bold transition-colors ${role == 'member' ? 'border bg-card text-foreground' : 'text-muted-foreground'}">일반 부원</a>
+                    </c:if>
+                    <c:if test="${empty allowedRoles or allowedRoles.contains('leader')}">
+                        <a href="<c:url value='/${active}'/>?role=leader" class="rounded-md px-3 py-1.5 text-xs font-bold transition-colors ${role == 'leader' ? 'border bg-card text-foreground' : 'text-muted-foreground'}">팀장</a>
+                    </c:if>
+                    <c:if test="${empty allowedRoles or allowedRoles.contains('admin')}">
+                        <a href="<c:url value='/${active}'/>?role=admin" class="rounded-md px-3 py-1.5 text-xs font-bold transition-colors ${role == 'admin' ? 'border bg-card text-foreground' : 'text-muted-foreground'}">운영진</a>
+                    </c:if>
                 </div>
             </c:if>
         </header>

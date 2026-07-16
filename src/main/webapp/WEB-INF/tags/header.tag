@@ -7,10 +7,10 @@
             반디
         </a>
         <div class="ml-auto flex items-center gap-1 text-sm font-bold">
-            <span class="hidden rounded-md px-3 py-1.5 text-sidebar-muted sm:block">공연 소개</span>
-            <span class="hidden rounded-md px-3 py-1.5 text-sidebar-muted sm:block">일정</span>
+            <span class="hidden rounded-md px-3 py-1.5 text-sidebar-muted md:block">공연 소개</span>
+            <span class="hidden rounded-md px-3 py-1.5 text-sidebar-muted md:block">일정</span>
             <a href="<c:url value='/reserve'/>" class="rounded-md bg-sidebar-accent px-3 py-1.5 text-white">관람 신청</a>
-            <span class="hidden rounded-md px-3 py-1.5 text-sidebar-muted sm:block">문의</span>
+            <span class="hidden rounded-md px-3 py-1.5 text-sidebar-muted md:block">문의</span>
         </div>
         <a href="<c:url value='/login'/>" class="rounded-md border border-sidebar-border px-3 py-1.5 text-xs font-bold text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-white">← 나가기</a>
     </nav>

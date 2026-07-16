@@ -1,5 +1,5 @@
-import { showToast } from '/js/common/toast.js';
-import { openModal } from '/js/common/modal.js';
+import { showToast } from '../common/toast.js';
+import { openModal } from '../common/modal.js';
 
 const ACTION_OPEN_DEMO_MODAL = 'open-demo-modal';
 const ACTION_SHOW_DEMO_TOAST = 'show-demo-toast';
