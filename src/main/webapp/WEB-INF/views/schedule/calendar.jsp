@@ -81,7 +81,7 @@
             <div class="flex flex-col gap-3">
                 <div><label class="${label}" for="ceTitle">일정명 <span class="text-accent-foreground">*</span></label><input class="${input}" id="ceTitle" type="text" placeholder="예) 전체 연습"></div>
                 <div class="grid grid-cols-2 gap-2.5">
-                    <div><label class="${label}" for="ceDay">날짜 (일)</label><input class="${input}" id="ceDay" type="number" value="25" min="1" max="30"></div>
+                    <div><label class="${label}" for="ceDay">날짜 (일)</label><input class="${input}" id="ceDay" type="number" value="25" min="1" max="30" step="1"></div>
                     <div><label class="${label}" for="ceTeam">담당팀</label><select class="${input}" id="ceTeam"><option>배우연출</option><option>무대</option><option>오퍼</option><option>디자인</option><option>영상</option></select></div>
                 </div>
                 <div><label class="${label}" for="ceLoc">장소</label><input class="${input}" id="ceLoc" type="text" placeholder="예) TIP아트센터"></div>

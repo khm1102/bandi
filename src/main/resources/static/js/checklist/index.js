@@ -77,6 +77,7 @@ function addChecklistItem(trigger) {
 
 all('[data-checklist-item]').forEach((item) => {
     item.setAttribute('role', 'checkbox');
+    item.setAttribute('aria-checked', String(item.dataset.complete === 'true'));
     item.tabIndex = 0;
     appendChecklistDelete(item);
 });

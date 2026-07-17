@@ -1,3 +1,5 @@
+import {lockBodyScroll, unlockBodyScroll} from './scroll-lock.js';
+
 const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 const modalTriggers = new WeakMap();
 
@@ -10,7 +12,7 @@ export function openModal(modalId, trigger = document.activeElement) {
     modal.classList.remove('hidden');
     modal.classList.add('flex');
     modal.setAttribute('aria-hidden', 'false');
-    document.body.classList.add('overflow-hidden');
+    lockBodyScroll(modal);
     const focusables = modal.querySelectorAll(FOCUSABLE_SELECTOR);
     if (focusables.length > 0) {
         focusables[0].focus();
@@ -29,7 +31,7 @@ export function closeModal(modal) {
     modal.classList.add('hidden');
     modal.classList.remove('flex');
     modal.setAttribute('aria-hidden', 'true');
-    document.body.classList.remove('overflow-hidden');
+    unlockBodyScroll(modal);
     const trigger = modalTriggers.get(modal);
     if (trigger instanceof HTMLElement) {
         trigger.focus();

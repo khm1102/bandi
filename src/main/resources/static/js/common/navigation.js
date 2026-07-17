@@ -1,3 +1,5 @@
+import {lockBodyScroll, unlockBodyScroll} from './scroll-lock.js';
+
 const navigationPanel = document.querySelector('[data-navigation-panel]');
 const navigationBackdrop = document.querySelector('[data-navigation-backdrop]');
 const navigationToggle = document.querySelector('[data-navigation-toggle]');
@@ -13,7 +15,12 @@ function setNavigation(open) {
     navigationToggle.setAttribute('aria-expanded', String(open));
     navigationToggle.setAttribute('aria-label', open ? '전체 메뉴 닫기' : '전체 메뉴 열기');
     navigationPanel.setAttribute('aria-hidden', String(!open));
-    document.body.classList.toggle('overflow-hidden', open);
+    navigationPanel.inert = !open;
+    if (open) {
+        lockBodyScroll(navigationPanel);
+    } else {
+        unlockBodyScroll(navigationPanel);
+    }
     if (open) {
         const currentLink = navigationPanel.querySelector('[aria-current="page"]');
         const firstLink = navigationPanel.querySelector('a[href]');
@@ -32,7 +39,8 @@ function syncNavigationViewport(desktop) {
     navigationToggle.setAttribute('aria-expanded', 'false');
     navigationToggle.setAttribute('aria-label', '전체 메뉴 열기');
     navigationPanel.setAttribute('aria-hidden', String(!desktop));
-    document.body.classList.remove('overflow-hidden');
+    navigationPanel.inert = !desktop;
+    unlockBodyScroll(navigationPanel);
 }
 
 navigationToggle?.addEventListener('click', () => {

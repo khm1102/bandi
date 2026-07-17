@@ -15,6 +15,42 @@ const ACTIONS = Object.freeze({
 
 let editingPropRow = null;
 
+function readValidInteger(id, message) {
+    const input = document.getElementById(id);
+    input.setCustomValidity('');
+    const value = input.valueAsNumber;
+    if (!Number.isInteger(value) || !input.checkValidity()) {
+        input.setCustomValidity(message);
+        input.reportValidity();
+        input.focus();
+        showToast(message);
+        return null;
+    }
+    return value;
+}
+
+function updatePropSummary() {
+    const rows = all('[data-prop-row]');
+    const used = rows.reduce((total, row) => total + Number(row.cells[3].textContent), 0);
+    const stored = rows.reduce(
+        (total, row) => total + Number(row.cells[2].textContent) - Number(row.cells[3].textContent),
+        0
+    );
+    lookup('[data-stat-value="prop-total"]').textContent = String(rows.length);
+    lookup('[data-stat-value="prop-used"]').textContent = String(used);
+    lookup('[data-stat-value="prop-stored"]').textContent = String(stored);
+}
+
+function updateBorrowSummary() {
+    const list = lookup('[data-borrow-list]');
+    if (!list) {
+        return;
+    }
+    const pending = all('[data-page-action="borrow-return"]', list).length;
+    lookup('[data-stat-value="borrow-pending"]').textContent = String(pending);
+    lookup('[data-borrow-pending]').textContent = String(pending);
+}
+
 function filterProps() {
     const selected = lookup('[data-filter-group="prop"][aria-pressed="true"]');
     const category = selected ? selected.dataset.filterValue : '전체';
@@ -57,16 +93,21 @@ function addProp(trigger) {
         showToast('품목명을 입력해 주세요');
         return;
     }
+    const total = readValidInteger('ppTotal', '총수량은 1 이상의 정수로 입력해 주세요');
+    if (total === null) {
+        return;
+    }
     const row = buildPropRow(
         name,
         readValue('ppCat'),
-        Number(readValue('ppTotal')) || 1,
+        total,
         0,
         readValue('ppLoc') || '미지정'
     );
     lookup('[data-prop-list]').prepend(row);
     closeActionModal(trigger);
     filterProps();
+    updatePropSummary();
     showToast('품목을 등록했어요');
 }
 
@@ -85,8 +126,19 @@ function savePropEdit(trigger) {
     if (!editingPropRow) {
         return;
     }
-    const total = Math.max(0, Number(readValue('epTotal')) || 0);
-    const used = Math.min(total, Math.max(0, Number(readValue('epUse')) || 0));
+    const total = readValidInteger('epTotal', '총수량은 0 이상의 정수로 입력해 주세요');
+    const used = readValidInteger('epUse', '사용중 수량은 0 이상의 정수로 입력해 주세요');
+    if (total === null || used === null) {
+        return;
+    }
+    if (used > total) {
+        const usedInput = document.getElementById('epUse');
+        usedInput.setCustomValidity('사용중 수량은 총수량보다 클 수 없습니다.');
+        usedInput.reportValidity();
+        usedInput.focus();
+        showToast('사용중 수량은 총수량보다 클 수 없습니다');
+        return;
+    }
     editingPropRow.cells[0].textContent = readValue('epName') || editingPropRow.cells[0].textContent;
     editingPropRow.cells[2].textContent = String(total);
     editingPropRow.cells[3].textContent = String(used);
@@ -94,6 +146,7 @@ function savePropEdit(trigger) {
     editingPropRow.cells[5].replaceChildren(statusBadge(readValue('epStatus')));
     editingPropRow = null;
     closeActionModal(trigger);
+    updatePropSummary();
     showToast('품목 정보를 수정했어요');
 }
 
@@ -119,6 +172,7 @@ function addBorrow(trigger) {
     actionCell.appendChild(returnAction);
     lookup('[data-borrow-list]').prepend(row);
     closeActionModal(trigger);
+    updateBorrowSummary();
     showToast('빌린 물품을 기록했어요');
 }
 
@@ -138,6 +192,7 @@ bindPageActions({
     [ACTIONS.SAVE_EDIT]: savePropEdit,
     [ACTIONS.DELETE]: (trigger) => {
         trigger.closest('[data-prop-row]').remove();
+        updatePropSummary();
         showToast('품목을 삭제했어요');
     },
     [ACTIONS.ADD_BORROW]: addBorrow,
@@ -145,6 +200,10 @@ bindPageActions({
         const row = trigger.closest('tr');
         lookup('[data-borrow-status]', row).replaceChildren(badge('반납 완료', 'success'));
         trigger.remove();
+        updateBorrowSummary();
         showToast('반납 완료로 기록했어요');
     }
 });
+
+updatePropSummary();
+updateBorrowSummary();

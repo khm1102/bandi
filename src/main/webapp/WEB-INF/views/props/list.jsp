@@ -16,10 +16,10 @@
     </div>
 
     <div class="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <t:statCard label="전체 품목" value="6" unit="종"/>
-        <t:statCard label="사용중" value="24" tone="danger"/>
-        <t:statCard label="보관중" value="15" tone="success"/>
-        <t:statCard label="반납 대기" value="3" unit="건"/>
+        <t:statCard label="전체 품목" value="6" unit="종" valueHook="prop-total"/>
+        <t:statCard label="사용중" value="24" tone="danger" valueHook="prop-used"/>
+        <t:statCard label="보관중" value="15" tone="success" valueHook="prop-stored"/>
+        <t:statCard label="반납 대기" value="3" unit="건" valueHook="borrow-pending"/>
     </div>
 
     <div class="mb-4 flex flex-wrap gap-2">
@@ -52,7 +52,7 @@
     <c:if test="${canEdit}">
         <div class="mb-2.5 mt-6 flex items-center gap-2.5">
             <h3 class="text-base font-extrabold">부원에게 빌린 물품</h3>
-            <t:badge tone="warning">반납 대기 3</t:badge>
+            <t:badge tone="warning">반납 대기 <span data-borrow-pending>3</span></t:badge>
             <t:button size="compact" openModal="borrowModal" cssClass="ml-auto">+ 빌린 물품 기록</t:button>
         </div>
         <div class="rounded-lg border bg-card">
@@ -77,7 +77,7 @@
             <div class="flex flex-col gap-3">
                 <div><label class="${label}" for="ppName">품목명 <span class="text-accent-foreground">*</span></label><input class="${input}" id="ppName" type="text" placeholder="예) 앤티크 촛대"></div>
                 <div class="grid grid-cols-2 gap-2.5">
-                    <div><label class="${label}" for="ppTotal">총수량</label><input class="${input}" id="ppTotal" type="number" value="1" min="1"></div>
+                    <div><label class="${label}" for="ppTotal">총수량</label><input class="${input}" id="ppTotal" type="number" value="1" min="1" step="1"></div>
                     <div><label class="${label}" for="ppLoc">보관 위치</label><input class="${input}" id="ppLoc" type="text" placeholder="소품창고 A-4"></div>
                 </div>
                 <div><label class="${label}" for="ppCat">분류</label><select class="${input}" id="ppCat"><option>소품</option><option>의상</option><option>조명장비</option><option>음향장비</option></select></div>
@@ -95,8 +95,8 @@
             <div class="flex flex-col gap-3">
                 <div><label class="${label}" for="epName">품목명</label><input class="${input}" id="epName" type="text"></div>
                 <div class="grid grid-cols-2 gap-2.5">
-                    <div><label class="${label}" for="epTotal">총수량</label><input class="${input}" id="epTotal" type="number" min="0"></div>
-                    <div><label class="${label}" for="epUse">사용중</label><input class="${input}" id="epUse" type="number" min="0"></div>
+                    <div><label class="${label}" for="epTotal">총수량</label><input class="${input}" id="epTotal" type="number" min="0" step="1"></div>
+                    <div><label class="${label}" for="epUse">사용중</label><input class="${input}" id="epUse" type="number" min="0" step="1"></div>
                 </div>
                 <div><label class="${label}" for="epLoc">보관 위치</label><input class="${input}" id="epLoc" type="text"></div>
                 <div><label class="${label}" for="epStatus">상태</label><select class="${input}" id="epStatus"><option>정상</option><option>사용중</option><option>수선중</option></select></div>

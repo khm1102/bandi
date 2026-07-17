@@ -14,7 +14,7 @@
     </div>
     <section data-show-card class="mb-7 overflow-hidden rounded-lg border bg-card">
         <div class="grid min-h-52 md:grid-cols-[220px_1fr]">
-            <div class="flex min-h-52 items-center justify-center bg-linear-to-br from-sidebar to-sidebar-accent text-white">
+            <div data-show-image class="flex min-h-52 items-center justify-center overflow-hidden bg-linear-to-br from-sidebar to-sidebar-accent text-white">
                 <div class="text-center text-sm font-extrabold">🎭<b class="mt-2 block">공연 이미지</b></div>
             </div>
             <div class="p-5">

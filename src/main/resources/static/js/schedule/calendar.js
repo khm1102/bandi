@@ -52,6 +52,10 @@ function renderCalendar() {
     });
     const firstDay = new Date(2025, calendarState.month, 1).getDay();
     const dayCount = new Date(2025, calendarState.month + 1, 0).getDate();
+    const dayInput = document.getElementById('ceDay');
+    if (dayInput) {
+        dayInput.max = String(dayCount);
+    }
     for (let index = 0; index < firstDay; index += 1) {
         grid.appendChild(element('div', 'min-h-20 rounded-md bg-secondary/50 opacity-50'));
     }
@@ -78,9 +82,20 @@ function addCalendarEvent(trigger) {
         showToast('일정명을 입력해 주세요');
         return;
     }
+    const dayInput = document.getElementById('ceDay');
+    const day = Number(readValue('ceDay'));
+    const lastDay = new Date(2025, calendarState.month + 1, 0).getDate();
+    if (!Number.isInteger(day) || day < 1 || day > lastDay) {
+        dayInput.setCustomValidity(`${calendarState.month + 1}월은 1일부터 ${lastDay}일까지 입력할 수 있습니다.`);
+        dayInput.reportValidity();
+        dayInput.focus();
+        showToast(`날짜는 1일부터 ${lastDay}일까지 입력해 주세요`);
+        return;
+    }
+    dayInput.setCustomValidity('');
     calendarState.events.push({
         month: calendarState.month,
-        day: Number(readValue('ceDay')) || 25,
+        day,
         title,
         team: readValue('ceTeam'),
         place: readValue('ceLoc') || '미정'
