@@ -6,26 +6,26 @@
 <%@ attribute name="type" %>
 <%@ attribute name="required" type="java.lang.Boolean" %>
 <%@ attribute name="help" %>
-<c:set var="baseClass" value="h-10 w-full rounded-md border bg-card px-3 text-sm transition-colors focus:outline-none focus:ring-2"/>
+<c:set var="baseClass" value="h-11 w-full rounded-md border bg-card px-3 text-base transition-colors focus:outline-none focus:ring-2 md:text-sm"/>
 <c:set var="inputClass" value="${baseClass} border-input focus:border-ring focus:ring-ring/20"/>
 <c:set var="errorClass" value="${baseClass} border-destructive focus:border-destructive focus:ring-destructive/20"/>
 <div class="mb-3.5">
     <form:label path="${path}" cssClass="mb-1.5 block text-xs font-extrabold text-muted-foreground">
         <c:out value="${label}"/><c:if test="${required}"><span class="text-accent-foreground"> *</span></c:if>
     </form:label>
+    <c:if test="${not empty help}">
+        <p id="${path}Help" class="mb-1.5 text-xs text-muted-foreground"><c:out value="${help}"/></p>
+    </c:if>
     <c:choose>
         <c:when test="${type == 'textarea'}">
-            <form:textarea path="${path}" rows="4" cssClass="${inputClass} h-auto py-2.5 resize-none" cssErrorClass="${errorClass} h-auto py-2.5 resize-none"/>
+            <form:textarea path="${path}" rows="4" required="${required}" aria-describedby="${path}Help ${path}Error" cssClass="${inputClass} h-auto py-2.5 resize-none" cssErrorClass="${errorClass} h-auto py-2.5 resize-none"/>
         </c:when>
         <c:when test="${type == 'password'}">
-            <form:password path="${path}" cssClass="${inputClass}" cssErrorClass="${errorClass}"/>
+            <form:password path="${path}" required="${required}" aria-describedby="${path}Help ${path}Error" cssClass="${inputClass}" cssErrorClass="${errorClass}"/>
         </c:when>
         <c:otherwise>
-            <form:input path="${path}" type="${empty type ? 'text' : type}" cssClass="${inputClass}" cssErrorClass="${errorClass}"/>
+            <form:input path="${path}" type="${empty type ? 'text' : type}" required="${required}" aria-describedby="${path}Help ${path}Error" cssClass="${inputClass}" cssErrorClass="${errorClass}"/>
         </c:otherwise>
     </c:choose>
-    <c:if test="${not empty help}">
-        <p class="mt-1.5 text-xs text-muted-foreground"><c:out value="${help}"/></p>
-    </c:if>
-    <form:errors path="${path}" element="p" cssClass="mt-1.5 text-xs font-bold text-destructive"/>
+    <form:errors id="${path}Error" path="${path}" element="p" cssClass="mt-1.5 text-xs font-bold text-destructive"/>
 </div>

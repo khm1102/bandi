@@ -8,10 +8,8 @@
     </jsp:attribute>
     <jsp:body>
         <t:pageHead title="스타일 가이드" description="bandi 디자인 시스템의 살아있는 명세 — 토큰·타이포·컴포넌트를 여기서 복사해 쓴다 (docs/design-guide.md)">
-            <button type="button" data-action="show-demo-toast"
-                    class="inline-flex h-9 items-center justify-center gap-1.5 rounded-md border bg-card px-4 text-sm font-bold transition-colors hover:bg-secondary">토스트 데모</button>
-            <button type="button" data-action="open-demo-modal"
-                    class="inline-flex h-9 items-center justify-center gap-1.5 rounded-md bg-primary px-4 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary-strong hover:text-white">모달 데모</button>
+            <t:button variant="outline" action="show-demo-toast">토스트 데모</t:button>
+            <t:button action="open-demo-modal">모달 데모</t:button>
         </t:pageHead>
 
         <div class="grid gap-4">
@@ -42,11 +40,11 @@
 
             <t:card title="버튼">
                 <div class="flex flex-wrap items-center gap-2">
-                    <button type="button" class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary-strong hover:text-white focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50">기본(primary)</button>
-                    <button type="button" class="inline-flex h-9 items-center justify-center rounded-md border bg-card px-4 text-sm font-bold transition-colors hover:bg-secondary">보조(outline)</button>
-                    <button type="button" class="inline-flex h-9 items-center justify-center rounded-md bg-sidebar px-4 text-sm font-bold text-white transition-colors hover:bg-sidebar-accent">네이비(dark)</button>
-                    <button type="button" class="inline-flex h-9 items-center justify-center rounded-md bg-destructive px-4 text-sm font-bold text-destructive-foreground transition-colors hover:bg-destructive/90">삭제(danger)</button>
-                    <button type="button" class="inline-flex h-8 items-center justify-center rounded-md border bg-card px-3 text-xs font-bold transition-colors hover:bg-secondary">작게(sm)</button>
+                    <t:button>기본(primary)</t:button>
+                    <t:button variant="outline">보조(outline)</t:button>
+                    <t:button variant="dark">네이비(dark)</t:button>
+                    <t:button variant="danger">삭제(danger)</t:button>
+                    <t:button variant="outline" size="compact">작게(compact)</t:button>
                     <button type="button" disabled class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-bold text-primary-foreground disabled:pointer-events-none disabled:opacity-50">비활성</button>
                 </div>
             </t:card>
@@ -61,9 +59,9 @@
                     <t:badge tone="neutral">보관됨</t:badge>
                 </div>
                 <div class="mt-4 flex flex-wrap gap-2">
-                    <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md border border-sidebar bg-sidebar px-3 text-xs font-bold text-white">전체 <span class="opacity-70">24</span></button>
-                    <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md border bg-card px-3 text-xs font-bold text-muted-foreground transition-colors hover:border-sidebar-muted">기수별 <span class="opacity-70">3</span></button>
-                    <button type="button" class="inline-flex h-8 items-center gap-1.5 rounded-md border bg-card px-3 text-xs font-bold text-muted-foreground transition-colors hover:border-sidebar-muted">팀별</button>
+                    <t:filterChip group="style-guide" value="all" label="전체" active="true" count="24"/>
+                    <t:filterChip group="style-guide" value="generation" label="기수별" count="3"/>
+                    <t:filterChip group="style-guide" value="team" label="팀별"/>
                 </div>
             </t:card>
 
@@ -75,33 +73,34 @@
             </div>
 
             <t:card title="테이블" flush="true">
-                <div class="overflow-x-auto">
-                    <table class="w-full border-collapse text-left">
-                        <thead>
-                        <tr>
-                            <th class="whitespace-nowrap border-b bg-secondary px-4 py-3 text-xs font-extrabold text-muted-foreground">이름</th>
-                            <th class="whitespace-nowrap border-b bg-secondary px-4 py-3 text-xs font-extrabold text-muted-foreground">기수</th>
-                            <th class="whitespace-nowrap border-b bg-secondary px-4 py-3 text-xs font-extrabold text-muted-foreground">상태</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr class="transition-colors hover:bg-secondary/50">
-                            <td class="border-b px-4 py-3 text-sm font-bold">김반디</td>
-                            <td class="border-b px-4 py-3 text-sm text-muted-foreground">12기</td>
-                            <td class="border-b px-4 py-3"><t:badge tone="success" dot="true">활동</t:badge></td>
-                        </tr>
-                        <tr class="transition-colors hover:bg-secondary/50">
-                            <td class="px-4 py-3 text-sm font-bold">이무대</td>
-                            <td class="px-4 py-3 text-sm text-muted-foreground">13기</td>
-                            <td class="px-4 py-3"><t:badge tone="neutral">휴단</t:badge></td>
-                        </tr>
-                        </tbody>
-                    </table>
-                </div>
+                <t:dataTable caption="스타일 가이드 멤버 목록 예시">
+                    <thead>
+                    <tr>
+                        <th>이름</th>
+                        <th>기수</th>
+                        <th>상태</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <td class="font-bold">김반디</td>
+                        <td class="text-muted-foreground">12기</td>
+                        <td><t:badge tone="success" dot="true">활동</t:badge></td>
+                    </tr>
+                    <tr>
+                        <td class="font-bold">이무대</td>
+                        <td class="text-muted-foreground">13기</td>
+                        <td><t:badge tone="neutral">휴단</t:badge></td>
+                    </tr>
+                    </tbody>
+                </t:dataTable>
             </t:card>
 
             <t:card title="공지 배너 / 빈 상태">
-                <div class="flex items-start gap-3 rounded-lg border border-l-4 border-l-primary bg-accent/50 px-4 py-3.5">
+                <div class="flex items-start gap-3 rounded-lg border bg-accent/50 px-4 py-3.5">
+                    <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground">
+                        <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17v5M5 3h14l-2 6 2 6H5l2-6-2-6z"/></svg>
+                    </span>
                     <div class="min-w-0">
                         <b class="text-sm">정기 공연 티켓 오픈</b>
                         <p class="mt-0.5 text-xs text-muted-foreground">6월 정기 공연 예매가 시작되었습니다.</p>
@@ -109,7 +108,7 @@
                 </div>
                 <div class="mt-4 rounded-lg border border-dashed">
                     <t:emptyState title="아직 등록된 일정이 없습니다" message="첫 일정을 만들어 단원들과 공유해 보세요.">
-                        <button type="button" class="inline-flex h-8 items-center justify-center rounded-md bg-primary px-3 text-xs font-bold text-primary-foreground transition-colors hover:bg-primary-strong hover:text-white">일정 만들기</button>
+                        <t:button size="compact">일정 만들기</t:button>
                     </t:emptyState>
                 </div>
             </t:card>
@@ -129,7 +128,7 @@
                     <div class="min-w-0 flex-1">
                         <p class="text-sm font-bold">김반디 — 회비 납부 진행률</p>
                         <div class="mt-2 h-2 overflow-hidden rounded-full bg-secondary">
-                            <span class="block h-full rounded-full bg-primary transition-all" style="width:63%"></span>
+                            <span class="block h-full w-3/5 rounded-full bg-primary"></span>
                         </div>
                     </div>
                     <span class="text-xs font-bold text-muted-foreground">63%</span>
@@ -165,9 +164,8 @@
                     <t:formField label="이메일" path="email" type="email" help="비워두면 성공, 형식이 틀리면 오류 상태를 볼 수 있습니다."/>
                     <t:formField label="소개" path="bio" type="textarea"/>
                     <div class="flex gap-2">
-                        <button type="submit" class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary-strong hover:text-white">등록</button>
-                        <button type="submit" data-confirm="정말 삭제할까요? 이 동작은 되돌릴 수 없습니다."
-                                class="inline-flex h-9 items-center justify-center rounded-md bg-destructive px-4 text-sm font-bold text-destructive-foreground transition-colors hover:bg-destructive/90">삭제 (confirm 데모)</button>
+                        <t:button type="submit">등록</t:button>
+                        <t:button type="submit" variant="danger" confirm="정말 삭제할까요? 이 동작은 되돌릴 수 없습니다." confirmAction="삭제">삭제 (confirm 데모)</t:button>
                     </div>
                 </form:form>
             </t:card>
@@ -175,8 +173,8 @@
 
         <t:modal id="demoModal" title="일정 추가" description="모달 컴포넌트 데모 — 폼이나 확인 메시지를 담는다.">
             <jsp:attribute name="footer">
-                <button type="button" data-action="close-modal" class="inline-flex h-9 items-center justify-center rounded-md border bg-card px-4 text-sm font-bold transition-colors hover:bg-secondary">취소</button>
-                <button type="button" data-action="close-modal" class="inline-flex h-9 items-center justify-center rounded-md bg-primary px-4 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary-strong hover:text-white">저장</button>
+                <t:button variant="outline" action="close-modal">취소</t:button>
+                <t:button action="close-modal">저장</t:button>
             </jsp:attribute>
             <jsp:body>
                 <p class="text-sm text-muted-foreground">본문 영역입니다. 닫기는 우상단 ×, 하단 취소, 바깥 클릭 세 경로 모두 동작합니다.</p>

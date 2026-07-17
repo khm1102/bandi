@@ -1,10 +1,16 @@
-import { showToast } from '../common/toast.js';
-import { openModal } from '../common/modal.js';
+import {openModal} from '../common/modal.js';
+import {showToast} from '../common/toast.js';
+import {activateFilterChip} from '../common/view.js';
 
 const ACTION_OPEN_DEMO_MODAL = 'open-demo-modal';
 const ACTION_SHOW_DEMO_TOAST = 'show-demo-toast';
 
 document.addEventListener('click', (event) => {
+    const filterChip = event.target.closest('[data-filter-group="style-guide"]');
+    if (filterChip) {
+        activateFilterChip(filterChip);
+        return;
+    }
     const button = event.target.closest('[data-action]');
     if (!button) {
         return;

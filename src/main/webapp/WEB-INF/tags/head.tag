@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="_csrf" content="${_csrf.token}">
 <meta name="_csrf_header" content="${_csrf.headerName}">
+<meta name="theme-color" content="#0b1f33">
 <title><c:out value="${title}"/> - bandi</title>
-<%-- TODO 브랜드 로고 확정 시 실제 파비콘 에셋으로 교체 --%>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎭</text></svg>">
+<link rel="icon" href="<c:url value='/images/favicon.svg'/>" type="image/svg+xml" sizes="any">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap" rel="stylesheet">
@@ -60,9 +60,23 @@
     @layer base {
         * {
             @apply border-border outline-ring/50;
+            box-sizing: border-box;
+        }
+        *::before,
+        *::after {
+            box-sizing: border-box;
         }
         body {
             @apply bg-background text-foreground font-sans antialiased;
+        }
+        :where(a, button, input, select, textarea):focus-visible {
+            @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+        }
+        :where(a, button, input, select, textarea) {
+            touch-action: manipulation;
+        }
+        :where(h1, h2, h3) {
+            text-wrap: balance;
         }
     }
 </style>
