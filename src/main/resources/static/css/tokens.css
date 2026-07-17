@@ -1,6 +1,6 @@
 /* shadcn 디자인 토큰 — 라이트 전용 (컨벤션 13.2, 공유 자원 — 22.5)
    팔레트: 화이트/네이비/민트 (근거: docs/design-guide.md, 레퍼런스 목업의 DESIGN OVERRIDE 섹션)
-   값 변경은 이 파일에서만. 새 토큰 추가 시 WEB-INF/tags/layout.tag의 @theme inline 매핑에도 함께 추가한다. */
+   값 변경은 이 파일에서만. 새 토큰 추가 시 WEB-INF/tags/head.tag의 @theme inline 매핑에도 함께 추가한다. */
 :root {
     --radius: 0.75rem;
 
