@@ -1,6 +1,6 @@
 import {openModal} from '../common/modal.js';
 import {showToast} from '../common/toast.js';
-import {bindPageActions, lookup, readValue} from '../common/dom.js';
+import {all, bindPageActions, lookup, readValue} from '../common/dom.js';
 import {badge, closeActionModal} from '../common/view.js';
 
 const ACTIONS = Object.freeze({
@@ -17,6 +17,37 @@ let showCardTemplate = null;
 let showCardHost = null;
 let showCardAnchor = null;
 
+const SHOW_STATUS_TONES = Object.freeze({
+    '신청 진행 중': ['bg-success-soft', 'text-success'],
+    '준비 중': ['bg-warning-soft', 'text-warning'],
+    '마감': ['bg-destructive-soft', 'text-destructive']
+});
+const SHOW_STATUS_CLASSES = Object.values(SHOW_STATUS_TONES).flat();
+
+function updateEntrySummary() {
+    const rows = all('[data-entry-list] tr');
+    const completedRows = rows.filter((row) => row.cells[4].textContent.trim() === '입장 완료');
+    const completedSeats = completedRows.reduce(
+        (total, row) => total + row.cells[2].querySelectorAll('span').length,
+        0
+    );
+    const pendingCount = rows.length - completedRows.length;
+    const entryRate = rows.length === 0 ? 0 : Math.round((completedRows.length / rows.length) * 100);
+    lookup('[data-entry-pending-summary]').textContent = `미입장 ${pendingCount}건`;
+    lookup('[data-stat-value="entry-completed"]').textContent = String(completedRows.length);
+    lookup('[data-stat-delta="entry-completed-seats"]').textContent = `${completedSeats}석 입장`;
+    lookup('[data-stat-value="entry-pending"]').textContent = String(pendingCount);
+    lookup('[data-stat-delta="entry-rate"]').textContent = `입장률 ${entryRate}%`;
+}
+
+function updateShowStatus(card, status) {
+    const statusText = lookup('[data-show-status]', card);
+    const statusBadge = statusText.parentElement;
+    statusText.textContent = status;
+    statusBadge.classList.remove(...SHOW_STATUS_CLASSES);
+    statusBadge.classList.add(...SHOW_STATUS_TONES[status]);
+}
+
 function changeEntry(trigger, checkedIn) {
     const row = trigger.closest('tr');
     const statusCell = row.cells[4];
@@ -30,12 +61,14 @@ function changeEntry(trigger, checkedIn) {
         timeCell.textContent = `${hour}:${minute}`;
         trigger.textContent = '입장 취소';
         trigger.dataset.pageAction = ACTIONS.CANCEL_ENTRY;
+        updateEntrySummary();
         showToast(`${row.cells[0].textContent.trim()}님 입장 처리했어요`);
         return;
     }
     timeCell.textContent = '—';
     trigger.textContent = '입장 완료';
     trigger.dataset.pageAction = ACTIONS.CHECK_IN;
+    updateEntrySummary();
 }
 
 function editShow(trigger) {
@@ -45,6 +78,7 @@ function editShow(trigger) {
     document.getElementById('shPeriod').value = lookup('[data-show-period]', card).textContent.trim();
     document.getElementById('shTime').value = lookup('[data-show-time]', card).textContent.trim();
     document.getElementById('shPlace').value = lookup('[data-show-place]', card).textContent.trim();
+    document.getElementById('shStatus').value = lookup('[data-show-status]', card).textContent.trim();
     const viewing = lookup('[data-show-viewing]', card).textContent.trim().split(' · ');
     document.getElementById('shAge').value = viewing[0];
     document.getElementById('shRuntime').value = viewing[1] || '';
@@ -87,6 +121,7 @@ function saveShow(trigger) {
     lookup('[data-show-time]', card).textContent = readValue('shTime');
     lookup('[data-show-place]', card).textContent = readValue('shPlace');
     lookup('[data-show-viewing]', card).textContent = `${readValue('shAge')} · ${readValue('shRuntime')}`;
+    updateShowStatus(card, readValue('shStatus'));
     closeActionModal(trigger);
     showToast(editingShowCard ? '공연 정보를 수정했어요' : '공연을 등록했어요');
     editingShowCard = null;
@@ -96,6 +131,7 @@ const firstCard = lookup('[data-show-card]');
 showCardTemplate = firstCard ? firstCard.cloneNode(true) : null;
 showCardHost = firstCard ? firstCard.parentElement : null;
 showCardAnchor = firstCard ? firstCard.nextElementSibling : null;
+updateEntrySummary();
 
 bindPageActions({
     [ACTIONS.CHECK_IN]: (trigger) => changeEntry(trigger, true),

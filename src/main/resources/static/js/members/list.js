@@ -119,9 +119,15 @@ document.addEventListener('click', (event) => {
 bindPageActions({
     [ACTIONS.COPY_INVITE]: copyInviteCode,
     [ACTIONS.TOGGLE_INVITE]: (trigger) => {
-        const inactive = trigger.textContent.trim() === '활성화';
-        trigger.textContent = inactive ? '중지' : '활성화';
-        showToast(inactive ? '초대코드를 활성화했어요' : '초대코드를 사용 중지했어요');
+        const activating = trigger.textContent.trim() === '활성화';
+        const card = trigger.closest('[data-invite-card]');
+        const metadata = lookup('[data-invite-meta]', card);
+        trigger.textContent = activating ? '중지' : '활성화';
+        metadata.textContent = metadata.textContent.replace(
+            /사용 가능|사용 중지$/,
+            activating ? '사용 가능' : '사용 중지'
+        );
+        showToast(activating ? '초대코드를 활성화했어요' : '초대코드를 사용 중지했어요');
     },
     [ACTIONS.ADD_INVITE]: addInvite,
     [ACTIONS.ADD_MEMBER]: addMember

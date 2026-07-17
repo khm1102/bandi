@@ -44,16 +44,16 @@
             </t:pageHead>
 
             <div class="mb-4 inline-flex max-w-full flex-wrap rounded-lg border bg-secondary p-0.5" role="tablist" aria-label="회비 항목">
-                <button type="button" role="tab" aria-selected="true" data-fee-tab data-amount="30000" class="min-h-11 rounded-md border bg-card px-3 text-xs font-bold text-foreground">동아리 가입 회비</button>
-                <button type="button" role="tab" aria-selected="false" data-fee-tab data-amount="15000" class="min-h-11 rounded-md px-3 text-xs font-bold text-muted-foreground transition-colors">6월 정기 회식비</button>
-                <button type="button" role="tab" aria-selected="false" data-fee-tab data-amount="10000" class="min-h-11 rounded-md px-3 text-xs font-bold text-muted-foreground transition-colors">공연 추가 납부</button>
+                <button type="button" role="tab" aria-selected="true" data-fee-tab data-amount="30000" data-paid-rows="0:05/02,1:05/03,2:05/05,5:05/06" class="min-h-11 rounded-md border bg-card px-3 text-xs font-bold text-foreground">동아리 가입 회비</button>
+                <button type="button" role="tab" aria-selected="false" data-fee-tab data-amount="15000" data-paid-rows="0:06/11,1:06/11,3:06/12,5:06/12" class="min-h-11 rounded-md px-3 text-xs font-bold text-muted-foreground transition-colors">6월 정기 회식비</button>
+                <button type="button" role="tab" aria-selected="false" data-fee-tab data-amount="10000" data-paid-rows="0:06/19,3:06/19,4:06/20" class="min-h-11 rounded-md px-3 text-xs font-bold text-muted-foreground transition-colors">공연 추가 납부</button>
             </div>
 
             <div class="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
-                <t:statCard label="항목 금액" value="30,000" unit="원"/>
-                <t:statCard label="납부 완료" value="4" tone="success"/>
-                <t:statCard label="미납" value="2" tone="danger"/>
-                <t:statCard label="수납액" value="120,000" unit="원"/>
+                <t:statCard label="항목 금액" value="30,000" unit="원" valueHook="fee-amount"/>
+                <t:statCard label="납부 완료" value="4" tone="success" valueHook="fee-paid"/>
+                <t:statCard label="미납" value="2" tone="danger" valueHook="fee-unpaid"/>
+                <t:statCard label="수납액" value="120,000" unit="원" valueHook="fee-collected"/>
             </div>
 
             <div class="mb-3 rounded-lg border bg-card px-4 py-3">

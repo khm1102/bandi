@@ -8,6 +8,8 @@
 <%@ attribute name="icon" %>
 <%@ attribute name="iconTone" %>
 <%@ attribute name="featured" type="java.lang.Boolean" %>
+<%@ attribute name="valueHook" %>
+<%@ attribute name="deltaHook" %>
 <c:set var="toneClass" value="${tone == 'success' ? 'text-success' : tone == 'danger' ? 'text-destructive' : 'text-foreground'}"/>
 <div class="rounded-lg border p-3.5 md:p-4 ${featured ? 'border-primary/40 bg-accent/60' : 'bg-card'}">
     <span class="flex items-center gap-1.5 text-xs font-bold text-muted-foreground md:gap-2">
@@ -26,10 +28,10 @@
         <c:out value="${label}"/>
     </span>
     <strong class="mt-2 block text-xl font-black tracking-tight tabular-nums md:text-2xl ${featured ? 'text-accent-foreground' : toneClass}">
-        <c:out value="${value}"/>
+        <span data-stat-value="${valueHook}"><c:out value="${value}"/></span>
         <c:if test="${not empty unit}"><small class="text-sm font-bold text-muted-foreground"><c:out value="${unit}"/></small></c:if>
     </strong>
     <c:if test="${not empty delta}">
-        <span class="mt-0.5 block text-xs font-bold text-muted-foreground"><c:out value="${delta}"/></span>
+        <span data-stat-delta="${deltaHook}" class="mt-0.5 block text-xs font-bold text-muted-foreground"><c:out value="${delta}"/></span>
     </c:if>
 </div>

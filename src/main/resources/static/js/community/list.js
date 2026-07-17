@@ -42,6 +42,14 @@ function buildPostCard(category, title, body, pinned) {
     return card;
 }
 
+function applyPostFilter() {
+    const activeFilter = lookup('[data-filter-group="post"][aria-pressed="true"]');
+    const category = activeFilter?.dataset.filterValue || '전체';
+    all('[data-post-card]').forEach((card) => {
+        card.hidden = category !== '전체' && card.dataset.category !== category;
+    });
+}
+
 function addPost(trigger, notice) {
     const title = readValue(notice ? 'npTitle' : 'poTitle');
     if (!title) {
@@ -51,6 +59,7 @@ function addPost(trigger, notice) {
     const category = notice ? '공지' : readValue('poCat');
     const body = readValue(notice ? 'npBody' : 'poBody');
     lookup('[data-post-list]').prepend(buildPostCard(category, title, body, notice));
+    applyPostFilter();
     closeActionModal(trigger);
     showToast(notice ? '공지를 등록했어요. 상단에 고정됩니다' : '글을 등록했어요');
 }
@@ -61,10 +70,7 @@ document.addEventListener('click', (event) => {
         return;
     }
     activateFilterChip(filter);
-    const category = filter.dataset.filterValue;
-    all('[data-post-card]').forEach((card) => {
-        card.hidden = category !== '전체' && card.dataset.category !== category;
-    });
+    applyPostFilter();
 });
 
 bindPageActions({

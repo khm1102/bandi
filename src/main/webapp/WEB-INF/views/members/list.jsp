@@ -22,7 +22,7 @@
             <div data-invite-card class="flex items-center gap-3 rounded-lg border px-4 py-3">
                 <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-2"><t:badge tone="accent">26-2기</t:badge><span data-invite-code class="font-mono text-sm font-black tracking-widest text-accent-foreground">BANDI-262-M9Q4</span></div>
-                    <p class="mt-1 text-xs text-muted-foreground">07/08 생성 · 가입 2명 · 사용 가능</p>
+                    <p data-invite-meta class="mt-1 text-xs text-muted-foreground">07/08 생성 · 가입 2명 · 사용 가능</p>
                 </div>
                 <t:button variant="outline" size="compact" pageAction="invite-copy">복사</t:button>
                 <t:button variant="outline" size="compact" pageAction="invite-toggle">중지</t:button>
@@ -30,7 +30,7 @@
             <div data-invite-card class="flex items-center gap-3 rounded-lg border px-4 py-3">
                 <div class="min-w-0 flex-1">
                     <div class="flex items-center gap-2"><t:badge tone="accent">26-1기</t:badge><span data-invite-code class="font-mono text-sm font-black tracking-widest text-accent-foreground">BANDI-261-A7K2</span></div>
-                    <p class="mt-1 text-xs text-muted-foreground">07/01 생성 · 가입 4명 · 사용 가능</p>
+                    <p data-invite-meta class="mt-1 text-xs text-muted-foreground">07/01 생성 · 가입 4명 · 사용 가능</p>
                 </div>
                 <t:button variant="outline" size="compact" pageAction="invite-copy">복사</t:button>
                 <t:button variant="outline" size="compact" pageAction="invite-toggle">중지</t:button>

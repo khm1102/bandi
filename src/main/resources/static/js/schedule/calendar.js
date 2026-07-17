@@ -15,7 +15,8 @@ const calendarState = {
 };
 
 function visibleEvents(day) {
-    return calendarState.events.filter((eventData) => eventData.day === day
+    return calendarState.events.filter((eventData) => eventData.month === calendarState.month
+        && eventData.day === day
         && (calendarState.filter === '전체' || eventData.team === calendarState.filter));
 }
 
@@ -78,6 +79,7 @@ function addCalendarEvent(trigger) {
         return;
     }
     calendarState.events.push({
+        month: calendarState.month,
         day: Number(readValue('ceDay')) || 25,
         title,
         team: readValue('ceTeam'),
@@ -94,6 +96,7 @@ function addCalendarEvent(trigger) {
 }
 
 calendarState.events = all('[data-calendar-event]').map((eventNode) => ({
+    month: 5,
     day: Number(eventNode.closest('[data-calendar-day]').dataset.calendarDay),
     title: eventNode.textContent.trim(),
     team: eventNode.dataset.team,

@@ -19,7 +19,7 @@
             </div>
             <div class="p-5">
                 <div class="flex items-center gap-2">
-                    <t:badge tone="success" dot="true">신청 진행 중</t:badge>
+                    <t:badge tone="success" dot="true"><span data-show-status>신청 진행 중</span></t:badge>
                     <div class="ml-auto flex gap-1.5">
                         <t:button variant="outline" size="compact" pageAction="show-edit">수정</t:button>
                         <t:button variant="outline" size="compact" pageAction="show-delete" confirm="이 공연과 화면에 표시된 운영 정보를 삭제할까요?" confirmAction="공연 삭제" cssClass="text-destructive">삭제</t:button>
@@ -42,14 +42,14 @@
             <h3 class="text-base font-extrabold">관람객 입장 현황</h3>
             <p class="text-xs text-muted-foreground">신청자별로 실제 입장 여부와 체크 시간을 확인합니다</p>
         </div>
-        <span class="ml-auto"><t:badge tone="warning" dot="true">미입장 2건</t:badge></span>
+        <span class="ml-auto"><t:badge tone="warning" dot="true"><span data-entry-pending-summary>미입장 2건</span></t:badge></span>
     </div>
 
     <div class="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <t:statCard label="신청 건수" value="5" unit="건"/>
         <t:statCard label="신청 좌석" value="9" unit="석"/>
-        <t:statCard label="입장 완료" value="3" unit="건" delta="6석 입장" tone="success"/>
-        <t:statCard label="미입장" value="2" unit="건" delta="입장률 60%" tone="danger"/>
+        <t:statCard label="입장 완료" value="3" unit="건" delta="6석 입장" tone="success" valueHook="entry-completed" deltaHook="entry-completed-seats"/>
+        <t:statCard label="미입장" value="2" unit="건" delta="입장률 60%" tone="danger" valueHook="entry-pending" deltaHook="entry-rate"/>
     </div>
 
     <div class="rounded-lg border bg-card">

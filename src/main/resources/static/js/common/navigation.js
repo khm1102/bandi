@@ -23,6 +23,18 @@ function setNavigation(open) {
     navigationToggle.focus();
 }
 
+function syncNavigationViewport(desktop) {
+    if (!navigationPanel || !navigationBackdrop || !navigationToggle) {
+        return;
+    }
+    navigationPanel.classList.toggle('-translate-x-full', !desktop);
+    navigationBackdrop.classList.add('hidden');
+    navigationToggle.setAttribute('aria-expanded', 'false');
+    navigationToggle.setAttribute('aria-label', '전체 메뉴 열기');
+    navigationPanel.setAttribute('aria-hidden', String(!desktop));
+    document.body.classList.remove('overflow-hidden');
+}
+
 navigationToggle?.addEventListener('click', () => {
     setNavigation(navigationToggle.getAttribute('aria-expanded') !== 'true');
 });
@@ -64,16 +76,7 @@ document.addEventListener('keydown', (event) => {
 });
 
 desktopMedia.addEventListener('change', (event) => {
-    if (event.matches && navigationPanel && navigationBackdrop && navigationToggle) {
-        navigationPanel.classList.remove('-translate-x-full');
-        navigationBackdrop.classList.add('hidden');
-        navigationToggle.setAttribute('aria-expanded', 'false');
-        navigationPanel.setAttribute('aria-hidden', 'false');
-        document.body.classList.remove('overflow-hidden');
-    }
+    syncNavigationViewport(event.matches);
 });
 
-if (desktopMedia.matches && navigationPanel) {
-    navigationPanel.classList.remove('-translate-x-full');
-    navigationPanel.setAttribute('aria-hidden', 'false');
-}
+syncNavigationViewport(desktopMedia.matches);

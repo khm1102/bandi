@@ -9,8 +9,59 @@ const ACTIONS = Object.freeze({
     ADD: 'fee-add',
     DELETE: 'fee-delete'
 });
+const feeStates = new WeakMap();
+
+function parseFeeState(tab) {
+    const paidDates = new Map();
+    tab.dataset.paidRows.split(',').filter(Boolean).forEach((entry) => {
+        const [rowIndex, date] = entry.split(':');
+        paidDates.set(Number(rowIndex), date);
+    });
+    return all('[data-fee-row]').map((row, index) => ({
+        paid: paidDates.has(index),
+        date: paidDates.get(index) || '—'
+    }));
+}
+
+function collectFeeState() {
+    return all('[data-fee-row]').map((row) => ({
+        paid: lookup('[data-fee-status]', row).textContent.trim() === '납부 완료',
+        date: lookup('[data-fee-date]', row).textContent.trim()
+    }));
+}
+
+function updateFeeSummary(tab, feeState) {
+    const amount = Number(tab?.dataset.amount || 0);
+    const paidCount = feeState.filter((payment) => payment.paid).length;
+    lookup('[data-stat-value="fee-amount"]').textContent = amount.toLocaleString('ko-KR');
+    lookup('[data-stat-value="fee-paid"]').textContent = String(paidCount);
+    lookup('[data-stat-value="fee-unpaid"]').textContent = String(feeState.length - paidCount);
+    lookup('[data-stat-value="fee-collected"]').textContent = (amount * paidCount)
+        .toLocaleString('ko-KR');
+}
+
+function renderFeeState(tab) {
+    const feeState = feeStates.get(tab) || parseFeeState(tab);
+    feeStates.set(tab, feeState);
+    all('[data-fee-row]').forEach((row, index) => {
+        const payment = feeState[index];
+        const tone = payment.paid ? 'success' : 'warning';
+        const statusBadge = badge(payment.paid ? '납부 완료' : '미납', tone);
+        lookup('[data-fee-status]', row).replaceChildren(statusBadge);
+        const dateCell = lookup('[data-fee-date]', row);
+        dateCell.textContent = payment.date;
+        dateCell.classList.toggle('text-muted-foreground', !payment.paid);
+        lookup('[data-fee-person]', row).checked = false;
+    });
+    lookup('[data-fee-all]').checked = false;
+    updateFeeSummary(tab, feeState);
+}
 
 function selectFeeTab(tab, announce) {
+    const currentTab = lookup('[data-fee-tab][aria-selected="true"]');
+    if (currentTab && currentTab !== tab) {
+        feeStates.set(currentTab, collectFeeState());
+    }
     all('[data-fee-tab]').forEach((candidate) => {
         const selected = candidate === tab;
         candidate.classList.toggle('border', selected);
@@ -20,6 +71,7 @@ function selectFeeTab(tab, announce) {
         candidate.setAttribute('aria-selected', String(selected));
         candidate.tabIndex = selected ? 0 : -1;
     });
+    renderFeeState(tab);
     if (announce) {
         showToast(`${tab.textContent.trim()} 현황을 불러왔어요`);
     }
@@ -41,6 +93,10 @@ function changeFeeStatus(paid) {
         lookup('[data-fee-person]', row).checked = false;
     });
     lookup('[data-fee-all]').checked = false;
+    const selectedTab = lookup('[data-fee-tab][aria-selected="true"]');
+    const feeState = collectFeeState();
+    feeStates.set(selectedTab, feeState);
+    updateFeeSummary(selectedTab, feeState);
     showToast(`${selectedRows.length}명을 ${paid ? '납부' : '미납'} 처리했어요`);
 }
 
@@ -57,11 +113,8 @@ function addFee(trigger) {
     tab.setAttribute('aria-selected', 'true');
     tab.dataset.feeTab = '';
     tab.dataset.amount = readValue('feeAmt') || '0';
+    tab.dataset.paidRows = '';
     const container = lookup('[data-fee-tab]').parentElement;
-    all('[data-fee-tab]').forEach((candidate) => {
-        candidate.classList.remove('border', 'bg-card', 'text-foreground');
-        candidate.classList.add('text-muted-foreground');
-    });
     container.appendChild(tab);
     selectFeeTab(tab, false);
     closeActionModal(trigger);
@@ -80,6 +133,8 @@ function deleteFee() {
     if (nextTab?.matches('[data-fee-tab]')) {
         selectFeeTab(nextTab, false);
         nextTab.focus();
+    } else {
+        updateFeeSummary(null, []);
     }
     showToast(`${name} 항목을 삭제했어요`);
 }
@@ -113,6 +168,7 @@ if (currentUserRole === 'admin') {
         selectFeeTab(nextTab, false);
         nextTab.focus();
     });
+    selectFeeTab(lookup('[data-fee-tab][aria-selected="true"]'), false);
 }
 
 bindPageActions({

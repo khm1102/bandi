@@ -70,7 +70,7 @@
 |---|---|---|
 | `<t:pageHead>` | `title`*, `description`, body=우측 액션 버튼 | 페이지 최상단 1회 |
 | `<t:card>` | `title`, `moreUrl`, `moreLabel`, `flush`(Boolean) | `flush=true`면 본문 패딩 제거 — 테이블/리스트 카드용 |
-| `<t:statCard>` | `label`*, `value`*, `unit`, `delta`, `tone`(default·success·danger), `featured`(Boolean) | 대시보드 통계 타일. 한 그룹에서 핵심 지표 하나만 `featured=true` |
+| `<t:statCard>` | `label`*, `value`*, `unit`, `delta`, `tone`(default·success·danger), `featured`(Boolean), `valueHook`, `deltaHook` | 대시보드 통계 타일. 동적 통계는 hook으로 값·증감 영역만 갱신. 한 그룹에서 핵심 지표 하나만 `featured=true` |
 | `<t:badge>` | `tone`*(accent·success·warning·danger·info·neutral), `dot`(Boolean), body=텍스트 | 상태 표시 |
 | `<t:emptyState>` | `title`*, `message`, body=행동 유도 버튼 | 빈 목록/검색 결과 |
 | `<t:modal>` | `id`*, `title`*, `description`, `footer`(fragment), body | 기본 hidden. `openModal(id)`로 열기 |

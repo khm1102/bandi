@@ -5,6 +5,11 @@ const MOCK_ACCOUNTS = {
     leader: {password: '1234', team: '무대', role: 'leader'},
     member: {password: '1234', team: '배우연출', role: 'member'}
 };
+const authForm = lookup('[data-auth-form]');
+
+function redirectToDashboard(role) {
+    window.location.assign(`${authForm.dataset.dashboardUrl}?role=${role}`);
+}
 
 function showAuthError(message, fieldId) {
     const error = lookup('[data-auth-error]');
@@ -33,7 +38,7 @@ function login() {
         showAuthError('가입할 때 선택한 팀과 일치하지 않습니다.', 'loginTeam');
         return;
     }
-    window.location.assign(`/dashboard?role=${account.role}`);
+    redirectToDashboard(account.role);
 }
 
 function signup() {
@@ -62,10 +67,8 @@ function signup() {
         showAuthError('사용할 수 없는 초대코드입니다.', 'joinCode');
         return;
     }
-    window.location.assign('/dashboard?role=member');
+    redirectToDashboard('member');
 }
-
-const authForm = lookup('[data-auth-form]');
 
 authForm.addEventListener('submit', (event) => {
     event.preventDefault();

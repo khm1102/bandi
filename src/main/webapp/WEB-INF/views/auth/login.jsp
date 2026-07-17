@@ -1,6 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
+<c:url var="dashboardUrl" value="/dashboard"/>
 <c:set var="input" value="h-11 w-full rounded-md border border-input bg-card px-3 text-base transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm"/>
 <c:set var="label" value="mb-1.5 block text-xs font-extrabold text-muted-foreground"/>
 <t:layoutAuth title="${mode == 'signup' ? '회원가입' : '로그인'}" scriptPath="auth/login">
@@ -11,7 +12,7 @@
 
     <c:choose>
         <c:when test="${mode == 'login'}">
-            <form class="flex flex-col gap-3" method="post" data-auth-form data-auth-mode="login">
+            <form class="flex flex-col gap-3" method="post" data-auth-form data-auth-mode="login" data-dashboard-url="${dashboardUrl}">
                 <div>
                     <label class="${label}" for="loginId">아이디</label>
                     <input class="${input}" id="loginId" name="username" type="text" autocomplete="username" placeholder="아이디를 입력하세요" required maxlength="50" aria-describedby="authError">
@@ -31,7 +32,7 @@
             </form>
         </c:when>
         <c:otherwise>
-            <form class="flex flex-col gap-3" method="post" data-auth-form data-auth-mode="signup">
+            <form class="flex flex-col gap-3" method="post" data-auth-form data-auth-mode="signup" data-dashboard-url="${dashboardUrl}">
                 <div class="grid gap-2.5 md:grid-cols-2">
                     <div>
                         <label class="${label}" for="joinName">이름 <span aria-hidden="true">*</span></label>
