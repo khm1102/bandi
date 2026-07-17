@@ -3,9 +3,18 @@ import {all, bindPageActions} from '../common/dom.js';
 
 const ACTIONS = Object.freeze({EXPORT: 'reservation-export'});
 
+function csvCellText(cell) {
+    const exportValue = cell.querySelector('[data-export-value]');
+    return (exportValue || cell).textContent.replace(/\s+/g, ' ').trim();
+}
+
+function csvCell(cell) {
+    return `"${csvCellText(cell).replaceAll('"', '""')}"`;
+}
+
 function exportReservations() {
     const rows = all('tbody tr').map((row) => all('td', row)
-        .map((cell) => `"${cell.textContent.trim().replaceAll('"', '""')}"`)
+        .map(csvCell)
         .join(','));
     const csv = ['관람객명,연락처,좌석,인원,관람일,회차', ...rows].join('\n');
     const anchor = document.createElement('a');

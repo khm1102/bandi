@@ -9,39 +9,36 @@ const ACTIONS = Object.freeze({
     ADD_MEMBER: 'member-add'
 });
 
+function memberName(row) {
+    const name = lookup('[data-member-name]', row) || lookup('b', row.cells[0]);
+    return name.textContent.trim();
+}
+
 function prepareMemberRoleButton(row, button) {
-    const memberName = row.cells[0].textContent.trim();
+    const name = memberName(row);
     const currentRole = row.cells[3].textContent.trim();
     const selected = button.textContent.trim() === currentRole;
     button.dataset.memberRole = '';
     button.setAttribute('aria-pressed', String(selected));
-    if (!selected) {
-        button.dataset.confirm = `${memberName}님의 권한을 ${button.textContent.trim()}(으)로 변경할까요?`;
-        button.dataset.confirmAction = '권한 변경';
+    button.classList.toggle('border', selected);
+    button.classList.toggle('bg-card', selected);
+    button.classList.toggle('text-foreground', selected);
+    button.classList.toggle('text-muted-foreground', !selected);
+    if (selected) {
+        delete button.dataset.confirm;
+        delete button.dataset.confirmAction;
+        return;
     }
+    button.dataset.confirm = `${name}님의 권한을 ${button.textContent.trim()}(으)로 변경할까요?`;
+    button.dataset.confirmAction = '권한 변경';
 }
 
 function changeMemberRole(row, button) {
     const roleName = button.textContent.trim();
     const tone = roleName === '운영진' ? 'accent' : roleName === '팀장' ? 'info' : 'neutral';
     row.cells[3].replaceChildren(badge(roleName, tone));
-    all('td:last-child button', row).forEach((candidate) => {
-        const selected = candidate === button;
-        candidate.classList.remove('border', 'bg-card', 'text-foreground');
-        candidate.classList.add('text-muted-foreground');
-        candidate.setAttribute('aria-pressed', String(selected));
-        if (selected) {
-            delete candidate.dataset.confirm;
-            delete candidate.dataset.confirmAction;
-            return;
-        }
-        const memberName = row.cells[0].textContent.trim();
-        candidate.dataset.confirm = `${memberName}님의 권한을 ${candidate.textContent.trim()}(으)로 변경할까요?`;
-        candidate.dataset.confirmAction = '권한 변경';
-    });
-    button.classList.add('border', 'bg-card', 'text-foreground');
-    button.classList.remove('text-muted-foreground');
-    showToast(`${row.cells[0].textContent.trim()}님 권한을 ${roleName}(으)로 변경했어요`);
+    all('td:last-child button', row).forEach((candidate) => prepareMemberRoleButton(row, candidate));
+    showToast(`${memberName(row)}님 권한을 ${roleName}(으)로 변경했어요`);
 }
 
 function inviteCard(code, cohort) {

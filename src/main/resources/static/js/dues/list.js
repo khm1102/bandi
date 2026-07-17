@@ -78,6 +78,11 @@ function selectFeeTab(tab, announce) {
 }
 
 function changeFeeStatus(paid) {
+    const selectedTab = lookup('[data-fee-tab][aria-selected="true"]');
+    if (!selectedTab) {
+        showToast('먼저 회비 항목을 추가해 주세요');
+        return;
+    }
     const selectedRows = all('[data-fee-row]')
         .filter((row) => lookup('[data-fee-person]', row).checked);
     if (selectedRows.length === 0) {
@@ -93,7 +98,6 @@ function changeFeeStatus(paid) {
         lookup('[data-fee-person]', row).checked = false;
     });
     lookup('[data-fee-all]').checked = false;
-    const selectedTab = lookup('[data-fee-tab][aria-selected="true"]');
     const feeState = collectFeeState();
     feeStates.set(selectedTab, feeState);
     updateFeeSummary(selectedTab, feeState);
@@ -114,7 +118,11 @@ function addFee(trigger) {
     tab.dataset.feeTab = '';
     tab.dataset.amount = readValue('feeAmt') || '0';
     tab.dataset.paidRows = '';
-    const container = lookup('[data-fee-tab]').parentElement;
+    const container = lookup('[role="tablist"]');
+    if (!container) {
+        showToast('회비 항목 영역을 찾을 수 없어요');
+        return;
+    }
     container.appendChild(tab);
     selectFeeTab(tab, false);
     closeActionModal(trigger);
@@ -168,7 +176,12 @@ if (currentUserRole === 'admin') {
         selectFeeTab(nextTab, false);
         nextTab.focus();
     });
-    selectFeeTab(lookup('[data-fee-tab][aria-selected="true"]'), false);
+    const initialTab = lookup('[data-fee-tab][aria-selected="true"]');
+    if (initialTab) {
+        selectFeeTab(initialTab, false);
+    } else {
+        updateFeeSummary(null, []);
+    }
 }
 
 bindPageActions({

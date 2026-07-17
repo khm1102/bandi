@@ -50,6 +50,7 @@ function updateShowStatus(card, status) {
 
 function changeEntry(trigger, checkedIn) {
     const row = trigger.closest('tr');
+    const guestName = lookup('[data-entry-name]', row).textContent.trim();
     const statusCell = row.cells[4];
     const timeCell = row.cells[5];
     const status = checkedIn ? '입장 완료' : '미입장';
@@ -62,7 +63,7 @@ function changeEntry(trigger, checkedIn) {
         trigger.textContent = '입장 취소';
         trigger.dataset.pageAction = ACTIONS.CANCEL_ENTRY;
         updateEntrySummary();
-        showToast(`${row.cells[0].textContent.trim()}님 입장 처리했어요`);
+        showToast(`${guestName}님 입장 처리했어요`);
         return;
     }
     timeCell.textContent = '—';

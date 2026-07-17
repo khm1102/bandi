@@ -50,15 +50,11 @@ function addChecklistItem(trigger) {
         return;
     }
     const team = readValue('ckTeam');
-    const section = all('section').find((candidate) => {
-        const title = lookup('h3', candidate);
-        return title && title.textContent.trim() === `${team}팀`;
-    });
-    if (!section) {
+    const list = all('[data-checklist-list]').find((candidate) => candidate.dataset.checklistTeam === team);
+    if (!list) {
         showToast('담당 팀 카드를 찾을 수 없어요');
         return;
     }
-    const list = lookup('[data-checklist-list]', section);
     const item = element('div', 'flex cursor-pointer items-center gap-3 rounded-md px-2 py-2');
     item.dataset.checklistItem = '';
     item.dataset.complete = 'false';
@@ -95,9 +91,9 @@ document.addEventListener('click', (event) => {
     }
     const modalButton = event.target.closest('[data-open-modal="checkModal"]');
     if (modalButton) {
-        const title = lookup('h3', modalButton.closest('section'));
-        if (title) {
-            document.getElementById('ckTeam').value = title.textContent.trim().replace(/팀$/, '');
+        const list = modalButton.closest('[data-checklist-list]');
+        if (list?.dataset.checklistTeam) {
+            document.getElementById('ckTeam').value = list.dataset.checklistTeam;
         }
         return;
     }
@@ -108,6 +104,9 @@ document.addEventListener('click', (event) => {
 });
 
 document.addEventListener('keydown', (event) => {
+    if (event.target.closest('button, a, input, select, textarea')) {
+        return;
+    }
     const item = event.target.closest('[data-checklist-item]');
     if (item && (event.key === 'Enter' || event.key === ' ')) {
         event.preventDefault();
