@@ -1,6 +1,6 @@
 import {openModal} from '../common/modal.js';
 import {showToast} from '../common/toast.js';
-import {all, bindPageActions, lookup, readValue} from '../common/dom.js';
+import {all, bindPageActions, element, lookup, readValue} from '../common/dom.js';
 import {badge, closeActionModal} from '../common/view.js';
 
 const ACTIONS = Object.freeze({
@@ -48,8 +48,36 @@ function updateShowStatus(card, status) {
     statusBadge.classList.add(...SHOW_STATUS_TONES[status]);
 }
 
+function updateShowImage(card, file, title) {
+    const imageHost = lookup('[data-show-image]', card);
+    const currentImage = lookup('[data-show-image-preview]', imageHost);
+    if (!file) {
+        if (currentImage) {
+            currentImage.alt = `${title} 공연 이미지`;
+        }
+        return;
+    }
+    if (currentImage?.dataset.objectUrl) {
+        URL.revokeObjectURL(currentImage.dataset.objectUrl);
+    }
+    const objectUrl = URL.createObjectURL(file);
+    const image = element('img', 'size-full object-cover');
+    image.alt = `${title} 공연 이미지`;
+    image.dataset.showImagePreview = '';
+    image.dataset.objectUrl = objectUrl;
+    imageHost.replaceChildren(image);
+}
+
+function releaseShowImage(card) {
+    const image = lookup('[data-show-image-preview]', card);
+    if (image?.dataset.objectUrl) {
+        URL.revokeObjectURL(image.dataset.objectUrl);
+    }
+}
+
 function changeEntry(trigger, checkedIn) {
     const row = trigger.closest('tr');
+    const guestName = lookup('[data-entry-name]', row).textContent.trim();
     const statusCell = row.cells[4];
     const timeCell = row.cells[5];
     const status = checkedIn ? '입장 완료' : '미입장';
@@ -62,7 +90,7 @@ function changeEntry(trigger, checkedIn) {
         trigger.textContent = '입장 취소';
         trigger.dataset.pageAction = ACTIONS.CANCEL_ENTRY;
         updateEntrySummary();
-        showToast(`${row.cells[0].textContent.trim()}님 입장 처리했어요`);
+        showToast(`${guestName}님 입장 처리했어요`);
         return;
     }
     timeCell.textContent = '—';
@@ -82,6 +110,7 @@ function editShow(trigger) {
     const viewing = lookup('[data-show-viewing]', card).textContent.trim().split(' · ');
     document.getElementById('shAge').value = viewing[0];
     document.getElementById('shRuntime').value = viewing[1] || '';
+    document.getElementById('shImage').value = '';
     editingShowCard = card;
     lookup('#showModal h2').textContent = '공연 수정';
     lookup('#showModal [data-page-action="show-save"]').textContent = '수정 저장';
@@ -94,6 +123,7 @@ function createShow() {
         document.getElementById(id).value = '';
     });
     document.getElementById('shStatus').value = '신청 진행 중';
+    document.getElementById('shImage').value = '';
     lookup('#showModal h2').textContent = '공연 등록';
     lookup('#showModal [data-page-action="show-save"]').textContent = '등록';
     openModal('showModal');
@@ -105,8 +135,7 @@ function saveShow(trigger) {
         showToast('공연명을 입력해 주세요');
         return;
     }
-    const firstCard = lookup('[data-show-card]');
-    const baseCard = firstCard || showCardTemplate;
+    const baseCard = showCardTemplate;
     if (!baseCard || !showCardHost) {
         showToast('공연 카드를 표시할 수 없어요');
         return;
@@ -122,6 +151,7 @@ function saveShow(trigger) {
     lookup('[data-show-place]', card).textContent = readValue('shPlace');
     lookup('[data-show-viewing]', card).textContent = `${readValue('shAge')} · ${readValue('shRuntime')}`;
     updateShowStatus(card, readValue('shStatus'));
+    updateShowImage(card, document.getElementById('shImage').files[0], title);
     closeActionModal(trigger);
     showToast(editingShowCard ? '공연 정보를 수정했어요' : '공연을 등록했어요');
     editingShowCard = null;
@@ -139,7 +169,9 @@ bindPageActions({
     [ACTIONS.EDIT]: editShow,
     [ACTIONS.CREATE]: createShow,
     [ACTIONS.DELETE]: (trigger) => {
-        trigger.closest('[data-show-card]').remove();
+        const card = trigger.closest('[data-show-card]');
+        releaseShowImage(card);
+        card.remove();
         showToast('공연을 삭제했어요');
     },
     [ACTIONS.SAVE]: saveShow

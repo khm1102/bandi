@@ -6,7 +6,7 @@
 <c:set var="seatTaken" value="flex size-11 shrink-0 cursor-not-allowed items-center justify-center rounded-md border bg-secondary text-xs font-extrabold text-muted-foreground/50"/>
 <c:set var="input" value="h-11 w-full rounded-md border border-input bg-card px-3 text-base transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm"/>
 <c:set var="label" value="mb-1.5 block text-xs font-extrabold text-muted-foreground"/>
-<t:layoutPublic title="관람 신청" scriptPath="reservation/form">
+<t:layoutPublic title="관람 신청" active="reserve" scriptPath="reservation/form">
     <div class="grid gap-5 lg:grid-cols-[1.3fr_1fr]">
         <div class="relative flex min-h-96 flex-col justify-between overflow-hidden rounded-xl bg-sidebar p-6 text-white">
             <img src="<c:url value='/images/performance/show-house-boy.webp'/>" alt="어두운 무대 위 집 세트의 문 앞에 선 인물" width="960" height="1200" class="absolute inset-0 size-full object-cover" fetchpriority="high">

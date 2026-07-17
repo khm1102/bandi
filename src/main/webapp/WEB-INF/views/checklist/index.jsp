@@ -26,7 +26,7 @@
 
     <div class="grid gap-3.5 md:grid-cols-2">
         <t:card title="배우연출팀" moreLabel="2/2" flush="true">
-            <div data-checklist-list class="flex flex-col gap-1 p-4">
+            <div data-checklist-list data-checklist-team="배우연출" class="flex flex-col gap-1 p-4">
                 <div data-checklist-item data-complete="true" class="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2">
                     <span class="${ckOn}"><svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="${ckSvg}"/></svg></span>
                     <span class="flex-1 text-sm font-semibold text-muted-foreground line-through">대본 최종본 숙지</span>
@@ -39,7 +39,7 @@
             </div>
         </t:card>
         <t:card title="무대팀" moreLabel="1/2" flush="true">
-            <div data-checklist-list class="flex flex-col gap-1 p-4">
+            <div data-checklist-list data-checklist-team="무대" class="flex flex-col gap-1 p-4">
                 <div data-checklist-item data-complete="true" class="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2">
                     <span class="${ckOn}"><svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="${ckSvg}"/></svg></span>
                     <span class="flex-1 text-sm font-semibold text-muted-foreground line-through">세트 설치 완료</span>
@@ -52,7 +52,7 @@
             </div>
         </t:card>
         <t:card title="오퍼팀" moreLabel="0/2" flush="true">
-            <div data-checklist-list class="flex flex-col gap-1 p-4">
+            <div data-checklist-list data-checklist-team="오퍼" class="flex flex-col gap-1 p-4">
                 <div data-checklist-item data-complete="false" class="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2">
                     <span class="${ckOff}"></span>
                     <span class="flex-1 text-sm font-semibold">조명 큐 프로그래밍</span>
@@ -65,7 +65,7 @@
             </div>
         </t:card>
         <t:card title="디자인팀" moreLabel="1/1" flush="true">
-            <div data-checklist-list class="flex flex-col gap-1 p-4">
+            <div data-checklist-list data-checklist-team="디자인" class="flex flex-col gap-1 p-4">
                 <div data-checklist-item data-complete="true" class="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2">
                     <span class="${ckOn}"><svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="${ckSvg}"/></svg></span>
                     <span class="flex-1 text-sm font-semibold text-muted-foreground line-through">팸플릿 인쇄</span>
@@ -74,7 +74,7 @@
             </div>
         </t:card>
         <t:card title="영상팀" moreLabel="0/1" flush="true">
-            <div data-checklist-list class="flex flex-col gap-1 p-4">
+            <div data-checklist-list data-checklist-team="영상" class="flex flex-col gap-1 p-4">
                 <div data-checklist-item data-complete="false" class="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2">
                     <span class="${ckOff}"></span>
                     <span class="flex-1 text-sm font-semibold">기록 카메라 세팅</span>

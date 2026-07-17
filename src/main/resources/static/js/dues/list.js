@@ -11,6 +11,11 @@ const ACTIONS = Object.freeze({
 });
 const feeStates = new WeakMap();
 
+function setFeeWorkspaceVisible(visible) {
+    lookup('[data-fee-workspace]').classList.toggle('hidden', !visible);
+    lookup('[data-fee-empty]').classList.toggle('hidden', visible);
+}
+
 function parseFeeState(tab) {
     const paidDates = new Map();
     tab.dataset.paidRows.split(',').filter(Boolean).forEach((entry) => {
@@ -71,6 +76,7 @@ function selectFeeTab(tab, announce) {
         candidate.setAttribute('aria-selected', String(selected));
         candidate.tabIndex = selected ? 0 : -1;
     });
+    setFeeWorkspaceVisible(true);
     renderFeeState(tab);
     if (announce) {
         showToast(`${tab.textContent.trim()} 현황을 불러왔어요`);
@@ -78,6 +84,11 @@ function selectFeeTab(tab, announce) {
 }
 
 function changeFeeStatus(paid) {
+    const selectedTab = lookup('[data-fee-tab][aria-selected="true"]');
+    if (!selectedTab) {
+        showToast('먼저 회비 항목을 추가해 주세요');
+        return;
+    }
     const selectedRows = all('[data-fee-row]')
         .filter((row) => lookup('[data-fee-person]', row).checked);
     if (selectedRows.length === 0) {
@@ -93,7 +104,6 @@ function changeFeeStatus(paid) {
         lookup('[data-fee-person]', row).checked = false;
     });
     lookup('[data-fee-all]').checked = false;
-    const selectedTab = lookup('[data-fee-tab][aria-selected="true"]');
     const feeState = collectFeeState();
     feeStates.set(selectedTab, feeState);
     updateFeeSummary(selectedTab, feeState);
@@ -106,15 +116,29 @@ function addFee(trigger) {
         showToast('항목명을 입력해 주세요');
         return;
     }
+    const amountInput = document.getElementById('feeAmt');
+    amountInput.setCustomValidity('');
+    const amount = readValue('feeAmt') === '' ? 0 : amountInput.valueAsNumber;
+    if (!Number.isInteger(amount) || amount < 0) {
+        amountInput.setCustomValidity('금액은 0 이상의 정수로 입력해 주세요.');
+        amountInput.reportValidity();
+        amountInput.focus();
+        showToast('금액은 0원 이상의 정수로 입력해 주세요');
+        return;
+    }
     const classes = 'min-h-11 rounded-md border bg-card px-3 text-xs font-bold text-foreground';
     const tab = element('button', classes, name);
     tab.type = 'button';
     tab.role = 'tab';
     tab.setAttribute('aria-selected', 'true');
     tab.dataset.feeTab = '';
-    tab.dataset.amount = readValue('feeAmt') || '0';
+    tab.dataset.amount = String(amount);
     tab.dataset.paidRows = '';
-    const container = lookup('[data-fee-tab]').parentElement;
+    const container = lookup('[role="tablist"]');
+    if (!container) {
+        showToast('회비 항목 영역을 찾을 수 없어요');
+        return;
+    }
     container.appendChild(tab);
     selectFeeTab(tab, false);
     closeActionModal(trigger);
@@ -135,6 +159,7 @@ function deleteFee() {
         nextTab.focus();
     } else {
         updateFeeSummary(null, []);
+        setFeeWorkspaceVisible(false);
     }
     showToast(`${name} 항목을 삭제했어요`);
 }
@@ -168,7 +193,13 @@ if (currentUserRole === 'admin') {
         selectFeeTab(nextTab, false);
         nextTab.focus();
     });
-    selectFeeTab(lookup('[data-fee-tab][aria-selected="true"]'), false);
+    const initialTab = lookup('[data-fee-tab][aria-selected="true"]');
+    if (initialTab) {
+        selectFeeTab(initialTab, false);
+    } else {
+        updateFeeSummary(null, []);
+        setFeeWorkspaceVisible(false);
+    }
 }
 
 bindPageActions({

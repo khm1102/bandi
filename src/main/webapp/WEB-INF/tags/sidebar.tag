@@ -11,7 +11,7 @@
 <c:set var="navBadgeOn" value=" bg-sidebar text-white"/>
 <aside id="mainNavigation"
        class="fixed inset-y-0 left-0 z-40 flex w-72 -translate-x-full flex-col overflow-y-auto overscroll-contain bg-sidebar p-4 text-sidebar-foreground transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:w-56 lg:translate-x-0"
-       data-navigation-panel aria-hidden="true">
+       data-navigation-panel aria-hidden="true" inert>
     <a href="<c:url value='/dashboard'/>${roleQuery}" class="flex min-h-14 items-center gap-2.5 border-b border-sidebar-border px-2 pb-4">
         <span class="flex size-8 items-center justify-center rounded-md bg-primary text-sm font-black text-primary-foreground">B</span>
         <span>

@@ -39,16 +39,16 @@
 <c:set var="buttonClass" value="${baseClass} ${sizeClass} ${variantClass} ${cssClass}"/>
 <c:choose>
     <c:when test="${not empty href}">
-        <a href="<c:url value='${href}'/>" class="${buttonClass}"><jsp:doBody/></a>
+        <a href="<c:url value='${href}'/>" class="<c:out value='${buttonClass}'/>"><jsp:doBody/></a>
     </c:when>
     <c:otherwise>
-        <button type="${buttonType}"
-                class="${buttonClass}"
-                data-action="${action}"
-                data-page-action="${pageAction}"
-                data-open-modal="${openModal}"
-                data-confirm="${confirm}"
-                data-confirm-action="${confirmAction}">
+        <button type="<c:out value='${buttonType}'/>"
+                class="<c:out value='${buttonClass}'/>"
+                data-action="<c:out value='${action}'/>"
+                data-page-action="<c:out value='${pageAction}'/>"
+                data-open-modal="<c:out value='${openModal}'/>"
+                data-confirm="<c:out value='${confirm}'/>"
+                data-confirm-action="<c:out value='${confirmAction}'/>">
             <jsp:doBody/>
         </button>
     </c:otherwise>

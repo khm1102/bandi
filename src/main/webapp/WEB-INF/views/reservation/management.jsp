@@ -18,11 +18,11 @@
         <t:dataTable caption="공연 관람 신청 명단">
             <thead><tr><th>관람객명</th><th>연락처</th><th>좌석</th><th>인원</th><th>관람일</th><th>회차</th></tr></thead>
             <tbody>
-            <tr><td><span class="flex items-center gap-2"><span class="${av}">김</span><b>김수민</b></span></td><td class="text-muted-foreground">010-2345-1122</td><td><t:badge tone="info">A3</t:badge> <t:badge tone="info">A4</t:badge></td><td>2명</td><td>6/21</td><td>17:00</td></tr>
-            <tr><td><span class="flex items-center gap-2"><span class="${av}">이</span><b>이정후</b></span></td><td class="text-muted-foreground">010-8811-3344</td><td><t:badge tone="info">C5</t:badge></td><td>1명</td><td>6/21</td><td>17:00</td></tr>
-            <tr><td><span class="flex items-center gap-2"><span class="${av}">박</span><b>박하은</b></span></td><td class="text-muted-foreground">010-5522-7788</td><td><t:badge tone="info">C6</t:badge> <t:badge tone="info">D1</t:badge> <t:badge tone="info">D2</t:badge></td><td>3명</td><td>6/21</td><td>17:00</td></tr>
-            <tr><td><span class="flex items-center gap-2"><span class="${av}">최</span><b>최유진</b></span></td><td class="text-muted-foreground">010-7788-9900</td><td><t:badge tone="info">E4</t:badge> <t:badge tone="info">E5</t:badge></td><td>2명</td><td>6/21</td><td>17:00</td></tr>
-            <tr><td><span class="flex items-center gap-2"><span class="${av}">정</span><b>정민석</b></span></td><td class="text-muted-foreground">010-3344-5566</td><td><t:badge tone="info">B2</t:badge></td><td>1명</td><td>6/22</td><td>17:00</td></tr>
+            <tr><td><span class="flex items-center gap-2"><span class="${av}">김</span><b data-export-value>김수민</b></span></td><td class="text-muted-foreground">010-2345-1122</td><td><t:badge tone="info">A3</t:badge> <t:badge tone="info">A4</t:badge></td><td>2명</td><td>6/21</td><td>17:00</td></tr>
+            <tr><td><span class="flex items-center gap-2"><span class="${av}">이</span><b data-export-value>이정후</b></span></td><td class="text-muted-foreground">010-8811-3344</td><td><t:badge tone="info">C5</t:badge></td><td>1명</td><td>6/21</td><td>17:00</td></tr>
+            <tr><td><span class="flex items-center gap-2"><span class="${av}">박</span><b data-export-value>박하은</b></span></td><td class="text-muted-foreground">010-5522-7788</td><td><t:badge tone="info">C6</t:badge> <t:badge tone="info">D1</t:badge> <t:badge tone="info">D2</t:badge></td><td>3명</td><td>6/21</td><td>17:00</td></tr>
+            <tr><td><span class="flex items-center gap-2"><span class="${av}">최</span><b data-export-value>최유진</b></span></td><td class="text-muted-foreground">010-7788-9900</td><td><t:badge tone="info">E4</t:badge> <t:badge tone="info">E5</t:badge></td><td>2명</td><td>6/21</td><td>17:00</td></tr>
+            <tr><td><span class="flex items-center gap-2"><span class="${av}">정</span><b data-export-value>정민석</b></span></td><td class="text-muted-foreground">010-3344-5566</td><td><t:badge tone="info">B2</t:badge></td><td>1명</td><td>6/22</td><td>17:00</td></tr>
             </tbody>
         </t:dataTable>
     </div>
