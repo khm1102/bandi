@@ -17,7 +17,6 @@ Closes #
 ## 체크리스트
 
 - [ ] `./gradlew build` 통과 (전체 테스트 포함)
-- [ ] 작성 주체: 사람 / AI 에이전트 / 혼합 (선택 표기)
 - [ ] 마이그레이션 추가 여부: 없음 / 있음(`V___________.sql`) — 기존 마이그레이션 파일은 수정하지 않았고, 있음이면 로컬 Flyway 적용을 확인했다(`flyway_schema_history` 조회)
 - [ ] 새 화면 추가 시 해당 URL 렌더링을 컨트롤러 테스트(`@WebMvcTest`)로 확인했다 / 해당 없음
 - [ ] 공유 자원(`global.**`, `common.css`, `layout.css`, `layout/`·`fragment/`, `messages.properties`) 접촉: 없음 / 있음(사전 승인됨)

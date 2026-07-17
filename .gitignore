@@ -43,6 +43,8 @@ out/
 logs/
 
 ### AI Tools ###
+.agents/
+.impeccable/
 .claude/
 .claude/settings.local.json
 CLAUDE.local.md
@@ -50,5 +52,9 @@ CLAUDE.local.md
 .cursor/
 .aider*
 .windsurf/
+skills-lock.json
 .github/copilot-instructions.md.local
+
+### Local Prototypes ###
+/testweb/
 .omc

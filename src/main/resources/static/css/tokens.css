@@ -14,22 +14,22 @@
     /* 주색(민트) — 민트 위 글자는 흰색이 아니라 다크 네이비. hover는 primary-strong + 흰 글자 */
     --primary: #2cc7a5;
     --primary-foreground: #08251f;
-    --primary-strong: #20aa8d;
+    --primary-strong: #0b715f;
 
     --secondary: #f5f8fa;
     --secondary-foreground: #102235;
     --muted: #f5f8fa;
-    --muted-foreground: #697b8c;
+    --muted-foreground: #56697c;
     --accent: #e9fbf6;
-    --accent-foreground: #16866f;
+    --accent-foreground: #0f6f5d;
 
     /* 상태색 — 배지/배너는 *-soft 배경 + 본색 글자 조합 */
-    --destructive: #d45d6e;
+    --destructive: #a63c4d;
     --destructive-foreground: #ffffff;
     --destructive-soft: #fff0f2;
-    --success: #1ea97c;
+    --success: #087054;
     --success-soft: #e8f8f2;
-    --warning: #b98324;
+    --warning: #80530a;
     --warning-soft: #fff6e6;
     --info: #315f8f;
     --info-soft: #edf4fb;
@@ -40,9 +40,9 @@
 
     /* 네이비 셸 (사이드바/공개 내비/스테이지 바) */
     --sidebar: #0b1f33;
-    --sidebar-foreground: #b8c7d3;
+    --sidebar-foreground: #c7d3dc;
     --sidebar-accent: #14304a;
     --sidebar-accent-foreground: #ffffff;
-    --sidebar-muted: #8fa3b5;
+    --sidebar-muted: #aebdca;
     --sidebar-border: rgba(255, 255, 255, .10);
 }

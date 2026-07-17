@@ -112,6 +112,8 @@ feature 간 참조는 Service → 다른 feature의 Service 만 허용
 
 - 브랜치: `feature/{이슈번호}-{케밥설명}` (dev에서 분기), 버그는 `fix/...`
 - 커밋: Conventional Commits — `feat|fix|refactor|style|docs|test|chore|db(scope): 한글 제목`
+- 커밋의 author/committer는 저장소에 설정된 개발자 identity를 그대로 사용한다. 자동화 도구·모델을 공동 작성자로 추가하지 않는다
+- 커밋 메시지·PR·이슈 등 GitHub 기록에 `Co-Authored-By: Claude...`, `Generated with ...`, 도구명·모델명·봇 이모지 등 자동 생성 주체 표기를 넣지 않는다
 - 작업 시작 = 이슈 assign + 브랜치 push 선행 (브랜치 목록이 잠금 현황판)
 - 에이전트 작업 1개 = 브랜치 1개 = PR 1개. 모든 커밋은 `./gradlew build` 통과 상태
 
