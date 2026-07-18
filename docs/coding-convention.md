@@ -545,7 +545,7 @@ public enum ErrorCode {
 }
 ```
 
-- 코드 접두사는 feature별 고정: `C` 공통, `M` member, `CA` calendar, `FI` file, `F` fee, `P` performance... 새 feature 추가 시 이 문서에 접두사를 등록한다.
+- 코드 접두사는 feature별 고정: `C` 공통, `M` member, `CA` calendar, `FI` file, `NI` internal notice, `F` fee, `P` performance... 새 feature 추가 시 이 문서에 접두사를 등록한다.
 - `message`는 **사용자에게 그대로 보여줄 문장**으로 작성한다. 내부 사정("DB 커넥션 실패")을 노출하지 않는다.
 
 ```java
