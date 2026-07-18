@@ -5,3 +5,13 @@ spring:
     url: jdbc:mysql://localhost:3307/bandi_test?serverTimezone=Asia/Seoul
     username: bandi
     password: bandi1234
+
+bandi:
+  storage:
+    endpoint: http://localhost:9000
+    access-key: bandi
+    secret-key: bandi-minio-dev
+    private-bucket: bandi-private
+    public-bucket: bandi-public
+    max-upload-bytes: 524288000
+    private-url-lifetime: 300s
