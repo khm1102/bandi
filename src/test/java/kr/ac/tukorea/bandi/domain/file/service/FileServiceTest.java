@@ -1,5 +1,6 @@
 package kr.ac.tukorea.bandi.domain.file.service;
 
+import kr.ac.tukorea.bandi.domain.file.dto.response.FileReferenceResponse;
 import kr.ac.tukorea.bandi.domain.file.exception.FileAccessDeniedException;
 import kr.ac.tukorea.bandi.domain.file.exception.FileStorageUnavailableException;
 import kr.ac.tukorea.bandi.domain.file.exception.InvalidFileScopeException;
@@ -144,9 +145,12 @@ class FileServiceTest {
         assignId(source, PRIVATE_FILE_ID);
         given(metadataService.lookup(PRIVATE_FILE_ID)).willReturn(source);
 
-        fileService.validatePrivateReady(PRIVATE_FILE_ID);
+        FileReferenceResponse result = fileService.lookupPrivateReady(PRIVATE_FILE_ID);
 
-        verify(metadataService).lookup(PRIVATE_FILE_ID);
+        assertThat(result.storedFileId()).isEqualTo(PRIVATE_FILE_ID);
+        assertThat(result.originalName()).isEqualTo("proof.png");
+        assertThat(result.contentType()).isEqualTo("image/png");
+        assertThat(result.sizeBytes()).isEqualTo(CONTENT.length);
     }
 
     @Test
