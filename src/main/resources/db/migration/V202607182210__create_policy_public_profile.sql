@@ -31,6 +31,10 @@ CREATE TABLE policy_document_version (
     published_by_member_id      BIGINT      NULL,
     effective_from_dttm         DATETIME(6) NOT NULL,
     is_required                 TINYINT(1)  NOT NULL,
+    created_dttm                DATETIME(6) NOT NULL
+        DEFAULT CURRENT_TIMESTAMP(6),
+    updated_dttm                DATETIME(6) NOT NULL
+        DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     CONSTRAINT pk_policy_document_version PRIMARY KEY (
         policy_document_version_id
     ),
@@ -100,6 +104,10 @@ CREATE TABLE public_profile_consent (
     agreed_dttm                  DATETIME(6) NOT NULL,
     revoked_dttm                 DATETIME(6) NULL,
     recorded_by_member_id        BIGINT      NOT NULL,
+    created_dttm                 DATETIME(6) NOT NULL
+        DEFAULT CURRENT_TIMESTAMP(6),
+    updated_dttm                 DATETIME(6) NOT NULL
+        DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     CONSTRAINT pk_public_profile_consent PRIMARY KEY (
         public_profile_consent_id
     ),
