@@ -146,6 +146,21 @@ class PerformanceContentMapperTest {
     }
 
     @Test
+    void 캐스팅_이력도_같은_프로젝트의_등장인물만_연결한다() {
+        PerformanceCharacter character = insertCharacter(project, "햄릿");
+        PerformanceProject other = insertProject(
+                (short) 2028, "SECOND", "리어왕");
+        PerformanceCastHistory mismatched = PerformanceCastHistory.project(
+                other.getPerformanceProjectId(),
+                character.getPerformanceCharacterId(), null, profileId,
+                null, CastType.PRIMARY, CastAction.ASSIGN,
+                "잘못된 프로젝트", adminId, NOW);
+
+        assertThatThrownBy(() -> contentMapper.insertCastHistory(mismatched))
+                .isInstanceOf(DataAccessException.class);
+    }
+
+    @Test
     void 같은_프로젝트_배역_프로필_캐스팅은_중복할_수_없다() {
         PerformanceCharacter character = insertCharacter(project, "햄릿");
         contentMapper.insertCast(PerformanceCast.assign(
