@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.ac.tukorea.bandi.domain.member.mapper.CohortMapper">
+
+    <resultMap id="cohortResultMap" type="kr.ac.tukorea.bandi.domain.member.model.Cohort">
+        <constructor>
+            <idArg column="cohort_id" javaType="java.lang.Long"/>
+            <arg column="name" javaType="java.lang.String"/>
+            <arg column="admission_year" javaType="_short"/>
+            <arg column="term_code" javaType="java.lang.String"/>
+            <arg column="is_active" javaType="_boolean"/>
+        </constructor>
+    </resultMap>
+
+    <select id="lookupById" resultMap="cohortResultMap">
+        SELECT cohort_id, name, admission_year, term_code, is_active
+        FROM cohort
+        WHERE cohort_id = #{cohortId}
+    </select>
+
+    <select id="searchAll" resultMap="cohortResultMap">
+        SELECT cohort_id, name, admission_year, term_code, is_active
+        FROM cohort
+        ORDER BY admission_year DESC, term_code DESC
+    </select>
+
+    <select id="existsByAdmissionYearAndTermCode" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1 FROM cohort
+            WHERE admission_year = #{admissionYear}
+              AND term_code = #{termCode}
+        )
+    </select>
+
+    <select id="existsByName" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1 FROM cohort WHERE name = #{name}
+        )
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="cohortId">
+        INSERT INTO cohort (name, admission_year, term_code, is_active)
+        VALUES (#{name}, #{admissionYear}, #{termCode}, #{active})
+    </insert>
+</mapper>

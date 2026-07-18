@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.domain.member.mapper;
 
 import kr.ac.tukorea.bandi.domain.member.model.Team;
+import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,5 +16,5 @@ public interface TeamMapper {
 
     int insert(Team team);
 
-    int updateActive(Long teamId, boolean active);
+    int updateActive(@Param("teamId") Long teamId, @Param("active") boolean active);
 }

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 이력은 append-only이므로 update/delete를 두지 않는다 (정본 5.4). -->
+<mapper namespace="kr.ac.tukorea.bandi.domain.member.mapper.MemberHistoryMapper">
+
+    <resultMap id="teamHistoryResultMap" type="kr.ac.tukorea.bandi.domain.member.model.MemberTeamHistory">
+        <constructor>
+            <idArg column="member_team_history_id" javaType="java.lang.Long"/>
+            <arg column="member_id" javaType="java.lang.Long"/>
+            <arg column="previous_team_id" javaType="java.lang.Long"/>
+            <arg column="new_team_id" javaType="java.lang.Long"/>
+            <arg column="reason" javaType="java.lang.String"/>
+            <arg column="changed_by_member_id" javaType="java.lang.Long"/>
+            <arg column="changed_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="roleHistoryResultMap" type="kr.ac.tukorea.bandi.domain.member.model.MemberRoleHistory">
+        <constructor>
+            <idArg column="member_role_history_id" javaType="java.lang.Long"/>
+            <arg column="member_id" javaType="java.lang.Long"/>
+            <arg column="previous_role_code" javaType="kr.ac.tukorea.bandi.domain.member.model.ClubRole"/>
+            <arg column="new_role_code" javaType="kr.ac.tukorea.bandi.domain.member.model.ClubRole"/>
+            <arg column="reason" javaType="java.lang.String"/>
+            <arg column="changed_by_member_id" javaType="java.lang.Long"/>
+            <arg column="changed_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <!-- 이력 식별자는 호출부에서 쓰지 않고 record는 불변이라 useGeneratedKeys를 두지 않는다 -->
+    <insert id="insertTeamHistory">
+        INSERT INTO member_team_history (
+            member_id, previous_team_id, new_team_id, reason, changed_by_member_id, changed_dttm
+        ) VALUES (
+            #{memberId}, #{previousTeamId}, #{newTeamId}, #{reason}, #{changedByMemberId}, #{changedDttm}
+        )
+    </insert>
+
+    <insert id="insertRoleHistory">
+        INSERT INTO member_role_history (
+            member_id, previous_role_code, new_role_code, reason, changed_by_member_id, changed_dttm
+        ) VALUES (
+            #{memberId}, #{previousRole}, #{newRole}, #{reason}, #{changedByMemberId}, #{changedDttm}
+        )
+    </insert>
+
+    <select id="searchTeamHistoryByMemberId" resultMap="teamHistoryResultMap">
+        SELECT member_team_history_id, member_id, previous_team_id, new_team_id,
+               reason, changed_by_member_id, changed_dttm
+        FROM member_team_history
+        WHERE member_id = #{memberId}
+        ORDER BY changed_dttm DESC, member_team_history_id DESC
+    </select>
+
+    <select id="searchRoleHistoryByMemberId" resultMap="roleHistoryResultMap">
+        SELECT member_role_history_id, member_id, previous_role_code, new_role_code,
+               reason, changed_by_member_id, changed_dttm
+        FROM member_role_history
+        WHERE member_id = #{memberId}
+        ORDER BY changed_dttm DESC, member_role_history_id DESC
+    </select>
+</mapper>
