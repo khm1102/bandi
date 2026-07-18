@@ -75,7 +75,9 @@ public enum ErrorCode {
     PERFORMANCE_PUBLIC_PAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "P010", "존재하지 않는 공연 공개 페이지입니다."),
     DUPLICATE_PERFORMANCE_PUBLIC_PAGE(HttpStatus.CONFLICT, "P011", "공연 공개 페이지나 슬러그가 이미 등록되어 있습니다."),
     PERFORMANCE_CONTENT_NOT_FOUND(HttpStatus.NOT_FOUND, "P012", "존재하지 않는 공연 콘텐츠입니다."),
-    DUPLICATE_PERFORMANCE_CONTENT(HttpStatus.CONFLICT, "P013", "이미 등록된 공연 콘텐츠입니다.");
+    DUPLICATE_PERFORMANCE_CONTENT(HttpStatus.CONFLICT, "P013", "이미 등록된 공연 콘텐츠입니다."),
+    CHECKLIST_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "P014", "존재하지 않는 체크리스트 항목입니다."),
+    INVALID_CHECKLIST_ITEM_STATE(HttpStatus.CONFLICT, "P015", "현재 상태에서는 체크리스트를 변경할 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;

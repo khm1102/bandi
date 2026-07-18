@@ -193,6 +193,19 @@ class PerformanceRoundServiceTest {
                 .isEqualTo(PerformanceRoundStatus.CANCELLED);
     }
 
+    @Test
+    void 활성_멤버는_회차와_프로젝트_관계를_검증한다() {
+        given(memberService.lookupAccessContext(ACTOR_ID))
+                .willReturn(memberContext());
+        given(roundMapper.lookupRoundForUpdate(ROUND_ID))
+                .willReturn(Optional.of(round(
+                        PerformanceRoundStatus.SCHEDULED)));
+
+        service.validateExists(ACTOR_ID, ROUND_ID, PROJECT_ID);
+
+        verify(roundMapper).lookupRoundForUpdate(ROUND_ID);
+    }
+
     private PerformanceRoundWriteParam roundParam(Long id) {
         return new PerformanceRoundWriteParam(id, PROJECT_ID, 1,
                 START, ENTRY_START, RESERVATION_OPEN, RESERVATION_CLOSE);
