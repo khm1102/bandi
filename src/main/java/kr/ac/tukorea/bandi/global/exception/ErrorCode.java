@@ -71,7 +71,9 @@ public enum ErrorCode {
     PUBLIC_PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "P006", "존재하지 않는 공개 프로필입니다."),
     DUPLICATE_PUBLIC_PROFILE(HttpStatus.CONFLICT, "P007", "이미 공개 프로필이 등록된 멤버입니다."),
     PUBLIC_PROFILE_CONSENT_NOT_FOUND(HttpStatus.NOT_FOUND, "P008", "존재하지 않는 공개 동의입니다."),
-    INVALID_PUBLIC_PROFILE_STATE(HttpStatus.CONFLICT, "P009", "현재 상태에서는 공개 프로필을 변경할 수 없습니다.");
+    INVALID_PUBLIC_PROFILE_STATE(HttpStatus.CONFLICT, "P009", "현재 상태에서는 공개 프로필을 변경할 수 없습니다."),
+    PERFORMANCE_PUBLIC_PAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "P010", "존재하지 않는 공연 공개 페이지입니다."),
+    DUPLICATE_PERFORMANCE_PUBLIC_PAGE(HttpStatus.CONFLICT, "P011", "공연 공개 페이지나 슬러그가 이미 등록되어 있습니다.");
 
     private final HttpStatus status;
     private final String code;

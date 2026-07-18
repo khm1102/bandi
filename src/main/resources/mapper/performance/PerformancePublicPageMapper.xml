@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.ac.tukorea.bandi.domain.performance.mapper.PerformancePublicPageMapper">
+
+    <resultMap id="publicPageMap"
+               type="kr.ac.tukorea.bandi.domain.performance.model.PerformancePublicPage">
+        <constructor>
+            <idArg column="performance_public_page_id"
+                   javaType="java.lang.Long"/>
+            <arg column="performance_project_id" javaType="java.lang.Long"/>
+            <arg column="slug" javaType="java.lang.String"/>
+            <arg column="status_code"
+                 javaType="kr.ac.tukorea.bandi.domain.performance.model.PublicPageStatus"/>
+            <arg column="short_description" javaType="java.lang.String"/>
+            <arg column="synopsis" javaType="java.lang.String"/>
+            <arg column="director_note" javaType="java.lang.String"/>
+            <arg column="genre" javaType="java.lang.String"/>
+            <arg column="age_rating" javaType="java.lang.String"/>
+            <arg column="runtime_minutes" javaType="java.lang.Integer"/>
+            <arg column="intermission_minutes" javaType="java.lang.Integer"/>
+            <arg column="admission_fee" javaType="java.lang.Long"/>
+            <arg column="hero_file_id" javaType="java.lang.Long"/>
+            <arg column="poster_file_id" javaType="java.lang.Long"/>
+            <arg column="accent_color" javaType="java.lang.String"/>
+            <arg column="contact_name" javaType="java.lang.String"/>
+            <arg column="contact_channel" javaType="java.lang.String"/>
+            <arg column="organizer_name" javaType="java.lang.String"/>
+            <arg column="og_title" javaType="java.lang.String"/>
+            <arg column="og_description" javaType="java.lang.String"/>
+            <arg column="og_image_file_id" javaType="java.lang.Long"/>
+            <arg column="publish_start_dttm"
+                 javaType="java.time.LocalDateTime"/>
+            <arg column="publish_end_dttm"
+                 javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="publicPageResponseMap"
+               type="kr.ac.tukorea.bandi.domain.performance.dto.response.PerformancePublicPageResponse">
+        <constructor>
+            <idArg column="performance_public_page_id"
+                   javaType="java.lang.Long"/>
+            <arg column="performance_project_id" javaType="java.lang.Long"/>
+            <arg column="project_title" javaType="java.lang.String"/>
+            <arg column="production_start_date"
+                 javaType="java.time.LocalDate"/>
+            <arg column="production_end_date"
+                 javaType="java.time.LocalDate"/>
+            <arg column="place" javaType="java.lang.String"/>
+            <arg column="slug" javaType="java.lang.String"/>
+            <arg column="status_code"
+                 javaType="kr.ac.tukorea.bandi.domain.performance.model.PublicPageStatus"/>
+            <arg column="short_description" javaType="java.lang.String"/>
+            <arg column="synopsis" javaType="java.lang.String"/>
+            <arg column="director_note" javaType="java.lang.String"/>
+            <arg column="genre" javaType="java.lang.String"/>
+            <arg column="age_rating" javaType="java.lang.String"/>
+            <arg column="runtime_minutes" javaType="_int"/>
+            <arg column="intermission_minutes" javaType="java.lang.Integer"/>
+            <arg column="admission_fee" javaType="_long"/>
+            <arg column="hero_file_id" javaType="java.lang.Long"/>
+            <arg column="poster_file_id" javaType="java.lang.Long"/>
+            <arg column="accent_color" javaType="java.lang.String"/>
+            <arg column="contact_name" javaType="java.lang.String"/>
+            <arg column="contact_channel" javaType="java.lang.String"/>
+            <arg column="organizer_name" javaType="java.lang.String"/>
+            <arg column="og_title" javaType="java.lang.String"/>
+            <arg column="og_description" javaType="java.lang.String"/>
+            <arg column="og_image_file_id" javaType="java.lang.Long"/>
+            <arg column="publish_start_dttm"
+                 javaType="java.time.LocalDateTime"/>
+            <arg column="publish_end_dttm"
+                 javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="viewingGuideMap"
+               type="kr.ac.tukorea.bandi.domain.performance.model.PerformanceViewingGuide">
+        <constructor>
+            <idArg column="performance_viewing_guide_id"
+                   javaType="java.lang.Long"/>
+            <arg column="performance_project_id" javaType="java.lang.Long"/>
+            <arg column="entry_policy" javaType="java.lang.String"/>
+            <arg column="late_entry_policy" javaType="java.lang.String"/>
+            <arg column="recording_policy" javaType="java.lang.String"/>
+            <arg column="cancellation_policy" javaType="java.lang.String"/>
+            <arg column="accessibility_policy" javaType="java.lang.String"/>
+            <arg column="directions" javaType="java.lang.String"/>
+            <arg column="parking_information" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="viewingGuideResponseMap"
+               type="kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceViewingGuideResponse">
+        <constructor>
+            <idArg column="performance_viewing_guide_id"
+                   javaType="java.lang.Long"/>
+            <arg column="performance_project_id" javaType="java.lang.Long"/>
+            <arg column="entry_policy" javaType="java.lang.String"/>
+            <arg column="late_entry_policy" javaType="java.lang.String"/>
+            <arg column="recording_policy" javaType="java.lang.String"/>
+            <arg column="cancellation_policy" javaType="java.lang.String"/>
+            <arg column="accessibility_policy" javaType="java.lang.String"/>
+            <arg column="directions" javaType="java.lang.String"/>
+            <arg column="parking_information" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="pageColumns">
+        performance_public_page_id, performance_project_id, slug,
+        status_code, short_description, synopsis, director_note,
+        genre, age_rating, runtime_minutes, intermission_minutes,
+        admission_fee, hero_file_id, poster_file_id, accent_color,
+        contact_name, contact_channel, organizer_name,
+        og_title, og_description, og_image_file_id,
+        publish_start_dttm, publish_end_dttm
+    </sql>
+
+    <sql id="guideColumns">
+        performance_viewing_guide_id, performance_project_id,
+        entry_policy, late_entry_policy, recording_policy,
+        cancellation_policy, accessibility_policy,
+        directions, parking_information
+    </sql>
+
+    <sql id="publicVisibility">
+        (
+            (
+                page.status_code = 'SCHEDULED'
+                AND page.publish_start_dttm &lt;= #{currentDttm}
+                AND (
+                    page.publish_end_dttm IS NULL
+                    OR page.publish_end_dttm &gt; #{currentDttm}
+                )
+            )
+            OR (
+                page.status_code = 'PUBLISHED'
+                AND (
+                    page.publish_start_dttm IS NULL
+                    OR page.publish_start_dttm &lt;= #{currentDttm}
+                )
+                AND (
+                    page.publish_end_dttm IS NULL
+                    OR page.publish_end_dttm &gt; #{currentDttm}
+                )
+            )
+            OR page.status_code IN ('ENDED', 'CANCELLED', 'ARCHIVED')
+        )
+    </sql>
+
+    <select id="lookupPageByIdForUpdate" resultMap="publicPageMap">
+        SELECT <include refid="pageColumns"/>
+        FROM performance_public_page
+        WHERE performance_public_page_id = #{performancePublicPageId}
+        FOR UPDATE
+    </select>
+
+    <select id="lookupPublicBySlug" resultMap="publicPageResponseMap">
+        SELECT page.performance_public_page_id,
+               page.performance_project_id,
+               project.title AS project_title,
+               project.production_start_date,
+               project.production_end_date,
+               project.place,
+               page.slug, page.status_code, page.short_description,
+               page.synopsis, page.director_note, page.genre,
+               page.age_rating, page.runtime_minutes,
+               page.intermission_minutes, page.admission_fee,
+               page.hero_file_id, page.poster_file_id, page.accent_color,
+               page.contact_name, page.contact_channel,
+               page.organizer_name, page.og_title, page.og_description,
+               page.og_image_file_id, page.publish_start_dttm,
+               page.publish_end_dttm
+        FROM performance_public_page page
+        JOIN performance_project project
+          ON project.performance_project_id = page.performance_project_id
+        WHERE page.slug = #{slug}
+          AND project.deleted_dttm IS NULL
+          AND <include refid="publicVisibility"/>
+    </select>
+
+    <select id="lookupGuideByProjectForUpdate" resultMap="viewingGuideMap">
+        SELECT <include refid="guideColumns"/>
+        FROM performance_viewing_guide
+        WHERE performance_project_id = #{performanceProjectId}
+        FOR UPDATE
+    </select>
+
+    <select id="lookupPublicGuide" resultMap="viewingGuideResponseMap">
+        SELECT guide.performance_viewing_guide_id,
+               guide.performance_project_id, guide.entry_policy,
+               guide.late_entry_policy, guide.recording_policy,
+               guide.cancellation_policy, guide.accessibility_policy,
+               guide.directions, guide.parking_information
+        FROM performance_viewing_guide guide
+        JOIN performance_public_page page
+          ON page.performance_project_id = guide.performance_project_id
+        JOIN performance_project project
+          ON project.performance_project_id = page.performance_project_id
+        WHERE guide.performance_project_id = #{performanceProjectId}
+          AND project.deleted_dttm IS NULL
+          AND <include refid="publicVisibility"/>
+    </select>
+
+    <select id="searchPages" resultMap="publicPageResponseMap">
+        SELECT page.performance_public_page_id,
+               page.performance_project_id,
+               project.title AS project_title,
+               project.production_start_date,
+               project.production_end_date,
+               project.place,
+               page.slug, page.status_code, page.short_description,
+               page.synopsis, page.director_note, page.genre,
+               page.age_rating, page.runtime_minutes,
+               page.intermission_minutes, page.admission_fee,
+               page.hero_file_id, page.poster_file_id, page.accent_color,
+               page.contact_name, page.contact_channel,
+               page.organizer_name, page.og_title, page.og_description,
+               page.og_image_file_id, page.publish_start_dttm,
+               page.publish_end_dttm
+        FROM performance_public_page page
+        JOIN performance_project project
+          ON project.performance_project_id = page.performance_project_id
+        WHERE project.deleted_dttm IS NULL
+        ORDER BY project.academic_year DESC, project.term_code DESC,
+                 page.performance_public_page_id DESC
+    </select>
+
+    <insert id="insertPage" useGeneratedKeys="true"
+            keyProperty="performancePublicPageId">
+        INSERT INTO performance_public_page (
+            performance_project_id, slug, status_code,
+            short_description, synopsis, director_note,
+            genre, age_rating, runtime_minutes, intermission_minutes,
+            admission_fee, hero_file_id, poster_file_id, accent_color,
+            contact_name, contact_channel, organizer_name,
+            og_title, og_description, og_image_file_id,
+            publish_start_dttm, publish_end_dttm
+        ) VALUES (
+            #{performanceProjectId}, #{slug}, #{status},
+            #{shortDescription}, #{synopsis}, #{directorNote},
+            #{genre}, #{ageRating}, #{runtimeMinutes},
+            #{intermissionMinutes}, #{admissionFee}, #{heroFileId},
+            #{posterFileId}, #{accentColor}, #{contactName},
+            #{contactChannel}, #{organizerName}, #{ogTitle},
+            #{ogDescription}, #{ogImageFileId},
+            #{publishStartDttm}, #{publishEndDttm}
+        )
+    </insert>
+
+    <update id="updatePage">
+        UPDATE performance_public_page
+        SET slug = #{slug},
+            status_code = #{status},
+            short_description = #{shortDescription},
+            synopsis = #{synopsis},
+            director_note = #{directorNote},
+            genre = #{genre},
+            age_rating = #{ageRating},
+            runtime_minutes = #{runtimeMinutes},
+            intermission_minutes = #{intermissionMinutes},
+            admission_fee = #{admissionFee},
+            hero_file_id = #{heroFileId},
+            poster_file_id = #{posterFileId},
+            accent_color = #{accentColor},
+            contact_name = #{contactName},
+            contact_channel = #{contactChannel},
+            organizer_name = #{organizerName},
+            og_title = #{ogTitle},
+            og_description = #{ogDescription},
+            og_image_file_id = #{ogImageFileId},
+            publish_start_dttm = #{publishStartDttm},
+            publish_end_dttm = #{publishEndDttm}
+        WHERE performance_public_page_id = #{performancePublicPageId}
+    </update>
+
+    <insert id="insertGuide" useGeneratedKeys="true"
+            keyProperty="performanceViewingGuideId">
+        INSERT INTO performance_viewing_guide (
+            performance_project_id, entry_policy, late_entry_policy,
+            recording_policy, cancellation_policy,
+            accessibility_policy, directions, parking_information
+        ) VALUES (
+            #{performanceProjectId}, #{entryPolicy}, #{lateEntryPolicy},
+            #{recordingPolicy}, #{cancellationPolicy},
+            #{accessibilityPolicy}, #{directions}, #{parkingInformation}
+        )
+    </insert>
+
+    <update id="updateGuide">
+        UPDATE performance_viewing_guide
+        SET entry_policy = #{entryPolicy},
+            late_entry_policy = #{lateEntryPolicy},
+            recording_policy = #{recordingPolicy},
+            cancellation_policy = #{cancellationPolicy},
+            accessibility_policy = #{accessibilityPolicy},
+            directions = #{directions},
+            parking_information = #{parkingInformation}
+        WHERE performance_viewing_guide_id = #{performanceViewingGuideId}
+    </update>
+</mapper>
