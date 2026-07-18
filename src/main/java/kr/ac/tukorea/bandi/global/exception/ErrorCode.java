@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 
 /**
  * 에러의 단일 출처 (컨벤션 9.4).
- * 코드 접두사는 feature별 고정 — C 공통, M member, CA calendar, FI file, EV event.
+ * 코드 접두사는 feature별 고정 — C 공통, M member, CA calendar, FI file, EV event, F fee.
  * message는 사용자에게 그대로 보여줄 문장으로 작성하고 내부 사정을 노출하지 않는다.
  */
 @Getter
@@ -48,7 +48,12 @@ public enum ErrorCode {
     // event (EV)
     CLUB_EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "EV001", "존재하지 않는 행사입니다."),
     EVENT_ATTENDANCE_NOT_FOUND(HttpStatus.NOT_FOUND, "EV002", "존재하지 않는 출석 대상입니다."),
-    INVALID_CLUB_EVENT_STATE(HttpStatus.CONFLICT, "EV003", "현재 상태에서는 행사를 변경할 수 없습니다.");
+    INVALID_CLUB_EVENT_STATE(HttpStatus.CONFLICT, "EV003", "현재 상태에서는 행사를 변경할 수 없습니다."),
+
+    // fee (F)
+    FEE_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "F001", "존재하지 않는 회비 항목입니다."),
+    FEE_CHARGE_NOT_FOUND(HttpStatus.NOT_FOUND, "F002", "존재하지 않는 회비 부과 내역입니다."),
+    INVALID_FEE_STATE(HttpStatus.CONFLICT, "F003", "현재 상태에서는 회비를 변경할 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;
