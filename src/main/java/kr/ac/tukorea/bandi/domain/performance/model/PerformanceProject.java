@@ -92,6 +92,15 @@ public class PerformanceProject {
                 productionEndDate, place, newStatus, actorMemberId);
     }
 
+    public void validateProductionMutable() {
+        if (status == PerformanceProjectStatus.ENDED
+                || status == PerformanceProjectStatus.CANCELLED
+                || status == PerformanceProjectStatus.ARCHIVED) {
+            throw new InvalidPerformanceProjectStateException(
+                    "production-mutation");
+        }
+    }
+
     private PerformanceProject copy(short newAcademicYear,
                                     String newTermCode, String newTitle,
                                     LocalDate newProductionStartDate,

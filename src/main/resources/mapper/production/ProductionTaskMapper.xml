@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.ac.tukorea.bandi.domain.production.mapper.ProductionTaskMapper">
+
+    <resultMap id="productionTaskMap" type="kr.ac.tukorea.bandi.domain.production.model.ProductionTask">
+        <constructor>
+            <idArg column="production_task_id" javaType="java.lang.Long"/>
+            <arg column="performance_project_id" javaType="java.lang.Long"/>
+            <arg column="team_id" javaType="java.lang.Long"/>
+            <arg column="title" javaType="java.lang.String"/>
+            <arg column="description" javaType="java.lang.String"/>
+            <arg column="start_date" javaType="java.time.LocalDate"/>
+            <arg column="due_date" javaType="java.time.LocalDate"/>
+            <arg column="status_code" javaType="kr.ac.tukorea.bandi.domain.production.model.ProductionTaskStatus"/>
+            <arg column="blocked_reason" javaType="java.lang.String"/>
+            <arg column="created_by_member_id" javaType="java.lang.Long"/>
+            <arg column="updated_by_member_id" javaType="java.lang.Long"/>
+            <arg column="created_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="deleted_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="productionTaskResponseMap" type="kr.ac.tukorea.bandi.domain.production.dto.response.ProductionTaskResponse">
+        <constructor>
+            <idArg column="production_task_id" javaType="java.lang.Long"/>
+            <arg column="performance_project_id" javaType="java.lang.Long"/>
+            <arg column="team_id" javaType="java.lang.Long"/>
+            <arg column="team_name" javaType="java.lang.String"/>
+            <arg column="title" javaType="java.lang.String"/>
+            <arg column="description" javaType="java.lang.String"/>
+            <arg column="start_date" javaType="java.time.LocalDate"/>
+            <arg column="due_date" javaType="java.time.LocalDate"/>
+            <arg column="status_code" javaType="kr.ac.tukorea.bandi.domain.production.model.ProductionTaskStatus"/>
+            <arg column="blocked_reason" javaType="java.lang.String"/>
+            <arg column="created_by_member_id" javaType="java.lang.Long"/>
+            <arg column="updated_by_member_id" javaType="java.lang.Long"/>
+            <arg column="created_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="productionTaskHistoryResponseMap" type="kr.ac.tukorea.bandi.domain.production.dto.response.ProductionTaskHistoryResponse">
+        <constructor>
+            <idArg column="production_task_history_id" javaType="java.lang.Long"/>
+            <arg column="previous_status_code" javaType="kr.ac.tukorea.bandi.domain.production.model.ProductionTaskStatus"/>
+            <arg column="new_status_code" javaType="kr.ac.tukorea.bandi.domain.production.model.ProductionTaskStatus"/>
+            <arg column="comment" javaType="java.lang.String"/>
+            <arg column="changed_by_member_id" javaType="java.lang.Long"/>
+            <arg column="changed_by_name" javaType="java.lang.String"/>
+            <arg column="changed_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="productionProgressMap" type="kr.ac.tukorea.bandi.domain.production.dto.response.ProductionProgressResponse">
+        <constructor>
+            <arg column="team_id" javaType="java.lang.Long"/>
+            <arg column="team_name" javaType="java.lang.String"/>
+            <arg column="total_count" javaType="_int"/>
+            <arg column="completed_count" javaType="_int"/>
+            <arg column="blocked_count" javaType="_int"/>
+            <arg column="overdue_count" javaType="_int"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="taskColumns">
+        task.production_task_id, task.performance_project_id,
+        task.team_id, task.title, task.description,
+        task.start_date, task.due_date, task.status_code,
+        task.blocked_reason, task.created_by_member_id,
+        task.updated_by_member_id, task.created_dttm,
+        task.updated_dttm, task.deleted_dttm
+    </sql>
+
+    <sql id="activeTaskCondition">
+        task.deleted_dttm IS NULL AND project.deleted_dttm IS NULL
+    </sql>
+
+    <select id="lookupByIdForUpdate" resultMap="productionTaskMap">
+        SELECT <include refid="taskColumns"/>
+        FROM production_task task
+        JOIN performance_project project
+          ON project.performance_project_id = task.performance_project_id
+        WHERE task.production_task_id = #{productionTaskId}
+          AND <include refid="activeTaskCondition"/>
+        FOR UPDATE
+    </select>
+
+    <select id="search" resultMap="productionTaskResponseMap">
+        SELECT task.production_task_id, task.performance_project_id,
+               task.team_id, team.name AS team_name,
+               task.title, task.description, task.start_date, task.due_date,
+               task.status_code, task.blocked_reason,
+               task.created_by_member_id, task.updated_by_member_id,
+               task.created_dttm, task.updated_dttm
+        FROM production_task task
+        JOIN performance_project project
+          ON project.performance_project_id = task.performance_project_id
+        JOIN team ON team.team_id = task.team_id
+        WHERE task.performance_project_id = #{condition.performanceProjectId}
+          AND <include refid="activeTaskCondition"/>
+        <if test="condition.teamId != null">
+          AND task.team_id = #{condition.teamId}
+        </if>
+        <if test="condition.status != null">
+          AND task.status_code = #{condition.status}
+        </if>
+        <if test="condition.overdueOnly">
+          AND task.due_date &lt; #{currentDate}
+          AND task.status_code &lt;&gt; 'COMPLETED'
+        </if>
+        ORDER BY team.display_order, task.due_date,
+                 task.production_task_id
+        LIMIT #{condition.limit} OFFSET #{condition.offset}
+    </select>
+
+    <select id="lookupProjectProgress" resultMap="productionProgressMap">
+        SELECT NULL AS team_id, NULL AS team_name,
+               COUNT(task.production_task_id) AS total_count,
+               COALESCE(SUM(task.status_code = 'COMPLETED'), 0) AS completed_count,
+               COALESCE(SUM(task.status_code = 'BLOCKED'), 0) AS blocked_count,
+               COALESCE(SUM(task.due_date &lt; #{currentDate}
+                   AND task.status_code &lt;&gt; 'COMPLETED'), 0) AS overdue_count
+        FROM production_task task
+        JOIN performance_project project
+          ON project.performance_project_id = task.performance_project_id
+        WHERE task.performance_project_id = #{performanceProjectId}
+          AND <include refid="activeTaskCondition"/>
+    </select>
+
+    <select id="searchTeamProgress" resultMap="productionProgressMap">
+        SELECT task.team_id, team.name AS team_name,
+               COUNT(*) AS total_count,
+               COALESCE(SUM(task.status_code = 'COMPLETED'), 0) AS completed_count,
+               COALESCE(SUM(task.status_code = 'BLOCKED'), 0) AS blocked_count,
+               COALESCE(SUM(task.due_date &lt; #{currentDate}
+                   AND task.status_code &lt;&gt; 'COMPLETED'), 0) AS overdue_count
+        FROM production_task task
+        JOIN performance_project project
+          ON project.performance_project_id = task.performance_project_id
+        JOIN team ON team.team_id = task.team_id
+        WHERE task.performance_project_id = #{performanceProjectId}
+          AND <include refid="activeTaskCondition"/>
+        GROUP BY task.team_id, team.name, team.display_order
+        ORDER BY team.display_order
+    </select>
+
+    <select id="searchHistories" resultMap="productionTaskHistoryResponseMap">
+        SELECT history.production_task_history_id,
+               history.previous_status_code, history.new_status_code,
+               history.comment, history.changed_by_member_id,
+               member.name AS changed_by_name, history.changed_dttm
+        FROM production_task_history history
+        JOIN production_task task
+          ON task.production_task_id = history.production_task_id
+        JOIN performance_project project
+          ON project.performance_project_id = task.performance_project_id
+        JOIN member ON member.member_id = history.changed_by_member_id
+        WHERE history.production_task_id = #{productionTaskId}
+          AND <include refid="activeTaskCondition"/>
+        ORDER BY history.changed_dttm DESC,
+                 history.production_task_history_id DESC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true"
+            keyProperty="productionTaskId">
+        INSERT INTO production_task (
+            performance_project_id, team_id, title, description,
+            start_date, due_date, status_code, blocked_reason,
+            created_by_member_id, updated_by_member_id
+        ) VALUES (
+            #{performanceProjectId}, #{teamId}, #{title}, #{description},
+            #{startDate}, #{dueDate}, #{status}, #{blockedReason},
+            #{createdByMemberId}, #{updatedByMemberId}
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE production_task
+        SET title = #{title},
+            description = #{description},
+            start_date = #{startDate},
+            due_date = #{dueDate},
+            status_code = #{status},
+            blocked_reason = #{blockedReason},
+            updated_by_member_id = #{updatedByMemberId}
+        WHERE production_task_id = #{productionTaskId}
+          AND deleted_dttm IS NULL
+    </update>
+
+    <update id="delete">
+        UPDATE production_task
+        SET updated_by_member_id = #{actorMemberId},
+            deleted_dttm = #{deletedDttm}
+        WHERE production_task_id = #{productionTaskId}
+          AND deleted_dttm IS NULL
+    </update>
+
+    <insert id="insertHistory" useGeneratedKeys="true"
+            keyProperty="productionTaskHistoryId">
+        INSERT INTO production_task_history (
+            production_task_id, previous_status_code, new_status_code,
+            comment, changed_by_member_id, changed_dttm
+        ) VALUES (
+            #{productionTaskId}, #{previousStatus}, #{newStatus},
+            #{comment}, #{changedByMemberId}, #{changedDttm}
+        )
+    </insert>
+</mapper>

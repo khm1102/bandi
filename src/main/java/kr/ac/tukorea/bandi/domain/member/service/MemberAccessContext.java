@@ -35,4 +35,11 @@ public record MemberAccessContext(
         }
         return admin || (leader && Objects.equals(teamId, targetTeamId));
     }
+
+    public boolean canContributeToTeam(Long targetTeamId) {
+        if (!active || targetTeamId == null) {
+            return false;
+        }
+        return admin || Objects.equals(teamId, targetTeamId);
+    }
 }
