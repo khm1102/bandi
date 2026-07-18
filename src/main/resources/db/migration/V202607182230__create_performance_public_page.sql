@@ -22,6 +22,10 @@ CREATE TABLE performance_public_page (
     og_image_file_id            BIGINT        NULL,
     publish_start_dttm          DATETIME(6)   NULL,
     publish_end_dttm            DATETIME(6)   NULL,
+    created_dttm                DATETIME(6)   NOT NULL
+        DEFAULT CURRENT_TIMESTAMP(6),
+    updated_dttm                DATETIME(6)   NOT NULL
+        DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     CONSTRAINT pk_performance_public_page PRIMARY KEY (
         performance_public_page_id
     ),
@@ -97,6 +101,10 @@ CREATE TABLE performance_viewing_guide (
     accessibility_policy          TEXT      NOT NULL,
     directions                    TEXT      NULL,
     parking_information           TEXT      NULL,
+    created_dttm                  DATETIME(6) NOT NULL
+        DEFAULT CURRENT_TIMESTAMP(6),
+    updated_dttm                  DATETIME(6) NOT NULL
+        DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     CONSTRAINT pk_performance_viewing_guide PRIMARY KEY (
         performance_viewing_guide_id
     ),
