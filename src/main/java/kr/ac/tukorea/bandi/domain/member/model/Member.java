@@ -76,6 +76,12 @@ public class Member {
         }
     }
 
+    public void validateStatusChangeTo(MemberStatus newStatus) {
+        if (status == newStatus) {
+            throw new NoChangeException("status");
+        }
+    }
+
     public boolean isAdmin() {
         return role == ClubRole.ADMIN;
     }

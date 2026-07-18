@@ -124,6 +124,31 @@ class MemberTest {
     }
 
     @Nested
+    @DisplayName("상태 변경")
+    class StatusChange {
+
+        @Test
+        void 같은_상태로_변경하면_예외가_발생한다() {
+            // given
+            Member member = savedMember(1L, ClubRole.MEMBER, MemberStatus.ACTIVE);
+
+            // when & then
+            assertThatThrownBy(() -> member.validateStatusChangeTo(MemberStatus.ACTIVE))
+                    .isInstanceOf(NoChangeException.class);
+        }
+
+        @Test
+        void 다른_상태로_변경하면_검증을_통과한다() {
+            // given
+            Member member = savedMember(1L, ClubRole.MEMBER, MemberStatus.PRE_REGISTERED);
+
+            // when & then
+            assertThatCode(() -> member.validateStatusChangeTo(MemberStatus.REGISTRATION_CANCELLED))
+                    .doesNotThrowAnyException();
+        }
+    }
+
+    @Nested
     @DisplayName("운영진 판단")
     class AdminDecision {
 
