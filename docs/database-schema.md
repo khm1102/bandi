@@ -752,7 +752,7 @@ erDiagram
 - `production_start_date`, `production_end_date`
 - `place`
 - `status_code`: `PLANNING`, `PRODUCING`, `RESERVATION_OPEN`, `PERFORMING`, `ENDED`, `CANCELLED`, `ARCHIVED`
-- `term_occupancy_key` VARCHAR(40) generated: 취소·삭제가 아니면 `{academic_year}:{term_code}`, 아니면 NULL
+- `term_occupancy_key` VARCHAR(40) STORED generated: 취소·삭제가 아니면 `{academic_year}:{term_code}`, 아니면 NULL. UNIQUE 인덱스의 정합성 키로 반복 조회되므로 계산 결과를 저장한다.
 - `created_by_member_id`, `updated_by_member_id` FK
 - `deleted_dttm`
 - UNIQUE `(term_occupancy_key)`

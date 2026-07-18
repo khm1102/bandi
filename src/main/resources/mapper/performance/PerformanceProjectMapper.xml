@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.ac.tukorea.bandi.domain.performance.mapper.PerformanceProjectMapper">
+
+    <resultMap id="performanceProjectMap" type="kr.ac.tukorea.bandi.domain.performance.model.PerformanceProject">
+        <constructor>
+            <idArg column="performance_project_id" javaType="java.lang.Long"/>
+            <arg column="academic_year" javaType="_short"/>
+            <arg column="term_code" javaType="java.lang.String"/>
+            <arg column="title" javaType="java.lang.String"/>
+            <arg column="production_start_date" javaType="java.time.LocalDate"/>
+            <arg column="production_end_date" javaType="java.time.LocalDate"/>
+            <arg column="place" javaType="java.lang.String"/>
+            <arg column="status_code" javaType="kr.ac.tukorea.bandi.domain.performance.model.PerformanceProjectStatus"/>
+            <arg column="created_by_member_id" javaType="java.lang.Long"/>
+            <arg column="updated_by_member_id" javaType="java.lang.Long"/>
+            <arg column="created_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="deleted_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="performanceProjectResponseMap" type="kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceProjectResponse">
+        <constructor>
+            <idArg column="performance_project_id" javaType="java.lang.Long"/>
+            <arg column="academic_year" javaType="_short"/>
+            <arg column="term_code" javaType="java.lang.String"/>
+            <arg column="title" javaType="java.lang.String"/>
+            <arg column="production_start_date" javaType="java.time.LocalDate"/>
+            <arg column="production_end_date" javaType="java.time.LocalDate"/>
+            <arg column="place" javaType="java.lang.String"/>
+            <arg column="status_code" javaType="kr.ac.tukorea.bandi.domain.performance.model.PerformanceProjectStatus"/>
+            <arg column="created_by_member_id" javaType="java.lang.Long"/>
+            <arg column="updated_by_member_id" javaType="java.lang.Long"/>
+            <arg column="created_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="projectColumns">
+        performance_project_id, academic_year, term_code, title,
+        production_start_date, production_end_date, place, status_code,
+        created_by_member_id, updated_by_member_id,
+        created_dttm, updated_dttm, deleted_dttm
+    </sql>
+
+    <sql id="responseColumns">
+        performance_project_id, academic_year, term_code, title,
+        production_start_date, production_end_date, place, status_code,
+        created_by_member_id, updated_by_member_id,
+        created_dttm, updated_dttm
+    </sql>
+
+    <sql id="notDeleted">
+        deleted_dttm IS NULL
+    </sql>
+
+    <select id="lookupByIdForUpdate" resultMap="performanceProjectMap">
+        SELECT <include refid="projectColumns"/>
+        FROM performance_project
+        WHERE performance_project_id = #{performanceProjectId}
+          AND <include refid="notDeleted"/>
+        FOR UPDATE
+    </select>
+
+    <select id="lookupCurrent" resultMap="performanceProjectResponseMap">
+        SELECT <include refid="responseColumns"/>
+        FROM performance_project
+        WHERE academic_year = #{academicYear}
+          AND term_code = #{termCode}
+          AND status_code &lt;&gt; 'CANCELLED'
+          AND <include refid="notDeleted"/>
+    </select>
+
+    <select id="search" resultMap="performanceProjectResponseMap">
+        SELECT <include refid="responseColumns"/>
+        FROM performance_project
+        WHERE <include refid="notDeleted"/>
+        <if test="academicYear != null">
+          AND academic_year = #{academicYear}
+        </if>
+        <if test="termCode != null">
+          AND term_code = #{termCode}
+        </if>
+        <if test="status != null">
+          AND status_code = #{status}
+        </if>
+        ORDER BY academic_year DESC, term_code DESC,
+                 production_start_date DESC, performance_project_id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true"
+            keyProperty="performanceProjectId">
+        INSERT INTO performance_project (
+            academic_year, term_code, title,
+            production_start_date, production_end_date, place,
+            status_code, created_by_member_id, updated_by_member_id
+        ) VALUES (
+            #{academicYear}, #{termCode}, #{title},
+            #{productionStartDate}, #{productionEndDate}, #{place},
+            #{status}, #{createdByMemberId}, #{updatedByMemberId}
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE performance_project
+        SET academic_year = #{academicYear},
+            term_code = #{termCode},
+            title = #{title},
+            production_start_date = #{productionStartDate},
+            production_end_date = #{productionEndDate},
+            place = #{place},
+            status_code = #{status},
+            updated_by_member_id = #{updatedByMemberId}
+        WHERE performance_project_id = #{performanceProjectId}
+          AND <include refid="notDeleted"/>
+    </update>
+</mapper>
