@@ -2,6 +2,7 @@ package kr.ac.tukorea.bandi.domain.member.service;
 
 import kr.ac.tukorea.bandi.domain.member.dto.request.CohortChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPreRegisterParam;
+import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchCondition;
 import kr.ac.tukorea.bandi.domain.member.dto.request.RoleChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.StatusChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.TeamChangeParam;
@@ -84,6 +85,22 @@ class MemberServiceTest {
         // 이력의 changed_dttm을 단언할 수 있도록 시각을 고정한다 (컨벤션 9.5).
         Clock clock = Clock.fixed(FIXED_INSTANT, SEOUL);
         memberService = new MemberService(memberMapper, teamMapper, cohortMapper, memberHistoryMapper, clock);
+    }
+
+    @Test
+    void 활성_멤버_식별자를_전체_또는_팀으로_조회한다() {
+        given(memberMapper.searchByCondition(any())).willReturn(List.of(
+                member(ADMIN_ID, STAGE_TEAM_ID, ClubRole.ADMIN, MemberStatus.ACTIVE),
+                member(TARGET_ID, STAGE_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
+
+        List<Long> result = memberService.searchActiveMemberIds(STAGE_TEAM_ID);
+
+        assertThat(result).containsExactly(ADMIN_ID, TARGET_ID);
+        ArgumentCaptor<MemberSearchCondition> captor =
+                ArgumentCaptor.forClass(MemberSearchCondition.class);
+        verify(memberMapper).searchByCondition(captor.capture());
+        assertThat(captor.getValue().teamId()).isEqualTo(STAGE_TEAM_ID);
+        assertThat(captor.getValue().status()).isEqualTo(MemberStatus.ACTIVE);
     }
 
     private static Member member(Long memberId, Long teamId, ClubRole role, MemberStatus status) {

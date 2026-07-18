@@ -2,6 +2,7 @@ package kr.ac.tukorea.bandi.domain.member.service;
 
 import kr.ac.tukorea.bandi.domain.member.dto.request.CohortChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPreRegisterParam;
+import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchCondition;
 import kr.ac.tukorea.bandi.domain.member.dto.request.RoleChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.StatusChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.TeamChangeParam;
@@ -61,6 +62,13 @@ public class MemberService {
 
     public void validateActiveTeam(Long teamId) {
         findAssignableTeam(teamId);
+    }
+
+    public List<Long> searchActiveMemberIds(Long teamId) {
+        return memberMapper.searchByCondition(new MemberSearchCondition(
+                        teamId, MemberStatus.ACTIVE, null)).stream()
+                .map(Member::getMemberId)
+                .toList();
     }
 
     @Transactional
