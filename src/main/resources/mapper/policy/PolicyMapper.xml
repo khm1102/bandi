@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.ac.tukorea.bandi.domain.policy.mapper.PolicyMapper">
+
+    <resultMap id="policyDocumentMap"
+               type="kr.ac.tukorea.bandi.domain.policy.model.PolicyDocument">
+        <constructor>
+            <idArg column="policy_document_id" javaType="java.lang.Long"/>
+            <arg column="policy_type_code"
+                 javaType="kr.ac.tukorea.bandi.domain.policy.model.PolicyType"/>
+            <arg column="title" javaType="java.lang.String"/>
+            <arg column="audience_code"
+                 javaType="kr.ac.tukorea.bandi.domain.policy.model.PolicyAudience"/>
+            <arg column="is_active" javaType="_boolean"/>
+            <arg column="created_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="policyDocumentResponseMap"
+               type="kr.ac.tukorea.bandi.domain.policy.dto.response.PolicyDocumentResponse">
+        <constructor>
+            <idArg column="policy_document_id" javaType="java.lang.Long"/>
+            <arg column="policy_type_code"
+                 javaType="kr.ac.tukorea.bandi.domain.policy.model.PolicyType"/>
+            <arg column="title" javaType="java.lang.String"/>
+            <arg column="audience_code"
+                 javaType="kr.ac.tukorea.bandi.domain.policy.model.PolicyAudience"/>
+            <arg column="is_active" javaType="_boolean"/>
+            <arg column="created_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="policyVersionResponseMap"
+               type="kr.ac.tukorea.bandi.domain.policy.dto.response.PolicyVersionResponse">
+        <constructor>
+            <idArg column="policy_document_version_id"
+                   javaType="java.lang.Long"/>
+            <arg column="policy_document_id" javaType="java.lang.Long"/>
+            <arg column="version_no" javaType="_int"/>
+            <arg column="body" javaType="java.lang.String"/>
+            <arg column="published_dttm"
+                 javaType="java.time.LocalDateTime"/>
+            <arg column="published_by_member_id"
+                 javaType="java.lang.Long"/>
+            <arg column="effective_from_dttm"
+                 javaType="java.time.LocalDateTime"/>
+            <arg column="is_required" javaType="_boolean"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="documentColumns">
+        policy_document_id, policy_type_code, title, audience_code,
+        is_active, created_dttm, updated_dttm
+    </sql>
+
+    <sql id="versionColumns">
+        policy_document_version_id, policy_document_id, version_no,
+        body, published_dttm, published_by_member_id,
+        effective_from_dttm, is_required
+    </sql>
+
+    <select id="lookupDocumentByIdForUpdate" resultMap="policyDocumentMap">
+        SELECT <include refid="documentColumns"/>
+        FROM policy_document
+        WHERE policy_document_id = #{policyDocumentId}
+        FOR UPDATE
+    </select>
+
+    <select id="lookupVersionById" resultMap="policyVersionResponseMap">
+        SELECT <include refid="versionColumns"/>
+        FROM policy_document_version
+        WHERE policy_document_version_id = #{policyDocumentVersionId}
+    </select>
+
+    <select id="lookupNextVersionNo" resultType="_int">
+        SELECT COALESCE(MAX(version_no), 0) + 1
+        FROM policy_document_version
+        WHERE policy_document_id = #{policyDocumentId}
+    </select>
+
+    <select id="existsEffectiveVersion" resultType="_boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM policy_document_version version
+            JOIN policy_document document
+              ON document.policy_document_id = version.policy_document_id
+            WHERE version.policy_document_version_id =
+                  #{policyDocumentVersionId}
+              AND document.is_active = 1
+              AND version.published_dttm &lt;= #{currentDttm}
+              AND version.effective_from_dttm &lt;= #{currentDttm}
+        )
+    </select>
+
+    <select id="searchDocuments" resultMap="policyDocumentResponseMap">
+        SELECT <include refid="documentColumns"/>
+        FROM policy_document
+        ORDER BY policy_document_id DESC
+    </select>
+
+    <select id="searchVersions" resultMap="policyVersionResponseMap">
+        SELECT <include refid="versionColumns"/>
+        FROM policy_document_version
+        WHERE policy_document_id = #{policyDocumentId}
+        ORDER BY version_no DESC
+    </select>
+
+    <insert id="insertDocument" useGeneratedKeys="true"
+            keyProperty="policyDocumentId">
+        INSERT INTO policy_document (
+            policy_type_code, title, audience_code, is_active
+        ) VALUES (
+            #{policyType}, #{title}, #{audience}, #{active}
+        )
+    </insert>
+
+    <update id="updateDocumentActive">
+        UPDATE policy_document
+        SET is_active = #{active}
+        WHERE policy_document_id = #{policyDocumentId}
+    </update>
+
+    <insert id="insertVersion" useGeneratedKeys="true"
+            keyProperty="policyDocumentVersionId">
+        INSERT INTO policy_document_version (
+            policy_document_id, version_no, body,
+            published_dttm, published_by_member_id,
+            effective_from_dttm, is_required
+        ) VALUES (
+            #{policyDocumentId}, #{versionNo}, #{body},
+            #{publishedDttm}, #{publishedByMemberId},
+            #{effectiveFromDttm}, #{required}
+        )
+    </insert>
+</mapper>

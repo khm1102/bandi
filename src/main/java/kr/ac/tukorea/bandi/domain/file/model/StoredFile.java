@@ -77,6 +77,13 @@ public class StoredFile {
         }
     }
 
+    public void validatePublicUse() {
+        validateReady();
+        if (storageScope != StorageScope.PUBLIC) {
+            throw new InvalidFileScopeException();
+        }
+    }
+
     public StoredFile createPublicPromotion(String publicStorageKey, Long uploadedByMemberId) {
         validateReady();
         if (storageScope != StorageScope.PRIVATE) {
