@@ -6,7 +6,7 @@ import kr.ac.tukorea.bandi.domain.member.exception.SchoolSsoResponseChangedExcep
 import kr.ac.tukorea.bandi.domain.member.exception.SchoolSsoUnavailableException;
 import kr.ac.tukorea.bandi.domain.member.model.AcademicStatus;
 import kr.ac.tukorea.bandi.domain.member.model.SchoolIdentity;
-import kr.ac.tukorea.bandi.global.config.SchoolSsoProperties;
+import kr.ac.tukorea.bandi.domain.member.client.tukorea.config.SchoolSsoProperties;
 import org.junit.jupiter.api.Test;
 
 import java.net.URI;

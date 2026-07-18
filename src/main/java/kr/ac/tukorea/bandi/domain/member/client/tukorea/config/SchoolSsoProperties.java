@@ -1,4 +1,4 @@
-package kr.ac.tukorea.bandi.global.config;
+package kr.ac.tukorea.bandi.domain.member.client.tukorea.config;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
