@@ -1,5 +1,6 @@
 package kr.ac.tukorea.bandi.domain.file.service;
 
+import kr.ac.tukorea.bandi.domain.file.dto.response.FileReferenceResponse;
 import kr.ac.tukorea.bandi.domain.file.exception.FileAccessDeniedException;
 import kr.ac.tukorea.bandi.domain.file.model.StorageScope;
 import kr.ac.tukorea.bandi.domain.file.model.StoredFile;
@@ -62,8 +63,13 @@ public class FileService {
     }
 
     public void validatePrivateReady(Long storedFileId) {
+        lookupPrivateReady(storedFileId);
+    }
+
+    public FileReferenceResponse lookupPrivateReady(Long storedFileId) {
         StoredFile file = metadataService.lookup(storedFileId);
         file.validatePrivateDownload();
+        return FileReferenceResponse.from(file);
     }
 
     public Long promoteToPublic(Long privateStoredFileId, String domain,
