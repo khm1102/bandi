@@ -112,7 +112,9 @@ erDiagram
     TEAM ||--o{ MEMBER : contains
     COHORT ||--o{ MEMBER : groups
     MEMBER ||--o{ MEMBER_TEAM_HISTORY : changes
+    MEMBER ||--o{ MEMBER_COHORT_HISTORY : changes
     MEMBER ||--o{ MEMBER_ROLE_HISTORY : changes
+    MEMBER ||--o{ MEMBER_STATUS_HISTORY : changes
     MEMBER ||--o{ CALENDAR_EVENT : creates
     TEAM ||--o{ CALENDAR_EVENT : owns
     TEAM ||--o{ ACTIVITY_RECORD : owns
@@ -185,6 +187,8 @@ erDiagram
 - `uk_cohort_year_term(admission_year, term_code)`
 - `uk_cohort_name(name)`
 
+비활성 기수는 기존 멤버와 이력의 참조를 유지하지만, 신규 사전 등록과 기수 변경의 배정 대상으로 사용할 수 없다.
+
 ### 5.3 `member`
 
 운영진 사전 등록과 SSO 연결 결과를 하나의 멤버 행에서 관리한다. 로컬 계정과 비밀번호 컬럼은 만들지 않는다.
@@ -240,7 +244,25 @@ erDiagram
 - `changed_by_member_id` FK
 - `changed_dttm` DATETIME(6)
 
-현재값은 `member`에서 조회하고, 이력은 감사와 분쟁 확인에 사용한다. 변경 서비스는 현재값 갱신과 이력 삽입을 하나의 트랜잭션으로 처리한다.
+#### `member_cohort_history`
+
+- `member_cohort_history_id` PK
+- `member_id` FK
+- `previous_cohort_id`, `new_cohort_id` FK
+- `reason` VARCHAR(500)
+- `changed_by_member_id` FK
+- `changed_dttm` DATETIME(6)
+
+#### `member_status_history`
+
+- `member_status_history_id` PK
+- `member_id` FK
+- `previous_status_code`, `new_status_code` VARCHAR(30)
+- `reason` VARCHAR(500)
+- `changed_by_member_id` FK
+- `changed_dttm` DATETIME(6)
+
+현재 팀·기수·권한·상태는 `member`에서 조회하고, 각 전용 이력은 감사와 분쟁 확인에 사용한다. 변경 서비스는 현재값 갱신과 해당 이력 삽입을 하나의 트랜잭션으로 처리한다. 변경 처리자 식별자는 요청 본문에서 받지 않고 인증 세션의 로그인 멤버 식별자를 Controller가 Service에 별도 전달한다. 모든 멤버 등록·변경 명령은 Service에서 처리자가 활성 `ADMIN`인지 다시 확인한다.
 
 권한 변경·활동 중지·탈퇴 처리 전에 활성 `ADMIN` 행을 잠금 조회한다. 처리 결과 활성 `ADMIN`이 0명이 되면 변경을 거부하며, 본인의 `ADMIN` 권한 하향은 다른 `ADMIN`만 실행할 수 있다.
 
@@ -1108,7 +1130,7 @@ MySQL의 조건부 UNIQUE 한계를 피하면서 활성 좌석 중복을 차단�
 |---|---|
 | 멤버 사전 등록 | 학번 중복 확인 → `PRE_REGISTERED`, `WAITING` 상태의 `member` 생성 |
 | 최초 SSO 연결 | 멤버 잠금 조회 → 학적·이름 대조 → 연결·활성 상태와 마지막 로그인 갱신 |
-| 팀·권한 변경 | 현재 멤버 갱신 → 전용 이력 삽입 → 감사 로그 |
+| 팀·기수·권한·상태 변경 | 처리자의 활성 `ADMIN` 권한 확인 → 현재 멤버 갱신 → 전용 이력 삽입 → 감사 로그 |
 | 파일 업로드 | `PENDING` 메타데이터 생성 → MinIO 저장·검증 → `READY` 전환 → 업무 레코드 연결 |
 | 공지 게시 | 게시 가능 상태 검증 → 본문·첨부 확정 → 게시 상태 전환 |
 | 활동 기록 제출·재제출 | 현재 증빙 사진 존재 확인 → 본문 revision 저장 → 상태 전환 → 검수 이력 삽입 |
@@ -1192,6 +1214,7 @@ MinIO 객체 저장은 DB 트랜잭션에 완전히 포함할 수 없으므로 `
 - 로컬 비밀번호와 초대코드 테이블이 없다.
 - 일정 조율, 자유 게시글, 댓글과 좋아요 테이블이 없다.
 - 멤버 한 명은 현재 팀 FK 하나만 가진다.
+- 팀·기수·권한·상태 변경은 전용 이력과 처리자를 남긴다.
 - 학교 학적과 동아리 활동 상태를 별도로 관리한다.
 - 공시, 공지, 자료와 활동 기록이 서로 다른 테이블이다.
 - 공지 읽음은 조회수가 아니라 멤버별 행으로 기록한다.

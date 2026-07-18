@@ -6,7 +6,6 @@ package kr.ac.tukorea.bandi.domain.member.dto.request;
 public record TeamChangeParam(
         Long memberId,
         Long newTeamId,
-        String reason,
-        Long actorMemberId
+        String reason
 ) {
 }

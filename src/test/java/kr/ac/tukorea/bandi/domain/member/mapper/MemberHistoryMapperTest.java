@@ -3,7 +3,10 @@ package kr.ac.tukorea.bandi.domain.member.mapper;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
+import kr.ac.tukorea.bandi.domain.member.model.MemberCohortHistory;
 import kr.ac.tukorea.bandi.domain.member.model.MemberRoleHistory;
+import kr.ac.tukorea.bandi.domain.member.model.MemberStatus;
+import kr.ac.tukorea.bandi.domain.member.model.MemberStatusHistory;
 import kr.ac.tukorea.bandi.domain.member.model.MemberTeamHistory;
 import kr.ac.tukorea.bandi.domain.member.model.Team;
 import kr.ac.tukorea.bandi.global.annotation.MapperTest;
@@ -30,6 +33,8 @@ class MemberHistoryMapperTest {
     private Long stageTeamId;
     private Long memberId;
     private Long adminId;
+    private Long cohortId;
+    private Long newCohortId;
 
     @Autowired
     MemberHistoryMapperTest(MemberHistoryMapper memberHistoryMapper, MemberMapper memberMapper,
@@ -48,13 +53,18 @@ class MemberHistoryMapperTest {
 
         Cohort cohort = new Cohort(null, "26-2기", (short) 2026, "SECOND", true);
         cohortMapper.insert(cohort);
+        cohortId = cohort.getCohortId();
 
-        Member admin = Member.preRegister("2020184000", "이서준", actorTeamId, cohort.getCohortId(),
+        Cohort newCohort = new Cohort(null, "27-1기", (short) 2027, "FIRST", true);
+        cohortMapper.insert(newCohort);
+        newCohortId = newCohort.getCohortId();
+
+        Member admin = Member.preRegister("2020184000", "이서준", actorTeamId, cohortId,
                 ClubRole.ADMIN, null);
         memberMapper.insert(admin);
         adminId = admin.getMemberId();
 
-        Member member = Member.preRegister("2021184000", "김하늘", actorTeamId, cohort.getCohortId(),
+        Member member = Member.preRegister("2021184000", "김하늘", actorTeamId, cohortId,
                 ClubRole.MEMBER, adminId);
         memberMapper.insert(member);
         memberId = member.getMemberId();
@@ -94,6 +104,40 @@ class MemberHistoryMapperTest {
         assertThat(found.get(0).previousRole()).isEqualTo(ClubRole.MEMBER);
         assertThat(found.get(0).newRole()).isEqualTo(ClubRole.LEADER);
         assertThat(found.get(0).reason()).isEqualTo("무대팀장 선임");
+    }
+
+    @Test
+    void 기수_변경_이력을_저장하고_멤버별로_조회한다() {
+        // given
+        MemberCohortHistory history = MemberCohortHistory.of(memberId, cohortId, newCohortId,
+                "기수 정정", adminId, CHANGED_AT);
+
+        // when
+        memberHistoryMapper.insertCohortHistory(history);
+        List<MemberCohortHistory> found = memberHistoryMapper.searchCohortHistoryByMemberId(memberId);
+
+        // then
+        assertThat(found).hasSize(1);
+        assertThat(found.get(0).previousCohortId()).isEqualTo(cohortId);
+        assertThat(found.get(0).newCohortId()).isEqualTo(newCohortId);
+        assertThat(found.get(0).reason()).isEqualTo("기수 정정");
+    }
+
+    @Test
+    void 상태_변경_이력을_저장하고_멤버별로_조회한다() {
+        // given
+        MemberStatusHistory history = MemberStatusHistory.of(memberId, MemberStatus.PRE_REGISTERED,
+                MemberStatus.REGISTRATION_CANCELLED, "합격 취소", adminId, CHANGED_AT);
+
+        // when
+        memberHistoryMapper.insertStatusHistory(history);
+        List<MemberStatusHistory> found = memberHistoryMapper.searchStatusHistoryByMemberId(memberId);
+
+        // then
+        assertThat(found).hasSize(1);
+        assertThat(found.get(0).previousStatus()).isEqualTo(MemberStatus.PRE_REGISTERED);
+        assertThat(found.get(0).newStatus()).isEqualTo(MemberStatus.REGISTRATION_CANCELLED);
+        assertThat(found.get(0).reason()).isEqualTo("합격 취소");
     }
 
     @Test

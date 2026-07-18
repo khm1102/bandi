@@ -1,5 +1,7 @@
 package kr.ac.tukorea.bandi.domain.member.service;
 
+import kr.ac.tukorea.bandi.domain.member.dto.request.CohortChangeParam;
+import kr.ac.tukorea.bandi.domain.member.dto.request.StatusChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.TeamChangeParam;
 import kr.ac.tukorea.bandi.domain.member.mapper.CohortMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.MemberHistoryMapper;
@@ -8,6 +10,7 @@ import kr.ac.tukorea.bandi.domain.member.mapper.TeamMapper;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
+import kr.ac.tukorea.bandi.domain.member.model.MemberStatus;
 import kr.ac.tukorea.bandi.domain.member.model.Team;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -53,7 +56,9 @@ class MemberServiceTransactionTest {
     private Long actorTeamId;
     private Long stageTeamId;
     private Long memberId;
+    private Long adminId;
     private Long cohortId;
+    private Long newCohortId;
 
     @Autowired
     MemberServiceTransactionTest(MemberService memberService, MemberMapper memberMapper,
@@ -75,8 +80,18 @@ class MemberServiceTransactionTest {
         cohortMapper.insert(cohort);
         cohortId = cohort.getCohortId();
 
+        Cohort newCohort = new Cohort(null, "트랜잭션검증새기수", (short) 2998, "SECOND", true);
+        cohortMapper.insert(newCohort);
+        newCohortId = newCohort.getCohortId();
+
+        Member admin = Member.preRegister("2999184001", "이서준", actorTeamId, cohortId,
+                ClubRole.ADMIN, null);
+        memberMapper.insert(admin);
+        adminId = admin.getMemberId();
+        memberMapper.updateStatus(adminId, MemberStatus.ACTIVE);
+
         Member member = Member.preRegister("2999184000", "김하늘", actorTeamId, cohortId,
-                ClubRole.MEMBER, null);
+                ClubRole.MEMBER, adminId);
         memberMapper.insert(member);
         memberId = member.getMemberId();
     }
@@ -85,6 +100,8 @@ class MemberServiceTransactionTest {
     void tearDown() throws SQLException {
         executeUpdate("DELETE FROM member_team_history WHERE member_id = " + memberId);
         executeUpdate("DELETE FROM member WHERE member_id = " + memberId);
+        executeUpdate("DELETE FROM member WHERE member_id = " + adminId);
+        executeUpdate("DELETE FROM cohort WHERE cohort_id = " + newCohortId);
         executeUpdate("DELETE FROM cohort WHERE cohort_id = " + cohortId);
     }
 
@@ -95,8 +112,8 @@ class MemberServiceTransactionTest {
                 .given(memberHistoryMapper).insertTeamHistory(any());
 
         // when
-        assertThatThrownBy(() -> memberService.changeTeam(
-                new TeamChangeParam(memberId, stageTeamId, "팀 재배치", null)))
+        assertThatThrownBy(() -> memberService.changeTeam(adminId,
+                new TeamChangeParam(memberId, stageTeamId, "팀 재배치")))
                 .isInstanceOf(IllegalStateException.class);
 
         // then — 이미 실행된 updateTeam이 함께 취소되어 원래 팀이 유지된다
@@ -105,6 +122,44 @@ class MemberServiceTransactionTest {
                 .get()
                 .extracting(Member::getTeamId)
                 .isEqualTo(actorTeamId);
+    }
+
+    @Test
+    void 기수_이력_삽입이_실패하면_기수_변경도_롤백된다() {
+        // given
+        willThrow(new IllegalStateException("기수 이력 저장 실패"))
+                .given(memberHistoryMapper).insertCohortHistory(any());
+
+        // when
+        assertThatThrownBy(() -> memberService.changeCohort(adminId,
+                new CohortChangeParam(memberId, newCohortId, "기수 정정")))
+                .isInstanceOf(IllegalStateException.class);
+
+        // then
+        assertThat(memberMapper.lookupById(memberId))
+                .isPresent()
+                .get()
+                .extracting(Member::getCohortId)
+                .isEqualTo(cohortId);
+    }
+
+    @Test
+    void 상태_이력_삽입이_실패하면_상태_변경도_롤백된다() {
+        // given
+        willThrow(new IllegalStateException("상태 이력 저장 실패"))
+                .given(memberHistoryMapper).insertStatusHistory(any());
+
+        // when
+        assertThatThrownBy(() -> memberService.changeStatus(adminId,
+                new StatusChangeParam(memberId, MemberStatus.REGISTRATION_CANCELLED, "합격 취소")))
+                .isInstanceOf(IllegalStateException.class);
+
+        // then
+        assertThat(memberMapper.lookupById(memberId))
+                .isPresent()
+                .get()
+                .extracting(Member::getStatus)
+                .isEqualTo(MemberStatus.PRE_REGISTERED);
     }
 
     private void executeUpdate(String sql) throws SQLException {

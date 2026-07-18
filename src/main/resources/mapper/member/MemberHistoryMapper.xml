@@ -29,6 +29,30 @@
         </constructor>
     </resultMap>
 
+    <resultMap id="cohortHistoryResultMap" type="kr.ac.tukorea.bandi.domain.member.model.MemberCohortHistory">
+        <constructor>
+            <idArg column="member_cohort_history_id" javaType="java.lang.Long"/>
+            <arg column="member_id" javaType="java.lang.Long"/>
+            <arg column="previous_cohort_id" javaType="java.lang.Long"/>
+            <arg column="new_cohort_id" javaType="java.lang.Long"/>
+            <arg column="reason" javaType="java.lang.String"/>
+            <arg column="changed_by_member_id" javaType="java.lang.Long"/>
+            <arg column="changed_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="statusHistoryResultMap" type="kr.ac.tukorea.bandi.domain.member.model.MemberStatusHistory">
+        <constructor>
+            <idArg column="member_status_history_id" javaType="java.lang.Long"/>
+            <arg column="member_id" javaType="java.lang.Long"/>
+            <arg column="previous_status_code" javaType="kr.ac.tukorea.bandi.domain.member.model.MemberStatus"/>
+            <arg column="new_status_code" javaType="kr.ac.tukorea.bandi.domain.member.model.MemberStatus"/>
+            <arg column="reason" javaType="java.lang.String"/>
+            <arg column="changed_by_member_id" javaType="java.lang.Long"/>
+            <arg column="changed_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
     <!-- 이력 식별자는 호출부에서 쓰지 않고 record는 불변이라 useGeneratedKeys를 두지 않는다 -->
     <insert id="insertTeamHistory">
         INSERT INTO member_team_history (
@@ -46,6 +70,22 @@
         )
     </insert>
 
+    <insert id="insertCohortHistory">
+        INSERT INTO member_cohort_history (
+            member_id, previous_cohort_id, new_cohort_id, reason, changed_by_member_id, changed_dttm
+        ) VALUES (
+            #{memberId}, #{previousCohortId}, #{newCohortId}, #{reason}, #{changedByMemberId}, #{changedDttm}
+        )
+    </insert>
+
+    <insert id="insertStatusHistory">
+        INSERT INTO member_status_history (
+            member_id, previous_status_code, new_status_code, reason, changed_by_member_id, changed_dttm
+        ) VALUES (
+            #{memberId}, #{previousStatus}, #{newStatus}, #{reason}, #{changedByMemberId}, #{changedDttm}
+        )
+    </insert>
+
     <select id="searchTeamHistoryByMemberId" resultMap="teamHistoryResultMap">
         SELECT member_team_history_id, member_id, previous_team_id, new_team_id,
                reason, changed_by_member_id, changed_dttm
@@ -60,5 +100,21 @@
         FROM member_role_history
         WHERE member_id = #{memberId}
         ORDER BY changed_dttm DESC, member_role_history_id DESC
+    </select>
+
+    <select id="searchCohortHistoryByMemberId" resultMap="cohortHistoryResultMap">
+        SELECT member_cohort_history_id, member_id, previous_cohort_id, new_cohort_id,
+               reason, changed_by_member_id, changed_dttm
+        FROM member_cohort_history
+        WHERE member_id = #{memberId}
+        ORDER BY changed_dttm DESC, member_cohort_history_id DESC
+    </select>
+
+    <select id="searchStatusHistoryByMemberId" resultMap="statusHistoryResultMap">
+        SELECT member_status_history_id, member_id, previous_status_code, new_status_code,
+               reason, changed_by_member_id, changed_dttm
+        FROM member_status_history
+        WHERE member_id = #{memberId}
+        ORDER BY changed_dttm DESC, member_status_history_id DESC
     </select>
 </mapper>

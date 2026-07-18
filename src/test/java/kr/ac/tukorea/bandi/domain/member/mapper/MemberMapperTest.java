@@ -34,6 +34,7 @@ class MemberMapperTest {
     private Long actorTeamId;
     private Long stageTeamId;
     private Long cohortId;
+    private Long newCohortId;
 
     @Autowired
     MemberMapperTest(MemberMapper memberMapper, TeamMapper teamMapper,
@@ -53,6 +54,10 @@ class MemberMapperTest {
         Cohort cohort = new Cohort(null, "26-2기", (short) 2026, "SECOND", true);
         cohortMapper.insert(cohort);
         cohortId = cohort.getCohortId();
+
+        Cohort newCohort = new Cohort(null, "27-1기", (short) 2027, "FIRST", true);
+        cohortMapper.insert(newCohort);
+        newCohortId = newCohort.getCohortId();
     }
 
     private Member preRegistered(String studentNo, Long teamId) {
@@ -138,6 +143,23 @@ class MemberMapperTest {
                 .get()
                 .extracting(Member::getTeamId)
                 .isEqualTo(stageTeamId);
+    }
+
+    @Test
+    void 기수를_변경하면_현재_기수가_갱신된다() {
+        // given
+        Member member = preRegistered("2021184000", actorTeamId);
+        memberMapper.insert(member);
+
+        // when
+        memberMapper.updateCohort(member.getMemberId(), newCohortId);
+
+        // then
+        assertThat(memberMapper.lookupById(member.getMemberId()))
+                .isPresent()
+                .get()
+                .extracting(Member::getCohortId)
+                .isEqualTo(newCohortId);
     }
 
     @Test

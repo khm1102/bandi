@@ -34,6 +34,8 @@ public interface MemberMapper {
 
     int updateTeam(@Param("memberId") Long memberId, @Param("teamId") Long teamId);
 
+    int updateCohort(@Param("memberId") Long memberId, @Param("cohortId") Long cohortId);
+
     int updateRole(@Param("memberId") Long memberId, @Param("role") ClubRole role);
 
     int updateStatus(@Param("memberId") Long memberId, @Param("status") MemberStatus status);

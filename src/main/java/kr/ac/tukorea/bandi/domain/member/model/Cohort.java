@@ -1,5 +1,6 @@
 package kr.ac.tukorea.bandi.domain.member.model;
 
+import kr.ac.tukorea.bandi.domain.member.exception.InactiveCohortException;
 import lombok.Getter;
 
 @Getter
@@ -17,5 +18,11 @@ public class Cohort {
         this.admissionYear = admissionYear;
         this.termCode = termCode;
         this.active = active;
+    }
+
+    public void validateAssignable() {
+        if (!active) {
+            throw new InactiveCohortException(cohortId);
+        }
     }
 }

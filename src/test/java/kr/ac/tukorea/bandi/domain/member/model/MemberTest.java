@@ -79,6 +79,30 @@ class MemberTest {
     }
 
     @Nested
+    @DisplayName("기수 변경")
+    class CohortChange {
+
+        @Test
+        void 동일한_기수로_변경하면_예외가_발생한다() {
+            // given
+            Member member = savedMember(1L, ClubRole.MEMBER, MemberStatus.ACTIVE);
+
+            // when & then
+            assertThatThrownBy(() -> member.validateCohortChangeTo(COHORT_ID))
+                    .isInstanceOf(NoChangeException.class);
+        }
+
+        @Test
+        void 다른_기수로_변경하면_검증을_통과한다() {
+            // given
+            Member member = savedMember(1L, ClubRole.MEMBER, MemberStatus.ACTIVE);
+
+            // when & then
+            assertThatCode(() -> member.validateCohortChangeTo(2L)).doesNotThrowAnyException();
+        }
+    }
+
+    @Nested
     @DisplayName("권한 변경")
     class RoleChange {
 

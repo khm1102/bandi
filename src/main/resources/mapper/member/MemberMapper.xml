@@ -105,6 +105,12 @@
         WHERE member_id = #{memberId}
     </update>
 
+    <update id="updateCohort">
+        UPDATE member
+        SET cohort_id = #{cohortId}
+        WHERE member_id = #{memberId}
+    </update>
+
     <update id="updateRole">
         UPDATE member
         SET role_code = #{role}

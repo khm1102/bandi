@@ -8,7 +8,6 @@ import kr.ac.tukorea.bandi.domain.member.model.MemberStatus;
 public record StatusChangeParam(
         Long memberId,
         MemberStatus newStatus,
-        String reason,
-        Long actorMemberId
+        String reason
 ) {
 }

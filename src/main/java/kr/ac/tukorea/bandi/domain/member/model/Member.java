@@ -63,6 +63,12 @@ public class Member {
         }
     }
 
+    public void validateCohortChangeTo(Long newCohortId) {
+        if (Objects.equals(cohortId, newCohortId)) {
+            throw new NoChangeException("cohort");
+        }
+    }
+
     /**
      * 정본 5.4 — 본인의 ADMIN 권한 하향은 다른 ADMIN만 실행할 수 있다.
      * ADMIN이 최상위 권한이므로 ADMIN에서 벗어나는 변경은 모두 하향이다.
