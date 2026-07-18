@@ -70,21 +70,23 @@
             </a>
         </c:if>
     </nav>
-    <div class="mt-auto flex items-center gap-2.5 border-t border-sidebar-border px-2 pt-3">
-        <c:choose>
-            <c:when test="${role == 'member'}">
-                <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-xs font-black text-white">KH</span>
-                <span class="min-w-0"><b class="block truncate text-sm text-white">김하늘</b><span class="block truncate text-xs text-sidebar-muted">일반 부원 · 배우연출팀</span></span>
-            </c:when>
-            <c:when test="${role == 'leader'}">
-                <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-info text-xs font-black text-white">JD</span>
-                <span class="min-w-0"><b class="block truncate text-sm text-white">정도윤</b><span class="block truncate text-xs text-sidebar-muted">무대팀장</span></span>
-            </c:when>
-            <c:otherwise>
-                <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-foreground">LS</span>
-                <span class="min-w-0"><b class="block truncate text-sm text-white">이서준</b><span class="block truncate text-xs text-sidebar-muted">운영진 · 회장</span></span>
-            </c:otherwise>
-        </c:choose>
-        <a href="<c:url value='/login'/>" class="ml-auto inline-flex min-h-11 items-center rounded-md border border-sidebar-border px-3 text-xs font-extrabold text-sidebar-muted transition-colors hover:bg-sidebar-accent hover:text-white">로그아웃</a>
+    <div class="mt-auto flex flex-col gap-3 border-t border-sidebar-border px-2 pt-3">
+        <div class="flex min-w-0 items-center gap-2.5">
+            <c:choose>
+                <c:when test="${role == 'member'}">
+                    <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-xs font-black text-white">KH</span>
+                    <span class="min-w-0 flex-1"><b class="block truncate text-sm text-white">김하늘</b><span class="block break-keep text-xs leading-4 text-sidebar-muted">일반 부원 · 배우연출팀</span></span>
+                </c:when>
+                <c:when test="${role == 'leader'}">
+                    <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-info text-xs font-black text-white">JD</span>
+                    <span class="min-w-0 flex-1"><b class="block truncate text-sm text-white">정도윤</b><span class="block break-keep text-xs leading-4 text-sidebar-muted">무대팀장</span></span>
+                </c:when>
+                <c:otherwise>
+                    <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-foreground">LS</span>
+                    <span class="min-w-0 flex-1"><b class="block truncate text-sm text-white">이서준</b><span class="block break-keep text-xs leading-4 text-sidebar-muted">운영진 · 회장</span></span>
+                </c:otherwise>
+            </c:choose>
+        </div>
+        <a href="<c:url value='/login'/>" class="inline-flex min-h-11 w-full items-center justify-center whitespace-nowrap rounded-md border border-sidebar-border px-3 text-xs font-extrabold text-sidebar-muted transition-colors hover:bg-sidebar-accent hover:text-white">로그아웃</a>
     </div>
 </aside>
