@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 
 /**
  * 에러의 단일 출처 (컨벤션 9.4).
- * 코드 접두사는 feature별 고정 — C 공통, M member.
+ * 코드 접두사는 feature별 고정 — C 공통, M member, CA calendar.
  * message는 사용자에게 그대로 보여줄 문장으로 작성하고 내부 사정을 노출하지 않는다.
  */
 @Getter
@@ -31,7 +31,10 @@ public enum ErrorCode {
     DUPLICATE_COHORT(HttpStatus.CONFLICT, "M010", "이미 등록된 기수입니다."),
     CHANGE_REASON_REQUIRED(HttpStatus.BAD_REQUEST, "M011", "변경 사유를 입력해 주세요."),
     INACTIVE_COHORT(HttpStatus.BAD_REQUEST, "M012", "비활성화된 기수에는 멤버를 배정할 수 없습니다."),
-    INVALID_MEMBER_STATUS_TRANSITION(HttpStatus.CONFLICT, "M013", "현재 상태에서는 요청한 상태로 변경할 수 없습니다.");
+    INVALID_MEMBER_STATUS_TRANSITION(HttpStatus.CONFLICT, "M013", "현재 상태에서는 요청한 상태로 변경할 수 없습니다."),
+
+    // calendar (CA)
+    CALENDAR_EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "CA001", "존재하지 않는 일정입니다.");
 
     private final HttpStatus status;
     private final String code;
