@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- team은 삭제하지 않고 is_active로 종료한다(정본 5.1). deleted_dttm 컬럼이 없다. -->
+<mapper namespace="kr.ac.tukorea.bandi.domain.member.mapper.TeamMapper">
+
+    <resultMap id="teamResultMap" type="kr.ac.tukorea.bandi.domain.member.model.Team">
+        <constructor>
+            <idArg column="team_id" javaType="java.lang.Long"/>
+            <arg column="name" javaType="java.lang.String"/>
+            <arg column="display_order" javaType="_int"/>
+            <arg column="is_active" javaType="_boolean"/>
+        </constructor>
+    </resultMap>
+
+    <select id="lookupById" resultMap="teamResultMap">
+        SELECT team_id, name, display_order, is_active
+        FROM team
+        WHERE team_id = #{teamId}
+    </select>
+
+    <select id="searchAll" resultMap="teamResultMap">
+        SELECT team_id, name, display_order, is_active
+        FROM team
+        ORDER BY display_order
+    </select>
+
+    <select id="existsByName" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1 FROM team WHERE name = #{name}
+        )
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="teamId">
+        INSERT INTO team (name, display_order, is_active)
+        VALUES (#{name}, #{displayOrder}, #{active})
+    </insert>
+
+    <update id="updateActive">
+        UPDATE team
+        SET is_active = #{active}
+        WHERE team_id = #{teamId}
+    </update>
+</mapper>

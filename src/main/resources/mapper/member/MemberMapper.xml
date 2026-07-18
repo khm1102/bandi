@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!--
+  member는 소프트 삭제 대상이 아니라 deleted_dttm 컬럼이 없다(정본 5.3 — 학번 정체성의
+  정본). 따라서 컨벤션 10.3의 notDeleted 조건을 붙이지 않는다. 종료된 멤버는
+  member_status_code로 구분한다.
+  model에 setter를 두지 않으므로 조회는 resultMap + constructor로 매핑한다(컨벤션 7.3).
+-->
+<mapper namespace="kr.ac.tukorea.bandi.domain.member.mapper.MemberMapper">
+
+    <resultMap id="memberResultMap" type="kr.ac.tukorea.bandi.domain.member.model.Member">
+        <constructor>
+            <idArg column="member_id" javaType="java.lang.Long"/>
+            <arg column="student_no" javaType="java.lang.String"/>
+            <arg column="name" javaType="java.lang.String"/>
+            <arg column="department" javaType="java.lang.String"/>
+            <arg column="academic_status_code" javaType="java.lang.String"/>
+            <arg column="academic_status_verified_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="team_id" javaType="java.lang.Long"/>
+            <arg column="cohort_id" javaType="java.lang.Long"/>
+            <arg column="role_code" javaType="kr.ac.tukorea.bandi.domain.member.model.ClubRole"/>
+            <arg column="member_status_code" javaType="kr.ac.tukorea.bandi.domain.member.model.MemberStatus"/>
+            <arg column="sso_link_status_code" javaType="kr.ac.tukorea.bandi.domain.member.model.SsoLinkStatus"/>
+            <arg column="sso_linked_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="last_login_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="registered_by_member_id" javaType="java.lang.Long"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="memberColumns">
+        member_id, student_no, name, department, academic_status_code, academic_status_verified_dttm,
+        team_id, cohort_id, role_code, member_status_code, sso_link_status_code,
+        sso_linked_dttm, last_login_dttm, registered_by_member_id
+    </sql>
+
+    <select id="lookupById" resultMap="memberResultMap">
+        SELECT <include refid="memberColumns"/>
+        FROM member
+        WHERE member_id = #{memberId}
+    </select>
+
+    <select id="lookupByStudentNo" resultMap="memberResultMap">
+        SELECT <include refid="memberColumns"/>
+        FROM member
+        WHERE student_no = #{studentNo}
+    </select>
+
+    <select id="lookupByIdForUpdate" resultMap="memberResultMap">
+        SELECT <include refid="memberColumns"/>
+        FROM member
+        WHERE member_id = #{memberId}
+        FOR UPDATE
+    </select>
+
+    <select id="searchByCondition" resultMap="memberResultMap">
+        SELECT <include refid="memberColumns"/>
+        FROM member
+        <where>
+            <if test="teamId != null">
+                AND team_id = #{teamId}
+            </if>
+            <if test="status != null">
+                AND member_status_code = #{status}
+            </if>
+            <if test="role != null">
+                AND role_code = #{role}
+            </if>
+        </where>
+        ORDER BY name, member_id
+    </select>
+
+    <!-- 마지막 운영진 보호 검증 전에 활성 운영진 행을 잠근다 (정본 5.4) -->
+    <select id="searchActiveAdminIdsForUpdate" resultType="java.lang.Long">
+        SELECT member_id
+        FROM member
+        WHERE role_code = 'ADMIN'
+          AND member_status_code = 'ACTIVE'
+        ORDER BY member_id
+        FOR UPDATE
+    </select>
+
+    <select id="existsByStudentNo" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1 FROM member WHERE student_no = #{studentNo}
+        )
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="memberId">
+        INSERT INTO member (
+            student_no, name, department, academic_status_code, academic_status_verified_dttm,
+            team_id, cohort_id, role_code, member_status_code, sso_link_status_code,
+            sso_linked_dttm, last_login_dttm, registered_by_member_id
+        ) VALUES (
+            #{studentNo}, #{name}, #{department}, #{academicStatusCode}, #{academicStatusVerifiedDttm},
+            #{teamId}, #{cohortId}, #{role}, #{status}, #{ssoLinkStatus},
+            #{ssoLinkedDttm}, #{lastLoginDttm}, #{registeredByMemberId}
+        )
+    </insert>
+
+    <update id="updateTeam">
+        UPDATE member
+        SET team_id = #{teamId}
+        WHERE member_id = #{memberId}
+    </update>
+
+    <update id="updateCohort">
+        UPDATE member
+        SET cohort_id = #{cohortId}
+        WHERE member_id = #{memberId}
+    </update>
+
+    <update id="updateRole">
+        UPDATE member
+        SET role_code = #{role}
+        WHERE member_id = #{memberId}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE member
+        SET member_status_code = #{status}
+        WHERE member_id = #{memberId}
+    </update>
+</mapper>
