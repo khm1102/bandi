@@ -31,4 +31,15 @@ class PerformanceCastHistoryTest {
                 CastAction.CHANGE, null, 5L, CHANGED_AT))
                 .isInstanceOf(InvalidPerformanceContentException.class);
     }
+
+    @Test
+    void 회차_캐스팅_변경_이력을_생성한다() {
+        PerformanceCastHistory history = PerformanceCastHistory.round(
+                1L, 2L, 3L, 4L, 5L,
+                CastType.PRIMARY, CastType.ALTERNATE,
+                CastAction.CHANGE, "회차 출연 변경", 6L, CHANGED_AT);
+
+        assertThat(history.getScope()).isEqualTo(CastScope.ROUND);
+        assertThat(history.getPerformanceRoundId()).isEqualTo(2L);
+    }
 }
