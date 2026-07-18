@@ -96,8 +96,8 @@ CREATE TABLE performance_cast_history (
         performance_cast_history_id
     ),
     KEY idx_performance_cast_history_round (performance_round_id),
-    KEY idx_performance_cast_history_character (
-        performance_character_id
+    KEY idx_performance_cast_history_character_project (
+        performance_character_id, performance_project_id
     ),
     KEY idx_performance_cast_history_previous_profile (
         previous_public_profile_id
@@ -111,9 +111,11 @@ CREATE TABLE performance_cast_history (
     CONSTRAINT fk_performance_cast_history_project FOREIGN KEY (
         performance_project_id
     ) REFERENCES performance_project (performance_project_id),
-    CONSTRAINT fk_performance_cast_history_character FOREIGN KEY (
-        performance_character_id
-    ) REFERENCES performance_character (performance_character_id),
+    CONSTRAINT fk_performance_cast_history_character_project FOREIGN KEY (
+        performance_character_id, performance_project_id
+    ) REFERENCES performance_character (
+        performance_character_id, performance_project_id
+    ),
     CONSTRAINT fk_performance_cast_history_previous_profile FOREIGN KEY (
         previous_public_profile_id
     ) REFERENCES public_profile (public_profile_id),
