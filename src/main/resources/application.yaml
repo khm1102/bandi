@@ -35,4 +35,4 @@ bandi:
     login-process-url: "https://ksc.tukorea.ac.kr/sso/login_proc.jsp?returnurl=null"
     connect-timeout: 5s
     request-timeout: 15s
-    user-agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120.0 Safari/537.36"
+    user-agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
