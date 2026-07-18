@@ -2,6 +2,8 @@ package kr.ac.tukorea.bandi.domain.file.service;
 
 import kr.ac.tukorea.bandi.domain.file.exception.FileAccessDeniedException;
 import kr.ac.tukorea.bandi.domain.file.exception.FileStorageUnavailableException;
+import kr.ac.tukorea.bandi.domain.file.exception.InvalidFileScopeException;
+import kr.ac.tukorea.bandi.domain.file.exception.InvalidFileStateException;
 import kr.ac.tukorea.bandi.domain.file.model.StorageScope;
 import kr.ac.tukorea.bandi.domain.file.model.StoredFile;
 import kr.ac.tukorea.bandi.global.config.FileStorageProperties;
@@ -134,6 +136,37 @@ class FileServiceTest {
         String url = fileService.createPrivateDownloadUrl(PRIVATE_FILE_ID, FileAccessDecision.GRANTED);
 
         assertThat(url).isEqualTo("https://storage/private-signed");
+    }
+
+    @Test
+    void READY_비공개_파일은_업무_레코드에_연결할_수_있다() {
+        StoredFile source = readyPrivate(PRIVATE_KEY);
+        assignId(source, PRIVATE_FILE_ID);
+        given(metadataService.lookup(PRIVATE_FILE_ID)).willReturn(source);
+
+        fileService.validatePrivateReady(PRIVATE_FILE_ID);
+
+        verify(metadataService).lookup(PRIVATE_FILE_ID);
+    }
+
+    @Test
+    void PENDING_파일은_업무_레코드에_연결할_수_없다() {
+        StoredFile source = pendingPrivate(PRIVATE_KEY);
+        assignId(source, PRIVATE_FILE_ID);
+        given(metadataService.lookup(PRIVATE_FILE_ID)).willReturn(source);
+
+        assertThatThrownBy(() -> fileService.validatePrivateReady(PRIVATE_FILE_ID))
+                .isInstanceOf(InvalidFileStateException.class);
+    }
+
+    @Test
+    void READY_공개_파일은_내부_업무_레코드에_연결할_수_없다() {
+        StoredFile source = readyPublic(PUBLIC_KEY);
+        assignId(source, PUBLIC_FILE_ID);
+        given(metadataService.lookup(PUBLIC_FILE_ID)).willReturn(source);
+
+        assertThatThrownBy(() -> fileService.validatePrivateReady(PUBLIC_FILE_ID))
+                .isInstanceOf(InvalidFileScopeException.class);
     }
 
     @Test
