@@ -53,6 +53,16 @@ public class MemberService {
     private final MemberHistoryMapper memberHistoryMapper;
     private final Clock clock;
 
+    public MemberAccessContext lookupAccessContext(Long memberId) {
+        Member member = memberMapper.lookupById(memberId)
+                .orElseThrow(() -> new MemberNotFoundException(memberId));
+        return MemberAccessContext.from(member);
+    }
+
+    public void validateActiveTeam(Long teamId) {
+        findAssignableTeam(teamId);
+    }
+
     @Transactional
     public Long preRegister(Long actorMemberId, MemberPreRegisterParam param) {
         validateActiveAdmin(actorMemberId);
