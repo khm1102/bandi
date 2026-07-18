@@ -1,5 +1,6 @@
 package kr.ac.tukorea.bandi.domain.member.model;
 
+import kr.ac.tukorea.bandi.domain.member.exception.InvalidMemberStatusTransitionException;
 import kr.ac.tukorea.bandi.domain.member.exception.NoChangeException;
 import kr.ac.tukorea.bandi.domain.member.exception.SelfRoleDemotionException;
 import org.junit.jupiter.api.DisplayName;
@@ -157,7 +158,7 @@ class MemberTest {
             Member member = savedMember(1L, ClubRole.MEMBER, MemberStatus.ACTIVE);
 
             // when & then
-            assertThatThrownBy(() -> member.validateStatusChangeTo(MemberStatus.ACTIVE))
+            assertThatThrownBy(() -> member.validateManagementStatusChangeTo(MemberStatus.ACTIVE))
                     .isInstanceOf(NoChangeException.class);
         }
 
@@ -167,8 +168,67 @@ class MemberTest {
             Member member = savedMember(1L, ClubRole.MEMBER, MemberStatus.PRE_REGISTERED);
 
             // when & then
-            assertThatCode(() -> member.validateStatusChangeTo(MemberStatus.REGISTRATION_CANCELLED))
+            assertThatCode(() -> member.validateManagementStatusChangeTo(MemberStatus.REGISTRATION_CANCELLED))
                     .doesNotThrowAnyException();
+        }
+
+        @Test
+        void SSO_연결_전환은_관리자_상태_변경으로_실행할_수_없다() {
+            // given
+            Member member = savedMember(1L, ClubRole.MEMBER, MemberStatus.PRE_REGISTERED);
+
+            // when & then
+            assertThatThrownBy(() -> member.validateManagementStatusChangeTo(MemberStatus.ACTIVE))
+                    .isInstanceOf(InvalidMemberStatusTransitionException.class);
+        }
+
+        @Test
+        void 활성_멤버는_활동_중지하거나_탈퇴할_수_있다() {
+            // given
+            Member member = savedMember(1L, ClubRole.MEMBER, MemberStatus.ACTIVE);
+
+            // when & then
+            assertThatCode(() -> member.validateManagementStatusChangeTo(MemberStatus.SUSPENDED))
+                    .doesNotThrowAnyException();
+            assertThatCode(() -> member.validateManagementStatusChangeTo(MemberStatus.WITHDRAWN))
+                    .doesNotThrowAnyException();
+        }
+
+        @Test
+        void 활성_멤버를_사전_등록이나_등록_취소로_되돌릴_수_없다() {
+            // given
+            Member member = savedMember(1L, ClubRole.MEMBER, MemberStatus.ACTIVE);
+
+            // when & then
+            assertThatThrownBy(() -> member.validateManagementStatusChangeTo(MemberStatus.PRE_REGISTERED))
+                    .isInstanceOf(InvalidMemberStatusTransitionException.class);
+            assertThatThrownBy(() -> member.validateManagementStatusChangeTo(MemberStatus.REGISTRATION_CANCELLED))
+                    .isInstanceOf(InvalidMemberStatusTransitionException.class);
+        }
+
+        @Test
+        void 활동_중지_멤버는_활성으로_복귀하거나_탈퇴할_수_있다() {
+            // given
+            Member member = savedMember(1L, ClubRole.MEMBER, MemberStatus.SUSPENDED);
+
+            // when & then
+            assertThatCode(() -> member.validateManagementStatusChangeTo(MemberStatus.ACTIVE))
+                    .doesNotThrowAnyException();
+            assertThatCode(() -> member.validateManagementStatusChangeTo(MemberStatus.WITHDRAWN))
+                    .doesNotThrowAnyException();
+        }
+
+        @Test
+        void 탈퇴와_등록_취소는_종료_상태라_다른_상태로_바꿀_수_없다() {
+            // given
+            Member withdrawn = savedMember(1L, ClubRole.MEMBER, MemberStatus.WITHDRAWN);
+            Member cancelled = savedMember(2L, ClubRole.MEMBER, MemberStatus.REGISTRATION_CANCELLED);
+
+            // when & then
+            assertThatThrownBy(() -> withdrawn.validateManagementStatusChangeTo(MemberStatus.ACTIVE))
+                    .isInstanceOf(InvalidMemberStatusTransitionException.class);
+            assertThatThrownBy(() -> cancelled.validateManagementStatusChangeTo(MemberStatus.PRE_REGISTERED))
+                    .isInstanceOf(InvalidMemberStatusTransitionException.class);
         }
     }
 

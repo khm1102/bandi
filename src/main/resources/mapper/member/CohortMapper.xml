@@ -9,7 +9,7 @@
             <idArg column="cohort_id" javaType="java.lang.Long"/>
             <arg column="name" javaType="java.lang.String"/>
             <arg column="admission_year" javaType="_short"/>
-            <arg column="term_code" javaType="java.lang.String"/>
+            <arg column="term_code" javaType="kr.ac.tukorea.bandi.domain.member.model.CohortTerm"/>
             <arg column="is_active" javaType="_boolean"/>
         </constructor>
     </resultMap>

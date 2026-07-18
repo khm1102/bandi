@@ -3,6 +3,7 @@ package kr.ac.tukorea.bandi.domain.member.mapper;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchCondition;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
+import kr.ac.tukorea.bandi.domain.member.model.CohortTerm;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
 import kr.ac.tukorea.bandi.domain.member.model.MemberStatus;
 import kr.ac.tukorea.bandi.domain.member.model.SsoLinkStatus;
@@ -51,11 +52,11 @@ class MemberMapperTest {
         actorTeamId = teams.get(2).getTeamId();
         stageTeamId = teams.get(3).getTeamId();
 
-        Cohort cohort = new Cohort(null, "26-2기", (short) 2026, "SECOND", true);
+        Cohort cohort = new Cohort(null, "26-2기", (short) 2026, CohortTerm.SECOND, true);
         cohortMapper.insert(cohort);
         cohortId = cohort.getCohortId();
 
-        Cohort newCohort = new Cohort(null, "27-1기", (short) 2027, "FIRST", true);
+        Cohort newCohort = new Cohort(null, "27-1기", (short) 2027, CohortTerm.FIRST, true);
         cohortMapper.insert(newCohort);
         newCohortId = newCohort.getCohortId();
     }

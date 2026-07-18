@@ -11,7 +11,7 @@ class CohortTest {
     @Test
     void 활성_기수에는_멤버를_배정할_수_있다() {
         // given
-        Cohort cohort = new Cohort(1L, "26-2기", (short) 2026, "SECOND", true);
+        Cohort cohort = new Cohort(1L, "26-2기", (short) 2026, CohortTerm.SECOND, true);
 
         // when & then
         assertThatCode(cohort::validateAssignable).doesNotThrowAnyException();
@@ -20,7 +20,7 @@ class CohortTest {
     @Test
     void 비활성_기수에는_멤버를_배정할_수_없다() {
         // given
-        Cohort cohort = new Cohort(1L, "26-2기", (short) 2026, "SECOND", false);
+        Cohort cohort = new Cohort(1L, "26-2기", (short) 2026, CohortTerm.SECOND, false);
 
         // when & then
         assertThatThrownBy(cohort::validateAssignable)

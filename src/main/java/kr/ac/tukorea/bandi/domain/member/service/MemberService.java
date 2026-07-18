@@ -27,6 +27,7 @@ import kr.ac.tukorea.bandi.domain.member.model.MemberTeamHistory;
 import kr.ac.tukorea.bandi.domain.member.model.Team;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -62,8 +63,12 @@ public class MemberService {
         findAssignableCohort(param.cohortId());
 
         Member member = Member.preRegister(param.studentNo(), param.name(), param.teamId(),
-                param.cohortId(), param.role(), actorMemberId);
-        memberMapper.insert(member);
+                param.cohortId(), ClubRole.MEMBER, actorMemberId);
+        try {
+            memberMapper.insert(member);
+        } catch (DuplicateKeyException exception) {
+            throw new DuplicateStudentNoException();
+        }
 
         log.info("멤버 사전 등록 - memberId={}, teamId={}, cohortId={}",
                 member.getMemberId(), param.teamId(), param.cohortId());
@@ -125,7 +130,7 @@ public class MemberService {
         validateReason(param.reason());
         validateActiveAdmin(actorMemberId);
         Member member = lockMember(param.memberId());
-        member.validateStatusChangeTo(param.newStatus());
+        member.validateManagementStatusChangeTo(param.newStatus());
         if (member.isActiveAdmin() && param.newStatus() != MemberStatus.ACTIVE) {
             validateAnotherActiveAdminRemains(param.memberId());
         }

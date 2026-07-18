@@ -1,5 +1,6 @@
 package kr.ac.tukorea.bandi.domain.member.model;
 
+import kr.ac.tukorea.bandi.domain.member.exception.InvalidMemberStatusTransitionException;
 import kr.ac.tukorea.bandi.domain.member.exception.NoChangeException;
 import kr.ac.tukorea.bandi.domain.member.exception.SelfRoleDemotionException;
 import lombok.Getter;
@@ -82,9 +83,12 @@ public class Member {
         }
     }
 
-    public void validateStatusChangeTo(MemberStatus newStatus) {
+    public void validateManagementStatusChangeTo(MemberStatus newStatus) {
         if (status == newStatus) {
             throw new NoChangeException("status");
+        }
+        if (!status.canTransitionByAdminTo(newStatus)) {
+            throw new InvalidMemberStatusTransitionException(status, newStatus);
         }
     }
 

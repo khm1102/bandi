@@ -22,6 +22,7 @@ import kr.ac.tukorea.bandi.domain.member.mapper.MemberMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.TeamMapper;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
+import kr.ac.tukorea.bandi.domain.member.model.CohortTerm;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
 import kr.ac.tukorea.bandi.domain.member.model.MemberCohortHistory;
 import kr.ac.tukorea.bandi.domain.member.model.MemberRoleHistory;
@@ -38,6 +39,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DuplicateKeyException;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -94,7 +96,7 @@ class MemberServiceTest {
     }
 
     private static Cohort cohort() {
-        return new Cohort(COHORT_ID, "26-2기", (short) 2026, "SECOND", true);
+        return new Cohort(COHORT_ID, "26-2기", (short) 2026, CohortTerm.SECOND, true);
     }
 
     private void givenActiveAdmin() {
@@ -112,8 +114,7 @@ class MemberServiceTest {
     class PreRegister {
 
         private MemberPreRegisterParam param() {
-            return new MemberPreRegisterParam("2021184000", "김하늘", ACTOR_TEAM_ID, COHORT_ID,
-                    ClubRole.MEMBER);
+            return new MemberPreRegisterParam("2021184000", "김하늘", ACTOR_TEAM_ID, COHORT_ID);
         }
 
         @Test
@@ -132,6 +133,7 @@ class MemberServiceTest {
             verify(memberMapper).insert(captor.capture());
             assertThat(captor.getValue().getStatus()).isEqualTo(MemberStatus.PRE_REGISTERED);
             assertThat(captor.getValue().getSsoLinkStatus()).isEqualTo(SsoLinkStatus.WAITING);
+            assertThat(captor.getValue().getRole()).isEqualTo(ClubRole.MEMBER);
         }
 
         @Test
@@ -144,6 +146,20 @@ class MemberServiceTest {
             assertThatThrownBy(() -> memberService.preRegister(ADMIN_ID, param()))
                     .isInstanceOf(DuplicateStudentNoException.class);
             verify(memberMapper, never()).insert(any());
+        }
+
+        @Test
+        void 동시_등록으로_DB_UNIQUE가_충돌해도_학번_중복_예외로_변환한다() {
+            // given
+            givenActiveAdmin();
+            given(memberMapper.existsByStudentNo("2021184000")).willReturn(false);
+            given(teamMapper.lookupById(ACTOR_TEAM_ID)).willReturn(Optional.of(activeTeam(ACTOR_TEAM_ID)));
+            given(cohortMapper.lookupById(COHORT_ID)).willReturn(Optional.of(cohort()));
+            given(memberMapper.insert(any())).willThrow(new DuplicateKeyException("uk_member_student_no"));
+
+            // when & then
+            assertThatThrownBy(() -> memberService.preRegister(ADMIN_ID, param()))
+                    .isInstanceOf(DuplicateStudentNoException.class);
         }
 
         @Test
@@ -193,7 +209,8 @@ class MemberServiceTest {
             given(memberMapper.existsByStudentNo("2021184000")).willReturn(false);
             given(teamMapper.lookupById(ACTOR_TEAM_ID)).willReturn(Optional.of(activeTeam(ACTOR_TEAM_ID)));
             given(cohortMapper.lookupById(COHORT_ID))
-                    .willReturn(Optional.of(new Cohort(COHORT_ID, "26-2기", (short) 2026, "SECOND", false)));
+                    .willReturn(Optional.of(new Cohort(COHORT_ID, "26-2기", (short) 2026,
+                            CohortTerm.SECOND, false)));
 
             // when & then
             assertThatThrownBy(() -> memberService.preRegister(ADMIN_ID, param()))
@@ -288,7 +305,8 @@ class MemberServiceTest {
             given(memberMapper.lookupByIdForUpdate(TARGET_ID))
                     .willReturn(Optional.of(member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
             given(cohortMapper.lookupById(NEW_COHORT_ID))
-                    .willReturn(Optional.of(new Cohort(NEW_COHORT_ID, "27-1기", (short) 2027, "FIRST", true)));
+                    .willReturn(Optional.of(new Cohort(NEW_COHORT_ID, "27-1기", (short) 2027,
+                            CohortTerm.FIRST, true)));
 
             // when
             memberService.changeCohort(ADMIN_ID,
@@ -310,7 +328,8 @@ class MemberServiceTest {
             given(memberMapper.lookupByIdForUpdate(TARGET_ID))
                     .willReturn(Optional.of(member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
             given(cohortMapper.lookupById(NEW_COHORT_ID))
-                    .willReturn(Optional.of(new Cohort(NEW_COHORT_ID, "27-1기", (short) 2027, "FIRST", false)));
+                    .willReturn(Optional.of(new Cohort(NEW_COHORT_ID, "27-1기", (short) 2027,
+                            CohortTerm.FIRST, false)));
 
             // when & then
             assertThatThrownBy(() -> memberService.changeCohort(ADMIN_ID,

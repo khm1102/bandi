@@ -19,5 +19,14 @@ public enum MemberStatus {
     WITHDRAWN,
 
     /** 합격 취소·중복 등록 등으로 등록이 취소됨 */
-    REGISTRATION_CANCELLED
+    REGISTRATION_CANCELLED;
+
+    public boolean canTransitionByAdminTo(MemberStatus newStatus) {
+        return switch (this) {
+            case PRE_REGISTERED -> newStatus == REGISTRATION_CANCELLED;
+            case ACTIVE -> newStatus == SUSPENDED || newStatus == WITHDRAWN;
+            case SUSPENDED -> newStatus == ACTIVE || newStatus == WITHDRAWN;
+            case WITHDRAWN, REGISTRATION_CANCELLED -> false;
+        };
+    }
 }

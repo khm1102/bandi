@@ -181,11 +181,12 @@ erDiagram
 | `cohort_id` | BIGINT PK | N | 기수 식별자 |
 | `name` | VARCHAR(30) | N | 표시명, 예: `26-2기` |
 | `admission_year` | SMALLINT | N | 가입 연도 |
-| `term_code` | VARCHAR(20) | N | `FIRST`, `SECOND` 등 |
+| `term_code` | VARCHAR(20) | N | `FIRST`, `SECOND` |
 | `is_active` | TINYINT(1) | N | 모집·운영 여부 |
 
 - `uk_cohort_year_term(admission_year, term_code)`
 - `uk_cohort_name(name)`
+- `ck_cohort_term_code`: `FIRST`, `SECOND`만 허용
 
 비활성 기수는 기존 멤버와 이력의 참조를 유지하지만, 신규 사전 등록과 기수 변경의 배정 대상으로 사용할 수 없다.
 
@@ -217,6 +218,7 @@ erDiagram
 - `idx_member_cohort_status(cohort_id, member_status_code)`
 - `idx_member_sso_link_status(sso_link_status_code)`
 - `role_code`는 세 값만 허용한다.
+- 운영진 사전 등록의 최초 권한은 항상 `MEMBER`다. `LEADER`, `ADMIN` 승격은 등록 후 별도 권한 변경 명령과 이력으로만 처리한다.
 - 일반 내부 접근은 `academic_status_code = 'ENROLLED'`, `member_status_code = 'ACTIVE'`, `sso_link_status_code = 'LINKED'`를 모두 만족해야 한다.
 - 온보딩 구현 전에는 사전 등록 정보가 일치한 최초 SSO 연결 트랜잭션에서 `PRE_REGISTERED → ACTIVE`, `WAITING → LINKED`로 전환하고 일반 세션을 생성한다. 이름·학번 대조가 불일치하면 활성화하지 않고 `REVIEW_REQUIRED`로 전환한다.
 - 학교 학적 상태는 매 로그인 때 다시 확인하며 DB 값만 믿고 허용하지 않는다.
@@ -263,6 +265,8 @@ erDiagram
 - `changed_dttm` DATETIME(6)
 
 현재 팀·기수·권한·상태는 `member`에서 조회하고, 각 전용 이력은 감사와 분쟁 확인에 사용한다. 변경 서비스는 현재값 갱신과 해당 이력 삽입을 하나의 트랜잭션으로 처리한다. 변경 처리자 식별자는 요청 본문에서 받지 않고 인증 세션의 로그인 멤버 식별자를 Controller가 Service에 별도 전달한다. 모든 멤버 등록·변경 명령은 Service에서 처리자가 활성 `ADMIN`인지 다시 확인한다.
+
+운영진 상태 변경은 `PRE_REGISTERED → REGISTRATION_CANCELLED`, `ACTIVE → SUSPENDED | WITHDRAWN`, `SUSPENDED → ACTIVE | WITHDRAWN`만 허용한다. `PRE_REGISTERED → ACTIVE`는 학교 SSO 대조 성공 흐름만 수행하며 운영진 상태 변경 명령으로 우회할 수 없다. `WITHDRAWN`, `REGISTRATION_CANCELLED`는 1차 범위에서 종결 상태로 취급한다.
 
 권한 변경·활동 중지·탈퇴 처리 전에 활성 `ADMIN` 행을 잠금 조회한다. 처리 결과 활성 `ADMIN`이 0명이 되면 변경을 거부하며, 본인의 `ADMIN` 권한 하향은 다른 `ADMIN`만 실행할 수 있다.
 

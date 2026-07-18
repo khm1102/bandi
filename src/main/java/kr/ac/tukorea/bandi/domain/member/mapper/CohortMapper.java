@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.domain.member.mapper;
 
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
+import kr.ac.tukorea.bandi.domain.member.model.CohortTerm;
 import org.apache.ibatis.annotations.Param;
 
 import java.util.List;
@@ -13,7 +14,7 @@ public interface CohortMapper {
     List<Cohort> searchAll();
 
     boolean existsByAdmissionYearAndTermCode(@Param("admissionYear") short admissionYear,
-                                             @Param("termCode") String termCode);
+                                             @Param("termCode") CohortTerm termCode);
 
     boolean existsByName(String name);
 
