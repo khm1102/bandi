@@ -5,6 +5,10 @@ CREATE TABLE performance_character (
     description               TEXT          NULL,
     importance_code           VARCHAR(30)   NOT NULL,
     display_order             INT           NOT NULL,
+    created_dttm              DATETIME(6)   NOT NULL
+        DEFAULT CURRENT_TIMESTAMP(6),
+    updated_dttm              DATETIME(6)   NOT NULL
+        DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     CONSTRAINT pk_performance_character PRIMARY KEY (
         performance_character_id
     ),
@@ -36,6 +40,10 @@ CREATE TABLE performance_cast (
     public_profile_id         BIGINT      NOT NULL,
     cast_type_code            VARCHAR(30) NOT NULL,
     display_order             INT         NOT NULL,
+    created_dttm              DATETIME(6) NOT NULL
+        DEFAULT CURRENT_TIMESTAMP(6),
+    updated_dttm              DATETIME(6) NOT NULL
+        DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     CONSTRAINT pk_performance_cast PRIMARY KEY (performance_cast_id),
     CONSTRAINT uk_performance_cast_project_character_profile UNIQUE (
         performance_project_id, performance_character_id,
@@ -76,6 +84,10 @@ CREATE TABLE performance_cast_history (
     reason                       VARCHAR(500)  NULL,
     changed_by_member_id         BIGINT        NOT NULL,
     changed_dttm                 DATETIME(6)   NOT NULL,
+    created_dttm                 DATETIME(6)   NOT NULL
+        DEFAULT CURRENT_TIMESTAMP(6),
+    updated_dttm                 DATETIME(6)   NOT NULL
+        DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     CONSTRAINT pk_performance_cast_history PRIMARY KEY (
         performance_cast_history_id
     ),
@@ -151,6 +163,10 @@ CREATE TABLE production_credit (
     public_name             VARCHAR(100)  NOT NULL,
     public_profile_id       BIGINT        NULL,
     display_order           INT           NOT NULL,
+    created_dttm            DATETIME(6)   NOT NULL
+        DEFAULT CURRENT_TIMESTAMP(6),
+    updated_dttm            DATETIME(6)   NOT NULL
+        DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     CONSTRAINT pk_production_credit PRIMARY KEY (production_credit_id),
     KEY idx_production_credit_project_order (
         performance_project_id, display_order, production_credit_id
@@ -183,6 +199,10 @@ CREATE TABLE performance_media (
     external_url            VARCHAR(1000)  NULL,
     display_order           INT            NOT NULL,
     is_published            TINYINT(1)     NOT NULL DEFAULT 0,
+    created_dttm            DATETIME(6)    NOT NULL
+        DEFAULT CURRENT_TIMESTAMP(6),
+    updated_dttm            DATETIME(6)    NOT NULL
+        DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     CONSTRAINT pk_performance_media PRIMARY KEY (performance_media_id),
     KEY idx_performance_media_project_publish_order (
         performance_project_id, is_published,
