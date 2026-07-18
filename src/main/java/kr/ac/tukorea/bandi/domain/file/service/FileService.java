@@ -61,6 +61,11 @@ public class FileService {
                 file.getStorageKey(), privateUrlLifetime);
     }
 
+    public void validatePrivateReady(Long storedFileId) {
+        StoredFile file = metadataService.lookup(storedFileId);
+        file.validatePrivateDownload();
+    }
+
     public Long promoteToPublic(Long privateStoredFileId, String domain,
                                 Long uploadedByMemberId) {
         StoredFile source = metadataService.lookup(privateStoredFileId);
