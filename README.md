@@ -1,6 +1,6 @@
 # bandi
 
-연극 동아리 통합 관리 시스템 (SSR 웹). 단원·공연·회비·일정 관리와 공개 예매 화면을 목표로 한다 — 기능 정의는 확정 중이며, 디자인 방향과 개발 기반이 먼저 확정된 상태다.
+연극 동아리 통합 관리 시스템 (SSR 웹). 단원·공연·회비·일정 관리와 공개 관람 신청 화면을 제공한다. 1차 기능과 스키마 기준선은 확정됐으며 온보딩은 후속 범위다.
 
 ## 스택
 
@@ -10,6 +10,7 @@
 | 뷰 | **JSP + JSTL + 태그 파일** | Thymeleaf에서 전환 (2026-07) — 컨벤션 12장 |
 | 스타일 | Tailwind CSS v4 (Play CDN) + shadcn 토큰 | 화이트/네이비/민트 팔레트 — `docs/design-guide.md` |
 | DB | MySQL 8.4 (Docker) · MyBatis · Flyway | 호스트 포트 **3307** |
+| 파일 저장 | MinIO | 내부 파일 비공개·공개 콘텐츠 버킷 분리 |
 | 인증 | 세션 기반 (spring-session-jdbc) | JWT 아님 — 확정 사항 |
 
 ## 시작하기
@@ -31,11 +32,14 @@ docker compose up -d        # MySQL 8.4 (3307, bandi/bandi1234, 스키마 bandi�
 
 `dev`(로컬 개발 기본, 미지정 시 자동) / `prod` 2단계 + 테스트 전용 `test`. DB 접속값은 `.env`에서 로딩한다(`DB_HOST`/`DB_PORT`/`DB_USERNAME`/`DB_PASSWORD`). 상세: 컨벤션 17장.
 
+파일 저장은 MinIO를 사용한다. 설정 키는 `MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_PRIVATE_BUCKET`, `MINIO_PUBLIC_BUCKET`이며 로컬 더미값은 `.env.example`을 따른다. MinIO 컨테이너·버킷 초기화와 Java SDK는 파일 저장 기능 PR에서 함께 추가한다.
+
 ## 현재 상태 / 임시 결정 (로그인 기능 도입 시 해소)
 
 - **Security는 임시 전체 개방**(`SecurityConfig`의 `permitAll`) — 로그인 기능이 없어서다. CSRF는 활성 유지. 로그인 구현 시 인가 규칙을 작성한다 (컨벤션 18장이 목표 상태)
-- 기능/스키마 정의 문서 작성 예정 — 그 전까지 이슈 내용만을 근거로 구현한다
-- `/style-guide`의 사이드바 내비는 feature 확정 시 항목을 채운다 (`WEB-INF/tags/layout.tag`)
+- 기능은 `docs/feature-spec.md`, 스키마는 `docs/database-schema.md`를 구현 기준으로 사용한다
+- 컨벤션 18.2의 역할 코드와 11.3의 `CHECK`·generated column 규칙은 확정 스키마에 맞춰 동기화돼 있다
+- 온보딩 화면·API·테이블은 후속 범위이며 1차 구현에 포함하지 않는다
 
 ## 프로젝트 구조 (요약)
 
@@ -58,6 +62,10 @@ src/main/resources
 |---|---|
 | [docs/coding-convention.md](docs/coding-convention.md) | 전체 컨벤션 (통독 금지 — AGENTS.md의 색인으로 필요한 장만) |
 | [docs/design-guide.md](docs/design-guide.md) | 디자인 시스템 정본 — 토큰·타이포·셸·컴포넌트 명세·레시피 |
+| [docs/feature-spec.md](docs/feature-spec.md) | 1차 기능 범위와 구현 순서 정본 |
+| [docs/database-schema.md](docs/database-schema.md) | 테이블·제약·트랜잭션·마이그레이션 순서 정본 |
+| [docs/performance-operations-plan.md](docs/performance-operations-plan.md) | 공연 제작·홍보·관람 운영 상세 |
+| [docs/member-onboarding-plan.md](docs/member-onboarding-plan.md) | 후속 온보딩 설계 기록 (1차 구현 제외) |
 | [AGENTS.md](AGENTS.md) | AI 에이전트 공통 규약 (MUST 규칙·TDD·DoD·금지 목록) |
 
 ## Git
