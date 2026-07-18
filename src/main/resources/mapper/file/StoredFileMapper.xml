@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.ac.tukorea.bandi.domain.file.mapper.StoredFileMapper">
+
+    <resultMap id="storedFileResultMap" type="kr.ac.tukorea.bandi.domain.file.model.StoredFile">
+        <constructor>
+            <idArg column="stored_file_id" javaType="java.lang.Long"/>
+            <arg column="original_name" javaType="java.lang.String"/>
+            <arg column="storage_scope_code" javaType="kr.ac.tukorea.bandi.domain.file.model.StorageScope"/>
+            <arg column="storage_key" javaType="java.lang.String"/>
+            <arg column="content_type" javaType="java.lang.String"/>
+            <arg column="size_bytes" javaType="java.lang.Long"/>
+            <arg column="sha256_hash" javaType="java.lang.String"/>
+            <arg column="object_etag" javaType="java.lang.String"/>
+            <arg column="uploaded_by_member_id" javaType="java.lang.Long"/>
+            <arg column="upload_status_code" javaType="kr.ac.tukorea.bandi.domain.file.model.UploadStatus"/>
+            <arg column="created_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="deleted_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="storedFileColumns">
+        stored_file_id, original_name, storage_scope_code, storage_key, content_type,
+        size_bytes, sha256_hash, object_etag, uploaded_by_member_id, upload_status_code,
+        created_dttm, updated_dttm, deleted_dttm
+    </sql>
+
+    <sql id="notDeleted">
+        deleted_dttm IS NULL
+    </sql>
+
+    <select id="lookupById" resultMap="storedFileResultMap">
+        SELECT <include refid="storedFileColumns"/>
+        FROM stored_file
+        WHERE stored_file_id = #{storedFileId}
+          AND <include refid="notDeleted"/>
+    </select>
+
+    <select id="lookupByIdForUpdate" resultMap="storedFileResultMap">
+        SELECT <include refid="storedFileColumns"/>
+        FROM stored_file
+        WHERE stored_file_id = #{storedFileId}
+          AND <include refid="notDeleted"/>
+        FOR UPDATE
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="storedFileId">
+        INSERT INTO stored_file (
+            original_name, storage_scope_code, storage_key, content_type, size_bytes,
+            sha256_hash, object_etag, uploaded_by_member_id, upload_status_code
+        ) VALUES (
+            #{originalName}, #{storageScope}, #{storageKey}, #{contentType}, #{sizeBytes},
+            #{sha256Hash}, #{objectEtag}, #{uploadedByMemberId}, #{uploadStatus}
+        )
+    </insert>
+
+    <update id="updateReady">
+        UPDATE stored_file
+        SET object_etag = #{objectEtag},
+            upload_status_code = 'READY'
+        WHERE stored_file_id = #{storedFileId}
+          AND upload_status_code = 'PENDING'
+          AND <include refid="notDeleted"/>
+    </update>
+
+    <update id="updateFailed">
+        UPDATE stored_file
+        SET upload_status_code = 'FAILED'
+        WHERE stored_file_id = #{storedFileId}
+          AND upload_status_code = 'PENDING'
+          AND <include refid="notDeleted"/>
+    </update>
+</mapper>
