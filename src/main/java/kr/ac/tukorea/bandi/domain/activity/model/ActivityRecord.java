@@ -113,6 +113,12 @@ public class ActivityRecord {
                 reviewedDttm, reviewedByMemberId);
     }
 
+    public void validateFileChange() {
+        if (!status.canEdit()) {
+            throw new InvalidActivityRecordStateException(status);
+        }
+    }
+
     private ActivityRecord copy(LocalDateTime newActivityDttm, String newTitle,
                                 String newBody, int newParticipantCount,
                                 ActivityRecordStatus newStatus, Long actorMemberId,

@@ -6,11 +6,12 @@ public record FileReferenceResponse(
         Long storedFileId,
         String originalName,
         String contentType,
-        long sizeBytes
+        long sizeBytes,
+        Long uploadedByMemberId
 ) {
 
     public static FileReferenceResponse from(StoredFile file) {
         return new FileReferenceResponse(file.getStoredFileId(), file.getOriginalName(),
-                file.getContentType(), file.getSizeBytes());
+                file.getContentType(), file.getSizeBytes(), file.getUploadedByMemberId());
     }
 }
