@@ -15,6 +15,7 @@ import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordManageCont
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordManageDetailResponse;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordSummaryResponse;
 import kr.ac.tukorea.bandi.domain.activity.exception.ActivityRecordAccessDeniedException;
+import kr.ac.tukorea.bandi.domain.activity.exception.ActivityRecordFileNotFoundException;
 import kr.ac.tukorea.bandi.domain.activity.exception.InvalidActivityRecordException;
 import kr.ac.tukorea.bandi.domain.activity.mapper.ActivityRecordMapper;
 import kr.ac.tukorea.bandi.domain.activity.model.ActivityFileRole;
@@ -398,6 +399,54 @@ class ActivityRecordServiceTest {
         assertThat(activityRecordService.createApprovedDownloadUrl(
                 ACTOR_ID, RECORD_ID, FILE_ID))
                 .isEqualTo("http://localhost:9000/evidence");
+    }
+
+    @Test
+    void 작성자는_관리_가능한_기록의_현재_사진을_다운로드한다() {
+        given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(memberContext());
+        given(activityRecordMapper.lookupManageContent(RECORD_ID))
+                .willReturn(Optional.of(manageContent(ACTOR_ID)));
+        given(activityRecordMapper.existsCurrentStoredFile(RECORD_ID, FILE_ID))
+                .willReturn(true);
+        given(fileService.createPrivateDownloadUrl(
+                FILE_ID, FileAccessDecision.GRANTED))
+                .willReturn("http://localhost:9000/manage-evidence");
+
+        String result = activityRecordService.createManageableDownloadUrl(
+                ACTOR_ID, RECORD_ID, FILE_ID);
+
+        assertThat(result).isEqualTo("http://localhost:9000/manage-evidence");
+    }
+
+    @Test
+    void 권한이_없는_MEMBER는_관리용_사진을_다운로드하지_못한다() {
+        given(memberService.lookupAccessContext(OTHER_MEMBER_ID))
+                .willReturn(new MemberAccessContext(OTHER_MEMBER_ID,
+                        STAGE_TEAM_ID, false, false, true));
+        given(activityRecordMapper.lookupManageContent(RECORD_ID))
+                .willReturn(Optional.of(manageContent(ACTOR_ID)));
+
+        assertThatThrownBy(() -> activityRecordService
+                .createManageableDownloadUrl(
+                        OTHER_MEMBER_ID, RECORD_ID, FILE_ID))
+                .isInstanceOf(ActivityRecordAccessDeniedException.class);
+
+        verify(fileService, never()).createPrivateDownloadUrl(any(), any());
+    }
+
+    @Test
+    void 현재_연결이_아닌_파일은_관리용으로_다운로드하지_못한다() {
+        given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(memberContext());
+        given(activityRecordMapper.lookupManageContent(RECORD_ID))
+                .willReturn(Optional.of(manageContent(ACTOR_ID)));
+        given(activityRecordMapper.existsCurrentStoredFile(RECORD_ID, FILE_ID))
+                .willReturn(false);
+
+        assertThatThrownBy(() -> activityRecordService
+                .createManageableDownloadUrl(ACTOR_ID, RECORD_ID, FILE_ID))
+                .isInstanceOf(ActivityRecordFileNotFoundException.class);
+
+        verify(fileService, never()).createPrivateDownloadUrl(any(), any());
     }
 
     private ActivityRecordWriteParam writeParam(Long teamId) {

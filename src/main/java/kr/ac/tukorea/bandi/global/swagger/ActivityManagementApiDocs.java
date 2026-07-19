@@ -51,6 +51,13 @@ public interface ActivityManagementApiDocs {
             @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @PathVariable Long activityRecordId);
 
+    @Operation(summary = "관리 가능한 현재 증빙 이미지 다운로드")
+    @GetMapping("/{activityRecordId}/files/{storedFileId}/download")
+    ResponseEntity<Void> download(
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
+            @PathVariable Long activityRecordId,
+            @PathVariable Long storedFileId);
+
     @Operation(summary = "활동 기록 초안 등록")
     @PostMapping
     ResponseEntity<ActivityRecordCreatedResponse> create(
