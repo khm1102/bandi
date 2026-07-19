@@ -8,6 +8,7 @@ import kr.ac.tukorea.bandi.domain.performance.dto.request.PublicPageStatusReques
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceIdentifierResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformancePublicPageResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformancePublicNoticeResponse;
+import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceViewingGuideResponse;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformancePublicPageService;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformancePublicNoticeService;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
@@ -65,6 +66,13 @@ public class PerformancePublicPageManagementApiController
             PerformanceViewingGuideRequest request) {
         publicPageService.saveViewingGuide(actorMemberId, request.toParam());
         return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public ResponseEntity<PerformanceViewingGuideResponse> lookupViewingGuide(
+            @LoginMember Long actorMemberId, Long projectId) {
+        return ResponseEntity.ok(publicPageService.lookupViewingGuide(
+                actorMemberId, projectId).orElse(null));
     }
 
     @Override

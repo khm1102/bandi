@@ -60,6 +60,12 @@ class SecurityConfigTest {
             mockMvc.perform(get("/notice-management/test")
                             .with(user("tester").roles(role)))
                     .andExpect(status().isForbidden());
+            mockMvc.perform(get("/performance-management/test")
+                            .with(user("tester").roles(role)))
+                    .andExpect(status().isForbidden());
+            mockMvc.perform(get("/api/performance-page-management/test")
+                            .with(user("tester").roles(role)))
+                    .andExpect(status().isForbidden());
             mockMvc.perform(get("/api/admin/public-notices/test")
                             .with(user("tester").roles(role)))
                     .andExpect(status().isForbidden());
@@ -77,6 +83,8 @@ class SecurityConfigTest {
         for (String path : new String[]{
                 "/members/test", "/reservations/test", "/showops/test",
                 "/notice-management/test", "/api/admin/public-notices/test",
+                "/performance-management/test",
+                "/api/performance-page-management/test",
                 "/api/reservation-management/test", "/api/policies/test"}) {
             mockMvc.perform(get(path).with(user("admin").roles("ADMIN")))
                     .andExpect(status().isOk());
@@ -214,14 +222,16 @@ class SecurityConfigTest {
 class SecurityTestController {
 
     @GetMapping({"/dashboard", "/members/test", "/reservations/test",
-            "/showops/test", "/notice-management/test", "/notices/test",
+            "/showops/test", "/notice-management/test",
+            "/performance-management/test", "/notices/test",
             "/performances/show",
             "/reserve/test", "/swagger-ui/test", "/api/test",
             "/api/members/me", "/api/members/reference/teams",
             "/api/members/reference/cohorts", "/api/members/test",
             "/api/public-notices/test",
             "/api/reservation-management/test", "/api/policies/test",
-            "/api/admin/public-notices/test"})
+            "/api/admin/public-notices/test",
+            "/api/performance-page-management/test"})
     ResponseEntity<Void> page() {
         return ResponseEntity.ok().build();
     }

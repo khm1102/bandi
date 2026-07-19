@@ -87,6 +87,10 @@ class PerformancePublicPageMapperTest {
                 .containsExactly("햄릿", "소극장");
         assertThat(pageMapper.lookupPublicGuide(
                 project.getPerformanceProjectId(), NOW)).isPresent();
+        assertThat(pageMapper.lookupGuideByProject(
+                project.getPerformanceProjectId())).isPresent().get()
+                .extracting("entryPolicy", "directions")
+                .containsExactly("공연 30분 전 입장", "정문");
         assertThat(pageMapper.searchPages()).hasSize(1);
 
         pageMapper.updateGuide(guide.edit("공연 40분 전 입장",

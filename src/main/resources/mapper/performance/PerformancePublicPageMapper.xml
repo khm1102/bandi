@@ -204,6 +204,15 @@
           AND <include refid="publicVisibility"/>
     </select>
 
+    <select id="lookupGuideByProject" resultMap="viewingGuideResponseMap">
+        SELECT performance_viewing_guide_id, performance_project_id,
+               entry_policy, late_entry_policy, recording_policy,
+               cancellation_policy, accessibility_policy, directions,
+               parking_information
+        FROM performance_viewing_guide
+        WHERE performance_project_id = #{performanceProjectId}
+    </select>
+
     <select id="searchPages" resultMap="publicPageResponseMap">
         SELECT page.performance_public_page_id,
                page.performance_project_id,

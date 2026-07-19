@@ -7,6 +7,7 @@ import kr.ac.tukorea.bandi.domain.performance.dto.request.PerformancePublicPageS
 import kr.ac.tukorea.bandi.domain.performance.dto.request.PerformancePublicPageWriteParam;
 import kr.ac.tukorea.bandi.domain.performance.dto.request.PerformanceViewingGuideWriteParam;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformancePublicPageResponse;
+import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceViewingGuideResponse;
 import kr.ac.tukorea.bandi.domain.performance.exception.DuplicatePerformancePublicPageException;
 import kr.ac.tukorea.bandi.domain.performance.exception.InvalidPerformancePublicPageException;
 import kr.ac.tukorea.bandi.domain.performance.exception.PerformanceAccessDeniedException;
@@ -175,6 +176,31 @@ class PerformancePublicPageServiceTest {
         verify(performanceProjectService,
                 org.mockito.Mockito.times(2))
                 .validateExists(ACTOR_ID, PROJECT_ID);
+    }
+
+    @Test
+    void 운영진은_비공개_프로젝트의_관람_안내를_조회한다() {
+        PerformanceViewingGuideResponse response =
+                new PerformanceViewingGuideResponse(40L, PROJECT_ID,
+                        "입장", "지연 입장", "촬영", "취소",
+                        "접근성", "오시는 길", "주차");
+        given(memberService.lookupAccessContext(ACTOR_ID))
+                .willReturn(adminContext());
+        given(publicPageMapper.lookupGuideByProject(PROJECT_ID))
+                .willReturn(Optional.of(response));
+
+        assertThat(service.lookupViewingGuide(ACTOR_ID, PROJECT_ID))
+                .contains(response);
+    }
+
+    @Test
+    void 일반_멤버는_관리용_관람_안내를_조회할_수_없다() {
+        given(memberService.lookupAccessContext(ACTOR_ID))
+                .willReturn(memberContext());
+
+        assertThatThrownBy(() -> service.lookupViewingGuide(
+                ACTOR_ID, PROJECT_ID))
+                .isInstanceOf(PerformanceAccessDeniedException.class);
     }
 
     @Test

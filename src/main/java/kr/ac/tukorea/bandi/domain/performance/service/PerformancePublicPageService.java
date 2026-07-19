@@ -113,6 +113,14 @@ public class PerformancePublicPageService {
         return publicPageMapper.searchPages();
     }
 
+    public Optional<PerformanceViewingGuideResponse> lookupViewingGuide(
+            Long actorMemberId, Long performanceProjectId) {
+        validateAdmin(actorMemberId);
+        performanceProjectService.validateExists(
+                actorMemberId, performanceProjectId);
+        return publicPageMapper.lookupGuideByProject(performanceProjectId);
+    }
+
     public PerformancePublicPageResponse lookupPublic(String slug) {
         return publicPageMapper.lookupPublicBySlug(slug, now())
                 .orElseThrow(() ->
