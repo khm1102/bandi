@@ -25,7 +25,8 @@ public class SecurityConfig {
                         .atCommonLocations()).permitAll()
                 .requestMatchers("/login", "/error", "/notices/**",
                         "/performances/**", "/reserve/**", "/docs/**",
-                        "/api-docs/**", "/style-guide/**").permitAll()
+                        "/api-docs/**", "/swagger-ui/**",
+                        "/style-guide/**").permitAll()
                 .requestMatchers("/members/**", "/reservations/**",
                         "/showops/**", "/api/members/**",
                         "/api/reservations/**", "/api/showops/**")

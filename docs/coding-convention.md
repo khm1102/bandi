@@ -402,10 +402,8 @@ kr.ac.tukorea.bandi
 ├── domain
 │   └── member                             # ── feature 단위 (club, performance, fee ...) ──
 │       ├── controller
-│       │   ├── docs
-│       │   │   └── MemberApiDocs.java         # springdoc 애노테이션 전용 인터페이스
 │       │   ├── MemberController.java          # SSR (JSP)
-│       │   └── MemberApiController.java       # /api — MemberApiDocs 구현
+│       │   └── MemberApiController.java       # /api — global.swagger.MemberApiDocs 구현
 │       ├── service
 │       │   └── MemberService.java
 │       ├── mapper
@@ -426,6 +424,7 @@ kr.ac.tukorea.bandi
 └── global
     ├── config                             # WebConfig, MyBatisConfig ...
     ├── security                           # SecurityConfig, @LoginMember, ArgumentResolver
+    ├── swagger                            # OpenApiConfig, ApiTag, 기능별 ~ApiDocs 인터페이스
     ├── exception                          # ErrorCode, BusinessException, ErrorResponse, ApiExceptionHandler, SsrExceptionHandler
     └── response                           # /api 공통 응답 객체 (현재 미사용 — 도입 여부는 16.3)
 ```
@@ -498,6 +497,7 @@ Mapper ──→ model
 - feature 패키지 간 직접 참조는 **service → 다른 feature의 service**까지만 허용한다. 다른 feature의 mapper/model을 직접 사용하지 않는다.
 - 순환 참조가 생기면 공통 개념을 별도 feature로 추출한다.
 - `global`에 특정 feature 전용 로직을 넣지 않는다. 인증 관련 클래스는 `config`가 아닌 `security`에 응집시킨다.
+- **Swagger 문서 예외**: `global.swagger`는 API 문서의 단일 관리 지점이다. `~ApiDocs`가 HTTP 계약을 표현하기 위해 feature의 request/response DTO를 참조하는 것만 허용하며, feature의 Service·Mapper·model 참조와 비즈니스 로직은 금지한다.
 
 ## 9. 레이어 규칙
 
@@ -1128,16 +1128,19 @@ docker compose up -d      # MySQL 8.x (포트/계정/DB명 팀 고정)
 ## 19. API 문서화 (springdoc / Swagger)
 
 ### 19.1 ApiDocs 인터페이스 패턴
-springdoc 애노테이션(`@Tag`, `@Operation`, `@Parameter`)이 컨트롤러를 오염시키지 않도록, **문서 애노테이션과 HTTP 매핑을 인터페이스에 두고 컨트롤러가 구현**한다.
+springdoc 애노테이션(`@Tag`, `@Operation`, `@Parameter`)이 컨트롤러를 오염시키지 않도록, **문서 애노테이션과 HTTP 매핑을 `global.swagger` 인터페이스에 두고 컨트롤러가 구현**한다.
 
-- 위치: `domain.{feature}.controller.docs.{도메인}ApiDocs`
+- 위치: `global.swagger.{도메인}ApiDocs` — Swagger 관련 설정과 문서 계약은 이 패키지를 단일 정본으로 사용한다
 - `@RequestMapping`/`@GetMapping` 등 매핑 애노테이션과 `@Valid`, 검증 애노테이션까지 인터페이스에 선언
 - 구현 컨트롤러(`~ApiController`)에는 `@RestController` + `@RequiredArgsConstructor` + 로직만. 메소드에 `@Override` 필수
+- `~ApiDocs`는 feature의 request/response DTO만 참조할 수 있고 Service·Mapper·model은 참조하지 않는다
+- 공통 태그명은 `ApiTag`, 세션 인증 스키마명은 `OpenApiConfig.SESSION_COOKIE_SCHEME`을 사용한다
 
 ```java
-// domain/member/controller/docs/MemberApiDocs.java
+// global/swagger/MemberApiDocs.java
 @RequestMapping("/api/members")
-@Tag(name = "Member API", description = "단원 관리 API")
+@Tag(name = ApiTag.MEMBER, description = "단원 관리 API")
+@SecurityRequirement(name = OpenApiConfig.SESSION_COOKIE_SCHEME)
 public interface MemberApiDocs {
 
     @Operation(summary = "단원 검색", description = "조건에 맞는 단원 목록을 조회합니다.")
