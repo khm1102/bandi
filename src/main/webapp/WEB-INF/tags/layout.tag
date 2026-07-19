@@ -36,7 +36,7 @@
     <t:sidebar active="${active}" role="${navRole}" roleQuery="${roleQuery}"/>
 
     <div class="min-w-0 flex-1">
-        <header class="sticky top-14 z-20 flex min-h-12 items-center gap-3 border-b bg-card/95 px-4 py-2.5 backdrop-blur md:px-6 lg:top-0 lg:px-7">
+        <header class="sticky top-14 z-20 hidden min-h-12 items-center gap-3 border-b bg-card/95 px-4 py-2.5 backdrop-blur md:flex md:px-6 lg:top-0 lg:px-7">
             <p class="hidden text-xs font-semibold text-muted-foreground md:block">반디 / <b class="font-extrabold text-foreground"><c:out value="${empty crumb ? title : crumb}"/></b></p>
             <t:devRoleSwitcher active="${active}" role="${role}" allowedRoles="${allowedRoles}"/>
         </header>
