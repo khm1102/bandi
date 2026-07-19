@@ -17,7 +17,7 @@
         <div class="border-y" data-notice-manage-list><p class="px-5 py-12 text-center text-sm text-muted-foreground">공시를 불러오는 중입니다.</p></div>
     </main>
 
-    <t:sheet id="noticePublishSheet" title="공시 게시 설정" description="시작 시각이 미래이면 예약 게시돼요.">
+    <t:sheet id="noticePublishSheet" title="공시 게시 설정" description="시작 시각이 미래이면 예약 게시돼요." presentation="form">
         <jsp:attribute name="footer"><t:button variant="outline" action="close-sheet">취소</t:button><t:button pageAction="notice-publish-save">게시 설정 저장</t:button></jsp:attribute>
         <jsp:body><form data-notice-publish-form class="grid gap-4"><p data-notice-publish-title class="border-l-4 border-primary bg-accent px-3 py-2.5 text-sm font-bold"></p><label class="text-xs font-bold text-muted-foreground">게시 시작 *<input id="noticePublishStart" class="${input} mt-1.5 w-full" type="datetime-local" required></label><label class="text-xs font-bold text-muted-foreground">게시 종료<input id="noticePublishEnd" class="${input} mt-1.5 w-full" type="datetime-local"></label></form></jsp:body>
     </t:sheet>

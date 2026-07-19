@@ -51,7 +51,7 @@
         <p class="mt-2 text-sm text-muted-foreground">조회 토큰을 입력하면 신청 정보가 이곳에 표시돼요.</p>
     </section>
 
-    <t:sheet id="publicReservationCancelSheet" title="관람 신청 전체 취소" description="신청한 모든 좌석이 취소되며 되돌릴 수 없어요.">
+    <t:sheet id="publicReservationCancelSheet" title="관람 신청 전체 취소" description="신청한 모든 좌석이 취소되며 되돌릴 수 없어요." presentation="form">
         <jsp:attribute name="footer">
             <t:button variant="outline" action="close-sheet">취소하지 않기</t:button>
             <t:button variant="danger" pageAction="reservation-cancel-save">모든 좌석 취소</t:button>

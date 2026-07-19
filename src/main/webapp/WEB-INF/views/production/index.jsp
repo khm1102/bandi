@@ -59,7 +59,7 @@
     </section>
     </main>
 
-    <t:sheet id="productionTaskSheet" title="제작 업무 추가" description="담당 팀과 일정, 완료 기준이 드러나도록 작성해요.">
+    <t:sheet id="productionTaskSheet" title="제작 업무 추가" description="담당 팀과 일정, 완료 기준이 드러나도록 작성해요." presentation="workspace">
         <jsp:attribute name="footer">
             <t:button variant="outline" action="close-sheet">취소</t:button>
             <t:button pageAction="production-save">업무 저장</t:button>
@@ -87,7 +87,7 @@
         </jsp:body>
     </t:sheet>
 
-    <t:sheet id="productionStatusSheet" title="업무 상태 변경" description="상태 변경은 이력으로 남아요.">
+    <t:sheet id="productionStatusSheet" title="업무 상태 변경" description="상태 변경은 이력으로 남아요." presentation="form">
         <jsp:attribute name="footer">
             <t:button variant="outline" action="close-sheet">취소</t:button>
             <t:button pageAction="production-status-save">상태 저장</t:button>

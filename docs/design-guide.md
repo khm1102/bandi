@@ -103,10 +103,12 @@
 - **action-heavy 목록**(행마다 조치가 있는 운영 목록 — 신청 관리, 멤버, 출석): 모바일은 세로 카드/리스트, 데스크톱은 구조화 목록(그리드 행). **모바일 가로 스크롤 테이블 금지.** 행 전체 또는 "열기" 버튼이 상세 sheet를 연다.
 - **`<t:dataTable>`은 읽기 중심의 고밀도 표에만** 사용한다(변경 이력, 통계 명세 등). 이때만 가로 스크롤 허용.
 
-### 5.2 sheet vs 페이지 섹션 vs modal
+### 5.2 입력 작업 vs 상세 sheet vs modal
 
-- **sheet**: 짧은 생성·수정 폼(입력 ~7개 이하), 목록 항목의 상세·조치. 모바일 하단, 데스크톱 우측에서 열린다.
-- **페이지 내부 섹션**: 장문·복잡한 설정(외부 공개 폼, 관람 안내). 섹션 전환은 URL hash로 보존.
+- **입력 `presentation="form"`**: 입력 약 6개 이하의 짧은 생성·수정. 모바일은 하단 sheet, 데스크톱은 `max-w-2xl` 중앙 대화상자로 열어 빈 전고 패널을 만들지 않는다.
+- **입력 `presentation="workspace"`**: 장문, 파일, 조건부 필드 또는 7개 이상의 복합 작성. 모바일은 하단 sheet, 데스크톱은 `max-w-4xl` 중앙 작업공간으로 열고 관련 필드를 묶는다. 저장에 1분 이상 걸리거나 URL 복구·임시 저장이 필요하면 전용 작성 페이지로 승격한다.
+- **상세 sheet(기본값)**: 목록 항목의 상세·이력처럼 원래 화면과 함께 봐야 하는 조회·조치만 사용한다. 모바일 하단, 데스크톱은 읽기 폭을 확보한 `30rem` 우측 패널이다.
+- **페이지 내부 섹션/전용 작성 페이지**: 공시 본문처럼 긴 입력, 여러 저장 단위, 이탈 복구가 필요한 작업.
 - **modal**: 파괴적 동작의 최종 확인(공용 confirm) 등 초단문. 중첩 modal은 만들지 않는다.
 
 ### 5.3 sticky action bar
@@ -165,7 +167,7 @@
 | `<t:badge>` | `tone`*, `dot`, body | 상태 표시 — 아이콘·문구 병행 |
 | `<t:emptyState>` | `title`*, `message`, body | 이유 + 시작 행동 포함 |
 | `<t:modal>` | `id`*, `title`*, `description`, `footer` | 확인 등 초단문 전용 |
-| `<t:sheet>` | `id`*, `title`*, `description`, `footer`(fragment), body | 모바일 하단·데스크톱 우측 패널. `openSheet(id)`/`data-open-sheet`. 포커스 트랩·Esc·복귀·스크롤 잠금 내장 |
+| `<t:sheet>` | `id`*, `title`*, `description`, `presentation`(`panel` 기본/`form`/`workspace`), `footer`(fragment), body | 모바일 하단. 데스크톱은 상세 우측 패널·짧은 중앙 폼·넓은 작성 작업공간으로 분기. `openSheet(id)`/`data-open-sheet`. 포커스 트랩·Esc·복귀·스크롤 잠금 내장 |
 | `<t:formField>` | 기존 동일 | `<form:form>` 내부 전용 |
 | `<t:button>` | 기존 동일 | 기본 높이 44px |
 | `<t:dataTable>` | `caption`*, `cssClass` | **읽기 중심 고밀도 표 전용** (5.1) |

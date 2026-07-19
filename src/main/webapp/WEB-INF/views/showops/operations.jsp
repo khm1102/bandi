@@ -107,7 +107,7 @@
     </div>
 
     <%-- 입장 취소 sheet --%>
-    <t:sheet id="entryCancelSheet" title="좌석 입장 취소" description="잘못 처리한 좌석의 입장 기록을 되돌려요.">
+    <t:sheet id="entryCancelSheet" title="좌석 입장 취소" description="잘못 처리한 좌석의 입장 기록을 되돌려요." presentation="form">
         <jsp:attribute name="footer">
             <t:button variant="outline" action="close-sheet">닫기</t:button>
             <t:button variant="danger" pageAction="entry-cancel-save">입장 취소</t:button>

@@ -63,7 +63,7 @@
     </main>
 
     <c:if test="${canManage}">
-        <t:sheet id="checkSheet" title="체크리스트 항목 추가" description="담당 팀과 적용 범위를 지정해요.">
+        <t:sheet id="checkSheet" title="체크리스트 항목 추가" description="담당 팀과 적용 범위를 지정해요." presentation="form">
             <jsp:attribute name="footer"><t:button variant="outline" action="close-sheet">취소</t:button><t:button pageAction="checklist-save">준비 항목 저장</t:button></jsp:attribute>
             <jsp:body>
                 <form data-checklist-form class="flex flex-col gap-4">

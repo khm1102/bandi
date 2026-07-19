@@ -79,12 +79,12 @@
                 </article>
             </template>
 
-            <t:sheet id="feeSheet" title="회비 초안 추가" description="초안으로 저장한 뒤 내용을 확인하고 부과를 시작해요.">
+            <t:sheet id="feeSheet" title="회비 초안 추가" description="초안으로 저장한 뒤 내용을 확인하고 부과를 시작해요." presentation="form">
                 <jsp:attribute name="footer"><t:button variant="outline" action="close-sheet">취소</t:button><t:button pageAction="fee-save"><span data-fee-submit-label>초안 저장</span></t:button></jsp:attribute>
                 <jsp:body><div class="flex flex-col gap-4"><div><label class="${label}" for="feeName">항목명 <span class="text-accent-foreground">*</span></label><input class="${input}" id="feeName" type="text" maxlength="150" placeholder="예) 7월 회식비"></div><div><label class="${label}" for="feeDescription">설명</label><textarea class="min-h-24 w-full resize-y rounded-md border border-input bg-card px-3 py-2.5 text-sm" id="feeDescription"></textarea></div><div class="grid grid-cols-1 gap-4 sm:grid-cols-2"><div><label class="${label}" for="feeAmt">금액 <span class="text-accent-foreground">*</span></label><input class="${input}" id="feeAmt" type="number" min="1" step="1" inputmode="numeric"></div><div><label class="${label}" for="feeDue">납부 기한 <span class="text-accent-foreground">*</span></label><input class="${input}" id="feeDue" type="date"></div></div><div><label class="${label}" for="feeTerm">기준 시기</label><input class="${input}" id="feeTerm" type="text" maxlength="20" placeholder="예) 2026-1"></div><p class="hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-sm text-destructive" data-fee-form-error role="alert"></p></div></jsp:body>
             </t:sheet>
 
-            <t:sheet id="feeCancelSheet" title="회비 항목 취소" description="부과 기록은 삭제하지 않고 취소 상태와 사유를 남겨요.">
+            <t:sheet id="feeCancelSheet" title="회비 항목 취소" description="부과 기록은 삭제하지 않고 취소 상태와 사유를 남겨요." presentation="form">
                 <jsp:attribute name="footer"><t:button variant="outline" action="close-sheet">닫기</t:button><t:button variant="danger" pageAction="fee-cancel">회비 항목 취소</t:button></jsp:attribute>
                 <jsp:body><label class="${label}" for="feeCancelReason">취소 사유 <span class="text-accent-foreground">*</span></label><textarea class="min-h-32 w-full resize-y rounded-md border border-input bg-card px-3 py-2.5 text-sm" id="feeCancelReason" maxlength="500"></textarea><p class="mt-2 hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-sm text-destructive" data-fee-cancel-error role="alert"></p></jsp:body>
             </t:sheet>

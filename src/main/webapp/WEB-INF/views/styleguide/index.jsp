@@ -169,6 +169,15 @@
                     </div>
                 </form:form>
             </t:card>
+
+            <t:card title="입력 작업 프레젠테이션">
+                <p class="mb-4 max-w-3xl text-sm leading-6 text-muted-foreground">모바일에서는 모두 하단 sheet로 열리고, 데스크톱에서는 작업 길이에 따라 중앙 폼과 넓은 작업공간으로 구분해요. 우측 패널은 상세·이력 조회에만 사용해요.</p>
+                <div class="flex flex-wrap gap-2">
+                    <t:button pageAction="open-form-sheet">짧은 등록 폼</t:button>
+                    <t:button variant="outline" pageAction="open-workspace-sheet">긴 작성 작업공간</t:button>
+                    <t:button variant="outline" pageAction="open-panel-sheet">상세 조회 패널</t:button>
+                </div>
+            </t:card>
         </div>
 
         <t:modal id="demoModal" title="일정 추가" description="모달 컴포넌트 데모 — 폼이나 확인 메시지를 담는다.">
@@ -180,5 +189,19 @@
                 <p class="text-sm text-muted-foreground">본문 영역입니다. 닫기는 우상단 ×, 하단 취소, 바깥 클릭 세 경로 모두 동작합니다.</p>
             </jsp:body>
         </t:modal>
+
+        <t:sheet id="demoFormSheet" title="멤버 사전 등록" description="학교 SSO 첫 로그인 전에 기본 정보를 등록해요." presentation="form">
+            <jsp:attribute name="footer"><t:button variant="outline" action="close-sheet">취소</t:button><t:button action="close-sheet">멤버 등록</t:button></jsp:attribute>
+            <jsp:body><div class="grid gap-4"><div class="grid gap-4 sm:grid-cols-2"><div><label for="demoStudentNo" class="mb-1.5 block text-xs font-bold text-muted-foreground">학번 *</label><input id="demoStudentNo" class="h-11 w-full rounded-md border border-input px-3" placeholder="학교 학번"></div><div><label for="demoMemberName" class="mb-1.5 block text-xs font-bold text-muted-foreground">이름 *</label><input id="demoMemberName" class="h-11 w-full rounded-md border border-input px-3" placeholder="학교 등록 이름"></div></div><div><label for="demoMemberTeam" class="mb-1.5 block text-xs font-bold text-muted-foreground">소속 팀 *</label><select id="demoMemberTeam" class="h-11 w-full rounded-md border border-input px-3"><option>팀을 선택해 주세요</option></select></div></div></jsp:body>
+        </t:sheet>
+
+        <t:sheet id="demoWorkspaceSheet" title="활동 기록 작성" description="장문과 파일을 함께 다루는 작업은 넓은 화면에서 작성해요." presentation="workspace">
+            <jsp:attribute name="footer"><t:button variant="outline" action="close-sheet">취소</t:button><t:button action="close-sheet">초안 저장</t:button></jsp:attribute>
+            <jsp:body><div class="grid gap-4"><div><label for="demoActivityTitle" class="mb-1.5 block text-xs font-bold text-muted-foreground">활동 제목 *</label><input id="demoActivityTitle" class="h-11 w-full rounded-md border border-input px-3" placeholder="예) 2막 전체 런스루"></div><div class="grid gap-4 md:grid-cols-2"><div><label for="demoActivityDate" class="mb-1.5 block text-xs font-bold text-muted-foreground">활동 일시 *</label><input id="demoActivityDate" type="datetime-local" class="h-11 w-full rounded-md border border-input px-3"></div><div><label for="demoActivityCount" class="mb-1.5 block text-xs font-bold text-muted-foreground">참여 인원 *</label><input id="demoActivityCount" type="number" class="h-11 w-full rounded-md border border-input px-3"></div></div><div><label for="demoActivityBody" class="mb-1.5 block text-xs font-bold text-muted-foreground">활동 내용 *</label><textarea id="demoActivityBody" class="min-h-40 w-full resize-y rounded-md border border-input px-3 py-2.5" placeholder="진행 내용과 결과를 구체적으로 작성해 주세요."></textarea></div></div></jsp:body>
+        </t:sheet>
+
+        <t:sheet id="demoPanelSheet" title="멤버 변경 이력" description="현재 목록과 비교하는 조회 정보는 우측 패널에 유지해요.">
+            <jsp:body><ol class="divide-y"><li class="py-4"><b class="text-sm">소속 팀 변경</b><p class="mt-1 text-sm text-muted-foreground">무대팀 → 오퍼팀 · 2026. 7. 20.</p></li><li class="py-4"><b class="text-sm">권한 변경</b><p class="mt-1 text-sm text-muted-foreground">멤버 → 팀장 · 2026. 3. 2.</p></li></ol></jsp:body>
+        </t:sheet>
     </jsp:body>
 </t:layout>

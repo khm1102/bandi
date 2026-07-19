@@ -37,7 +37,7 @@
     </section>
     </main>
 
-    <t:sheet id="calendarEventSheet" title="일정 등록" description="전체 또는 팀 일정을 등록하고 기간과 장소를 관리해요.">
+    <t:sheet id="calendarEventSheet" title="일정 등록" description="전체 또는 팀 일정을 등록하고 기간과 장소를 관리해요." presentation="workspace">
         <jsp:attribute name="footer">
             <t:button variant="danger" pageAction="calendar-delete" cssClass="mr-auto hidden" confirm="이 일정을 삭제할까요?" confirmAction="일정 삭제">삭제</t:button>
             <t:button variant="outline" action="close-sheet">취소</t:button>

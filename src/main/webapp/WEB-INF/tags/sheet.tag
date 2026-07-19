@@ -1,16 +1,28 @@
-<%@ tag description="sheet — 짧은 생성·수정 폼과 목록 상세용 패널. 모바일 하단, 데스크톱 우측. js/common/sheet.js의 openSheet(id) 또는 data-open-sheet로 연다" pageEncoding="UTF-8" trimDirectiveWhitespaces="true" %>
+<%@ tag description="sheet — 모바일 하단 sheet. 데스크톱은 presentation에 따라 우측 패널·중앙 폼·넓은 작업공간으로 표시한다" pageEncoding="UTF-8" trimDirectiveWhitespaces="true" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ attribute name="id" required="true" %>
 <%@ attribute name="title" required="true" %>
 <%@ attribute name="description" %>
+<%@ attribute name="presentation" %>
 <%@ attribute name="footer" fragment="true" %>
 <c:set var="descriptionId" value="${id}Description"/>
+<c:choose>
+    <c:when test="${presentation eq 'form'}">
+        <c:set var="panelClass" value="md:bottom-auto md:left-1/2 md:right-auto md:top-1/2 md:h-fit md:max-h-[calc(100dvh-3rem)] md:w-11/12 md:max-w-2xl md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-xl md:border"/>
+    </c:when>
+    <c:when test="${presentation eq 'workspace'}">
+        <c:set var="panelClass" value="md:bottom-auto md:left-1/2 md:right-auto md:top-1/2 md:h-fit md:max-h-[calc(100dvh-3rem)] md:w-11/12 md:max-w-4xl md:-translate-x-1/2 md:-translate-y-1/2 md:rounded-xl md:border"/>
+    </c:when>
+    <c:otherwise>
+        <c:set var="panelClass" value="md:inset-y-0 md:left-auto md:right-0 md:top-0 md:w-[30rem] md:rounded-none md:border-l"/>
+    </c:otherwise>
+</c:choose>
 <div id="${id}" class="fixed inset-0 z-50 hidden bg-sidebar/50 backdrop-blur-sm"
      data-sheet-back aria-hidden="true">
-    <div class="fixed inset-x-0 bottom-0 top-20 flex flex-col overflow-hidden rounded-t-xl bg-card shadow-xl md:inset-y-0 md:left-auto md:right-0 md:top-0 md:w-96 md:rounded-none md:border-l"
+    <div class="fixed inset-x-0 bottom-0 top-20 flex flex-col overflow-hidden rounded-t-xl bg-card shadow-xl ${panelClass}"
          role="dialog" aria-modal="true" aria-labelledby="${id}Title"
          aria-describedby="${not empty description ? descriptionId : ''}"
-         data-sheet-panel tabindex="-1">
+         data-sheet-panel data-sheet-presentation="${empty presentation ? 'panel' : presentation}" tabindex="-1">
         <header class="flex items-start gap-3 border-b px-5 py-4">
             <div class="min-w-0">
                 <h2 id="${id}Title" class="text-base font-bold"><c:out value="${title}"/></h2>

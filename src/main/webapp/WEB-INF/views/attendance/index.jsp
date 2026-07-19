@@ -83,7 +83,7 @@
     </main>
 
     <c:if test="${canManage}">
-        <t:sheet id="eventSheet" title="행사 생성" description="행사를 저장한 뒤 참석 대상을 확정해요.">
+        <t:sheet id="eventSheet" title="행사 생성" description="행사를 저장한 뒤 참석 대상을 확정해요." presentation="workspace">
             <jsp:attribute name="footer">
                 <t:button variant="outline" action="close-sheet">취소</t:button>
                 <t:button pageAction="event-save"><span data-event-save-label>행사 저장</span></t:button>
@@ -130,7 +130,7 @@
             </jsp:body>
         </t:sheet>
 
-        <t:sheet id="targetSheet" title="참석 대상 확정" description="확정하면 출석 명단이 생성되며 대상은 다시 바꿀 수 없어요.">
+        <t:sheet id="targetSheet" title="참석 대상 확정" description="확정하면 출석 명단이 생성되며 대상은 다시 바꿀 수 없어요." presentation="form">
             <jsp:attribute name="footer">
                 <t:button variant="outline" action="close-sheet">취소</t:button>
                 <t:button pageAction="event-target-confirm">대상 확정</t:button>

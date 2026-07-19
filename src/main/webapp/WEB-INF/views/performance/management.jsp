@@ -244,7 +244,7 @@
     </div>
 
     <%-- 프로젝트 sheet --%>
-    <t:sheet id="performanceProjectSheet" title="공연 프로젝트" description="학기당 하나의 공연 프로젝트를 운영해요.">
+    <t:sheet id="performanceProjectSheet" title="공연 프로젝트" description="학기당 하나의 공연 프로젝트를 운영해요." presentation="workspace">
         <jsp:attribute name="footer"><t:button variant="outline" action="close-sheet">닫기</t:button><t:button pageAction="performance-project-save">프로젝트 저장</t:button></jsp:attribute>
         <jsp:body>
             <form data-project-form class="grid gap-4">
@@ -264,7 +264,7 @@
     </t:sheet>
 
     <%-- 회차 sheet --%>
-    <t:sheet id="performanceRoundSheet" title="공연 회차" description="신청과 입장 시각은 공연 시작보다 앞서야 해요.">
+    <t:sheet id="performanceRoundSheet" title="공연 회차" description="신청과 입장 시각은 공연 시작보다 앞서야 해요." presentation="workspace">
         <jsp:attribute name="footer"><t:button variant="outline" action="close-sheet">닫기</t:button><t:button pageAction="performance-round-save">회차 저장</t:button></jsp:attribute>
         <jsp:body>
             <form data-round-form class="grid gap-4">
@@ -281,7 +281,7 @@
     </t:sheet>
 
     <%-- 상태 변경 sheet (프로젝트/회차/공개 페이지 공용) --%>
-    <t:sheet id="performanceStatusSheet" title="상태 변경">
+    <t:sheet id="performanceStatusSheet" title="상태 변경" presentation="form">
         <jsp:attribute name="footer"><t:button variant="outline" action="close-sheet">닫기</t:button><t:button pageAction="performance-status-save">상태 변경</t:button></jsp:attribute>
         <jsp:body>
             <p data-status-summary class="rounded-md bg-secondary px-3 py-2.5 text-sm font-bold"></p>
@@ -294,7 +294,7 @@
     </t:sheet>
 
     <%-- 회차 접근성 sheet --%>
-    <t:sheet id="performanceAccessibilitySheet" title="회차 접근성" description="자막·수어·음성 해설 등 실제 제공 정보를 입력해요.">
+    <t:sheet id="performanceAccessibilitySheet" title="회차 접근성" description="자막·수어·음성 해설 등 실제 제공 정보를 입력해요." presentation="form">
         <jsp:attribute name="footer"><t:button variant="outline" action="close-sheet">닫기</t:button><t:button pageAction="performance-accessibility-save">접근성 저장</t:button></jsp:attribute>
         <jsp:body>
             <div data-accessibility-list class="mb-4 flex flex-col gap-2"></div>
@@ -308,7 +308,7 @@
     </t:sheet>
 
     <%-- 공시 연결 sheet --%>
-    <t:sheet id="performanceNoticeSheet" title="공연 공시 연결" description="게시 중이거나 게시 예정인 공시를 선택해요.">
+    <t:sheet id="performanceNoticeSheet" title="공연 공시 연결" description="게시 중이거나 게시 예정인 공시를 선택해요." presentation="form">
         <jsp:attribute name="footer"><t:button variant="outline" action="close-sheet">닫기</t:button><t:button pageAction="performance-notice-save">공시 연결</t:button></jsp:attribute>
         <jsp:body>
             <label class="${label}" for="performanceNoticeSelect">공시 *</label>

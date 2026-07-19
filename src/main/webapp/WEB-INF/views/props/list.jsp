@@ -51,7 +51,7 @@
     </template>
 
     <c:if test="${canAdmin}">
-        <t:sheet id="assetSheet" title="품목 등록" description="소유 구분과 재고 기준을 함께 기록해요.">
+        <t:sheet id="assetSheet" title="품목 등록" description="소유 구분과 재고 기준을 함께 기록해요." presentation="workspace">
             <jsp:attribute name="footer">
                 <t:button variant="outline" action="close-sheet">취소</t:button>
                 <t:button pageAction="asset-save">등록</t:button>

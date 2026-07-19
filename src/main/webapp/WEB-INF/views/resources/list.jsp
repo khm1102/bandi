@@ -108,7 +108,7 @@
         </article>
     </template>
 
-    <t:sheet id="uploadSheet" title="자료 업로드" description="파일은 MinIO 비공개 저장소에 보관해요.">
+    <t:sheet id="uploadSheet" title="자료 업로드" description="파일은 MinIO 비공개 저장소에 보관해요." presentation="workspace">
         <jsp:attribute name="footer"><t:button variant="outline" action="close-sheet">취소</t:button><t:button pageAction="resource-upload"><span data-resource-submit-label>자료 업로드</span></t:button></jsp:attribute>
         <jsp:body>
             <div class="flex flex-col gap-4">
@@ -126,7 +126,7 @@
         </jsp:body>
     </t:sheet>
 
-    <t:sheet id="noticeSheet" title="짧은 공지 작성" description="간단한 전달 사항을 바로 게시해요.">
+    <t:sheet id="noticeSheet" title="짧은 공지 작성" description="간단한 전달 사항을 바로 게시해요." presentation="form">
         <jsp:attribute name="footer"><t:button variant="outline" action="close-sheet">취소</t:button><t:button pageAction="notice-add"><span data-notice-submit-label>공지 게시</span></t:button></jsp:attribute>
         <jsp:body>
             <div class="flex flex-col gap-4">
