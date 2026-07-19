@@ -23,7 +23,7 @@ class MemberTest {
      * 테스트 본문이 인자 순서에 휘둘리지 않게 한다.
      */
     private static Member savedMember(Long memberId, ClubRole role, MemberStatus status) {
-        return new Member(memberId, "2020184000", "이서준", "컴퓨터공학부", "ENROLLED", null,
+        return new Member(memberId, "2020184000", "이서준", "컴퓨터공학부", AcademicStatus.ENROLLED, null,
                 ACTOR_TEAM_ID, COHORT_ID, role, status, SsoLinkStatus.LINKED, null, null, REGISTRAR_ID);
     }
 
@@ -49,7 +49,7 @@ class MemberTest {
                     ClubRole.MEMBER, REGISTRAR_ID);
 
             // then — 학적과 로그인 시각은 학교 SSO 연결이 채운다
-            assertThat(member.getAcademicStatusCode()).isNull();
+            assertThat(member.getAcademicStatus()).isNull();
             assertThat(member.getSsoLinkedDttm()).isNull();
             assertThat(member.getLastLoginDttm()).isNull();
         }
