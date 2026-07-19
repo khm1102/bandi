@@ -16,6 +16,7 @@ import kr.ac.tukorea.bandi.domain.activity.service.ActivityRecordService;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import kr.ac.tukorea.bandi.global.swagger.ActivityManagementApiDocs;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -43,6 +44,17 @@ public class ActivityManagementApiController implements ActivityManagementApiDoc
             @LoginMember Long actorMemberId, Long activityRecordId) {
         return ResponseEntity.ok(activityRecordService.lookupManageable(actorMemberId,
                 activityRecordId));
+    }
+
+    @Override
+    public ResponseEntity<Void> download(@LoginMember Long actorMemberId,
+                                         Long activityRecordId,
+                                         Long storedFileId) {
+        String url = activityRecordService.createManageableDownloadUrl(
+                actorMemberId, activityRecordId, storedFileId);
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(URI.create(url))
+                .build();
     }
 
     @Override

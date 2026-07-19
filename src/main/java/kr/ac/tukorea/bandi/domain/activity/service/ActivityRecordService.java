@@ -215,6 +215,23 @@ public class ActivityRecordService {
                 activityRecordMapper.searchReviewHistories(activityRecordId));
     }
 
+    public String createManageableDownloadUrl(Long actorMemberId,
+                                              Long activityRecordId,
+                                              Long storedFileId) {
+        MemberAccessContext access = readableAccess(actorMemberId);
+        ActivityRecordManageContentResponse content = activityRecordMapper
+                .lookupManageContent(activityRecordId)
+                .orElseThrow(() -> new ActivityRecordNotFoundException(
+                        activityRecordId));
+        validateManageContent(access, content, actorMemberId);
+        if (!activityRecordMapper.existsCurrentStoredFile(
+                activityRecordId, storedFileId)) {
+            throw new ActivityRecordFileNotFoundException(storedFileId);
+        }
+        return fileService.createPrivateDownloadUrl(
+                storedFileId, FileAccessDecision.GRANTED);
+    }
+
     private void review(Long actorMemberId, Long activityRecordId,
                         String comment, boolean approve) {
         MemberAccessContext access = memberService.lookupAccessContext(actorMemberId);

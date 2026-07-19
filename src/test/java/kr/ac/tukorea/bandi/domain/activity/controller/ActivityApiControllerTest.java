@@ -108,6 +108,19 @@ class ActivityApiControllerTest {
     }
 
     @Test
+    void 관리_가능한_현재_증빙은_MinIO_주소로_리다이렉트한다() throws Exception {
+        given(activityRecordService.createManageableDownloadUrl(ACTOR_ID,
+                RECORD_ID, FILE_ID)).willReturn(
+                "http://localhost:9000/bandi-private/manage-evidence");
+
+        mockMvc.perform(get("/api/activity-management/{recordId}/files/"
+                        + "{fileId}/download", RECORD_ID, FILE_ID))
+                .andExpect(status().isFound())
+                .andExpect(header().string("Location",
+                        "http://localhost:9000/bandi-private/manage-evidence"));
+    }
+
+    @Test
     void 멤버가_자기_팀_활동_초안을_등록한다() throws Exception {
         given(activityRecordService.createDraft(any(), any())).willReturn(RECORD_ID);
 
