@@ -5,12 +5,14 @@ import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPreRegisterParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.RoleChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.StatusChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.TeamChangeParam;
+import kr.ac.tukorea.bandi.domain.member.dto.response.SchoolConnectionResponse;
 import kr.ac.tukorea.bandi.domain.member.exception.ChangeReasonRequiredException;
 import kr.ac.tukorea.bandi.domain.member.exception.CohortNotFoundException;
 import kr.ac.tukorea.bandi.domain.member.exception.DuplicateStudentNoException;
 import kr.ac.tukorea.bandi.domain.member.exception.LastActiveAdminException;
 import kr.ac.tukorea.bandi.domain.member.exception.MemberManagementForbiddenException;
 import kr.ac.tukorea.bandi.domain.member.exception.MemberNotFoundException;
+import kr.ac.tukorea.bandi.domain.member.exception.SchoolMemberNotRegisteredException;
 import kr.ac.tukorea.bandi.domain.member.exception.TeamNotFoundException;
 import kr.ac.tukorea.bandi.domain.member.mapper.CohortMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.MemberHistoryMapper;
@@ -21,9 +23,11 @@ import kr.ac.tukorea.bandi.domain.member.model.Cohort;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
 import kr.ac.tukorea.bandi.domain.member.model.MemberCohortHistory;
 import kr.ac.tukorea.bandi.domain.member.model.MemberRoleHistory;
+import kr.ac.tukorea.bandi.domain.member.model.MemberSchoolConnection;
 import kr.ac.tukorea.bandi.domain.member.model.MemberStatus;
 import kr.ac.tukorea.bandi.domain.member.model.MemberStatusHistory;
 import kr.ac.tukorea.bandi.domain.member.model.MemberTeamHistory;
+import kr.ac.tukorea.bandi.domain.member.model.SchoolIdentity;
 import kr.ac.tukorea.bandi.domain.member.model.Team;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +50,8 @@ import java.util.Objects;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class MemberService {
+
+    private static final String SCHOOL_SSO_LINK_REASON = "학교 SSO 최초 연결";
 
     private final MemberMapper memberMapper;
     private final TeamMapper teamMapper;
@@ -151,6 +157,21 @@ public class MemberService {
 
         log.info("멤버 상태 변경 - memberId={}, newStatus={}, actorMemberId={}",
                 param.memberId(), param.newStatus(), actorMemberId);
+    }
+
+    @Transactional
+    public SchoolConnectionResponse connectSchoolIdentity(SchoolIdentity identity) {
+        Member member = memberMapper.lookupByStudentNoForUpdate(identity.studentNo())
+                .orElseThrow(SchoolMemberNotRegisteredException::new);
+        MemberSchoolConnection connection = member.determineSchoolConnection(identity, now());
+        memberMapper.updateSchoolConnection(connection);
+        if (connection.changesMemberStatusFrom(member)) {
+            memberHistoryMapper.insertStatusHistory(
+                    connection.toStatusHistory(member, SCHOOL_SSO_LINK_REASON));
+        }
+
+        log.info("학교 신원 확인 반영 - memberId={}, outcome={}", member.getMemberId(), connection.outcome());
+        return SchoolConnectionResponse.from(member, connection);
     }
 
     private Member lockMember(Long memberId) {

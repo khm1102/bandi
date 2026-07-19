@@ -200,7 +200,7 @@ erDiagram
 | `student_no` | VARCHAR(20) | N | 학교 학번, 로그인 연결 키 |
 | `name` | VARCHAR(50) | N | 표시 이름 |
 | `department` | VARCHAR(100) | Y | 마지막 학교 확인 학과 |
-| `academic_status_code` | VARCHAR(30) | Y | 마지막 학적 상태 |
+| `academic_status_code` | VARCHAR(30) | Y | `ENROLLED`, `LEAVE_OF_ABSENCE`, `GRADUATED`, `UNKNOWN` |
 | `academic_status_verified_dttm` | DATETIME(6) | Y | 학교에서 확인한 시각 |
 | `team_id` | BIGINT FK | N | 현재 소속 팀, 한 명당 하나 |
 | `cohort_id` | BIGINT FK | N | 가입 기수 |
@@ -218,6 +218,7 @@ erDiagram
 - `idx_member_cohort_status(cohort_id, member_status_code)`
 - `idx_member_sso_link_status(sso_link_status_code)`
 - `role_code`는 세 값만 허용한다.
+- `ck_member_academic_status_code`: 학교 라벨을 정규화한 네 학적 코드만 허용하며 SSO 확인 전에는 NULL이다.
 - 운영진 사전 등록의 최초 권한은 항상 `MEMBER`다. `LEADER`, `ADMIN` 승격은 등록 후 별도 권한 변경 명령과 이력으로만 처리한다.
 - 일반 내부 접근은 `academic_status_code = 'ENROLLED'`, `member_status_code = 'ACTIVE'`, `sso_link_status_code = 'LINKED'`를 모두 만족해야 한다.
 - 온보딩 구현 전에는 사전 등록 정보가 일치한 최초 SSO 연결 트랜잭션에서 `PRE_REGISTERED → ACTIVE`, `WAITING → LINKED`로 전환하고 일반 세션을 생성한다. 이름·학번 대조가 불일치하면 활성화하지 않고 `REVIEW_REQUIRED`로 전환한다.
