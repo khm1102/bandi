@@ -42,7 +42,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST,
                         "/api/files/*/public-promotions")
                 .hasRole("ADMIN")
-                .requestMatchers(HttpMethod.GET, "/api/members/me")
+                .requestMatchers(HttpMethod.GET, "/api/members/me",
+                        "/api/members/reference/teams")
                 .authenticated()
                 .requestMatchers("/members/**", "/reservations/**",
                         "/showops/**", "/api/members/**",
