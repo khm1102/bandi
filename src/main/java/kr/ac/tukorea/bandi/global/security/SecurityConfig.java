@@ -47,11 +47,13 @@ public class SecurityConfig {
                 .authenticated()
                 .requestMatchers("/members/**", "/reservations/**",
                         "/notice-management/**",
+                        "/performance-management/**",
                         "/showops/**", "/api/members/**",
                         "/api/reservations/**", "/api/showops/**",
                         "/api/reservation-management/**",
                         "/api/policies/**",
-                        "/api/admin/public-notices/**")
+                        "/api/admin/public-notices/**",
+                        "/api/performance-page-management/**")
                 .hasRole("ADMIN")
                 .anyRequest().authenticated());
         http.exceptionHandling(exception -> exception

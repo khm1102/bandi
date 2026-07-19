@@ -22,6 +22,9 @@ public interface PerformancePublicPageMapper {
     Optional<PerformanceViewingGuide> lookupGuideByProjectForUpdate(
             Long performanceProjectId);
 
+    Optional<PerformanceViewingGuideResponse> lookupGuideByProject(
+            Long performanceProjectId);
+
     Optional<PerformanceViewingGuideResponse> lookupPublicGuide(
             @Param("performanceProjectId") Long performanceProjectId,
             @Param("currentDttm") LocalDateTime currentDttm);

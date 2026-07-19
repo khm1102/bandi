@@ -12,6 +12,7 @@ import kr.ac.tukorea.bandi.domain.performance.dto.request.PublicPageStatusReques
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceIdentifierResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformancePublicPageResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformancePublicNoticeResponse;
+import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceViewingGuideResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -59,6 +60,12 @@ public interface PerformancePublicPageManagementApiDocs {
     ResponseEntity<Void> saveViewingGuide(
             @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @Valid @RequestBody PerformanceViewingGuideRequest request);
+
+    @Operation(summary = "공연 관람 안내 관리 조회")
+    @GetMapping("/projects/{projectId}/viewing-guide")
+    ResponseEntity<PerformanceViewingGuideResponse> lookupViewingGuide(
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
+            @PathVariable Long projectId);
 
     @Operation(summary = "공연 관련 공시 연결 목록 조회")
     @GetMapping("/projects/{projectId}/notices")
