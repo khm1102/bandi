@@ -1,0 +1,32 @@
+package kr.ac.tukorea.bandi.global.swagger;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformancePublicPageResponse;
+import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceRoundResponse;
+import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceViewingGuideResponse;
+import kr.ac.tukorea.bandi.domain.performance.dto.response.PublicPerformanceRoundResponse;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import java.util.List;
+
+@RequestMapping("/api/public-performances")
+@Tag(name = ApiTag.PERFORMANCE, description = "외부 공개 공연 기본 정보 API")
+public interface PublicPerformanceApiDocs {
+    @Operation(summary = "공개 공연 페이지 조회")
+    @GetMapping("/{slug}")
+    ResponseEntity<PerformancePublicPageResponse> lookup(@PathVariable String slug);
+
+    @Operation(summary = "공개 공연 회차와 접근성 지원 조회")
+    @GetMapping("/{slug}/rounds")
+    ResponseEntity<List<PublicPerformanceRoundResponse>> searchRounds(
+            @PathVariable String slug);
+
+    @Operation(summary = "공개 공연 관람 안내 조회")
+    @GetMapping("/{slug}/viewing-guide")
+    ResponseEntity<PerformanceViewingGuideResponse> lookupViewingGuide(
+            @PathVariable String slug);
+}
