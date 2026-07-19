@@ -167,8 +167,8 @@
                 <p class="mt-3 hidden rounded-md bg-warning-soft px-3 py-2.5 text-xs text-warning" data-roster-readonly>출석 확인 중인 행사에서만 상태를 처리할 수 있습니다.</p>
                 <div class="mt-4 overflow-hidden rounded-md border">
                     <t:dataTable caption="행사 출석 명단">
-                        <thead><tr><th class="w-11"><input type="checkbox" class="size-4 accent-primary" data-roster-all aria-label="전체 선택"></th><th>멤버</th><th>팀</th><th>상태</th><th>처리 정보</th></tr></thead>
-                        <tbody data-roster-list><tr data-roster-state><td colspan="5" class="px-5 py-11 text-center"><b data-roster-state-title>명단을 불러오는 중입니다</b><p class="mt-1 text-xs text-muted-foreground" data-roster-state-message>잠시만 기다려 주세요.</p></td></tr></tbody>
+                        <thead><tr><th class="w-11"><input type="checkbox" class="size-4 accent-primary" data-roster-all aria-label="전체 선택"></th><th>멤버</th><th>팀</th><th>상태</th><th>처리 정보</th><th class="text-right">이력</th></tr></thead>
+                        <tbody data-roster-list><tr data-roster-state><td colspan="6" class="px-5 py-11 text-center"><b data-roster-state-title>명단을 불러오는 중입니다</b><p class="mt-1 text-xs text-muted-foreground" data-roster-state-message>잠시만 기다려 주세요.</p></td></tr></tbody>
                     </t:dataTable>
                 </div>
                 <p class="mt-3 hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-xs text-destructive" data-roster-error role="alert"></p>
@@ -176,7 +176,12 @@
         </t:modal>
 
         <template data-roster-row-template>
-            <tr data-roster-row><td><input type="checkbox" class="size-4 accent-primary" data-roster-member></td><td><span class="flex items-center gap-2"><span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-foreground" data-roster-avatar></span><b data-roster-name></b></span></td><td data-roster-team></td><td data-roster-status></td><td><span class="block text-xs" data-roster-processor></span><small class="block text-xs text-muted-foreground" data-roster-reason></small></td></tr>
+            <tr data-roster-row><td><input type="checkbox" class="size-4 accent-primary" data-roster-member></td><td><span class="flex items-center gap-2"><span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-foreground" data-roster-avatar></span><b data-roster-name></b></span></td><td data-roster-team></td><td data-roster-status></td><td><span class="block text-xs" data-roster-processor></span><small class="block text-xs text-muted-foreground" data-roster-reason></small></td><td class="text-right"><t:button variant="outline" size="compact" pageAction="attendance-history-open" cssClass="min-h-9">이력</t:button></td></tr>
         </template>
+
+        <t:modal id="attendanceHistoryModal" title="출석 상태 변경 이력" description="처리 상태와 담당자, 사유를 시간순으로 확인합니다.">
+            <jsp:attribute name="footer"><t:button variant="outline" action="close-modal">닫기</t:button></jsp:attribute>
+            <jsp:body><p class="mb-3 text-sm font-extrabold" data-attendance-history-member></p><div class="flex flex-col gap-2" data-attendance-history></div></jsp:body>
+        </t:modal>
     </c:if>
 </t:layout>

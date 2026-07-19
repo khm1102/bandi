@@ -16,6 +16,7 @@ const ACTIONS = Object.freeze({
     CHECK_IN_CLOSE: 'event-checkin-close',
     ROSTER_OPEN: 'event-roster-open',
     ATTENDANCE_PROCESS: 'attendance-process',
+    ATTENDANCE_HISTORY_OPEN: 'attendance-history-open',
     ARCHIVE: 'event-archive',
 });
 
@@ -154,6 +155,9 @@ function configureAdminActions(card, event) {
     showCardAction(card, 'close', event.status === 'IN_PROGRESS');
     showCardAction(card, 'roster', event.status !== 'DRAFT');
     showCardAction(card, 'archive', event.status !== 'ARCHIVED');
+    const archive = lookup('[data-page-action="event-archive"]', card);
+    archive.dataset.confirm = `'${event.title}' 행사를 보관하시겠어요?`;
+    archive.dataset.confirmAction = '행사 보관';
 }
 
 function renderMyAttendance(card, eventId) {
@@ -538,6 +542,10 @@ function renderRoster(rows, counts) {
             ? `${item.processedByName} · ${formatProcessedTime(item.processedDttm)}` : '미처리';
         setText('[data-roster-processor]', processor, row);
         setText('[data-roster-reason]', item.reason || '', row);
+        const history = lookup('[data-page-action="attendance-history-open"]', row);
+        history.dataset.attendanceId = item.eventAttendanceId;
+        history.dataset.memberName = item.memberName;
+        history.setAttribute('aria-label', `${item.memberName} 출석 상태 변경 이력`);
         list.appendChild(row);
     });
     lookup('[data-roster-all]').checked = false;
@@ -609,9 +617,47 @@ async function processAttendance(trigger) {
     }
 }
 
+async function showAttendanceHistory(trigger) {
+    const region = lookup('[data-attendance-history]');
+    setText('[data-attendance-history-member]', trigger.dataset.memberName);
+    region.replaceChildren(element('p',
+            'py-8 text-center text-sm text-muted-foreground',
+            '변경 이력을 불러오는 중입니다.'));
+    openModal('attendanceHistoryModal', trigger);
+    try {
+        const histories = await get(
+                `/api/event-management/attendances/${trigger.dataset.attendanceId}/histories`);
+        if (histories.length === 0) {
+            region.replaceChildren(element('p',
+                    'rounded-md bg-secondary px-4 py-3 text-sm text-muted-foreground',
+                    '출석 상태 변경 이력이 없습니다.'));
+            return;
+        }
+        region.replaceChildren();
+        histories.forEach((history) => {
+            const card = element('article', 'rounded-lg border px-4 py-3');
+            const head = element('div', 'flex flex-wrap items-center gap-2');
+            head.append(createStatusBadge(history.previousStatus, true),
+                    element('span', 'text-xs text-muted-foreground', '→'),
+                    createStatusBadge(history.newStatus, true));
+            card.append(head, element('p',
+                    'mt-2 text-xs text-muted-foreground',
+                    `${history.changedByName || '처리자 미상'} · ${formatDateTime(history.changedDttm)}`));
+            if (history.reason) {
+                card.appendChild(element('p', 'mt-2 text-sm', history.reason));
+            }
+            region.appendChild(card);
+        });
+    } catch (error) {
+        region.replaceChildren(element('p',
+                'rounded-md bg-destructive-soft px-4 py-3 text-sm text-destructive',
+                errorMessage(error)));
+    }
+}
+
 async function archiveEvent(trigger) {
     const event = lookupEventFromTrigger(trigger);
-    if (!event || !window.confirm(`'${event.title}' 행사를 보관하시겠어요?`)) {
+    if (!event) {
         return;
     }
     trigger.disabled = true;
@@ -656,6 +702,7 @@ if (canManage) {
         [ACTIONS.CHECK_IN_CLOSE]: (trigger) => changeCheckIn(trigger, 'close'),
         [ACTIONS.ROSTER_OPEN]: openRosterModal,
         [ACTIONS.ATTENDANCE_PROCESS]: processAttendance,
+        [ACTIONS.ATTENDANCE_HISTORY_OPEN]: showAttendanceHistory,
         [ACTIONS.ARCHIVE]: archiveEvent,
         [ACTIONS.RETRY]: loadEvents,
     });
