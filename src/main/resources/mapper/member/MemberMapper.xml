@@ -16,7 +16,7 @@
             <arg column="student_no" javaType="java.lang.String"/>
             <arg column="name" javaType="java.lang.String"/>
             <arg column="department" javaType="java.lang.String"/>
-            <arg column="academic_status_code" javaType="java.lang.String"/>
+            <arg column="academic_status_code" javaType="kr.ac.tukorea.bandi.domain.member.model.AcademicStatus"/>
             <arg column="academic_status_verified_dttm" javaType="java.time.LocalDateTime"/>
             <arg column="team_id" javaType="java.lang.Long"/>
             <arg column="cohort_id" javaType="java.lang.Long"/>
@@ -45,6 +45,13 @@
         SELECT <include refid="memberColumns"/>
         FROM member
         WHERE student_no = #{studentNo}
+    </select>
+
+    <select id="lookupByStudentNoForUpdate" resultMap="memberResultMap">
+        SELECT <include refid="memberColumns"/>
+        FROM member
+        WHERE student_no = #{studentNo}
+        FOR UPDATE
     </select>
 
     <select id="lookupByIdForUpdate" resultMap="memberResultMap">
@@ -93,7 +100,7 @@
             team_id, cohort_id, role_code, member_status_code, sso_link_status_code,
             sso_linked_dttm, last_login_dttm, registered_by_member_id
         ) VALUES (
-            #{studentNo}, #{name}, #{department}, #{academicStatusCode}, #{academicStatusVerifiedDttm},
+            #{studentNo}, #{name}, #{department}, #{academicStatus}, #{academicStatusVerifiedDttm},
             #{teamId}, #{cohortId}, #{role}, #{status}, #{ssoLinkStatus},
             #{ssoLinkedDttm}, #{lastLoginDttm}, #{registeredByMemberId}
         )
@@ -120,6 +127,18 @@
     <update id="updateStatus">
         UPDATE member
         SET member_status_code = #{status}
+        WHERE member_id = #{memberId}
+    </update>
+
+    <update id="updateSchoolConnection">
+        UPDATE member
+        SET department = #{department},
+            academic_status_code = #{academicStatus},
+            academic_status_verified_dttm = #{academicStatusVerifiedDttm},
+            member_status_code = #{memberStatus},
+            sso_link_status_code = #{ssoLinkStatus},
+            sso_linked_dttm = #{ssoLinkedDttm},
+            last_login_dttm = #{lastLoginDttm}
         WHERE member_id = #{memberId}
     </update>
 </mapper>
