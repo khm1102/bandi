@@ -11,9 +11,8 @@
         <p class="mt-1 text-xs leading-5 text-muted-foreground">현재 학교 시스템에서 재학생으로 확인되고, 운영진이 사전 등록한 멤버만 이용할 수 있습니다.</p>
     </div>
 
-    <form:form method="post" action="${loginUrl}" modelAttribute="schoolLoginForm"
-               cssClass="mt-5 flex flex-col gap-3" aria-label="학교 계정 로그인"
-               data-auth-form="">
+    <form:form id="schoolLoginForm" method="post" action="${loginUrl}" modelAttribute="schoolLoginForm"
+               cssClass="mt-5 flex flex-col gap-3" aria-label="학교 계정 로그인">
         <div>
             <form:label cssClass="${label}" path="studentNo">학교 포털 아이디</form:label>
             <form:input cssClass="${input}" path="studentNo" type="text"

@@ -1,6 +1,6 @@
 import {all, lookup, readValue} from '../common/dom.js';
 
-const authForm = lookup('[data-auth-form]');
+const authForm = lookup('#schoolLoginForm');
 
 function showAuthError(message, fieldId) {
     const error = lookup('[data-auth-error]');
@@ -26,19 +26,21 @@ function validateLogin() {
     return true;
 }
 
-authForm.addEventListener('submit', (event) => {
-    if (!validateLogin()) {
-        event.preventDefault();
-    }
-});
+if (authForm) {
+    authForm.addEventListener('submit', (event) => {
+        if (!validateLogin()) {
+            event.preventDefault();
+        }
+    });
 
-authForm.addEventListener('input', (event) => {
-    const field = event.target.closest('[aria-describedby~="authError"]');
-    if (!field) {
-        return;
-    }
-    field.removeAttribute('aria-invalid');
-    const error = lookup('[data-auth-error]');
-    error.classList.add('hidden');
-    error.textContent = '';
-});
+    authForm.addEventListener('input', (event) => {
+        const field = event.target.closest('[aria-describedby~="authError"]');
+        if (!field) {
+            return;
+        }
+        field.removeAttribute('aria-invalid');
+        const error = lookup('[data-auth-error]');
+        error.classList.add('hidden');
+        error.textContent = '';
+    });
+}
