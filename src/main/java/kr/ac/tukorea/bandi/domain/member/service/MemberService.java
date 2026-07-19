@@ -6,7 +6,11 @@ import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchCondition;
 import kr.ac.tukorea.bandi.domain.member.dto.request.RoleChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.StatusChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.TeamChangeParam;
+import kr.ac.tukorea.bandi.domain.member.dto.response.CohortResponse;
+import kr.ac.tukorea.bandi.domain.member.dto.response.MemberHistoryResponse;
+import kr.ac.tukorea.bandi.domain.member.dto.response.MemberResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.SchoolConnectionResponse;
+import kr.ac.tukorea.bandi.domain.member.dto.response.TeamResponse;
 import kr.ac.tukorea.bandi.domain.member.exception.ChangeReasonRequiredException;
 import kr.ac.tukorea.bandi.domain.member.exception.CohortNotFoundException;
 import kr.ac.tukorea.bandi.domain.member.exception.DuplicateStudentNoException;
@@ -72,8 +76,42 @@ public class MemberService {
 
     public List<Long> searchActiveMemberIds(Long teamId) {
         return memberMapper.searchByCondition(new MemberSearchCondition(
-                        teamId, MemberStatus.ACTIVE, null)).stream()
+                        null, teamId, MemberStatus.ACTIVE, null, null)).stream()
                 .map(Member::getMemberId)
+                .toList();
+    }
+
+    public List<MemberResponse> searchMembers(
+            MemberSearchCondition condition) {
+        return memberMapper.searchByCondition(condition).stream()
+                .map(MemberResponse::from)
+                .toList();
+    }
+
+    public MemberResponse lookupMember(Long memberId) {
+        return MemberResponse.from(findMember(memberId));
+    }
+
+    public MemberHistoryResponse lookupMemberHistory(Long memberId) {
+        findMember(memberId);
+        return MemberHistoryResponse.from(
+                memberHistoryMapper.searchTeamHistoryByMemberId(memberId),
+                memberHistoryMapper.searchCohortHistoryByMemberId(memberId),
+                memberHistoryMapper.searchRoleHistoryByMemberId(memberId),
+                memberHistoryMapper.searchStatusHistoryByMemberId(memberId));
+    }
+
+    public List<TeamResponse> searchTeams(boolean activeOnly) {
+        return teamMapper.searchAll().stream()
+                .filter(team -> !activeOnly || team.isActive())
+                .map(TeamResponse::from)
+                .toList();
+    }
+
+    public List<CohortResponse> searchCohorts(boolean activeOnly) {
+        return cohortMapper.searchAll().stream()
+                .filter(cohort -> !activeOnly || cohort.isActive())
+                .map(CohortResponse::from)
                 .toList();
     }
 
@@ -184,6 +222,11 @@ public class MemberService {
 
     private Member lockMember(Long memberId) {
         return memberMapper.lookupByIdForUpdate(memberId)
+                .orElseThrow(() -> new MemberNotFoundException(memberId));
+    }
+
+    private Member findMember(Long memberId) {
+        return memberMapper.lookupById(memberId)
                 .orElseThrow(() -> new MemberNotFoundException(memberId));
     }
 
