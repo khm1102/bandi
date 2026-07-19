@@ -12,6 +12,7 @@ import kr.ac.tukorea.bandi.domain.member.model.AcademicStatus;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.SchoolConnectionOutcome;
 import kr.ac.tukorea.bandi.domain.member.model.SchoolIdentity;
+import kr.ac.tukorea.bandi.global.security.LoginPrincipal;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +22,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
@@ -55,6 +58,26 @@ class SchoolAuthenticationServiceTest {
         assertThat(response.teamId()).isEqualTo(3L);
         assertThat(response.role()).isEqualTo(ClubRole.MEMBER);
         verify(memberService).connectSchoolIdentity(identity);
+    }
+
+    @Test
+    void 로그인_어댑터는_세션에_멤버_ID와_역할만_반환한다() {
+        // given
+        SchoolIdentity identity = enrolledIdentity();
+        given(schoolSsoClient.authenticate(any(SchoolCredentials.class)))
+                .willReturn(identity);
+        given(memberService.connectSchoolIdentity(identity)).willReturn(
+                connection(SchoolConnectionOutcome.AUTHENTICATED));
+
+        // when
+        LoginPrincipal principal = schoolAuthenticationService.authenticate(
+                "2021184000", "school-password");
+
+        // then
+        assertThat(principal).isEqualTo(new LoginPrincipal(200L, "MEMBER"));
+        verify(schoolSsoClient).authenticate(argThat(credentials ->
+                credentials.studentNo().equals("2021184000")
+                        && credentials.password().equals("school-password")));
     }
 
     @Test

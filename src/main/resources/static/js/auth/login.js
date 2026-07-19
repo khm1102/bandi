@@ -1,6 +1,5 @@
-import {all, bindPageActions, lookup, readValue} from '../common/dom.js';
+import {all, lookup, readValue} from '../common/dom.js';
 
-const ACTIONS = Object.freeze({SUBMIT: 'auth-submit'});
 const authForm = lookup('[data-auth-form]');
 
 function showAuthError(message, fieldId) {
@@ -15,26 +14,22 @@ function showAuthError(message, fieldId) {
     field.focus();
 }
 
-function previewLogin() {
-    if (!readValue('schoolId')) {
-        showAuthError('학교 포털 아이디를 입력해 주세요.', 'schoolId');
-        return;
+function validateLogin() {
+    if (!readValue('studentNo')) {
+        showAuthError('학교 포털 아이디를 입력해 주세요.', 'studentNo');
+        return false;
     }
-    if (!readValue('schoolPassword')) {
-        showAuthError('학교 포털 비밀번호를 입력해 주세요.', 'schoolPassword');
-        return;
+    if (!readValue('password')) {
+        showAuthError('학교 포털 비밀번호를 입력해 주세요.', 'password');
+        return false;
     }
-    window.location.assign(`${authForm.dataset.dashboardUrl}?role=member`);
+    return true;
 }
 
-bindPageActions({[ACTIONS.SUBMIT]: previewLogin});
-
-authForm.addEventListener('keydown', (event) => {
-    if (event.key !== 'Enter') {
-        return;
+authForm.addEventListener('submit', (event) => {
+    if (!validateLogin()) {
+        event.preventDefault();
     }
-    event.preventDefault();
-    previewLogin();
 });
 
 authForm.addEventListener('input', (event) => {
