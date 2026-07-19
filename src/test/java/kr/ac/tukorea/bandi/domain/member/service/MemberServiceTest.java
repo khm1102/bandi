@@ -515,4 +515,50 @@ class MemberServiceTest {
             verify(memberMapper, never()).updateStatus(any(), any());
         }
     }
+
+    @Nested
+    @DisplayName("내부 기능 접근 컨텍스트")
+    class InternalAccessContext {
+
+        @Test
+        void 멤버의_현재_팀과_권한과_활성_상태를_반환한다() {
+            given(memberMapper.lookupById(TARGET_ID))
+                    .willReturn(Optional.of(member(TARGET_ID, STAGE_TEAM_ID,
+                            ClubRole.LEADER, MemberStatus.ACTIVE)));
+
+            MemberAccessContext context = memberService.lookupAccessContext(TARGET_ID);
+
+            assertThat(context.memberId()).isEqualTo(TARGET_ID);
+            assertThat(context.teamId()).isEqualTo(STAGE_TEAM_ID);
+            assertThat(context.leader()).isTrue();
+            assertThat(context.active()).isTrue();
+        }
+
+        @Test
+        void 존재하지_않는_멤버의_접근_컨텍스트는_조회할_수_없다() {
+            given(memberMapper.lookupById(TARGET_ID)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> memberService.lookupAccessContext(TARGET_ID))
+                    .isInstanceOf(MemberNotFoundException.class);
+        }
+
+        @Test
+        void 활성_팀은_다른_feature가_사용하기_전에_검증할_수_있다() {
+            given(teamMapper.lookupById(STAGE_TEAM_ID))
+                    .willReturn(Optional.of(activeTeam(STAGE_TEAM_ID)));
+
+            memberService.validateActiveTeam(STAGE_TEAM_ID);
+
+            verify(teamMapper).lookupById(STAGE_TEAM_ID);
+        }
+
+        @Test
+        void 비활성_팀은_다른_feature에서_사용할_수_없다() {
+            given(teamMapper.lookupById(STAGE_TEAM_ID))
+                    .willReturn(Optional.of(new Team(STAGE_TEAM_ID, "무대팀", 4, false)));
+
+            assertThatThrownBy(() -> memberService.validateActiveTeam(STAGE_TEAM_ID))
+                    .isInstanceOf(InactiveTeamException.class);
+        }
+    }
 }
