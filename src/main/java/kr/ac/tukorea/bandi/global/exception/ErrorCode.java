@@ -8,7 +8,8 @@ import org.springframework.http.HttpStatus;
  * 에러의 단일 출처 (컨벤션 9.4).
  * 코드 접두사는 feature별 고정 — C 공통, A auth, M member, CA calendar, FI file,
  * PN public notice, NI internal notice, RS resource, AR activity record,
- * EV event, F fee, PO policy, P performance, AS asset, R reservation.
+ * EV event, F fee, PO policy, P performance, AS asset, R reservation,
+ * AU audit.
  * message는 사용자에게 그대로 보여줄 문장으로 작성하고 내부 사정을 노출하지 않는다.
  */
 @Getter
@@ -20,6 +21,9 @@ public enum ErrorCode {
     FORBIDDEN(HttpStatus.FORBIDDEN, "C002", "권한이 없습니다."),
     UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "C003", "로그인이 필요합니다."),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C999", "일시적인 오류가 발생했습니다."),
+
+    // audit (AU)
+    INVALID_AUDIT_LOG(HttpStatus.BAD_REQUEST, "AU001", "감사 기록 정보가 올바르지 않습니다."),
 
     // member (M)
     MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "M001", "존재하지 않는 멤버입니다."),

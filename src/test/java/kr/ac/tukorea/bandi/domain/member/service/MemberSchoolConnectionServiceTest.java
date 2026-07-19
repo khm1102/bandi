@@ -1,5 +1,6 @@
 package kr.ac.tukorea.bandi.domain.member.service;
 
+import kr.ac.tukorea.bandi.domain.audit.service.AuditService;
 import kr.ac.tukorea.bandi.domain.member.dto.response.SchoolConnectionResponse;
 import kr.ac.tukorea.bandi.domain.member.exception.SchoolMemberNotRegisteredException;
 import kr.ac.tukorea.bandi.domain.member.mapper.CohortMapper;
@@ -48,13 +49,16 @@ class MemberSchoolConnectionServiceTest {
     private CohortMapper cohortMapper;
     @Mock
     private MemberHistoryMapper memberHistoryMapper;
+    @Mock
+    private AuditService auditService;
 
     private MemberService memberService;
 
     @BeforeEach
     void setUp() {
         Clock clock = Clock.fixed(FIXED_INSTANT, ZoneId.of("Asia/Seoul"));
-        memberService = new MemberService(memberMapper, teamMapper, cohortMapper, memberHistoryMapper, clock);
+        memberService = new MemberService(memberMapper, teamMapper,
+                cohortMapper, memberHistoryMapper, auditService, clock);
     }
 
     @Test

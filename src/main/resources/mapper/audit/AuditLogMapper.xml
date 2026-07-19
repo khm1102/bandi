@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.ac.tukorea.bandi.domain.audit.mapper.AuditLogMapper">
+
+    <resultMap id="auditLogMap"
+               type="kr.ac.tukorea.bandi.domain.audit.model.AuditLog">
+        <constructor>
+            <idArg column="audit_log_id" javaType="java.lang.Long"/>
+            <arg column="actor_member_id" javaType="java.lang.Long"/>
+            <arg column="action_code"
+                 javaType="kr.ac.tukorea.bandi.domain.audit.model.AuditAction"/>
+            <arg column="target_type_code"
+                 javaType="kr.ac.tukorea.bandi.domain.audit.model.AuditTargetType"/>
+            <arg column="target_id" javaType="java.lang.Long"/>
+            <arg column="summary" javaType="java.lang.String"/>
+            <arg column="metadata_json" javaType="java.lang.String"/>
+            <arg column="occurred_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <select id="searchByTarget" resultMap="auditLogMap">
+        SELECT audit_log_id, actor_member_id, action_code,
+               target_type_code, target_id, summary, metadata_json,
+               occurred_dttm
+        FROM audit_log
+        WHERE target_type_code = #{targetType}
+          AND target_id = #{targetId}
+        ORDER BY occurred_dttm DESC, audit_log_id DESC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="auditLogId">
+        INSERT INTO audit_log (
+            actor_member_id, action_code, target_type_code,
+            target_id, summary, metadata_json, occurred_dttm
+        ) VALUES (
+            #{actorMemberId}, #{action}, #{targetType},
+            #{targetId}, #{summary}, #{metadataJson}, #{occurredDttm}
+        )
+    </insert>
+</mapper>

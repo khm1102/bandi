@@ -1,5 +1,8 @@
 package kr.ac.tukorea.bandi.domain.member.service;
 
+import kr.ac.tukorea.bandi.domain.audit.model.AuditAction;
+import kr.ac.tukorea.bandi.domain.audit.model.AuditTargetType;
+import kr.ac.tukorea.bandi.domain.audit.service.AuditService;
 import kr.ac.tukorea.bandi.domain.member.dto.request.CohortChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPreRegisterParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchCondition;
@@ -62,6 +65,7 @@ public class MemberService {
     private final TeamMapper teamMapper;
     private final CohortMapper cohortMapper;
     private final MemberHistoryMapper memberHistoryMapper;
+    private final AuditService auditService;
     private final Clock clock;
 
     public MemberAccessContext lookupAccessContext(Long memberId) {
@@ -148,6 +152,8 @@ public class MemberService {
         memberMapper.updateTeam(param.memberId(), param.newTeamId());
         memberHistoryMapper.insertTeamHistory(MemberTeamHistory.of(param.memberId(), member.getTeamId(),
                 param.newTeamId(), param.reason(), actorMemberId, now()));
+        auditService.record(actorMemberId, AuditAction.MEMBER_TEAM_CHANGED,
+                AuditTargetType.MEMBER, param.memberId(), "멤버 팀 변경");
 
         log.info("멤버 팀 변경 - memberId={}, previousTeamId={}, newTeamId={}",
                 param.memberId(), member.getTeamId(), param.newTeamId());
@@ -164,6 +170,8 @@ public class MemberService {
         memberMapper.updateCohort(param.memberId(), param.newCohortId());
         memberHistoryMapper.insertCohortHistory(MemberCohortHistory.of(param.memberId(), member.getCohortId(),
                 param.newCohortId(), param.reason(), actorMemberId, now()));
+        auditService.record(actorMemberId, AuditAction.MEMBER_COHORT_CHANGED,
+                AuditTargetType.MEMBER, param.memberId(), "멤버 기수 변경");
 
         log.info("멤버 기수 변경 - memberId={}, previousCohortId={}, newCohortId={}",
                 param.memberId(), member.getCohortId(), param.newCohortId());
@@ -182,6 +190,8 @@ public class MemberService {
         memberMapper.updateRole(param.memberId(), param.newRole());
         memberHistoryMapper.insertRoleHistory(MemberRoleHistory.of(param.memberId(), member.getRole(),
                 param.newRole(), param.reason(), actorMemberId, now()));
+        auditService.record(actorMemberId, AuditAction.MEMBER_ROLE_CHANGED,
+                AuditTargetType.MEMBER, param.memberId(), "멤버 권한 변경");
 
         log.info("멤버 권한 변경 - memberId={}, previousRole={}, newRole={}, actorMemberId={}",
                 param.memberId(), member.getRole(), param.newRole(), actorMemberId);
@@ -200,6 +210,8 @@ public class MemberService {
         memberMapper.updateStatus(param.memberId(), param.newStatus());
         memberHistoryMapper.insertStatusHistory(MemberStatusHistory.of(param.memberId(), member.getStatus(),
                 param.newStatus(), param.reason(), actorMemberId, now()));
+        auditService.record(actorMemberId, AuditAction.MEMBER_STATUS_CHANGED,
+                AuditTargetType.MEMBER, param.memberId(), "멤버 상태 변경");
 
         log.info("멤버 상태 변경 - memberId={}, newStatus={}, actorMemberId={}",
                 param.memberId(), param.newStatus(), actorMemberId);
