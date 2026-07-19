@@ -25,8 +25,8 @@
     </div>
 
     <div class="grid gap-3.5 md:grid-cols-2">
-        <t:card title="배우연출팀" moreLabel="2/2" flush="true">
-            <div data-checklist-list data-checklist-team="배우연출" class="flex flex-col gap-1 p-4">
+        <t:card title="배우" moreLabel="2/2" flush="true">
+            <div data-checklist-list data-checklist-team="배우" class="flex flex-col gap-1 p-4">
                 <div data-checklist-item data-complete="true" class="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2">
                     <span class="${ckOn}"><svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="${ckSvg}"/></svg></span>
                     <span class="flex-1 text-sm font-semibold text-muted-foreground line-through">대본 최종본 숙지</span>
@@ -35,7 +35,7 @@
                     <span class="${ckOn}"><svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="${ckSvg}"/></svg></span>
                     <span class="flex-1 text-sm font-semibold text-muted-foreground line-through">분장·의상 컨펌</span>
                 </div>
-                <c:if test="${canEdit}"><t:button variant="outline" size="compact" openModal="checkModal" cssClass="mt-1 justify-start border-dashed text-muted-foreground">+ 배우연출팀 항목 추가</t:button></c:if>
+                <c:if test="${canEdit}"><t:button variant="outline" size="compact" openModal="checkModal" cssClass="mt-1 justify-start border-dashed text-muted-foreground">+ 배우 항목 추가</t:button></c:if>
             </div>
         </t:card>
         <t:card title="무대팀" moreLabel="1/2" flush="true">
@@ -91,7 +91,7 @@
         </jsp:attribute>
         <jsp:body>
             <div class="flex flex-col gap-3">
-                <div><label class="${label}" for="ckTeam">담당팀</label><select class="${input}" id="ckTeam"><option>배우연출</option><option>무대</option><option>오퍼</option><option>디자인</option><option>영상</option></select></div>
+                <div><label class="${label}" for="ckTeam">담당팀</label><select class="${input}" id="ckTeam"><option>배우</option><option>무대팀</option><option>오퍼팀</option><option>디자인팀</option><option>영상팀</option></select></div>
                 <div><label class="${label}" for="ckItem">체크 항목 <span class="text-accent-foreground">*</span></label><input class="${input}" id="ckItem" type="text" placeholder="예) 무대 전환 리허설 완료"></div>
             </div>
         </jsp:body>
