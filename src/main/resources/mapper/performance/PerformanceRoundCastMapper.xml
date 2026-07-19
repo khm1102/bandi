@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.ac.tukorea.bandi.domain.performance.mapper.PerformanceRoundCastMapper">
+
+    <resultMap id="roundCastMap"
+               type="kr.ac.tukorea.bandi.domain.performance.model.PerformanceRoundCast">
+        <constructor>
+            <idArg column="performance_round_cast_id"
+                   javaType="java.lang.Long"/>
+            <arg column="performance_project_id" javaType="java.lang.Long"/>
+            <arg column="performance_round_id" javaType="java.lang.Long"/>
+            <arg column="performance_character_id"
+                 javaType="java.lang.Long"/>
+            <arg column="public_profile_id" javaType="java.lang.Long"/>
+            <arg column="cast_type_code"
+                 javaType="kr.ac.tukorea.bandi.domain.performance.model.CastType"/>
+            <arg column="created_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="roundCastResponseMap"
+               type="kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceRoundCastResponse">
+        <constructor>
+            <idArg column="performance_round_cast_id"
+                   javaType="java.lang.Long"/>
+            <arg column="performance_project_id" javaType="java.lang.Long"/>
+            <arg column="performance_round_id" javaType="java.lang.Long"/>
+            <arg column="performance_character_id"
+                 javaType="java.lang.Long"/>
+            <arg column="character_name" javaType="java.lang.String"/>
+            <arg column="character_description"
+                 javaType="java.lang.String"/>
+            <arg column="character_importance_code"
+                 javaType="kr.ac.tukorea.bandi.domain.performance.model.CharacterImportance"/>
+            <arg column="public_profile_id" javaType="java.lang.Long"/>
+            <arg column="cast_type_code"
+                 javaType="kr.ac.tukorea.bandi.domain.performance.model.CastType"/>
+        </constructor>
+    </resultMap>
+
+    <select id="lookupByIdForUpdate" resultMap="roundCastMap">
+        SELECT performance_round_cast_id, performance_project_id,
+               performance_round_id, performance_character_id,
+               public_profile_id, cast_type_code,
+               created_dttm, updated_dttm
+        FROM performance_round_cast
+        WHERE performance_round_cast_id = #{performanceRoundCastId}
+        FOR UPDATE
+    </select>
+
+    <select id="searchByRound" resultMap="roundCastResponseMap">
+        SELECT prc.performance_round_cast_id,
+               prc.performance_project_id, prc.performance_round_id,
+               prc.performance_character_id,
+               pc.name AS character_name,
+               pc.description AS character_description,
+               pc.importance_code AS character_importance_code,
+               prc.public_profile_id, prc.cast_type_code
+        FROM performance_round_cast prc
+        JOIN performance_character pc
+          ON pc.performance_character_id = prc.performance_character_id
+         AND pc.performance_project_id = prc.performance_project_id
+        WHERE prc.performance_round_id = #{performanceRoundId}
+        ORDER BY FIELD(pc.importance_code,
+                       'LEAD', 'SUPPORT', 'ENSEMBLE'),
+                 pc.display_order, pc.performance_character_id
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true"
+            keyProperty="performanceRoundCastId">
+        INSERT INTO performance_round_cast (
+            performance_project_id, performance_round_id,
+            performance_character_id, public_profile_id,
+            cast_type_code
+        ) VALUES (
+            #{performanceProjectId}, #{performanceRoundId},
+            #{performanceCharacterId}, #{publicProfileId},
+            #{castType}
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE performance_round_cast
+        SET public_profile_id = #{publicProfileId},
+            cast_type_code = #{castType}
+        WHERE performance_round_cast_id = #{performanceRoundCastId}
+    </update>
+
+    <delete id="remove">
+        DELETE FROM performance_round_cast
+        WHERE performance_round_cast_id = #{performanceRoundCastId}
+    </delete>
+</mapper>

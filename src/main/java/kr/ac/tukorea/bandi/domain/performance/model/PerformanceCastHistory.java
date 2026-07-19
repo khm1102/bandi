@@ -62,6 +62,20 @@ public class PerformanceCastHistory {
                 changedDttm);
     }
 
+    public static PerformanceCastHistory round(
+            Long performanceProjectId, Long performanceRoundId,
+            Long performanceCharacterId,
+            Long previousPublicProfileId, Long newPublicProfileId,
+            CastType previousCastType, CastType newCastType,
+            CastAction action, String reason, Long changedByMemberId,
+            LocalDateTime changedDttm) {
+        return new PerformanceCastHistory(null, performanceProjectId,
+                performanceRoundId, performanceCharacterId,
+                previousPublicProfileId, newPublicProfileId,
+                previousCastType, newCastType, CastScope.ROUND,
+                action, reason, changedByMemberId, changedDttm);
+    }
+
     private void validateProfiles() {
         if (previousPublicProfileId == null && newPublicProfileId == null) {
             throw new InvalidPerformanceContentException("profiles");
