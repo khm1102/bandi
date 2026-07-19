@@ -1,7 +1,7 @@
 package kr.ac.tukorea.bandi.domain.notice.service;
 
 import kr.ac.tukorea.bandi.domain.file.dto.response.FileReferenceResponse;
-import kr.ac.tukorea.bandi.domain.file.service.FileAccessDecision;
+import kr.ac.tukorea.bandi.domain.file.exception.InvalidFileScopeException;
 import kr.ac.tukorea.bandi.domain.file.service.FileService;
 import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
@@ -75,10 +75,10 @@ class PublicNoticeServiceTest {
     }
 
     @Test
-    void 활성_ADMIN은_READY_비공개_파일과_함께_공시_초안을_작성한다() {
+    void 활성_ADMIN은_READY_공개_파일과_함께_공시_초안을_작성한다() {
         given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(adminContext(true));
-        given(fileService.lookupPrivateReady(FIRST_FILE_ID)).willReturn(firstFile());
-        given(fileService.lookupPrivateReady(SECOND_FILE_ID)).willReturn(secondFile());
+        given(fileService.lookupPublicReady(FIRST_FILE_ID)).willReturn(firstFile());
+        given(fileService.lookupPublicReady(SECOND_FILE_ID)).willReturn(secondFile());
         willAnswer(invocation -> {
             assignNoticeId(invocation.getArgument(0), NOTICE_ID);
             return 1;
@@ -126,7 +126,7 @@ class PublicNoticeServiceTest {
         assertThatThrownBy(() -> publicNoticeService.createDraft(
                 ACTOR_ID, writeParam(List.of(FIRST_FILE_ID, FIRST_FILE_ID))))
                 .isInstanceOf(InvalidPublicNoticeException.class);
-        verify(fileService, never()).lookupPrivateReady(any());
+        verify(fileService, never()).lookupPublicReady(any());
         verify(publicNoticeMapper, never()).insert(any());
     }
 
@@ -135,7 +135,7 @@ class PublicNoticeServiceTest {
         given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(adminContext(true));
         given(publicNoticeMapper.lookupByIdForUpdate(NOTICE_ID))
                 .willReturn(Optional.of(persistedDraft()));
-        given(fileService.lookupPrivateReady(SECOND_FILE_ID)).willReturn(secondFile());
+        given(fileService.lookupPublicReady(SECOND_FILE_ID)).willReturn(secondFile());
         PublicNoticeUpdateParam param = new PublicNoticeUpdateParam(NOTICE_ID,
                 "PERFORMANCE", "정기 공연 안내", "수정 본문", false,
                 List.of(SECOND_FILE_ID));
@@ -257,7 +257,7 @@ class PublicNoticeServiceTest {
                 .willReturn(Optional.of(adminContentResponse()));
         given(publicNoticeMapper.searchAttachmentFileIds(NOTICE_ID))
                 .willReturn(List.of(FIRST_FILE_ID));
-        given(fileService.lookupPrivateReady(FIRST_FILE_ID)).willReturn(firstFile());
+        given(fileService.lookupPublicReady(FIRST_FILE_ID)).willReturn(firstFile());
 
         PublicNoticeAdminDetailResponse result = publicNoticeService.lookupAdmin(
                 ACTOR_ID, NOTICE_ID);
@@ -273,8 +273,8 @@ class PublicNoticeServiceTest {
                 .willReturn(Optional.of(contentResponse()));
         given(publicNoticeMapper.searchAttachmentFileIds(NOTICE_ID))
                 .willReturn(List.of(FIRST_FILE_ID, SECOND_FILE_ID));
-        given(fileService.lookupPrivateReady(FIRST_FILE_ID)).willReturn(firstFile());
-        given(fileService.lookupPrivateReady(SECOND_FILE_ID)).willReturn(secondFile());
+        given(fileService.lookupPublicReady(FIRST_FILE_ID)).willReturn(firstFile());
+        given(fileService.lookupPublicReady(SECOND_FILE_ID)).willReturn(secondFile());
 
         PublicNoticeDetailResponse result = publicNoticeService.lookupPublic(NOTICE_ID);
 
@@ -290,15 +290,14 @@ class PublicNoticeServiceTest {
 
         assertThatThrownBy(() -> publicNoticeService.lookupPublic(NOTICE_ID))
                 .isInstanceOf(PublicNoticeNotFoundException.class);
-        verify(fileService, never()).lookupPrivateReady(any());
+        verify(fileService, never()).lookupPublicReady(any());
     }
 
     @Test
     void 공개_공시에_연결된_첨부만_다운로드_URL을_발급한다() {
         given(publicNoticeMapper.existsPublicAttachment(NOTICE_ID, FIRST_FILE_ID, NOW))
                 .willReturn(true);
-        given(fileService.createPrivateDownloadUrl(
-                FIRST_FILE_ID, FileAccessDecision.GRANTED))
+        given(fileService.createPublicDownloadUrl(FIRST_FILE_ID))
                 .willReturn("https://storage/signed");
 
         String result = publicNoticeService.createAttachmentDownloadUrl(
@@ -315,7 +314,19 @@ class PublicNoticeServiceTest {
         assertThatThrownBy(() -> publicNoticeService.createAttachmentDownloadUrl(
                 NOTICE_ID, FIRST_FILE_ID))
                 .isInstanceOf(PublicNoticeAccessDeniedException.class);
-        verify(fileService, never()).createPrivateDownloadUrl(any(), any());
+        verify(fileService, never()).createPublicDownloadUrl(any());
+    }
+
+    @Test
+    void 비공개_파일은_공시_첨부로_연결할_수_없다() {
+        given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(adminContext(true));
+        given(fileService.lookupPublicReady(FIRST_FILE_ID))
+                .willThrow(new InvalidFileScopeException());
+
+        assertThatThrownBy(() -> publicNoticeService.createDraft(
+                ACTOR_ID, writeParam(List.of(FIRST_FILE_ID))))
+                .isInstanceOf(InvalidFileScopeException.class);
+        verify(publicNoticeMapper, never()).insert(any());
     }
 
     private PublicNoticeWriteParam writeParam(List<Long> fileIds) {

@@ -1,7 +1,6 @@
 package kr.ac.tukorea.bandi.domain.notice.service;
 
 import kr.ac.tukorea.bandi.domain.file.dto.response.FileReferenceResponse;
-import kr.ac.tukorea.bandi.domain.file.service.FileAccessDecision;
 import kr.ac.tukorea.bandi.domain.file.service.FileService;
 import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
@@ -127,8 +126,7 @@ public class PublicNoticeService {
                 publicNoticeId, storedFileId, currentDttm)) {
             throw new PublicNoticeAccessDeniedException();
         }
-        return fileService.createPrivateDownloadUrl(
-                storedFileId, FileAccessDecision.GRANTED);
+        return fileService.createPublicDownloadUrl(storedFileId);
     }
 
     private PublicNotice lock(Long publicNoticeId) {
@@ -148,7 +146,7 @@ public class PublicNoticeService {
                 || new HashSet<>(storedFileIds).size() != storedFileIds.size()) {
             throw new InvalidPublicNoticeException("attachments");
         }
-        storedFileIds.forEach(fileService::lookupPrivateReady);
+        storedFileIds.forEach(fileService::lookupPublicReady);
     }
 
     private void attachFiles(Long publicNoticeId, List<Long> storedFileIds) {
@@ -166,7 +164,7 @@ public class PublicNoticeService {
 
     private List<PublicNoticeAttachmentResponse> lookupAttachments(Long publicNoticeId) {
         return publicNoticeMapper.searchAttachmentFileIds(publicNoticeId).stream()
-                .map(fileService::lookupPrivateReady)
+                .map(fileService::lookupPublicReady)
                 .map(this::toAttachmentResponse)
                 .toList();
     }
