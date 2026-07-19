@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.global.swagger;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -32,7 +33,7 @@ public interface AssetApiDocs {
     @Operation(summary = "소품·장비 품목 검색")
     @GetMapping
     ResponseEntity<List<AssetItemResponse>> searchItems(
-            @LoginMember Long actorMemberId,
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String categoryCode,
             @RequestParam(required = false) AssetTrackingType trackingType,
@@ -41,37 +42,37 @@ public interface AssetApiDocs {
     @Operation(summary = "개별 장비 목록 조회")
     @GetMapping("/{assetItemId}/units")
     ResponseEntity<List<AssetUnitResponse>> searchUnits(
-            @LoginMember Long actorMemberId,
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @PathVariable Long assetItemId);
 
     @Operation(summary = "품목 사용 이력 조회")
     @GetMapping("/{assetItemId}/usages")
     ResponseEntity<List<AssetUsageResponse>> searchUsages(
-            @LoginMember Long actorMemberId,
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @PathVariable Long assetItemId);
 
     @Operation(summary = "소품·장비 품목 등록")
     @PostMapping
     ResponseEntity<AssetIdentifierResponse> registerItem(
-            @LoginMember Long actorMemberId,
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @Valid @RequestBody AssetItemCreateRequest request);
 
     @Operation(summary = "개별 장비 등록")
     @PostMapping("/{assetItemId}/units")
     ResponseEntity<AssetIdentifierResponse> registerUnit(
-            @LoginMember Long actorMemberId,
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @PathVariable Long assetItemId,
             @Valid @RequestBody AssetUnitCreateRequest request);
 
     @Operation(summary = "소품·장비 사용 예약")
     @PostMapping("/usages")
     ResponseEntity<AssetIdentifierResponse> reserve(
-            @LoginMember Long actorMemberId,
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @Valid @RequestBody AssetUsageCreateRequest request);
 
     @Operation(summary = "소품·장비 반납")
     @PostMapping("/usages/{assetUsageId}/return")
     ResponseEntity<Void> returnUsage(
-            @LoginMember Long actorMemberId,
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @PathVariable Long assetUsageId);
 }
