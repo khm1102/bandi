@@ -1,5 +1,6 @@
 package kr.ac.tukorea.bandi.global.security;
 
+import jakarta.servlet.DispatcherType;
 import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -110,6 +111,21 @@ class SecurityConfigTest {
                 "/swagger-ui/test"}) {
             mockMvc.perform(get(path)).andExpect(status().isOk());
         }
+    }
+
+    @Test
+    void JSP_포워드와_오류_디스패치는_추가_인증을_요구하지_않는다()
+            throws Exception {
+        mockMvc.perform(get("/dispatch-target").with(request -> {
+                    request.setDispatcherType(DispatcherType.FORWARD);
+                    return request;
+                }))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/dispatch-target").with(request -> {
+                    request.setDispatcherType(DispatcherType.ERROR);
+                    return request;
+                }))
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -238,7 +254,7 @@ class SecurityTestController {
             "/performance-management/test", "/notices/test",
             "/performance-content-management/test",
             "/performances/show",
-            "/reserve/test", "/swagger-ui/test", "/api/test",
+            "/reserve/test", "/swagger-ui/test", "/dispatch-target", "/api/test",
             "/api/members/me", "/api/members/reference/teams",
             "/api/members/reference/cohorts", "/api/members/test",
             "/api/public-notices/test",

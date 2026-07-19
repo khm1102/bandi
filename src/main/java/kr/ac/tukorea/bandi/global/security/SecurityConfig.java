@@ -1,5 +1,6 @@
 package kr.ac.tukorea.bandi.global.security;
 
+import jakarta.servlet.DispatcherType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
@@ -28,6 +29,8 @@ public class SecurityConfig {
                 PathPatternRequestMatcher.withDefaults().matcher("/api/**");
         http.authenticationProvider(authenticationProvider);
         http.authorizeHttpRequests(authorize -> authorize
+                .dispatcherTypeMatchers(DispatcherType.FORWARD,
+                        DispatcherType.ERROR).permitAll()
                 .requestMatchers(PathRequest.toStaticResources()
                         .atCommonLocations()).permitAll()
                 .requestMatchers("/login", "/error", "/notices/**",
