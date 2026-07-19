@@ -96,6 +96,21 @@
         )
     </select>
 
+    <select id="existsEffectiveVersionOfType" resultType="_boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM policy_document_version version
+            JOIN policy_document document
+              ON document.policy_document_id = version.policy_document_id
+            WHERE version.policy_document_version_id =
+                  #{policyDocumentVersionId}
+              AND document.policy_type_code = #{policyType}
+              AND document.is_active = 1
+              AND version.published_dttm &lt;= #{currentDttm}
+              AND version.effective_from_dttm &lt;= #{currentDttm}
+        )
+    </select>
+
     <select id="searchDocuments" resultMap="policyDocumentResponseMap">
         SELECT <include refid="documentColumns"/>
         FROM policy_document

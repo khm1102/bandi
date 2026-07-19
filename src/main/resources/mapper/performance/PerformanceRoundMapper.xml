@@ -82,6 +82,15 @@
         FOR UPDATE
     </select>
 
+    <select id="lookupRoundById" resultMap="roundMap">
+        SELECT performance_round_id, performance_project_id, round_no,
+               start_dttm, entry_start_dttm,
+               reservation_open_dttm, reservation_close_dttm,
+               status_code, created_dttm, updated_dttm
+        FROM performance_round
+        WHERE performance_round_id = #{performanceRoundId}
+    </select>
+
     <select id="lookupAccessibilityForUpdate"
             resultMap="accessibilityMap">
         SELECT performance_round_accessibility_id,

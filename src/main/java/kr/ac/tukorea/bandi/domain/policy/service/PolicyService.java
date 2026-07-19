@@ -13,6 +13,7 @@ import kr.ac.tukorea.bandi.domain.policy.exception.PolicyDocumentNotFoundExcepti
 import kr.ac.tukorea.bandi.domain.policy.mapper.PolicyMapper;
 import kr.ac.tukorea.bandi.domain.policy.model.PolicyDocument;
 import kr.ac.tukorea.bandi.domain.policy.model.PolicyDocumentVersion;
+import kr.ac.tukorea.bandi.domain.policy.model.PolicyType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
@@ -81,6 +82,22 @@ public class PolicyService {
             throw new InvalidPolicyVersionException(
                     "policyDocumentVersionId=" + policyDocumentVersionId);
         }
+    }
+
+    public void validateEffectiveVersion(
+            Long policyDocumentVersionId, PolicyType policyType) {
+        if (policyDocumentVersionId == null || policyType == null
+                || !policyMapper.existsEffectiveVersionOfType(
+                policyDocumentVersionId, policyType, now())) {
+            throw new InvalidPolicyVersionException(
+                    "policyDocumentVersionId=" + policyDocumentVersionId);
+        }
+    }
+
+    public void validateReservationPrivacyVersion(
+            Long policyDocumentVersionId) {
+        validateEffectiveVersion(policyDocumentVersionId,
+                PolicyType.RESERVATION_PRIVACY);
     }
 
     public List<PolicyDocumentResponse> searchDocuments(Long actorMemberId) {

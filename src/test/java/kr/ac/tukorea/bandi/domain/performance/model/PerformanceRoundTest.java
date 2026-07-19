@@ -87,6 +87,43 @@ class PerformanceRoundTest {
                 .isInstanceOf(InvalidPerformanceContentException.class);
     }
 
+    @Test
+    void 신청_오픈_상태이고_시작_이상_마감_미만일_때만_신청한다() {
+        PerformanceRound opened = scheduled().changeStatus(
+                PerformanceRoundStatus.RESERVATION_OPEN);
+
+        assertThat(opened.isReservationOpenAt(RESERVATION_OPEN)).isTrue();
+        assertThat(opened.isReservationOpenAt(
+                RESERVATION_CLOSE.minusNanos(1))).isTrue();
+        assertThat(opened.isReservationOpenAt(RESERVATION_CLOSE)).isFalse();
+        assertThat(scheduled().isReservationOpenAt(
+                RESERVATION_OPEN)).isFalse();
+    }
+
+    @Test
+    void 관람객_취소는_입장_오픈_전_상태까지만_허용한다() {
+        assertThat(scheduled().isViewerCancellationOpen()).isTrue();
+        assertThat(scheduled().changeStatus(
+                PerformanceRoundStatus.RESERVATION_CLOSED)
+                .isViewerCancellationOpen()).isTrue();
+        assertThat(scheduled().changeStatus(
+                PerformanceRoundStatus.ENTRY_OPEN)
+                .isViewerCancellationOpen()).isFalse();
+        assertThat(scheduled().changeStatus(
+                PerformanceRoundStatus.ENDED)
+                .isViewerCancellationOpen()).isFalse();
+        assertThat(scheduled().changeStatus(
+                PerformanceRoundStatus.CANCELLED)
+                .isViewerCancellationOpen()).isFalse();
+    }
+
+    @Test
+    void 입장은_ENTRY_OPEN_상태에서만_허용한다() {
+        assertThat(scheduled().isEntryOpen()).isFalse();
+        assertThat(scheduled().changeStatus(
+                PerformanceRoundStatus.ENTRY_OPEN).isEntryOpen()).isTrue();
+    }
+
     private PerformanceRound scheduled() {
         return PerformanceRound.scheduled(PROJECT_ID, 1, START,
                 ENTRY_START, RESERVATION_OPEN, RESERVATION_CLOSE);

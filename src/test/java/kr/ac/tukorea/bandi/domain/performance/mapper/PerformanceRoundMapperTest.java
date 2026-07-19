@@ -94,6 +94,10 @@ class PerformanceRoundMapperTest {
                 second.getPerformanceRoundId())).isPresent().get()
                 .extracting(PerformanceRound::getStatus)
                 .isEqualTo(PerformanceRoundStatus.RESERVATION_OPEN);
+        assertThat(roundMapper.lookupRoundById(
+                first.getPerformanceRoundId())).isPresent().get()
+                .extracting(PerformanceRound::getRoundNo)
+                .isEqualTo(1);
         assertThat(roundMapper.searchRounds(
                 project.getPerformanceProjectId()))
                 .extracting("performanceRoundId")

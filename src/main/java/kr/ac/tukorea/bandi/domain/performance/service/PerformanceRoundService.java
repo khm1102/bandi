@@ -19,6 +19,7 @@ import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -145,6 +146,13 @@ public class PerformanceRoundService {
         lockRound(performanceRoundId).validateProject(performanceProjectId);
     }
 
+    @Transactional
+    public void validateManage(Long actorMemberId, Long performanceRoundId,
+                               Long performanceProjectId) {
+        validateAdmin(actorMemberId);
+        lockRound(performanceRoundId).validateProject(performanceProjectId);
+    }
+
     public List<PublicPerformanceRoundResponse> searchPublicRounds(
             String slug) {
         Long projectId = publicPageService.lookupPublic(slug)
@@ -159,6 +167,31 @@ public class PerformanceRoundService {
                             round.performanceRoundId(), List.of())));
         }
         return result;
+    }
+
+    public boolean isPublicRound(String slug, Long performanceRoundId) {
+        return searchPublicRounds(slug).stream()
+                .anyMatch(round -> round.performanceRoundId()
+                        .equals(performanceRoundId));
+    }
+
+    public boolean isPublicReservationOpen(
+            String slug, Long performanceRoundId,
+            LocalDateTime currentDttm) {
+        return isPublicRound(slug, performanceRoundId)
+                && lookupRound(performanceRoundId)
+                .isReservationOpenAt(currentDttm);
+    }
+
+    public boolean isViewerCancellationOpen(Long performanceRoundId) {
+        return lookupRound(performanceRoundId)
+                .isViewerCancellationOpen();
+    }
+
+    public boolean isEntryOpen(
+            Long actorMemberId, Long performanceRoundId) {
+        validateAdmin(actorMemberId);
+        return lookupRound(performanceRoundId).isEntryOpen();
     }
 
     private Map<Long, List<PerformanceRoundAccessibilityResponse>>
@@ -176,6 +209,12 @@ public class PerformanceRoundService {
 
     private PerformanceRound lockRound(Long performanceRoundId) {
         return roundMapper.lookupRoundForUpdate(performanceRoundId)
+                .orElseThrow(() -> new PerformanceContentNotFoundException(
+                        "performanceRoundId=" + performanceRoundId));
+    }
+
+    private PerformanceRound lookupRound(Long performanceRoundId) {
+        return roundMapper.lookupRoundById(performanceRoundId)
                 .orElseThrow(() -> new PerformanceContentNotFoundException(
                         "performanceRoundId=" + performanceRoundId));
     }

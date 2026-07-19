@@ -134,6 +134,19 @@ class PolicyServiceTest {
                 .isInstanceOf(InvalidPolicyVersionException.class);
     }
 
+    @Test
+    void 관람_신청은_현재_발효된_관람객_정책_버전만_사용한다() {
+        given(policyMapper.existsEffectiveVersionOfType(
+                VERSION_ID, PolicyType.RESERVATION_PRIVACY, NOW))
+                .willReturn(true, false);
+
+        service.validateEffectiveVersion(
+                VERSION_ID, PolicyType.RESERVATION_PRIVACY);
+        assertThatThrownBy(() -> service.validateEffectiveVersion(
+                VERSION_ID, PolicyType.RESERVATION_PRIVACY))
+                .isInstanceOf(InvalidPolicyVersionException.class);
+    }
+
     private PolicyDocument document(boolean active) {
         return new PolicyDocument(DOCUMENT_ID, PolicyType.PRIVACY,
                 "공개 프로필 동의", PolicyAudience.MEMBER,
