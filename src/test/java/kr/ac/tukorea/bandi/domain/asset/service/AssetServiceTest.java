@@ -166,6 +166,40 @@ class AssetServiceTest {
     }
 
     @Test
+    void 품목의_동일한_상태_변경은_갱신과_이력을_생략한다() {
+        given(assetMapper.lookupItemByIdForUpdate(ITEM_ID))
+                .willReturn(Optional.of(quantityItem()));
+
+        assetService.changeItemStatus(ACTOR_ID, ITEM_ID,
+                AssetStatus.AVAILABLE, "중복 요청");
+
+        verify(assetMapper, never()).updateItem(
+                org.mockito.ArgumentMatchers.any());
+        verify(assetMapper, never()).insertHistory(
+                org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void 품목의_상태가_바뀌면_갱신하고_상태_이력을_남긴다() {
+        given(assetMapper.lookupItemByIdForUpdate(ITEM_ID))
+                .willReturn(Optional.of(quantityItem()));
+
+        assetService.changeItemStatus(ACTOR_ID, ITEM_ID,
+                AssetStatus.REPAIR, "피복 손상");
+
+        ArgumentCaptor<AssetItem> itemCaptor =
+                ArgumentCaptor.forClass(AssetItem.class);
+        ArgumentCaptor<AssetHistory> historyCaptor =
+                ArgumentCaptor.forClass(AssetHistory.class);
+        verify(assetMapper).updateItem(itemCaptor.capture());
+        verify(assetMapper).insertHistory(historyCaptor.capture());
+        assertThat(itemCaptor.getValue().getStatus())
+                .isEqualTo(AssetStatus.REPAIR);
+        assertThat(historyCaptor.getValue().action())
+                .isEqualTo(AssetAction.REPAIR);
+    }
+
+    @Test
     void 활성_대여가_있는_개별_장비는_직접_수정할_수_없다() {
         AssetUnit unit = new AssetUnit(20L, ITEM_ID, "CAM-001",
                 AssetStatus.IN_USE, "영상팀");

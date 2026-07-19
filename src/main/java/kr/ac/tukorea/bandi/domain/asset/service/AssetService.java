@@ -171,6 +171,9 @@ public class AssetService {
                                  AssetStatus status, String note) {
         validateAdmin(actorMemberId);
         AssetItem current = lockItem(assetItemId);
+        if (current.getStatus() == status) {
+            return;
+        }
         AssetItem changed = current.changeStatus(status);
         assetMapper.updateItem(changed);
         assetMapper.insertHistory(new AssetHistory(null, assetItemId, null,
