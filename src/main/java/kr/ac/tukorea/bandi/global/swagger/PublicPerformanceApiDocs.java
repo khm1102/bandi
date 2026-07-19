@@ -59,4 +59,16 @@ public interface PublicPerformanceApiDocs {
     @GetMapping("/{slug}/media")
     ResponseEntity<List<PerformanceMediaResponse>> searchMedia(
             @PathVariable String slug);
+
+    @Operation(summary = "공개 공연 이미지·미디어 파일 조회")
+    @GetMapping("/{slug}/files/{storedFileId}")
+    ResponseEntity<Void> downloadPerformanceFile(
+            @PathVariable String slug,
+            @PathVariable Long storedFileId);
+
+    @Operation(summary = "공개 프로필 사진 파일 조회")
+    @GetMapping("/profiles/{profileId}/files/{storedFileId}")
+    ResponseEntity<Void> downloadProfileFile(
+            @PathVariable Long profileId,
+            @PathVariable Long storedFileId);
 }

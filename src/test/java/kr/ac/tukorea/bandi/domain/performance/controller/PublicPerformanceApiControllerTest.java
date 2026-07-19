@@ -4,6 +4,7 @@ import kr.ac.tukorea.bandi.domain.performance.service.PerformancePublicPageServi
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceContentService;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceRoundCastService;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceRoundService;
+import kr.ac.tukorea.bandi.domain.performance.service.PublicPerformanceFileService;
 import kr.ac.tukorea.bandi.domain.performance.service.PublicProfileService;
 import kr.ac.tukorea.bandi.global.config.SecurityWebMvcConfig;
 import kr.ac.tukorea.bandi.global.exception.ApiExceptionHandler;
@@ -30,6 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest({PublicPerformanceApiController.class,
@@ -56,6 +58,9 @@ class PublicPerformanceApiControllerTest {
 
     @MockitoBean
     private PerformanceRoundCastService roundCastService;
+
+    @MockitoBean
+    private PublicPerformanceFileService publicPerformanceFileService;
 
     @Autowired
     PublicPerformanceApiControllerTest(MockMvc mockMvc) {
@@ -124,6 +129,23 @@ class PublicPerformanceApiControllerTest {
         verify(roundCastService).searchPublic("hamlet", 30L);
         verify(contentService).searchPublicCredits("hamlet");
         verify(contentService).searchPublicMedia("hamlet");
+    }
+
+    @Test
+    void 공개_공연과_프로필_파일은_검증된_URL로_이동한다() throws Exception {
+        given(publicPerformanceFileService.createPerformanceFileDownloadUrl(
+                "hamlet", 11L)).willReturn("https://storage/performance");
+        given(publicPerformanceFileService.createProfileFileDownloadUrl(
+                21L, 12L)).willReturn("https://storage/profile");
+
+        mockMvc.perform(get("/api/public-performances/{slug}/files/{storedFileId}",
+                        "hamlet", 11L))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl("https://storage/performance"));
+        mockMvc.perform(get("/api/public-performances/profiles/{profileId}/files/"
+                        + "{storedFileId}", 21L, 12L))
+                .andExpect(status().isFound())
+                .andExpect(redirectedUrl("https://storage/profile"));
     }
 
     @Test

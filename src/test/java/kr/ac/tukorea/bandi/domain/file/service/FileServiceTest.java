@@ -141,6 +141,19 @@ class FileServiceTest {
     }
 
     @Test
+    void READY_공개_파일은_공개_다운로드_URL을_발급한다() {
+        StoredFile source = readyPublic(PUBLIC_KEY);
+        assignId(source, PUBLIC_FILE_ID);
+        given(metadataService.lookup(PUBLIC_FILE_ID)).willReturn(source);
+        given(objectStorage.createPresignedGetUrl(StorageScope.PUBLIC, PUBLIC_KEY,
+                Duration.ofMinutes(5))).willReturn("https://storage/public-signed");
+
+        String url = fileService.createPublicDownloadUrl(PUBLIC_FILE_ID);
+
+        assertThat(url).isEqualTo("https://storage/public-signed");
+    }
+
+    @Test
     void READY_비공개_파일은_업무_레코드에_연결할_수_있다() {
         StoredFile source = readyPrivate(PRIVATE_KEY);
         assignId(source, PRIVATE_FILE_ID);
