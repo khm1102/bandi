@@ -1,5 +1,8 @@
 package kr.ac.tukorea.bandi.domain.member.service;
 
+import kr.ac.tukorea.bandi.domain.audit.model.AuditAction;
+import kr.ac.tukorea.bandi.domain.audit.model.AuditTargetType;
+import kr.ac.tukorea.bandi.domain.audit.service.AuditService;
 import kr.ac.tukorea.bandi.domain.member.dto.request.CohortChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPreRegisterParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchCondition;
@@ -78,6 +81,8 @@ class MemberServiceTest {
     private CohortMapper cohortMapper;
     @Mock
     private MemberHistoryMapper memberHistoryMapper;
+    @Mock
+    private AuditService auditService;
 
     private MemberService memberService;
 
@@ -85,7 +90,8 @@ class MemberServiceTest {
     void setUp() {
         // 이력의 changed_dttm을 단언할 수 있도록 시각을 고정한다 (컨벤션 9.5).
         Clock clock = Clock.fixed(FIXED_INSTANT, SEOUL);
-        memberService = new MemberService(memberMapper, teamMapper, cohortMapper, memberHistoryMapper, clock);
+        memberService = new MemberService(memberMapper, teamMapper,
+                cohortMapper, memberHistoryMapper, auditService, clock);
     }
 
     @Test
@@ -274,6 +280,9 @@ class MemberServiceTest {
             assertThat(history.reason()).isEqualTo(REASON);
             assertThat(history.changedByMemberId()).isEqualTo(ADMIN_ID);
             assertThat(history.changedDttm()).isEqualTo(LocalDateTime.ofInstant(FIXED_INSTANT, SEOUL));
+            verify(auditService).record(ADMIN_ID,
+                    AuditAction.MEMBER_TEAM_CHANGED,
+                    AuditTargetType.MEMBER, TARGET_ID, "멤버 팀 변경");
         }
 
         @Test
@@ -337,6 +346,9 @@ class MemberServiceTest {
             assertThat(captor.getValue().previousCohortId()).isEqualTo(COHORT_ID);
             assertThat(captor.getValue().newCohortId()).isEqualTo(NEW_COHORT_ID);
             assertThat(captor.getValue().changedByMemberId()).isEqualTo(ADMIN_ID);
+            verify(auditService).record(ADMIN_ID,
+                    AuditAction.MEMBER_COHORT_CHANGED,
+                    AuditTargetType.MEMBER, TARGET_ID, "멤버 기수 변경");
         }
 
         @Test
@@ -377,6 +389,9 @@ class MemberServiceTest {
             verify(memberHistoryMapper).insertRoleHistory(captor.capture());
             assertThat(captor.getValue().previousRole()).isEqualTo(ClubRole.MEMBER);
             assertThat(captor.getValue().newRole()).isEqualTo(ClubRole.LEADER);
+            verify(auditService).record(ADMIN_ID,
+                    AuditAction.MEMBER_ROLE_CHANGED,
+                    AuditTargetType.MEMBER, TARGET_ID, "멤버 권한 변경");
         }
 
         @Test
@@ -464,6 +479,9 @@ class MemberServiceTest {
             assertThat(captor.getValue().newStatus()).isEqualTo(MemberStatus.REGISTRATION_CANCELLED);
             assertThat(captor.getValue().reason()).isEqualTo(REASON);
             assertThat(captor.getValue().changedByMemberId()).isEqualTo(ADMIN_ID);
+            verify(auditService).record(ADMIN_ID,
+                    AuditAction.MEMBER_STATUS_CHANGED,
+                    AuditTargetType.MEMBER, TARGET_ID, "멤버 상태 변경");
         }
 
         @Test

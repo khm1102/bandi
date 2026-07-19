@@ -1,5 +1,6 @@
 package kr.ac.tukorea.bandi.domain.member.service;
 
+import kr.ac.tukorea.bandi.domain.audit.mapper.AuditLogMapper;
 import kr.ac.tukorea.bandi.domain.member.dto.request.CohortChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.StatusChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.TeamChangeParam;
@@ -56,6 +57,8 @@ class MemberServiceTransactionTest {
 
     @MockitoBean
     private MemberHistoryMapper memberHistoryMapper;
+    @MockitoBean
+    private AuditLogMapper auditLogMapper;
 
     private Long actorTeamId;
     private Long stageTeamId;
@@ -102,6 +105,9 @@ class MemberServiceTransactionTest {
 
     @AfterEach
     void tearDown() throws SQLException {
+        executeUpdate("DELETE FROM audit_log WHERE actor_member_id IN ("
+                + memberId + ", " + adminId + ") OR target_id IN ("
+                + memberId + ", " + adminId + ")");
         executeUpdate("DELETE FROM member_team_history WHERE member_id = " + memberId);
         executeUpdate("DELETE FROM member WHERE member_id = " + memberId);
         executeUpdate("DELETE FROM member WHERE member_id = " + adminId);
@@ -121,6 +127,22 @@ class MemberServiceTransactionTest {
                 .isInstanceOf(IllegalStateException.class);
 
         // then — 이미 실행된 updateTeam이 함께 취소되어 원래 팀이 유지된다
+        assertThat(memberMapper.lookupById(memberId))
+                .isPresent()
+                .get()
+                .extracting(Member::getTeamId)
+                .isEqualTo(actorTeamId);
+    }
+
+    @Test
+    void 감사_로그_삽입이_실패하면_팀_변경도_롤백된다() {
+        willThrow(new IllegalStateException("감사 로그 저장 실패"))
+                .given(auditLogMapper).insert(any());
+
+        assertThatThrownBy(() -> memberService.changeTeam(adminId,
+                new TeamChangeParam(memberId, stageTeamId, "팀 재배치")))
+                .isInstanceOf(IllegalStateException.class);
+
         assertThat(memberMapper.lookupById(memberId))
                 .isPresent()
                 .get()

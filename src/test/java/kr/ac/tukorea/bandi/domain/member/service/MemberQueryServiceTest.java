@@ -1,5 +1,6 @@
 package kr.ac.tukorea.bandi.domain.member.service;
 
+import kr.ac.tukorea.bandi.domain.audit.service.AuditService;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchCondition;
 import kr.ac.tukorea.bandi.domain.member.dto.response.CohortResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberHistoryResponse;
@@ -56,13 +57,16 @@ class MemberQueryServiceTest {
     private CohortMapper cohortMapper;
     @Mock
     private MemberHistoryMapper memberHistoryMapper;
+    @Mock
+    private AuditService auditService;
 
     private MemberService memberService;
 
     @BeforeEach
     void setUp() {
         memberService = new MemberService(memberMapper, teamMapper,
-                cohortMapper, memberHistoryMapper, Clock.systemUTC());
+                cohortMapper, memberHistoryMapper, auditService,
+                Clock.systemUTC());
     }
 
     @Test
