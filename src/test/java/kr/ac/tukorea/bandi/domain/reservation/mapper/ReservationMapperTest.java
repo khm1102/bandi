@@ -18,6 +18,7 @@ import kr.ac.tukorea.bandi.domain.reservation.model.PerformanceRoundSeat;
 import kr.ac.tukorea.bandi.domain.reservation.model.Reservation;
 import kr.ac.tukorea.bandi.domain.reservation.model.ReservationSeat;
 import kr.ac.tukorea.bandi.domain.reservation.model.ReservationStatusHistory;
+import kr.ac.tukorea.bandi.domain.reservation.model.ReservationStatus;
 import kr.ac.tukorea.bandi.domain.reservation.model.RoundSeatStatus;
 import kr.ac.tukorea.bandi.domain.reservation.model.SeatEntryHistory;
 import kr.ac.tukorea.bandi.global.annotation.MapperTest;
@@ -137,6 +138,24 @@ class ReservationMapperTest {
                 .isPresent();
         assertThat(reservationMapper.lookupReservationByNo(
                 "R20321110AAA")).isPresent();
+    }
+
+    @Test
+    void 회차와_상태로_신청_목록을_최신순_조회한다() {
+        Reservation first = insertReservation(
+                "R20321110AAA", LOOKUP_HASH, ENTRY_HASH);
+        Reservation second = insertReservation(
+                "R20321110BBB", "d".repeat(64), "e".repeat(64));
+
+        assertThat(reservationMapper.searchReservations(
+                round.getPerformanceRoundId(),
+                ReservationStatus.CONFIRMED, 0, 20))
+                .extracting(Reservation::getReservationId)
+                .containsExactly(second.getReservationId(),
+                        first.getReservationId());
+        assertThat(reservationMapper.searchReservations(
+                round.getPerformanceRoundId(),
+                ReservationStatus.CANCELLED, 0, 20)).isEmpty();
     }
 
     @Test

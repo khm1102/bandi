@@ -243,6 +243,17 @@
                  seat.seat_label, rs.reservation_seat_id
     </select>
 
+    <select id="searchReservations" resultMap="reservationMap">
+        SELECT <include refid="reservationColumns"/>
+        FROM reservation
+        WHERE performance_round_id = #{performanceRoundId}
+        <if test="status != null">
+            AND status_code = #{status}
+        </if>
+        ORDER BY created_dttm DESC, reservation_id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
     <select id="lookupReservationMetrics"
             resultMap="reservationMetricsMap">
         SELECT COUNT(*) AS reservation_count,

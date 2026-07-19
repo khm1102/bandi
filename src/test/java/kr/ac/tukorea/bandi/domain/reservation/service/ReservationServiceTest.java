@@ -288,6 +288,40 @@ class ReservationServiceTest {
     }
 
     @Test
+    void 운영진이_회차별_신청자와_좌석을_조회한다() {
+        given(reservationMapper.searchReservations(ROUND_ID,
+                ReservationStatus.CONFIRMED, 0, 20))
+                .willReturn(List.of(reservation()));
+        given(reservationMapper.searchReservationSeatResponses(
+                RESERVATION_ID)).willReturn(List.of());
+        given(dataProtector.decryptName(any(byte[].class), any(Short.class)))
+                .willReturn("홍길동");
+        given(dataProtector.decryptPhone(any(byte[].class), any(Short.class)))
+                .willReturn("01012345678");
+
+        var result = service.search(ACTOR_ID, PROJECT_ID, ROUND_ID,
+                ReservationStatus.CONFIRMED, 0, 20);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.get(0).applicantName()).isEqualTo("홍길동");
+        assertThat(result.get(0).phone()).isEqualTo("01012345678");
+        verify(roundService).validateManage(ACTOR_ID, ROUND_ID, PROJECT_ID);
+    }
+
+    @Test
+    void 신청_목록의_페이지_범위가_잘못되면_조회하지_않는다() {
+        assertThatThrownBy(() -> service.search(ACTOR_ID, PROJECT_ID,
+                ROUND_ID, null, -1, 20))
+                .isInstanceOf(InvalidReservationException.class);
+        assertThatThrownBy(() -> service.search(ACTOR_ID, PROJECT_ID,
+                ROUND_ID, null, 0, 51))
+                .isInstanceOf(InvalidReservationException.class);
+
+        verify(reservationMapper, never()).searchReservations(
+                any(), any(), any(Integer.class), any(Integer.class));
+    }
+
+    @Test
     void 보존_기한이_지난_신청의_개인정보를_파기한다() {
         given(reservationMapper.searchPersonalDataEraseTargets(
                 NOW.minusDays(90), 100))

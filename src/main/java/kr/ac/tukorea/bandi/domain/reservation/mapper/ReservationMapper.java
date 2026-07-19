@@ -7,6 +7,7 @@ import kr.ac.tukorea.bandi.domain.reservation.model.ActiveSeatOccupancy;
 import kr.ac.tukorea.bandi.domain.reservation.model.Reservation;
 import kr.ac.tukorea.bandi.domain.reservation.model.ReservationSeat;
 import kr.ac.tukorea.bandi.domain.reservation.model.ReservationStatusHistory;
+import kr.ac.tukorea.bandi.domain.reservation.model.ReservationStatus;
 import kr.ac.tukorea.bandi.domain.reservation.model.SeatEntryHistory;
 import org.apache.ibatis.annotations.Param;
 
@@ -49,6 +50,12 @@ public interface ReservationMapper {
 
     List<ReservationSeatResponse> searchReservationSeatResponses(
             Long reservationId);
+
+    List<Reservation> searchReservations(
+            @Param("performanceRoundId") Long performanceRoundId,
+            @Param("status") ReservationStatus status,
+            @Param("offset") int offset,
+            @Param("limit") int limit);
 
     ReservationMetricsResponse lookupReservationMetrics(
             Long performanceRoundId);

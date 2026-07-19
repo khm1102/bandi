@@ -57,13 +57,17 @@ class SecurityConfigTest {
             mockMvc.perform(get("/showops/test")
                             .with(user("tester").roles(role)))
                     .andExpect(status().isForbidden());
+            mockMvc.perform(get("/api/reservation-management/test")
+                            .with(user("tester").roles(role)))
+                    .andExpect(status().isForbidden());
         }
     }
 
     @Test
     void 운영진은_관리자_화면에_접근할_수_있다() throws Exception {
         for (String path : new String[]{
-                "/members/test", "/reservations/test", "/showops/test"}) {
+                "/members/test", "/reservations/test", "/showops/test",
+                "/api/reservation-management/test"}) {
             mockMvc.perform(get(path).with(user("admin").roles("ADMIN")))
                     .andExpect(status().isOk());
         }
@@ -92,6 +96,14 @@ class SecurityConfigTest {
         mockMvc.perform(post("/api/public-notices/test").with(csrf()))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("C003"));
+    }
+
+    @Test
+    void 공개_관람_신청은_로그인_없이_CSRF로_요청한다() throws Exception {
+        mockMvc.perform(post("/api/public-reservations/test"))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/public-reservations/test").with(csrf()))
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -146,7 +158,8 @@ class SecurityTestController {
     @GetMapping({"/dashboard", "/members/test", "/reservations/test",
             "/showops/test", "/notices/test", "/performances/show",
             "/reserve/test", "/swagger-ui/test", "/api/test",
-            "/api/members/test", "/api/public-notices/test"})
+            "/api/members/test", "/api/public-notices/test",
+            "/api/reservation-management/test"})
     ResponseEntity<Void> page() {
         return ResponseEntity.ok().build();
     }
@@ -158,6 +171,11 @@ class SecurityTestController {
 
     @PostMapping("/api/public-notices/test")
     ResponseEntity<Void> changePublicNotice() {
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/api/public-reservations/test")
+    ResponseEntity<Void> createPublicReservation() {
         return ResponseEntity.ok().build();
     }
 
