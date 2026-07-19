@@ -16,7 +16,7 @@
 <c:set var="baseClass" value="inline-flex items-center justify-center gap-1.5 rounded-md font-bold transition-colors focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"/>
 <c:choose>
     <c:when test="${buttonSize == 'compact'}">
-        <c:set var="sizeClass" value="min-h-9 px-3 text-xs"/>
+        <c:set var="sizeClass" value="min-h-11 px-3 text-xs md:min-h-9"/>
     </c:when>
     <c:otherwise>
         <c:set var="sizeClass" value="min-h-11 px-4 text-sm"/>
