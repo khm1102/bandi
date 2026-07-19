@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.ac.tukorea.bandi.domain.performance.mapper.PerformanceRoundMapper">
+
+    <resultMap id="roundMap"
+               type="kr.ac.tukorea.bandi.domain.performance.model.PerformanceRound">
+        <constructor>
+            <idArg column="performance_round_id" javaType="java.lang.Long"/>
+            <arg column="performance_project_id" javaType="java.lang.Long"/>
+            <arg column="round_no" javaType="java.lang.Integer"/>
+            <arg column="start_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="entry_start_dttm"
+                 javaType="java.time.LocalDateTime"/>
+            <arg column="reservation_open_dttm"
+                 javaType="java.time.LocalDateTime"/>
+            <arg column="reservation_close_dttm"
+                 javaType="java.time.LocalDateTime"/>
+            <arg column="status_code"
+                 javaType="kr.ac.tukorea.bandi.domain.performance.model.PerformanceRoundStatus"/>
+            <arg column="created_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="roundResponseMap"
+               type="kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceRoundResponse">
+        <constructor>
+            <idArg column="performance_round_id" javaType="java.lang.Long"/>
+            <arg column="performance_project_id" javaType="java.lang.Long"/>
+            <arg column="round_no" javaType="_int"/>
+            <arg column="start_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="entry_start_dttm"
+                 javaType="java.time.LocalDateTime"/>
+            <arg column="reservation_open_dttm"
+                 javaType="java.time.LocalDateTime"/>
+            <arg column="reservation_close_dttm"
+                 javaType="java.time.LocalDateTime"/>
+            <arg column="status_code"
+                 javaType="kr.ac.tukorea.bandi.domain.performance.model.PerformanceRoundStatus"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="accessibilityMap"
+               type="kr.ac.tukorea.bandi.domain.performance.model.PerformanceRoundAccessibility">
+        <constructor>
+            <idArg column="performance_round_accessibility_id"
+                   javaType="java.lang.Long"/>
+            <arg column="performance_round_id" javaType="java.lang.Long"/>
+            <arg column="support_type_code"
+                 javaType="kr.ac.tukorea.bandi.domain.performance.model.AccessibilitySupportType"/>
+            <arg column="title" javaType="java.lang.String"/>
+            <arg column="description" javaType="java.lang.String"/>
+            <arg column="display_order" javaType="java.lang.Integer"/>
+            <arg column="created_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="accessibilityResponseMap"
+               type="kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceRoundAccessibilityResponse">
+        <constructor>
+            <idArg column="performance_round_accessibility_id"
+                   javaType="java.lang.Long"/>
+            <arg column="performance_round_id" javaType="java.lang.Long"/>
+            <arg column="support_type_code"
+                 javaType="kr.ac.tukorea.bandi.domain.performance.model.AccessibilitySupportType"/>
+            <arg column="title" javaType="java.lang.String"/>
+            <arg column="description" javaType="java.lang.String"/>
+            <arg column="display_order" javaType="_int"/>
+        </constructor>
+    </resultMap>
+
+    <select id="lookupRoundForUpdate" resultMap="roundMap">
+        SELECT performance_round_id, performance_project_id, round_no,
+               start_dttm, entry_start_dttm,
+               reservation_open_dttm, reservation_close_dttm,
+               status_code, created_dttm, updated_dttm
+        FROM performance_round
+        WHERE performance_round_id = #{performanceRoundId}
+        FOR UPDATE
+    </select>
+
+    <select id="lookupAccessibilityForUpdate"
+            resultMap="accessibilityMap">
+        SELECT performance_round_accessibility_id,
+               performance_round_id, support_type_code,
+               title, description, display_order,
+               created_dttm, updated_dttm
+        FROM performance_round_accessibility
+        WHERE performance_round_accessibility_id =
+              #{performanceRoundAccessibilityId}
+        FOR UPDATE
+    </select>
+
+    <select id="searchRounds" resultMap="roundResponseMap">
+        SELECT performance_round_id, performance_project_id, round_no,
+               start_dttm, entry_start_dttm,
+               reservation_open_dttm, reservation_close_dttm,
+               status_code
+        FROM performance_round
+        WHERE performance_project_id = #{performanceProjectId}
+        ORDER BY start_dttm, round_no, performance_round_id
+    </select>
+
+    <select id="searchAccessibilities"
+            resultMap="accessibilityResponseMap">
+        SELECT performance_round_accessibility_id,
+               performance_round_id, support_type_code,
+               title, description, display_order
+        FROM performance_round_accessibility
+        WHERE performance_round_id = #{performanceRoundId}
+        ORDER BY display_order, performance_round_accessibility_id
+    </select>
+
+    <select id="searchAccessibilitiesByProject"
+            resultMap="accessibilityResponseMap">
+        SELECT pra.performance_round_accessibility_id,
+               pra.performance_round_id, pra.support_type_code,
+               pra.title, pra.description, pra.display_order
+        FROM performance_round_accessibility pra
+        JOIN performance_round pr
+          ON pr.performance_round_id = pra.performance_round_id
+        WHERE pr.performance_project_id = #{performanceProjectId}
+        ORDER BY pr.start_dttm, pr.round_no,
+                 pra.display_order,
+                 pra.performance_round_accessibility_id
+    </select>
+
+    <insert id="insertRound" useGeneratedKeys="true"
+            keyProperty="performanceRoundId">
+        INSERT INTO performance_round (
+            performance_project_id, round_no,
+            start_dttm, entry_start_dttm,
+            reservation_open_dttm, reservation_close_dttm,
+            status_code
+        ) VALUES (
+            #{performanceProjectId}, #{roundNo},
+            #{startDttm}, #{entryStartDttm},
+            #{reservationOpenDttm}, #{reservationCloseDttm},
+            #{status}
+        )
+    </insert>
+
+    <update id="updateRound">
+        UPDATE performance_round
+        SET round_no = #{roundNo},
+            start_dttm = #{startDttm},
+            entry_start_dttm = #{entryStartDttm},
+            reservation_open_dttm = #{reservationOpenDttm},
+            reservation_close_dttm = #{reservationCloseDttm},
+            status_code = #{status}
+        WHERE performance_round_id = #{performanceRoundId}
+    </update>
+
+    <insert id="insertAccessibility" useGeneratedKeys="true"
+            keyProperty="performanceRoundAccessibilityId">
+        INSERT INTO performance_round_accessibility (
+            performance_round_id, support_type_code,
+            title, description, display_order
+        ) VALUES (
+            #{performanceRoundId}, #{supportType},
+            #{title}, #{description}, #{displayOrder}
+        )
+    </insert>
+
+    <update id="updateAccessibility">
+        UPDATE performance_round_accessibility
+        SET support_type_code = #{supportType},
+            title = #{title},
+            description = #{description},
+            display_order = #{displayOrder}
+        WHERE performance_round_accessibility_id =
+              #{performanceRoundAccessibilityId}
+    </update>
+
+    <delete id="removeAccessibility">
+        DELETE FROM performance_round_accessibility
+        WHERE performance_round_accessibility_id =
+              #{performanceRoundAccessibilityId}
+    </delete>
+</mapper>
