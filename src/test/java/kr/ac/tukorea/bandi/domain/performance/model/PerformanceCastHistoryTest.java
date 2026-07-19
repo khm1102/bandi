@@ -31,7 +31,6 @@ class PerformanceCastHistoryTest {
                 CastAction.CHANGE, null, 5L, CHANGED_AT))
                 .isInstanceOf(InvalidPerformanceContentException.class);
     }
-
     @Test
     void 회차_캐스팅_변경_이력을_생성한다() {
         PerformanceCastHistory history = PerformanceCastHistory.round(

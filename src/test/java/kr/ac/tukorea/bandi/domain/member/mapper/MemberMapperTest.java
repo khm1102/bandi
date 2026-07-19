@@ -1,12 +1,15 @@
 package kr.ac.tukorea.bandi.domain.member.mapper;
 
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchCondition;
+import kr.ac.tukorea.bandi.domain.member.model.AcademicStatus;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
 import kr.ac.tukorea.bandi.domain.member.model.CohortTerm;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
+import kr.ac.tukorea.bandi.domain.member.model.MemberSchoolConnection;
 import kr.ac.tukorea.bandi.domain.member.model.MemberStatus;
 import kr.ac.tukorea.bandi.domain.member.model.SsoLinkStatus;
+import kr.ac.tukorea.bandi.domain.member.model.SchoolConnectionOutcome;
 import kr.ac.tukorea.bandi.domain.member.model.Team;
 import kr.ac.tukorea.bandi.global.annotation.MapperTest;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,6 +21,7 @@ import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -184,6 +188,49 @@ class MemberMapperTest {
     }
 
     @Test
+    void 학번으로_멤버를_잠금_조회한다() {
+        // given
+        Member member = preRegistered("2021184000", actorTeamId);
+        memberMapper.insert(member);
+
+        // when & then
+        assertThat(memberMapper.lookupByStudentNoForUpdate("2021184000"))
+                .isPresent()
+                .get()
+                .extracting(Member::getMemberId)
+                .isEqualTo(member.getMemberId());
+    }
+
+    @Test
+    void 학교_신원_확인_결과를_일괄_갱신한다() {
+        // given
+        Member member = preRegistered("2021184000", actorTeamId);
+        memberMapper.insert(member);
+        LocalDateTime verifiedAt = LocalDateTime.of(2026, 7, 18, 17, 30);
+        MemberSchoolConnection connection = new MemberSchoolConnection(
+                member.getMemberId(), "컴퓨터공학부", AcademicStatus.ENROLLED, verifiedAt,
+                MemberStatus.ACTIVE, SsoLinkStatus.LINKED, verifiedAt, verifiedAt,
+                SchoolConnectionOutcome.AUTHENTICATED);
+
+        // when
+        memberMapper.updateSchoolConnection(connection);
+
+        // then
+        assertThat(memberMapper.lookupById(member.getMemberId()))
+                .isPresent()
+                .get()
+                .satisfies(found -> {
+                    assertThat(found.getDepartment()).isEqualTo("컴퓨터공학부");
+                    assertThat(found.getAcademicStatus()).isEqualTo(AcademicStatus.ENROLLED);
+                    assertThat(found.getAcademicStatusVerifiedDttm()).isEqualTo(verifiedAt);
+                    assertThat(found.getStatus()).isEqualTo(MemberStatus.ACTIVE);
+                    assertThat(found.getSsoLinkStatus()).isEqualTo(SsoLinkStatus.LINKED);
+                    assertThat(found.getSsoLinkedDttm()).isEqualTo(verifiedAt);
+                    assertThat(found.getLastLoginDttm()).isEqualTo(verifiedAt);
+                });
+    }
+
+    @Test
     void 허용되지_않는_role_code는_CHECK_제약으로_거부된다() throws SQLException {
         // given — Java enum을 우회한 직접 INSERT로 ck_member_role_code를 검증한다
         String sql = """
@@ -198,6 +245,24 @@ class MemberMapperTest {
             assertThatThrownBy(() -> statement.executeUpdate(sql))
                     .isInstanceOf(SQLException.class)
                     .hasMessageContaining("ck_member_role_code");
+        }
+    }
+
+    @Test
+    void 허용되지_않는_academic_status_code는_CHECK_제약으로_거부된다() throws SQLException {
+        // given — Java enum을 우회한 직접 INSERT로 ck_member_academic_status_code를 검증한다
+        String sql = """
+                INSERT INTO member (student_no, name, academic_status_code, team_id, cohort_id, role_code,
+                                    member_status_code, sso_link_status_code)
+                VALUES ('2021184888', '테스트', 'STUDENT', %d, %d, 'MEMBER', 'ACTIVE', 'LINKED')
+                """.formatted(actorTeamId, cohortId);
+
+        // when & then
+        try (Connection connection = dataSource.getConnection();
+             Statement statement = connection.createStatement()) {
+            assertThatThrownBy(() -> statement.executeUpdate(sql))
+                    .isInstanceOf(SQLException.class)
+                    .hasMessageContaining("ck_member_academic_status_code");
         }
     }
 }
