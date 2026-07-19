@@ -53,6 +53,9 @@
             <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 7V6a2 2 0 0 1 2-2h11M17 13h.01"/></svg>회비
         </a>
         <c:if test="${role == 'admin'}">
+            <a href="<c:url value='/notice-management'/>" class="${navBase} ${active == 'notice-management' ? navOn : navOff}" aria-current="${active == 'notice-management' ? 'page' : 'false'}">
+                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4zM8 8h8M8 12h8M8 16h5"/></svg>공시 관리
+            </a>
             <a href="<c:url value='/members'/>" class="${navBase} ${active == 'members' ? navOn : navOff}" aria-current="${active == 'members' ? 'page' : 'false'}">
                 <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>멤버·권한
             </a>
