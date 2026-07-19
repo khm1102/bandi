@@ -1,4 +1,4 @@
-import {ApiError, get, post} from '../common/api.js';
+import {ApiError, get, post, put} from '../common/api.js';
 import {all, bindPageActions, element, lookup, readValue} from '../common/dom.js';
 import {openModal} from '../common/modal.js';
 import {currentUserRole} from '../common/session.js';
@@ -8,11 +8,19 @@ import {badge, closeActionModal} from '../common/view.js';
 const ACTIONS = Object.freeze({
     PAY: 'fee-pay',
     UNPAY: 'fee-unpay',
-    ADD: 'fee-add',
+    CREATE_OPEN: 'fee-create-open',
+    EDIT_OPEN: 'fee-edit-open',
+    SAVE: 'fee-save',
+    OPEN: 'fee-open',
+    CLOSE: 'fee-close',
     CANCEL_OPEN: 'fee-cancel-open',
     CANCEL: 'fee-cancel',
+    HISTORY_OPEN: 'fee-history-open',
 });
 const STATUS_LABELS = Object.freeze({
+    DRAFT: ['초안', 'neutral'],
+    OPEN: ['부과 중', 'info'],
+    CLOSED: ['마감', 'success'],
     PAID: ['납부 완료', 'success'],
     UNPAID: ['미납', 'warning'],
     EXEMPT: ['면제', 'info'],
@@ -22,7 +30,7 @@ const STATUS_LABELS = Object.freeze({
 let feeItems = [];
 let selectedItem = null;
 let charges = [];
-let pendingCreatedFeeItemId = null;
+let editingItemId = null;
 
 function errorMessage(error) {
     if (error instanceof ApiError && error.fieldErrors.length > 0) {
@@ -37,6 +45,20 @@ function money(value) {
 
 function date(value) {
     return value ? value.slice(0, 10) : '—';
+}
+
+function dateTime(value) {
+    if (!value) {
+        return '—';
+    }
+    return new Intl.DateTimeFormat('ko-KR', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+    }).format(new Date(value));
 }
 
 function setError(selector, message) {
@@ -106,6 +128,9 @@ function createTab(item) {
 
 function activateTab(itemId) {
     selectedItem = feeItems.find((item) => item.feeItemId === Number(itemId));
+    if (!selectedItem) {
+        return;
+    }
     all('[data-fee-tab]').forEach((tab) => {
         const selected = Number(tab.dataset.feeItemId) === selectedItem.feeItemId;
         tab.setAttribute('aria-selected', String(selected));
@@ -115,7 +140,26 @@ function activateTab(itemId) {
         tab.classList.toggle('text-foreground', selected);
         tab.classList.toggle('text-muted-foreground', !selected);
     });
+    renderItemContext();
     loadCharges();
+}
+
+function renderItemContext() {
+    lookup('[data-fee-item-name]').textContent = selectedItem.name;
+    lookup('[data-fee-item-description]').textContent =
+            selectedItem.description || '등록된 설명이 없습니다.';
+    lookup('[data-fee-item-due]').textContent = `${date(selectedItem.dueDate)}까지`;
+    const status = lookup('[data-fee-item-status]');
+    status.replaceChildren(statusBadge(selectedItem.status));
+    lookup('[data-page-action="fee-edit-open"]').classList.toggle('hidden',
+            selectedItem.status !== 'DRAFT');
+    lookup('[data-page-action="fee-open"]').classList.toggle('hidden',
+            selectedItem.status !== 'DRAFT');
+    lookup('[data-page-action="fee-close"]').classList.toggle('hidden',
+            selectedItem.status !== 'OPEN');
+    lookup('[data-page-action="fee-cancel-open"]').classList.remove('hidden');
+    lookup('[data-fee-process-controls]').classList.toggle('hidden',
+            selectedItem.status === 'DRAFT');
 }
 
 function renderItems() {
@@ -126,6 +170,9 @@ function renderItems() {
     lookup('[data-fee-workspace]').classList.toggle('hidden', available.length === 0);
     if (available.length === 0) {
         selectedItem = null;
+        ['fee-edit-open', 'fee-open', 'fee-close', 'fee-cancel-open']
+                .forEach((action) => lookup(`[data-page-action="${action}"]`)
+                        .classList.add('hidden'));
         return;
     }
     available.forEach((item) => tabs.appendChild(createTab(item)));
@@ -171,6 +218,10 @@ function renderCharges() {
         lookup('[data-fee-charged-amount]', row).textContent = `${money(charge.chargedAmount)}원`;
         lookup('[data-fee-status]', row).appendChild(statusBadge(charge.status));
         lookup('[data-fee-date]', row).textContent = date(charge.paidDttm);
+        const history = lookup('[data-page-action="fee-history-open"]', row);
+        history.dataset.feeChargeId = charge.feeChargeId;
+        history.dataset.memberName = charge.memberName;
+        history.setAttribute('aria-label', `${charge.memberName} 수납 상태 변경 이력`);
         lookup('[data-fee-charge-list]').appendChild(row);
     });
     lookup('[data-fee-all]').checked = false;
@@ -218,34 +269,99 @@ async function processCharges(status) {
     }
 }
 
-async function addFee(trigger) {
+function feeItemPayload() {
     const dueDate = readValue('feeDue');
-    const amount = Number(readValue('feeAmt'));
+    return {
+        name: readValue('feeName'),
+        description: readValue('feeDescription'),
+        referenceYear: dueDate ? Number(dueDate.slice(0, 4)) : 0,
+        referenceTermCode: readValue('feeTerm'),
+        amount: Number(readValue('feeAmt')),
+        dueDate,
+    };
+}
+
+function fillFeeForm(item) {
+    document.getElementById('feeName').value = item?.name || '';
+    document.getElementById('feeDescription').value = item?.description || '';
+    document.getElementById('feeAmt').value = item?.amount || '';
+    document.getElementById('feeDue').value = item?.dueDate || '';
+    document.getElementById('feeTerm').value = item?.referenceTermCode || '';
+}
+
+function openFeeForm(trigger, item) {
+    editingItemId = item?.feeItemId || null;
+    fillFeeForm(item);
     setError('[data-fee-form-error]', '');
+    document.getElementById('feeModalTitle').textContent =
+            item ? '회비 초안 수정' : '회비 초안 추가';
+    document.getElementById('feeModalDescription').textContent = item
+        ? '부과를 시작하기 전까지 항목 정보를 수정할 수 있습니다.'
+        : '초안으로 저장한 뒤 내용을 확인하고 부과를 시작합니다.';
+    lookup('[data-fee-submit-label]').textContent = item ? '수정 저장' : '초안 저장';
+    openModal('feeModal', trigger);
+}
+
+function openCreateForm(trigger) {
+    openFeeForm(trigger, null);
+}
+
+function openEditForm(trigger) {
+    if (!selectedItem || selectedItem.status !== 'DRAFT') {
+        showToast('초안 상태의 회비만 수정할 수 있습니다.');
+        return;
+    }
+    openFeeForm(trigger, selectedItem);
+}
+
+async function saveFee(trigger) {
+    const targetId = editingItemId;
     trigger.disabled = true;
     try {
-        if (!pendingCreatedFeeItemId) {
-            const created = await post('/api/fee-management', {
-                name: readValue('feeName'),
-                description: readValue('feeDescription'),
-                referenceYear: dueDate ? Number(dueDate.slice(0, 4)) : 0,
-                referenceTermCode: readValue('feeTerm'),
-                amount,
-                dueDate,
-            });
-            pendingCreatedFeeItemId = created.feeItemId;
+        if (targetId) {
+            await put(`/api/fee-management/${targetId}`, feeItemPayload());
+        } else {
+            const created = await post('/api/fee-management', feeItemPayload());
+            selectedItem = {feeItemId: created.feeItemId};
         }
-        await post(`/api/fee-management/${pendingCreatedFeeItemId}/open`, {
-            selectedMemberIds: [],
-        });
-        pendingCreatedFeeItemId = null;
         closeActionModal(trigger);
-        showToast('회비 항목을 만들고 전체 활성 멤버에게 부과했습니다.');
+        showToast(targetId ? '회비 초안을 수정했습니다.' : '회비 초안을 저장했습니다.');
+        editingItemId = null;
         await loadItems();
     } catch (error) {
         setError('[data-fee-form-error]', errorMessage(error));
     } finally {
         trigger.disabled = false;
+    }
+}
+
+async function openFee() {
+    if (!selectedItem || selectedItem.status !== 'DRAFT') {
+        showToast('부과를 시작할 회비 초안을 선택해 주세요.');
+        return;
+    }
+    try {
+        await post(`/api/fee-management/${selectedItem.feeItemId}/open`, {
+            selectedMemberIds: [],
+        });
+        showToast('전체 활성 멤버에게 회비를 부과했습니다.');
+        await loadItems();
+    } catch (error) {
+        showToast(errorMessage(error));
+    }
+}
+
+async function closeFee() {
+    if (!selectedItem || selectedItem.status !== 'OPEN') {
+        showToast('부과 중인 회비 항목을 선택해 주세요.');
+        return;
+    }
+    try {
+        await post(`/api/fee-management/${selectedItem.feeItemId}/close`);
+        showToast('회비 부과를 마감했습니다.');
+        await loadItems();
+    } catch (error) {
+        showToast(errorMessage(error));
     }
 }
 
@@ -275,6 +391,44 @@ async function cancelFee(trigger) {
     }
 }
 
+async function showChargeHistory(trigger) {
+    const region = lookup('[data-fee-history]');
+    lookup('[data-fee-history-member]').textContent = trigger.dataset.memberName;
+    region.replaceChildren(element('p',
+            'py-8 text-center text-sm text-muted-foreground',
+            '변경 이력을 불러오는 중입니다.'));
+    openModal('feeHistoryModal', trigger);
+    try {
+        const histories = await get(
+                `/api/fee-management/charges/${trigger.dataset.feeChargeId}/histories`);
+        if (histories.length === 0) {
+            region.replaceChildren(element('p',
+                    'rounded-md bg-secondary px-4 py-3 text-sm text-muted-foreground',
+                    '수납 상태 변경 이력이 없습니다.'));
+            return;
+        }
+        region.replaceChildren();
+        histories.forEach((history) => {
+            const card = element('article', 'rounded-lg border px-4 py-3');
+            const head = element('div', 'flex flex-wrap items-center gap-2');
+            head.append(statusBadge(history.previousStatus),
+                    element('span', 'text-xs text-muted-foreground', '→'),
+                    statusBadge(history.newStatus));
+            card.append(head, element('p',
+                    'mt-2 text-xs text-muted-foreground',
+                    `${history.changedByName || '알 수 없음'} · ${dateTime(history.changedDttm)}`));
+            if (history.reason) {
+                card.appendChild(element('p', 'mt-2 text-sm', history.reason));
+            }
+            region.appendChild(card);
+        });
+    } catch (error) {
+        region.replaceChildren(element('p',
+                'rounded-md bg-destructive-soft px-4 py-3 text-sm text-destructive',
+                errorMessage(error)));
+    }
+}
+
 if (currentUserRole === 'admin') {
     lookup('[data-fee-tabs]').addEventListener('click', (event) => {
         const tab = event.target.closest('[data-fee-tab]');
@@ -290,9 +444,14 @@ if (currentUserRole === 'admin') {
     bindPageActions({
         [ACTIONS.PAY]: () => processCharges('PAID'),
         [ACTIONS.UNPAY]: () => processCharges('UNPAID'),
-        [ACTIONS.ADD]: addFee,
+        [ACTIONS.CREATE_OPEN]: openCreateForm,
+        [ACTIONS.EDIT_OPEN]: openEditForm,
+        [ACTIONS.SAVE]: saveFee,
+        [ACTIONS.OPEN]: openFee,
+        [ACTIONS.CLOSE]: closeFee,
         [ACTIONS.CANCEL_OPEN]: openCancel,
         [ACTIONS.CANCEL]: cancelFee,
+        [ACTIONS.HISTORY_OPEN]: showChargeHistory,
     });
     loadItems();
 } else {
