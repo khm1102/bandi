@@ -2,7 +2,6 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
 <c:set var="segOff" value="min-h-11 rounded-md px-2.5 text-xs font-bold text-muted-foreground transition-colors md:min-h-9"/>
-<c:set var="segOn" value="min-h-11 rounded-md border bg-card px-2.5 text-xs font-bold text-foreground md:min-h-9"/>
 <c:set var="input" value="h-11 w-full rounded-md border border-input bg-card px-3 text-base transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm"/>
 <c:set var="label" value="mb-1.5 block text-xs font-extrabold text-muted-foreground"/>
 <t:layout title="멤버·권한" active="members" role="${role}" scriptPath="members/list">
@@ -11,9 +10,9 @@
     </t:pageHead>
 
     <div class="mb-4 grid grid-cols-1 gap-2.5 md:grid-cols-3 md:gap-4">
-        <t:statCard label="활성 멤버" value="6" unit="명"/>
-        <t:statCard label="운영 중인 기수" value="2" unit="개" delta="26-1기 · 26-2기"/>
-        <t:statCard label="SSO 연결 대기" value="2" unit="명" tone="danger"/>
+        <t:statCard label="활성 멤버" value="—" unit="명" valueHook="active-members"/>
+        <t:statCard label="운영 중인 기수" value="—" unit="개" delta="불러오는 중" valueHook="active-cohorts" deltaHook="active-cohort-names"/>
+        <t:statCard label="SSO 연결 대기" value="—" unit="명" tone="danger" valueHook="waiting-sso"/>
     </div>
 
     <div class="mb-4 flex items-start gap-3 rounded-lg border bg-accent/50 px-4 py-3.5">
@@ -25,10 +24,13 @@
         <t:dataTable caption="멤버와 권한 목록">
             <thead><tr><th>이름</th><th>학번</th><th>기수</th><th>소속 팀</th><th>SSO 연결</th><th>역할</th><th class="text-right">권한 변경</th></tr></thead>
             <tbody data-member-list>
-            <tr><td><span class="flex items-center gap-2"><span class="flex size-7 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-foreground">LS</span><b data-member-name>이서준</b></span></td><td>202012345</td><td><t:badge tone="info">26-1기</t:badge></td><td>연출</td><td><t:badge tone="success">연결 완료</t:badge></td><td data-member-role-cell><t:badge tone="accent">운영진</t:badge></td><td class="text-right"><span class="inline-flex rounded-lg border bg-secondary p-0.5"><button type="button" class="${segOff}">일반 부원</button><button type="button" class="${segOff}">팀장</button><button type="button" class="${segOn}">운영진</button></span></td></tr>
-            <tr><td><span class="flex items-center gap-2"><span class="flex size-7 items-center justify-center rounded-full bg-info text-xs font-black text-white">JD</span><b data-member-name>정도윤</b></span></td><td>202112346</td><td><t:badge tone="info">26-1기</t:badge></td><td>무대팀</td><td><t:badge tone="success">연결 완료</t:badge></td><td data-member-role-cell><t:badge tone="info">팀장</t:badge></td><td class="text-right"><span class="inline-flex rounded-lg border bg-secondary p-0.5"><button type="button" class="${segOff}">일반 부원</button><button type="button" class="${segOn}">팀장</button><button type="button" class="${segOff}">운영진</button></span></td></tr>
-            <tr><td><span class="flex items-center gap-2"><span class="flex size-7 items-center justify-center rounded-full bg-sidebar-accent text-xs font-black text-white">KH</span><b data-member-name>김하늘</b></span></td><td>202412347</td><td><t:badge tone="info">26-2기</t:badge></td><td>배우</td><td><t:badge tone="warning">연결 대기</t:badge></td><td data-member-role-cell><t:badge tone="neutral">일반 부원</t:badge></td><td class="text-right"><span class="inline-flex rounded-lg border bg-secondary p-0.5"><button type="button" class="${segOn}">일반 부원</button><button type="button" class="${segOff}">팀장</button><button type="button" class="${segOff}">운영진</button></span></td></tr>
-            <tr><td><span class="flex items-center gap-2"><span class="flex size-7 items-center justify-center rounded-full bg-accent-foreground text-xs font-black text-white">PS</span><b data-member-name>박서연</b></span></td><td>202312348</td><td><t:badge tone="info">26-2기</t:badge></td><td>오퍼팀</td><td><t:badge tone="success">연결 완료</t:badge></td><td data-member-role-cell><t:badge tone="neutral">일반 부원</t:badge></td><td class="text-right"><span class="inline-flex rounded-lg border bg-secondary p-0.5"><button type="button" class="${segOn}">일반 부원</button><button type="button" class="${segOff}">팀장</button><button type="button" class="${segOff}">운영진</button></span></td></tr>
+            <tr data-member-state>
+                <td colspan="7" class="px-5 py-11 text-center">
+                    <b class="block text-sm font-extrabold" data-member-state-title>멤버 목록을 불러오는 중입니다</b>
+                    <p class="mt-1 text-xs text-muted-foreground" data-member-state-message>잠시만 기다려 주세요.</p>
+                    <button type="button" class="mx-auto mt-4 hidden min-h-11 rounded-md border bg-card px-4 text-xs font-bold" data-member-retry>다시 시도</button>
+                </td>
+            </tr>
             </tbody>
         </t:dataTable>
     </div>
@@ -41,7 +43,7 @@
             <td data-member-team></td>
             <td data-member-sso></td>
             <td data-member-role-cell></td>
-            <td class="text-right"><span class="inline-flex rounded-lg border bg-secondary p-0.5"><button type="button" class="${segOff}">일반 부원</button><button type="button" class="${segOff}">팀장</button><button type="button" class="${segOff}">운영진</button></span></td>
+            <td class="text-right"><span class="inline-flex rounded-lg border bg-secondary p-0.5"><button type="button" data-member-role="MEMBER" class="${segOff}">일반 부원</button><button type="button" data-member-role="LEADER" class="${segOff}">팀장</button><button type="button" data-member-role="ADMIN" class="${segOff}">운영진</button></span></td>
         </tr>
     </template>
 
@@ -53,12 +55,20 @@
                     <div><label class="${label}" for="mbStudentNo">학번 <span class="text-accent-foreground">*</span></label><input class="${input}" id="mbStudentNo" type="text" inputmode="numeric" maxlength="20" placeholder="학교 학번"></div>
                     <div><label class="${label}" for="mbName">이름 <span class="text-accent-foreground">*</span></label><input class="${input}" id="mbName" type="text" maxlength="50" placeholder="학교 등록 이름"></div>
                 </div>
-                <div><label class="${label}" for="mbTeam">소속 팀 <span class="text-accent-foreground">*</span></label><select class="${input}" id="mbTeam"><option>연출</option><option>조연출</option><option>배우</option><option>무대팀</option><option>오퍼팀</option><option>디자인팀</option><option>영상팀</option><option>영상 배우</option><option>영상 촬영</option><option>영상 연출</option><option>영상 편집</option></select><p class="mt-1.5 text-xs text-muted-foreground">한 멤버는 동시에 하나의 활성 팀에만 소속됩니다.</p></div>
-                <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
-                    <div><label class="${label}" for="mbCohort">기수</label><input class="${input}" id="mbCohort" type="text" value="26-2기" placeholder="예) 26-2기"></div>
-                    <div><label class="${label}" for="mbRole">역할</label><select class="${input}" id="mbRole"><option>일반 부원</option><option>팀장</option><option>운영진</option></select></div>
-                </div>
+                <div><label class="${label}" for="mbTeam">소속 팀 <span class="text-accent-foreground">*</span></label><select class="${input}" id="mbTeam"><option value="">팀을 선택해 주세요</option></select><p class="mt-1.5 text-xs text-muted-foreground">한 멤버는 동시에 하나의 활성 팀에만 소속됩니다.</p></div>
+                <div><label class="${label}" for="mbCohort">기수 <span class="text-accent-foreground">*</span></label><select class="${input}" id="mbCohort"><option value="">기수를 선택해 주세요</option></select></div>
+                <p class="hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-xs text-destructive" data-member-form-error role="alert"></p>
             </div>
+        </jsp:body>
+    </t:modal>
+
+    <t:modal id="memberRoleModal" title="멤버 권한 변경" description="권한 변경 이력에 남길 사유를 입력합니다.">
+        <jsp:attribute name="footer"><t:button variant="outline" action="close-modal">취소</t:button><t:button pageAction="member-role-save">변경</t:button></jsp:attribute>
+        <jsp:body>
+            <p class="rounded-md bg-secondary px-3 py-2.5 text-sm font-bold" data-member-role-summary></p>
+            <label class="${label} mt-4" for="memberRoleReason">변경 사유 <span class="text-accent-foreground">*</span></label>
+            <textarea class="min-h-28 w-full resize-y rounded-md border border-input bg-card px-3 py-2.5 text-sm transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20" id="memberRoleReason" maxlength="500" placeholder="예) 2026-1학기 팀장 지정"></textarea>
+            <p class="mt-2 hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-xs text-destructive" data-member-role-error role="alert"></p>
         </jsp:body>
     </t:modal>
 </t:layout>
