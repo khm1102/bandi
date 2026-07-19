@@ -39,6 +39,9 @@ public class SecurityConfig {
                         "/api/public-performances/**",
                         "/api/public-policies/**").permitAll()
                 .requestMatchers("/api/public-reservations/**").permitAll()
+                .requestMatchers(HttpMethod.POST,
+                        "/api/files/*/public-promotions")
+                .hasRole("ADMIN")
                 .requestMatchers("/members/**", "/reservations/**",
                         "/showops/**", "/api/members/**",
                         "/api/reservations/**", "/api/showops/**",

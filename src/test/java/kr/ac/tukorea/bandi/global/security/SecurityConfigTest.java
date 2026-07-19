@@ -123,6 +123,26 @@ class SecurityConfigTest {
     }
 
     @Test
+    void 로그인_멤버는_파일을_업로드하고_공개_승격은_운영진만_한다()
+            throws Exception {
+        mockMvc.perform(post("/api/files/private")
+                        .with(csrf()))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/files/private")
+                        .with(user("member").roles("MEMBER"))
+                        .with(csrf()))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/files/1/public-promotions")
+                        .with(user("member").roles("MEMBER"))
+                        .with(csrf()))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/files/1/public-promotions")
+                        .with(user("admin").roles("ADMIN"))
+                        .with(csrf()))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void 미인증_API는_로그인_리다이렉트_대신_JSON_401을_반환한다()
             throws Exception {
         mockMvc.perform(get("/api/test"))
@@ -181,6 +201,12 @@ class SecurityTestController {
 
     @PostMapping("/api/public-reservations/test")
     ResponseEntity<Void> createPublicReservation() {
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping({"/api/files/private",
+            "/api/files/1/public-promotions"})
+    ResponseEntity<Void> fileChange() {
         return ResponseEntity.ok().build();
     }
 
