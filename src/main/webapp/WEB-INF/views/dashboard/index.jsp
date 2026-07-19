@@ -9,13 +9,13 @@
 </c:choose>
 <t:layout title="홈" active="dashboard" role="${role}">
     <t:pageHead title="안녕하세요, ${userName}님" description="2025년 6월 20일 금요일 · 정기공연 D-1">
-        <t:button href="/community${rq}" variant="outline">공지 보기</t:button>
+        <t:button href="/resources${rq}" variant="outline">미확인 공지 보기</t:button>
         <c:if test="${role != 'member'}">
             <t:button href="/calendar${rq}">+ 일정 등록</t:button>
         </c:if>
     </t:pageHead>
 
-    <div class="mb-4 grid grid-cols-2 gap-2.5 md:gap-4 lg:grid-cols-4">
+    <div class="mb-4 grid grid-cols-1 gap-2.5 md:grid-cols-2 md:gap-4 lg:grid-cols-4">
         <t:statCard label="오늘 일정" value="4" unit="건" delta="연습 2 · 회의 1 · 홍보 1" icon="calendar" featured="true"/>
         <c:choose>
             <c:when test="${role == 'admin'}">
@@ -32,7 +32,7 @@
         <t:statCard label="관람 신청" value="9" unit="석" delta="2회차 합산" tone="success" icon="ticket" iconTone="info"/>
     </div>
 
-    <div class="mb-4 flex items-start gap-3 rounded-lg border bg-accent/50 px-4 py-3.5">
+    <div class="mb-4 flex flex-col items-start gap-3 rounded-lg border bg-accent/50 px-4 py-3.5 md:flex-row">
         <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
             <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
         </span>
@@ -43,7 +43,7 @@
             </div>
             <p class="mt-0.5 text-xs text-muted-foreground">6/20(금) 18시 전원 소집. 의상·소품 지참 바랍니다. · 이서준</p>
         </div>
-        <a href="<c:url value='/community'/>${rq}" class="inline-flex min-h-11 shrink-0 items-center rounded-md bg-primary px-3 text-xs font-bold text-primary-foreground transition-colors hover:bg-primary-strong hover:text-white">공지 보기</a>
+        <a href="<c:url value='/resources'/>${rq}" class="inline-flex min-h-11 w-full shrink-0 items-center justify-center rounded-md bg-primary px-3 text-xs font-bold text-primary-foreground transition-colors hover:bg-primary-strong hover:text-white md:w-auto">공지 보기</a>
     </div>
 
     <div class="grid items-start gap-4 lg:grid-cols-[1.7fr_1fr]">
@@ -51,8 +51,8 @@
             <t:card title="오늘의 일정" icon="clock" moreUrl="/calendar${rq}" moreLabel="캘린더 →" flush="true">
                 <div class="flex items-center gap-3 border-b px-5 py-3">
                     <span class="min-w-11 text-sm font-extrabold text-accent-foreground">14:00</span>
-                    <div class="min-w-0 flex-1"><p class="text-sm font-bold">2막 전체 런스루</p><p class="mt-0.5 text-xs text-muted-foreground">소극장 무대 · 배우연출팀</p></div>
-                    <t:badge tone="neutral" dot="true">배우연출</t:badge>
+                    <div class="min-w-0 flex-1"><p class="text-sm font-bold">2막 전체 런스루</p><p class="mt-0.5 text-xs text-muted-foreground">소극장 무대 · 배우</p></div>
+                    <t:badge tone="neutral" dot="true">배우</t:badge>
                 </div>
                 <div class="flex items-center gap-3 border-b px-5 py-3">
                     <span class="min-w-11 text-sm font-extrabold text-accent-foreground">16:30</span>
@@ -74,7 +74,7 @@
             <t:card title="팀별 진행 현황" icon="activity" moreUrl="/activity${rq}" moreLabel="활동 기록 →">
                 <div class="flex flex-col gap-3.5">
                     <div>
-                        <div class="mb-1.5 flex items-center gap-2"><t:badge tone="neutral" dot="true">배우연출</t:badge><span class="flex-1 truncate text-xs text-muted-foreground">런스루 진행 중</span><b class="text-xs">82%</b></div>
+                        <div class="mb-1.5 flex items-center gap-2"><t:badge tone="neutral" dot="true">배우</t:badge><span class="flex-1 truncate text-xs text-muted-foreground">런스루 진행 중</span><b class="text-xs">82%</b></div>
                         <div class="h-2 overflow-hidden rounded-full bg-secondary"><span class="block h-full w-4/5 rounded-full bg-primary"></span></div>
                     </div>
                     <div>
@@ -98,22 +98,22 @@
         </div>
 
         <div class="flex flex-col gap-4">
-            <t:card title="최근 게시판" icon="bell" moreUrl="/community${rq}" moreLabel="전체 →" flush="true">
+            <t:card title="중요·미확인 공지" icon="bell" moreUrl="/resources${rq}" moreLabel="전체 →" flush="true">
                 <div class="flex items-center gap-3 border-b px-5 py-3">
-                    <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-accent text-xs font-black text-accent-foreground">공지</span>
-                    <div class="min-w-0 flex-1"><p class="truncate text-sm font-bold">정기공연 최종 리허설 안내</p><p class="mt-0.5 text-xs text-muted-foreground">이서준 · 2시간 전</p></div>
+                    <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-accent text-xs font-black text-accent-foreground">중요</span>
+                    <div class="min-w-0 flex-1"><p class="truncate text-sm font-bold">정기공연 최종 리허설 안내</p><p class="mt-0.5 text-xs text-muted-foreground">전체 · 미확인 4명</p></div>
                 </div>
                 <div class="flex items-center gap-3 border-b px-5 py-3">
-                    <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-black text-muted-foreground">자유</span>
-                    <div class="min-w-0 flex-1"><p class="truncate text-sm font-bold">2막 전환 타이밍 관련 아이디어</p><p class="mt-0.5 text-xs text-muted-foreground">박서연 · 5시간 전</p></div>
+                    <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-black text-muted-foreground">팀</span>
+                    <div class="min-w-0 flex-1"><p class="truncate text-sm font-bold">2막 전환 리허설 집합 안내</p><p class="mt-0.5 text-xs text-muted-foreground">무대팀 · 내가 미확인</p></div>
                 </div>
                 <div class="flex items-center gap-3 border-b px-5 py-3">
-                    <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-black text-muted-foreground">질문</span>
-                    <div class="min-w-0 flex-1"><p class="truncate text-sm font-bold">MT 회비 언제까지 내면 되나요?</p><p class="mt-0.5 text-xs text-muted-foreground">김하늘 · 어제</p></div>
+                    <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-black text-muted-foreground">전체</span>
+                    <div class="min-w-0 flex-1"><p class="truncate text-sm font-bold">공연 당일 출석 처리 방법</p><p class="mt-0.5 text-xs text-muted-foreground">운영진 · 확인 완료</p></div>
                 </div>
                 <div class="flex items-center gap-3 px-5 py-3">
-                    <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-black text-muted-foreground">자유</span>
-                    <div class="min-w-0 flex-1"><p class="truncate text-sm font-bold">포스터 시안 투표해주세요</p><p class="mt-0.5 text-xs text-muted-foreground">한지우 · 2일 전</p></div>
+                    <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-black text-muted-foreground">팀</span>
+                    <div class="min-w-0 flex-1"><p class="truncate text-sm font-bold">최종 큐시트 확인 요청</p><p class="mt-0.5 text-xs text-muted-foreground">오퍼팀 · 미확인 1명</p></div>
                 </div>
             </t:card>
 

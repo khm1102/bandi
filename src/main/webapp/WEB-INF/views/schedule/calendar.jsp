@@ -17,7 +17,7 @@
 
     <div class="mb-4 flex flex-wrap gap-2">
         <t:filterChip group="calendar" value="전체" label="전체" count="10" active="true"/>
-        <t:filterChip group="calendar" value="배우연출" label="배우연출" count="3"/>
+        <t:filterChip group="calendar" value="배우" label="배우" count="3"/>
         <t:filterChip group="calendar" value="무대" label="무대" count="2"/>
         <t:filterChip group="calendar" value="오퍼" label="오퍼" count="2"/>
         <t:filterChip group="calendar" value="디자인" label="디자인" count="2"/>
@@ -55,12 +55,12 @@
             <div class="${cell}"><span class="${dn}">14</span></div>
             <div class="${cell}"><span class="${dn}">15</span></div>
             <div class="${cell}" data-calendar-day="16"><span class="${dn}">16</span><span class="${ev}" data-calendar-event data-team="오퍼" title="TIP아트센터">조명 세팅</span></div>
-            <div class="${cell}" data-calendar-day="17"><span class="${dn}">17</span><span class="${ev}" data-calendar-event data-team="배우연출" title="동아리방">대본 리딩</span></div>
+            <div class="${cell}" data-calendar-day="17"><span class="${dn}">17</span><span class="${ev}" data-calendar-event data-team="배우" title="동아리방">대본 리딩</span></div>
             <div class="${cell}" data-calendar-day="18"><span class="${dn}">18</span><span class="${ev}" data-calendar-event data-team="무대" title="동아리방">주간 운영회의</span></div>
             <div class="${cell}" data-calendar-day="19"><span class="${dn}">19</span><span class="${ev}" data-calendar-event data-team="디자인" title="의상실">의상 피팅</span></div>
             <div class="min-h-20 rounded-md border border-primary bg-card p-1.5 ring-2 ring-ring/20" data-calendar-day="20"><span class="${dn} text-accent-foreground">20</span><span class="${ev}" data-calendar-event data-team="무대" title="TIP아트센터">최종 리허설</span></div>
-            <div class="${cell}" data-calendar-day="21"><span class="${dn}">21</span><span class="${evHot}" data-calendar-event data-team="배우연출" title="TIP아트센터">정기공연 1일차</span></div>
-            <div class="${cell}" data-calendar-day="22"><span class="${dn}">22</span><span class="${evHot}" data-calendar-event data-team="배우연출" title="TIP아트센터">정기공연 2일차</span></div>
+            <div class="${cell}" data-calendar-day="21"><span class="${dn}">21</span><span class="${evHot}" data-calendar-event data-team="배우" title="TIP아트센터">정기공연 1일차</span></div>
+            <div class="${cell}" data-calendar-day="22"><span class="${dn}">22</span><span class="${evHot}" data-calendar-event data-team="배우" title="TIP아트센터">정기공연 2일차</span></div>
             <div class="${cell}" data-calendar-day="23"><span class="${dn}">23</span><span class="${ev}" data-calendar-event data-team="영상" title="TIP아트센터">기록 촬영</span></div>
             <div class="${cell}" data-calendar-day="24"><span class="${dn}">24</span><span class="${ev}" data-calendar-event data-team="오퍼" title="소극장">정기연습</span></div>
             <div class="${cell}" data-calendar-day="25"><span class="${dn}">25</span></div>
@@ -82,7 +82,7 @@
                 <div><label class="${label}" for="ceTitle">일정명 <span class="text-accent-foreground">*</span></label><input class="${input}" id="ceTitle" type="text" placeholder="예) 전체 연습"></div>
                 <div class="grid grid-cols-2 gap-2.5">
                     <div><label class="${label}" for="ceDay">날짜 (일)</label><input class="${input}" id="ceDay" type="number" value="25" min="1" max="30" step="1"></div>
-                    <div><label class="${label}" for="ceTeam">담당팀</label><select class="${input}" id="ceTeam"><option>배우연출</option><option>무대</option><option>오퍼</option><option>디자인</option><option>영상</option></select></div>
+                    <div><label class="${label}" for="ceTeam">담당팀</label><select class="${input}" id="ceTeam"><option>배우</option><option>무대팀</option><option>오퍼팀</option><option>디자인팀</option><option>영상팀</option></select></div>
                 </div>
                 <div><label class="${label}" for="ceLoc">장소</label><input class="${input}" id="ceLoc" type="text" placeholder="예) TIP아트센터"></div>
             </div>

@@ -23,7 +23,7 @@ function visibleEvents(day) {
 function calendarEventNode(eventData) {
     const hot = eventData.title.includes('공연');
     const teamClasses = {
-        배우연출: 'bg-secondary text-muted-foreground',
+        배우: 'bg-secondary text-muted-foreground',
         무대: 'bg-info-soft text-info',
         오퍼: 'bg-accent text-accent-foreground',
         디자인: 'bg-warning-soft text-warning',

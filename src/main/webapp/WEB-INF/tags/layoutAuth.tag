@@ -37,8 +37,8 @@
             </div>
         </section>
 
-        <section class="flex min-h-screen items-center px-4 py-10 md:px-8 lg:min-h-0 lg:px-16 lg:py-12" aria-label="${title} 영역">
-            <div class="mx-auto w-full max-w-md">
+        <section class="flex min-h-screen min-w-0 items-center px-4 py-10 md:px-8 lg:min-h-0 lg:px-16 lg:py-12" aria-label="${title} 영역">
+            <div class="mx-auto min-w-0 w-full max-w-md">
                 <div class="mb-9 flex items-center gap-3 lg:hidden">
                     <span class="flex size-11 items-center justify-center rounded-lg bg-primary text-xl font-black text-primary-foreground">B</span>
                     <span>
@@ -48,7 +48,7 @@
                 </div>
                 <div class="mb-6">
                     <h1 class="text-3xl font-black tracking-tight text-foreground"><c:out value="${title}"/></h1>
-                    <p class="mt-2 text-sm leading-6 text-muted-foreground">반디 구성원 계정으로 백스테이지에 입장하세요.</p>
+                    <p class="mt-2 text-sm leading-6 text-muted-foreground">학교 포털 인증으로 반디 운영 공간에 입장하세요.</p>
                 </div>
                 <jsp:doBody/>
             </div>

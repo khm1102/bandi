@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.ac.tukorea.bandi.domain.resource.mapper.ResourceMapper">
+
+    <resultMap id="resourceResultMap" type="kr.ac.tukorea.bandi.domain.resource.model.Resource">
+        <constructor>
+            <idArg column="resource_id" javaType="java.lang.Long"/>
+            <arg column="target_scope_code" javaType="kr.ac.tukorea.bandi.domain.resource.model.ResourceTargetScope"/>
+            <arg column="team_id" javaType="java.lang.Long"/>
+            <arg column="category_code" javaType="java.lang.String"/>
+            <arg column="title" javaType="java.lang.String"/>
+            <arg column="description" javaType="java.lang.String"/>
+            <arg column="status_code" javaType="kr.ac.tukorea.bandi.domain.resource.model.ResourceStatus"/>
+            <arg column="is_pinned" javaType="_boolean"/>
+            <arg column="created_by_member_id" javaType="java.lang.Long"/>
+            <arg column="updated_by_member_id" javaType="java.lang.Long"/>
+            <arg column="created_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="deleted_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="manageSummaryResultMap" type="kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceManageSummaryResponse">
+        <constructor>
+            <idArg column="resource_id" javaType="java.lang.Long"/>
+            <arg column="target_scope_code" javaType="kr.ac.tukorea.bandi.domain.resource.model.ResourceTargetScope"/>
+            <arg column="team_id" javaType="java.lang.Long"/>
+            <arg column="team_name" javaType="java.lang.String"/>
+            <arg column="category_code" javaType="java.lang.String"/>
+            <arg column="title" javaType="java.lang.String"/>
+            <arg column="status_code" javaType="kr.ac.tukorea.bandi.domain.resource.model.ResourceStatus"/>
+            <arg column="is_pinned" javaType="_boolean"/>
+            <arg column="current_revision_no" javaType="java.lang.Integer"/>
+            <arg column="updated_by_name" javaType="java.lang.String"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="readableSummaryResultMap" type="kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceSummaryResponse">
+        <constructor>
+            <idArg column="resource_id" javaType="java.lang.Long"/>
+            <arg column="target_scope_code" javaType="kr.ac.tukorea.bandi.domain.resource.model.ResourceTargetScope"/>
+            <arg column="team_id" javaType="java.lang.Long"/>
+            <arg column="team_name" javaType="java.lang.String"/>
+            <arg column="category_code" javaType="java.lang.String"/>
+            <arg column="title" javaType="java.lang.String"/>
+            <arg column="is_pinned" javaType="_boolean"/>
+            <arg column="current_revision_no" javaType="java.lang.Integer"/>
+            <arg column="updated_by_name" javaType="java.lang.String"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="manageContentResultMap" type="kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceManageContentResponse">
+        <constructor>
+            <idArg column="resource_id" javaType="java.lang.Long"/>
+            <arg column="target_scope_code" javaType="kr.ac.tukorea.bandi.domain.resource.model.ResourceTargetScope"/>
+            <arg column="team_id" javaType="java.lang.Long"/>
+            <arg column="team_name" javaType="java.lang.String"/>
+            <arg column="category_code" javaType="java.lang.String"/>
+            <arg column="title" javaType="java.lang.String"/>
+            <arg column="description" javaType="java.lang.String"/>
+            <arg column="status_code" javaType="kr.ac.tukorea.bandi.domain.resource.model.ResourceStatus"/>
+            <arg column="is_pinned" javaType="_boolean"/>
+            <arg column="created_by_name" javaType="java.lang.String"/>
+            <arg column="updated_by_name" javaType="java.lang.String"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="readableContentResultMap" type="kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceContentResponse">
+        <constructor>
+            <idArg column="resource_id" javaType="java.lang.Long"/>
+            <arg column="target_scope_code" javaType="kr.ac.tukorea.bandi.domain.resource.model.ResourceTargetScope"/>
+            <arg column="team_id" javaType="java.lang.Long"/>
+            <arg column="team_name" javaType="java.lang.String"/>
+            <arg column="category_code" javaType="java.lang.String"/>
+            <arg column="title" javaType="java.lang.String"/>
+            <arg column="description" javaType="java.lang.String"/>
+            <arg column="is_pinned" javaType="_boolean"/>
+            <arg column="updated_by_name" javaType="java.lang.String"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="fileLinkResultMap" type="kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceFileLinkResponse">
+        <constructor>
+            <idArg column="stored_file_id" javaType="java.lang.Long"/>
+            <arg column="revision_no" javaType="_int"/>
+            <arg column="display_order" javaType="_int"/>
+            <arg column="uploaded_by_member_id" javaType="java.lang.Long"/>
+            <arg column="uploaded_by_name" javaType="java.lang.String"/>
+            <arg column="uploaded_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="resourceColumns">
+        resource_id, target_scope_code, team_id, category_code, title, description,
+        status_code, is_pinned, created_by_member_id, updated_by_member_id,
+        created_dttm, updated_dttm, deleted_dttm
+    </sql>
+
+    <sql id="readableCondition">
+        r.deleted_dttm IS NULL
+        AND r.status_code = 'PUBLISHED'
+        AND (
+            #{admin} = TRUE
+            OR r.target_scope_code = 'ALL'
+            OR (r.target_scope_code = 'TEAM' AND r.team_id = #{memberTeamId})
+        )
+    </sql>
+
+    <select id="lookupById" resultMap="resourceResultMap">
+        SELECT <include refid="resourceColumns"/>
+        FROM resource
+        WHERE resource_id = #{resourceId}
+          AND deleted_dttm IS NULL
+    </select>
+
+    <select id="lookupByIdForUpdate" resultMap="resourceResultMap">
+        SELECT <include refid="resourceColumns"/>
+        FROM resource
+        WHERE resource_id = #{resourceId}
+          AND deleted_dttm IS NULL
+        FOR UPDATE
+    </select>
+
+    <select id="lookupMaxRevisionForUpdate" resultType="int">
+        SELECT revision_no
+        FROM resource_file
+        WHERE resource_id = #{resourceId}
+        ORDER BY revision_no DESC
+        LIMIT 1
+        FOR UPDATE
+    </select>
+
+    <select id="searchManageable" resultMap="manageSummaryResultMap">
+        SELECT r.resource_id, r.target_scope_code, r.team_id,
+               t.name AS team_name, r.category_code, r.title, r.status_code,
+               r.is_pinned, MAX(rf.revision_no) AS current_revision_no,
+               updater.name AS updated_by_name, r.updated_dttm
+        FROM resource r
+        LEFT JOIN team t ON t.team_id = r.team_id
+        JOIN member updater ON updater.member_id = r.updated_by_member_id
+        LEFT JOIN resource_file rf ON rf.resource_id = r.resource_id
+        WHERE r.deleted_dttm IS NULL
+        <if test="keyword != null">
+          AND (r.title LIKE CONCAT('%', #{keyword}, '%')
+               OR r.description LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="categoryCode != null">
+          AND r.category_code = #{categoryCode}
+        </if>
+        <if test="status != null">
+          AND r.status_code = #{status}
+        </if>
+        <if test="targetScope != null">
+          AND r.target_scope_code = #{targetScope}
+        </if>
+        <if test="teamId != null">
+          AND r.team_id = #{teamId}
+        </if>
+        GROUP BY r.resource_id, r.target_scope_code, r.team_id, t.name,
+                 r.category_code, r.title, r.status_code, r.is_pinned,
+                 updater.name, r.updated_dttm
+        ORDER BY r.updated_dttm DESC, r.resource_id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="lookupManageContent" resultMap="manageContentResultMap">
+        SELECT r.resource_id, r.target_scope_code, r.team_id,
+               t.name AS team_name, r.category_code, r.title, r.description,
+               r.status_code, r.is_pinned, creator.name AS created_by_name,
+               updater.name AS updated_by_name, r.updated_dttm
+        FROM resource r
+        LEFT JOIN team t ON t.team_id = r.team_id
+        JOIN member creator ON creator.member_id = r.created_by_member_id
+        JOIN member updater ON updater.member_id = r.updated_by_member_id
+        WHERE r.resource_id = #{resourceId}
+          AND r.deleted_dttm IS NULL
+    </select>
+
+    <select id="searchReadable" resultMap="readableSummaryResultMap">
+        SELECT r.resource_id, r.target_scope_code, r.team_id,
+               t.name AS team_name, r.category_code, r.title, r.is_pinned,
+               MAX(rf.revision_no) AS current_revision_no,
+               updater.name AS updated_by_name, r.updated_dttm
+        FROM resource r
+        LEFT JOIN team t ON t.team_id = r.team_id
+        JOIN member updater ON updater.member_id = r.updated_by_member_id
+        JOIN resource_file rf ON rf.resource_id = r.resource_id
+        WHERE <include refid="readableCondition"/>
+        <if test="keyword != null">
+          AND (r.title LIKE CONCAT('%', #{keyword}, '%')
+               OR r.description LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="categoryCode != null">
+          AND r.category_code = #{categoryCode}
+        </if>
+        GROUP BY r.resource_id, r.target_scope_code, r.team_id, t.name,
+                 r.category_code, r.title, r.is_pinned, updater.name, r.updated_dttm
+        ORDER BY r.is_pinned DESC, r.updated_dttm DESC, r.resource_id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="lookupReadableContent" resultMap="readableContentResultMap">
+        SELECT r.resource_id, r.target_scope_code, r.team_id,
+               t.name AS team_name, r.category_code, r.title, r.description,
+               r.is_pinned, updater.name AS updated_by_name, r.updated_dttm
+        FROM resource r
+        LEFT JOIN team t ON t.team_id = r.team_id
+        JOIN member updater ON updater.member_id = r.updated_by_member_id
+        WHERE r.resource_id = #{resourceId}
+          AND <include refid="readableCondition"/>
+          AND EXISTS (
+              SELECT 1 FROM resource_file rf WHERE rf.resource_id = r.resource_id
+          )
+    </select>
+
+    <select id="existsFilesInRevision" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1 FROM resource_file
+            WHERE resource_id = #{resourceId}
+              AND revision_no = #{revisionNo}
+        )
+    </select>
+
+    <select id="existsReadableCurrentFile" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM resource r
+            JOIN resource_file rf ON rf.resource_id = r.resource_id
+            WHERE r.resource_id = #{resourceId}
+              AND rf.stored_file_id = #{storedFileId}
+              AND rf.revision_no = (
+                  SELECT MAX(current_file.revision_no)
+                  FROM resource_file current_file
+                  WHERE current_file.resource_id = r.resource_id
+              )
+              AND <include refid="readableCondition"/>
+        )
+    </select>
+
+    <select id="searchCurrentFileLinks" resultMap="fileLinkResultMap">
+        SELECT rf.stored_file_id, rf.revision_no, rf.display_order,
+               rf.uploaded_by_member_id, uploader.name AS uploaded_by_name,
+               rf.created_dttm AS uploaded_dttm
+        FROM resource_file rf
+        JOIN member uploader ON uploader.member_id = rf.uploaded_by_member_id
+        WHERE rf.resource_id = #{resourceId}
+          AND rf.revision_no = (
+              SELECT MAX(current_file.revision_no)
+              FROM resource_file current_file
+              WHERE current_file.resource_id = rf.resource_id
+          )
+        ORDER BY rf.display_order, rf.resource_file_id
+    </select>
+
+    <select id="searchFileLinks" resultMap="fileLinkResultMap">
+        SELECT rf.stored_file_id, rf.revision_no, rf.display_order,
+               rf.uploaded_by_member_id, uploader.name AS uploaded_by_name,
+               rf.created_dttm AS uploaded_dttm
+        FROM resource_file rf
+        JOIN member uploader ON uploader.member_id = rf.uploaded_by_member_id
+        WHERE rf.resource_id = #{resourceId}
+        ORDER BY rf.revision_no DESC, rf.display_order, rf.resource_file_id
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="resourceId">
+        INSERT INTO resource (
+            target_scope_code, team_id, category_code, title, description,
+            status_code, is_pinned, created_by_member_id, updated_by_member_id
+        ) VALUES (
+            #{targetScope}, #{teamId}, #{categoryCode}, #{title}, #{description},
+            #{status}, #{pinned}, #{createdByMemberId}, #{updatedByMemberId}
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE resource
+        SET target_scope_code = #{targetScope},
+            team_id = #{teamId},
+            category_code = #{categoryCode},
+            title = #{title},
+            description = #{description},
+            status_code = #{status},
+            is_pinned = #{pinned},
+            updated_by_member_id = #{updatedByMemberId}
+        WHERE resource_id = #{resourceId}
+          AND deleted_dttm IS NULL
+    </update>
+
+    <insert id="insertFile" useGeneratedKeys="true" keyProperty="resourceFileId">
+        INSERT INTO resource_file (
+            resource_id, stored_file_id, revision_no, display_order,
+            uploaded_by_member_id
+        ) VALUES (
+            #{resourceId}, #{storedFileId}, #{revisionNo}, #{displayOrder},
+            #{uploadedByMemberId}
+        )
+    </insert>
+</mapper>

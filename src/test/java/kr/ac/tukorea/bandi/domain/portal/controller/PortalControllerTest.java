@@ -28,10 +28,8 @@ class PortalControllerTest {
     private static final Map<String, String> PAGE_VIEWS = Map.ofEntries(
             Map.entry("dashboard", "dashboard/index"),
             Map.entry("calendar", "schedule/calendar"),
-            Map.entry("schedule", "schedule/coordination"),
             Map.entry("resources", "resources/list"),
             Map.entry("activity", "activity/list"),
-            Map.entry("community", "community/list"),
             Map.entry("props", "props/list"),
             Map.entry("reservations", "reservation/management"),
             Map.entry("showops", "showops/operations"),
@@ -48,7 +46,7 @@ class PortalControllerTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"dashboard", "calendar", "schedule", "resources", "activity", "community",
+    @ValueSource(strings = {"dashboard", "calendar", "resources", "activity",
             "props", "reservations", "showops", "checklist", "attendance", "dues", "members"})
     void 관리자_포털_화면이_렌더링된다(String page) throws Exception {
         mockMvc.perform(get("/" + page).with(user("tester")))
@@ -101,13 +99,44 @@ class PortalControllerTest {
     }
 
     @Test
-    void 로그인_화면이_렌더링되고_mode가_분기된다() throws Exception {
+    void 로그인_화면은_회원가입_mode를_분기하지_않는다() throws Exception {
         mockMvc.perform(get("/login").with(user("tester")))
                 .andExpect(status().isOk())
                 .andExpect(view().name("auth/login"))
-                .andExpect(model().attribute("mode", "login"));
+                .andExpect(model().attributeDoesNotExist("mode"));
         mockMvc.perform(get("/login").param("mode", "signup").with(user("tester")))
-                .andExpect(model().attribute("mode", "signup"));
+                .andExpect(status().isOk())
+                .andExpect(view().name("auth/login"))
+                .andExpect(model().attributeDoesNotExist("mode"));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "school-unavailable, 학교 로그인 서비스 장애",
+            "bad-credentials, 학교 계정 확인 필요",
+            "member-not-registered, 멤버 사전 등록 필요",
+            "link-pending, 학교 계정 연결 대기",
+            "academic-restricted, 학적 상태 확인 필요"
+    })
+    void 로그인_오류_상태를_구분한다(String error, String title) throws Exception {
+        mockMvc.perform(get("/login").param("error", error).with(user("tester")))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("loginErrorTitle", title))
+                .andExpect(model().attributeExists("loginErrorMessage"));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"schedule", "community"})
+    void 폐기된_화면은_라우팅하지_않는다(String page) throws Exception {
+        mockMvc.perform(get("/" + page).with(user("tester")))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void 공개_공시_화면이_렌더링된다() throws Exception {
+        mockMvc.perform(get("/notices").with(user("tester")))
+                .andExpect(status().isOk())
+                .andExpect(view().name("notice/list"));
     }
 
     @Test

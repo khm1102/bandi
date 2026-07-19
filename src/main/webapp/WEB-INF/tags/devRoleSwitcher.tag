@@ -4,7 +4,7 @@
 <%@ attribute name="role" %>
 <%@ attribute name="allowedRoles" %>
 <c:if test="${not empty role and not empty active}">
-    <nav class="ml-auto inline-flex rounded-lg border bg-secondary p-0.5" aria-label="개발 역할 미리보기">
+    <nav class="ml-auto hidden rounded-lg border bg-secondary p-0.5 md:inline-flex" aria-label="개발 역할 미리보기">
         <c:if test="${empty allowedRoles or allowedRoles.contains('member')}">
             <a href="<c:url value='/${active}'/>?role=member" class="inline-flex min-h-9 items-center rounded-md px-3 text-xs font-bold transition-colors ${role == 'member' ? 'border bg-card text-foreground' : 'text-muted-foreground'}" aria-current="${role == 'member' ? 'page' : 'false'}">일반 부원</a>
         </c:if>
