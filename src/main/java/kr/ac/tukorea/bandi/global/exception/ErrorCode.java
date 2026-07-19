@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 
 /**
  * 에러의 단일 출처 (컨벤션 9.4).
- * 코드 접두사는 feature별 고정 — C 공통, M member, CA calendar, FI file, RS resource.
+ * 코드 접두사는 feature별 고정 — C 공통, A auth, M member, CA calendar, FI file, PN public notice, NI internal notice, RS resource.
  * message는 사용자에게 그대로 보여줄 문장으로 작성하고 내부 사정을 노출하지 않는다.
  */
 @Getter
@@ -32,6 +32,16 @@ public enum ErrorCode {
     CHANGE_REASON_REQUIRED(HttpStatus.BAD_REQUEST, "M011", "변경 사유를 입력해 주세요."),
     INACTIVE_COHORT(HttpStatus.BAD_REQUEST, "M012", "비활성화된 기수에는 멤버를 배정할 수 없습니다."),
     INVALID_MEMBER_STATUS_TRANSITION(HttpStatus.CONFLICT, "M013", "현재 상태에서는 요청한 상태로 변경할 수 없습니다."),
+    SCHOOL_IDENTITY_MISMATCH(HttpStatus.CONFLICT, "M014", "학교 인증 정보와 등록 정보가 일치하지 않습니다."),
+
+    // auth (A)
+    SCHOOL_MEMBER_NOT_REGISTERED(HttpStatus.FORBIDDEN, "A001", "등록된 동아리 멤버가 아닙니다."),
+    SCHOOL_ACADEMIC_STATUS_DENIED(HttpStatus.FORBIDDEN, "A002", "재학생만 로그인할 수 있습니다."),
+    SCHOOL_IDENTITY_REVIEW_REQUIRED(HttpStatus.FORBIDDEN, "A003", "등록 정보 확인이 필요합니다. 운영진에게 문의해 주세요."),
+    MEMBER_LOGIN_DENIED(HttpStatus.FORBIDDEN, "A004", "현재 동아리 활동 상태로는 로그인할 수 없습니다."),
+    SCHOOL_CREDENTIALS_INVALID(HttpStatus.UNAUTHORIZED, "A005", "학교 계정 정보를 확인해 주세요."),
+    SCHOOL_SSO_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "A006", "학교 인증 시스템에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요."),
+    SCHOOL_SSO_RESPONSE_CHANGED(HttpStatus.BAD_GATEWAY, "A007", "학교 인증 응답을 확인할 수 없습니다. 운영진에게 문의해 주세요."),
 
     // file (FI)
     INVALID_FILE(HttpStatus.BAD_REQUEST, "FI001", "업로드할 수 없는 파일입니다."),
@@ -44,6 +54,14 @@ public enum ErrorCode {
 
     // calendar (CA)
     CALENDAR_EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "CA001", "존재하지 않는 일정입니다."),
+
+    // public notice (PN)
+    PUBLIC_NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "PN001", "존재하지 않는 공시입니다."),
+    INVALID_PUBLIC_NOTICE_STATE(HttpStatus.CONFLICT, "PN002", "현재 상태에서는 요청한 공시 작업을 처리할 수 없습니다."),
+
+    // internal notice (NI)
+    INTERNAL_NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "NI001", "존재하지 않는 공지입니다."),
+    INVALID_INTERNAL_NOTICE_STATE(HttpStatus.CONFLICT, "NI002", "현재 상태에서는 요청한 공지 작업을 처리할 수 없습니다."),
 
     // resource (RS)
     RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "RS001", "존재하지 않는 자료입니다."),

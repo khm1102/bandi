@@ -59,7 +59,7 @@
             <t:dataTable caption="부원에게 빌린 물품 목록">
                 <thead><tr><th>물품명</th><th>주인</th><th>소속팀</th><th>빌린 날짜</th><th>반납 예정</th><th>상태</th><th></th></tr></thead>
                 <tbody data-borrow-list>
-                <tr><td class="font-bold">빈티지 손목시계</td><td>김하늘</td><td>배우연출팀</td><td>06/14</td><td>공연 후</td><td data-borrow-status><t:badge tone="warning">대기</t:badge></td><td class="text-right"><t:button size="compact" pageAction="borrow-return">반납 확인</t:button></td></tr>
+                <tr><td class="font-bold">빈티지 손목시계</td><td>김하늘</td><td>배우</td><td>06/14</td><td>공연 후</td><td data-borrow-status><t:badge tone="warning">대기</t:badge></td><td class="text-right"><t:button size="compact" pageAction="borrow-return">반납 확인</t:button></td></tr>
                 <tr><td class="font-bold">체크무늬 담요</td><td>한지우</td><td>디자인팀</td><td>06/16</td><td>06/23</td><td data-borrow-status><t:badge tone="warning">대기</t:badge></td><td class="text-right"><t:button size="compact" pageAction="borrow-return">반납 확인</t:button></td></tr>
                 <tr><td class="font-bold">블루투스 스피커</td><td>정도윤</td><td>무대팀</td><td>06/12</td><td>06/20</td><td data-borrow-status><t:badge tone="warning">대기</t:badge></td><td class="text-right"><t:button size="compact" pageAction="borrow-return">반납 확인</t:button></td></tr>
                 <tr><td class="font-bold">빈티지 여행 가방</td><td>박서연</td><td>오퍼팀</td><td>06/09</td><td>06/15</td><td><t:badge tone="success">반납 완료</t:badge></td><td></td></tr>
@@ -115,7 +115,7 @@
             <div class="flex flex-col gap-3">
                 <div><label class="${label}" for="bwItem">물품명 <span class="text-accent-foreground">*</span></label><input class="${input}" id="bwItem" type="text" placeholder="예) 빈티지 카메라"></div>
                 <div class="grid grid-cols-2 gap-2.5">
-                    <div><label class="${label}" for="bwOwner">주인 (누구 것)</label><select class="${input}" id="bwOwner"><option>이서준 (운영진팀)</option><option>정도윤 (무대팀)</option><option>김하늘 (배우연출팀)</option><option>박서연 (오퍼팀)</option><option>한지우 (디자인팀)</option><option>최민준 (영상팀)</option></select></div>
+                    <div><label class="${label}" for="bwOwner">주인 (누구 것)</label><select class="${input}" id="bwOwner"><option>이서준 (연출)</option><option>정도윤 (무대팀)</option><option>김하늘 (배우)</option><option>박서연 (오퍼팀)</option><option>한지우 (디자인팀)</option><option>최민준 (영상팀)</option></select></div>
                     <div><label class="${label}" for="bwDue">반납 예정일</label><input class="${input}" id="bwDue" type="text" placeholder="06/23 또는 공연 후"></div>
                 </div>
             </div>
