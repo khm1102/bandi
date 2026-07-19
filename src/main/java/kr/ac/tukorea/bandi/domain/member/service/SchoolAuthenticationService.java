@@ -8,12 +8,14 @@ import kr.ac.tukorea.bandi.domain.member.exception.MemberLoginDeniedException;
 import kr.ac.tukorea.bandi.domain.member.exception.SchoolAcademicStatusDeniedException;
 import kr.ac.tukorea.bandi.domain.member.exception.SchoolIdentityReviewRequiredException;
 import kr.ac.tukorea.bandi.domain.member.model.SchoolIdentity;
+import kr.ac.tukorea.bandi.global.security.LoginPrincipal;
+import kr.ac.tukorea.bandi.global.security.SchoolLoginAuthenticator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
-public class SchoolAuthenticationService {
+public class SchoolAuthenticationService implements SchoolLoginAuthenticator {
 
     private final SchoolSsoClient schoolSsoClient;
     private final MemberService memberService;
@@ -28,5 +30,12 @@ public class SchoolAuthenticationService {
             case IDENTITY_REVIEW_REQUIRED -> throw new SchoolIdentityReviewRequiredException();
             case MEMBER_STATUS_DENIED -> throw new MemberLoginDeniedException();
         };
+    }
+
+    @Override
+    public LoginPrincipal authenticate(String studentNo, String password) {
+        AuthenticatedMemberResponse member = authenticate(
+                new SchoolCredentials(studentNo, password));
+        return new LoginPrincipal(member.memberId(), member.role().name());
     }
 }
