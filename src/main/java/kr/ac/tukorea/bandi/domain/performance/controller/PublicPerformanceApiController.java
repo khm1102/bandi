@@ -12,12 +12,15 @@ import kr.ac.tukorea.bandi.domain.performance.service.PerformancePublicPageServi
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceContentService;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceRoundCastService;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceRoundService;
+import kr.ac.tukorea.bandi.domain.performance.service.PublicPerformanceFileService;
 import kr.ac.tukorea.bandi.domain.performance.service.PublicProfileService;
 import kr.ac.tukorea.bandi.global.swagger.PublicPerformanceApiDocs;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.net.URI;
 import java.util.List;
 
 @RestController
@@ -28,6 +31,7 @@ public class PublicPerformanceApiController implements PublicPerformanceApiDocs 
     private final PublicProfileService publicProfileService;
     private final PerformanceContentService contentService;
     private final PerformanceRoundCastService roundCastService;
+    private final PublicPerformanceFileService publicPerformanceFileService;
 
     @Override
     public ResponseEntity<PerformancePublicPageResponse> lookup(String slug) {
@@ -74,5 +78,25 @@ public class PublicPerformanceApiController implements PublicPerformanceApiDocs 
     @Override
     public ResponseEntity<List<PerformanceMediaResponse>> searchMedia(String slug) {
         return ResponseEntity.ok(contentService.searchPublicMedia(slug));
+    }
+
+    @Override
+    public ResponseEntity<Void> downloadPerformanceFile(String slug,
+                                                        Long storedFileId) {
+        String url = publicPerformanceFileService
+                .createPerformanceFileDownloadUrl(slug, storedFileId);
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(URI.create(url))
+                .build();
+    }
+
+    @Override
+    public ResponseEntity<Void> downloadProfileFile(Long profileId,
+                                                    Long storedFileId) {
+        String url = publicPerformanceFileService
+                .createProfileFileDownloadUrl(profileId, storedFileId);
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(URI.create(url))
+                .build();
     }
 }

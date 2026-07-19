@@ -63,6 +63,13 @@ public class FileService {
                 file.getStorageKey(), privateUrlLifetime);
     }
 
+    public String createPublicDownloadUrl(Long storedFileId) {
+        StoredFile file = metadataService.lookup(storedFileId);
+        file.validatePublicUse();
+        return objectStorage.createPresignedGetUrl(StorageScope.PUBLIC,
+                file.getStorageKey(), privateUrlLifetime);
+    }
+
     public void validatePrivateReady(Long storedFileId) {
         lookupPrivateReady(storedFileId);
     }
