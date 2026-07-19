@@ -18,7 +18,7 @@
                 <p class="mt-1 text-xs leading-5 text-muted-foreground">전체 공지와 내 팀 공지를 표시하며, 조회수 대신 내가 읽었는지 기록합니다.</p>
             </div>
             <c:if test="${role != 'member'}">
-                <t:button openModal="noticeModal" cssClass="w-full md:w-auto">짧은 공지 작성</t:button>
+                <t:button pageAction="notice-create-open" cssClass="w-full md:w-auto">짧은 공지 작성</t:button>
             </c:if>
         </div>
 
@@ -45,7 +45,7 @@
             </div>
             <div class="grid w-full gap-2 md:flex md:w-auto">
                 <input data-resource-search class="h-11 w-full rounded-md border border-input bg-card px-3 text-base transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:w-56 md:text-sm" type="search" name="resourceQuery" placeholder="자료 제목·업로더 검색" aria-label="자료 검색">
-                <c:if test="${role != 'member'}"><t:button openModal="uploadModal">자료 업로드</t:button></c:if>
+                <c:if test="${role != 'member'}"><t:button pageAction="resource-create-open">자료 업로드</t:button></c:if>
             </div>
         </div>
 
@@ -76,7 +76,7 @@
     </section>
 
     <template data-resource-row-template>
-        <tr data-resource-row><td data-resource-name class="font-bold"></td><td data-resource-category></td><td data-resource-version></td><td data-resource-uploader></td><td data-resource-date class="text-muted-foreground"></td><td class="text-right"><t:button variant="outline" size="compact" pageAction="resource-download">다운로드</t:button></td></tr>
+        <tr data-resource-row><td data-resource-name class="font-bold"></td><td data-resource-category></td><td data-resource-version></td><td data-resource-uploader></td><td data-resource-date class="text-muted-foreground"></td><td><div data-resource-actions class="flex flex-wrap justify-end gap-1"></div></td></tr>
     </template>
     <template data-notice-card-template>
         <article class="rounded-lg border bg-card p-4 md:p-5" data-notice-card>
@@ -88,14 +88,15 @@
     </template>
 
     <t:modal id="uploadModal" title="자료 업로드" description="파일을 MinIO 비공개 저장소에 올린 뒤 자료 메타데이터와 함께 게시합니다.">
-        <jsp:attribute name="footer"><t:button variant="outline" action="close-modal">취소</t:button><t:button pageAction="resource-upload">업로드</t:button></jsp:attribute>
+        <jsp:attribute name="footer"><t:button variant="outline" action="close-modal">취소</t:button><t:button pageAction="resource-upload"><span data-resource-submit-label>업로드</span></t:button></jsp:attribute>
         <jsp:body>
             <div class="flex flex-col gap-3">
                 <div><label class="${label}" for="upName">자료 제목 <span class="text-accent-foreground">*</span></label><input class="${input}" id="upName" type="text" maxlength="200" placeholder="예) 정기공연 최종 대본"></div>
                 <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
                     <div><label class="${label}" for="upCat">분류</label><select class="${input}" id="upCat"><option value="SCRIPT">대본</option><option value="MINUTES">회의록</option><option value="PROMOTION">홍보물</option><option value="VIDEO">영상</option><option value="OTHER">기타</option></select></div>
-                    <div><label class="${label}" for="upTarget">공개 대상</label><select class="${input}" id="upTarget"><option value="ALL">전체</option><option value="TEAM">내 팀</option></select></div>
+                    <div><label class="${label}" for="upTarget">공개 대상</label><select class="${input}" id="upTarget"><c:if test="${role == 'admin'}"><option value="ALL">전체</option></c:if><option value="TEAM">내 팀</option></select></div>
                 </div>
+                <div class="hidden" data-resource-team-field><label class="${label}" for="upTeam">대상 팀</label><select class="${input}" id="upTeam"></select></div>
                 <div><label class="${label}" for="upDescription">설명 <span class="text-accent-foreground">*</span></label><textarea class="min-h-24 w-full resize-y rounded-md border border-input bg-card px-3 py-2.5 text-sm" id="upDescription" placeholder="자료의 용도와 변경 사항을 입력하세요"></textarea></div>
                 <div><label class="${label}" for="upFile">파일 <span class="text-accent-foreground">*</span></label><input class="block min-h-11 w-full rounded-md border border-input bg-card px-3 py-2 text-sm file:mr-3 file:rounded-md file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-xs file:font-bold" id="upFile" type="file"></div>
                 <label class="flex min-h-11 items-center gap-2 text-sm font-bold"><input id="upPinned" type="checkbox" class="size-4 rounded border-input"> 상단 고정 자료</label>
@@ -105,10 +106,11 @@
     </t:modal>
 
     <t:modal id="noticeModal" title="짧은 공지 작성" description="간단한 전달 사항을 작성하고 즉시 게시합니다.">
-        <jsp:attribute name="footer"><t:button variant="outline" action="close-modal">취소</t:button><t:button pageAction="notice-add">공지 게시</t:button></jsp:attribute>
+        <jsp:attribute name="footer"><t:button variant="outline" action="close-modal">취소</t:button><t:button pageAction="notice-add"><span data-notice-submit-label>공지 게시</span></t:button></jsp:attribute>
         <jsp:body>
             <div class="flex flex-col gap-3">
-                <div><label class="${label}" for="ntTarget">대상</label><select class="${input}" id="ntTarget"><option value="ALL">전체</option><option value="TEAM">내 팀</option></select></div>
+                <div><label class="${label}" for="ntTarget">대상</label><select class="${input}" id="ntTarget"><c:if test="${role == 'admin'}"><option value="ALL">전체</option></c:if><option value="TEAM">내 팀</option></select></div>
+                <div class="hidden" data-notice-team-field><label class="${label}" for="ntTeam">대상 팀</label><select class="${input}" id="ntTeam"></select></div>
                 <div><label class="${label}" for="ntTitle">제목 <span class="text-accent-foreground">*</span></label><input class="${input}" id="ntTitle" type="text" maxlength="200" placeholder="공지 제목"></div>
                 <div><label class="${label}" for="ntBody">내용 <span class="text-accent-foreground">*</span></label><textarea class="min-h-28 w-full resize-y rounded-md border border-input bg-card px-3 py-2.5 text-sm" id="ntBody" placeholder="전달 내용을 입력하세요"></textarea></div>
                 <label class="flex min-h-11 items-center gap-2 text-sm font-bold"><input id="ntImportant" type="checkbox" class="size-4 rounded border-input"> 중요 공지로 표시</label>
@@ -124,6 +126,15 @@
             <p class="mt-2 whitespace-pre-wrap text-sm leading-6 text-muted-foreground" data-notice-detail-body></p>
             <p class="mt-4 border-t pt-3 text-xs text-muted-foreground" data-notice-detail-meta></p>
             <div class="mt-3 flex flex-col gap-2" data-notice-detail-files></div>
+            <div class="mt-5 hidden flex-wrap gap-2 border-t pt-4" data-notice-management-actions>
+                <t:button variant="outline" pageAction="notice-edit">수정</t:button>
+                <t:button variant="outline" pageAction="notice-read-statuses">확인 현황</t:button>
+                <t:button variant="outline" pageAction="notice-close" confirm="공지 게시를 종료할까요?" confirmAction="공지 종료">게시 종료</t:button>
+                <t:button variant="danger" pageAction="notice-archive" confirm="이 공지를 보관할까요?" confirmAction="공지 보관">보관</t:button>
+            </div>
         </jsp:body>
     </t:modal>
+
+    <t:modal id="noticeReadModal" title="공지 확인 현황" description="조회수 대신 대상 멤버의 최초 확인 여부를 표시합니다."><jsp:attribute name="footer"><t:button variant="outline" action="close-modal">닫기</t:button></jsp:attribute><jsp:body><div data-notice-read-list class="max-h-[60vh] overflow-y-auto"></div></jsp:body></t:modal>
+    <t:modal id="resourceHistoryModal" title="자료 파일 이력"><jsp:attribute name="footer"><t:button variant="outline" action="close-modal">닫기</t:button></jsp:attribute><jsp:body><h3 data-resource-history-title class="text-base font-black"></h3><div data-resource-history-list class="mt-3 max-h-[60vh] overflow-y-auto"></div></jsp:body></t:modal>
 </t:layout>

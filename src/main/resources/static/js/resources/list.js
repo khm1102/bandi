@@ -1,14 +1,24 @@
-import {ApiError, get, post} from '../common/api.js';
+import {ApiError, get, post, put} from '../common/api.js';
 import {all, bindPageActions, debounce, element, lookup, readValue} from '../common/dom.js';
 import {openModal} from '../common/modal.js';
+import {currentUserRole} from '../common/session.js';
 import {showToast} from '../common/toast.js';
 import {activateFilterChip, badge, closeActionModal} from '../common/view.js';
 
 const ACTIONS = Object.freeze({
     DOWNLOAD: 'resource-download',
+    RESOURCE_CREATE: 'resource-create-open',
     UPLOAD: 'resource-upload',
+    NOTICE_CREATE: 'notice-create-open',
     NOTICE_ADD: 'notice-add',
     NOTICE_OPEN: 'notice-open',
+    NOTICE_EDIT: 'notice-edit',
+    NOTICE_READS: 'notice-read-statuses',
+    NOTICE_CLOSE: 'notice-close',
+    NOTICE_ARCHIVE: 'notice-archive',
+    RESOURCE_EDIT: 'resource-edit',
+    RESOURCE_HISTORY: 'resource-history',
+    RESOURCE_ARCHIVE: 'resource-archive',
 });
 const CATEGORY_LABELS = Object.freeze({
     SCRIPT: '대본',
@@ -21,6 +31,10 @@ const CATEGORY_LABELS = Object.freeze({
 let notices = [];
 let resources = [];
 let loginMember = null;
+let teams = [];
+let editingNotice = null;
+let currentNoticeDetail = null;
+let editingResource = null;
 
 function errorMessage(error) {
     if (error instanceof ApiError && error.fieldErrors.length > 0) {
@@ -43,6 +57,25 @@ function setInlineError(selector, message) {
     const container = lookup(selector);
     container.textContent = message || '';
     container.classList.toggle('hidden', !message);
+}
+
+function actionButton(label, action, id, tone = 'outline') {
+    const style = tone === 'danger'
+            ? 'border-destructive/30 text-destructive hover:bg-destructive-soft'
+            : 'hover:bg-secondary';
+    const button = element('button',
+            `min-h-11 rounded-md border bg-card px-3 text-xs font-bold transition-colors ${style}`,
+            label);
+    button.type = 'button';
+    button.dataset.pageAction = action;
+    if (id !== undefined) button.dataset.targetId = String(id);
+    return button;
+}
+
+function canManage(item) {
+    if (currentUserRole === 'admin') return true;
+    return currentUserRole === 'leader' && item.targetScope === 'TEAM'
+            && Number(item.teamId) === Number(loginMember?.teamId);
 }
 
 function activateInfoTab(button) {
@@ -166,6 +199,18 @@ function appendResourceRow(resource) {
             resource.updatedByName || '—';
     lookup('[data-resource-date]', row).textContent =
             formatDate(resource.updatedDttm);
+    const actions = lookup('[data-resource-actions]', row);
+    actions.appendChild(actionButton('다운로드', ACTIONS.DOWNLOAD));
+    if (canManage(resource)) {
+        actions.append(actionButton('수정', ACTIONS.RESOURCE_EDIT,
+                resource.resourceId), actionButton('이력', ACTIONS.RESOURCE_HISTORY,
+                resource.resourceId));
+        const archive = actionButton('보관', ACTIONS.RESOURCE_ARCHIVE,
+                resource.resourceId, 'danger');
+        archive.dataset.confirm = '이 자료를 보관할까요? 보관 후 일반 목록에서 숨겨집니다.';
+        archive.dataset.confirmAction = '자료 보관';
+        actions.appendChild(archive);
+    }
     lookup('[data-resource-list]').appendChild(row);
 }
 
@@ -223,16 +268,45 @@ async function lookupLoginMember() {
     return loginMember;
 }
 
-function targetTeamId(targetScope, member) {
-    return targetScope === 'TEAM' ? member.teamId : null;
+function targetTeamId(targetScope, member, selectId) {
+    if (targetScope !== 'TEAM') return null;
+    return currentUserRole === 'admin'
+            ? Number(readValue(selectId)) || null : member.teamId;
+}
+
+function updateTargetField(targetId, fieldSelector) {
+    lookup(fieldSelector).classList.toggle('hidden', readValue(targetId) !== 'TEAM'
+            || currentUserRole !== 'admin');
+}
+
+function fillTeamOptions() {
+    for (const id of ['ntTeam', 'upTeam']) {
+        const select = document.getElementById(id);
+        select.replaceChildren();
+        teams.forEach((team) => {
+            const option = element('option', '', team.name);
+            option.value = String(team.teamId);
+            select.appendChild(option);
+        });
+    }
 }
 
 function resetNoticeForm() {
-    document.getElementById('ntTarget').value = 'ALL';
+    document.getElementById('ntTarget').value = currentUserRole === 'admin'
+            ? 'ALL' : 'TEAM';
     document.getElementById('ntTitle').value = '';
     document.getElementById('ntBody').value = '';
     document.getElementById('ntImportant').checked = false;
+    updateTargetField('ntTarget', '[data-notice-team-field]');
     setInlineError('[data-notice-form-error]', '');
+}
+
+function openNoticeForm(trigger) {
+    editingNotice = null;
+    resetNoticeForm();
+    document.getElementById('noticeModalTitle').textContent = '짧은 공지 작성';
+    lookup('[data-notice-submit-label]').textContent = '공지 게시';
+    openModal('noticeModal', trigger);
 }
 
 async function addNotice(trigger) {
@@ -241,21 +315,29 @@ async function addNotice(trigger) {
     try {
         const member = await lookupLoginMember();
         const targetScope = readValue('ntTarget');
-        const created = await post('/api/internal-notice-management', {
+        const body = {
             targetScope,
-            teamId: targetTeamId(targetScope, member),
+            teamId: targetTeamId(targetScope, member, 'ntTeam'),
             title: readValue('ntTitle'),
             body: readValue('ntBody'),
             important: document.getElementById('ntImportant').checked,
-            attachmentFileIds: [],
-        });
-        await post(`/api/internal-notice-management/${created.internalNoticeId}/publish`, {
-            publishStartDttm: null,
-            publishEndDttm: null,
-        });
+            attachmentFileIds: editingNotice?.attachments.map((file) =>
+                file.storedFileId) || [],
+        };
+        if (editingNotice) {
+            await put(`/api/internal-notice-management/${editingNotice.internalNoticeId}`,
+                    body);
+        } else {
+            const created = await post('/api/internal-notice-management', body);
+            await post(`/api/internal-notice-management/${created.internalNoticeId}/publish`, {
+                publishStartDttm: null,
+                publishEndDttm: null,
+            });
+        }
         closeActionModal(trigger);
         resetNoticeForm();
-        showToast('공지를 게시했습니다.');
+        showToast(editingNotice ? '공지를 수정했습니다.' : '공지를 게시했습니다.');
+        editingNotice = null;
         await loadNotices();
     } catch (error) {
         setInlineError('[data-notice-form-error]', errorMessage(error));
@@ -267,16 +349,27 @@ async function addNotice(trigger) {
 function resetResourceForm() {
     document.getElementById('upName').value = '';
     document.getElementById('upCat').value = 'SCRIPT';
-    document.getElementById('upTarget').value = 'ALL';
+    document.getElementById('upTarget').value = currentUserRole === 'admin'
+            ? 'ALL' : 'TEAM';
     document.getElementById('upDescription').value = '';
     document.getElementById('upFile').value = '';
     document.getElementById('upPinned').checked = false;
+    updateTargetField('upTarget', '[data-resource-team-field]');
     setInlineError('[data-resource-form-error]', '');
+}
+
+function openResourceForm(trigger) {
+    editingResource = null;
+    resetResourceForm();
+    document.getElementById('upFile').required = true;
+    document.getElementById('uploadModalTitle').textContent = '자료 업로드';
+    lookup('[data-resource-submit-label]').textContent = '업로드';
+    openModal('uploadModal', trigger);
 }
 
 async function uploadResource(trigger) {
     const file = document.getElementById('upFile').files[0];
-    if (!file) {
+    if (!file && !editingResource) {
         setInlineError('[data-resource-form-error]', '파일을 선택해 주세요.');
         return;
     }
@@ -284,25 +377,42 @@ async function uploadResource(trigger) {
     setInlineError('[data-resource-form-error]', '');
     try {
         const member = await lookupLoginMember();
-        const formData = new FormData();
-        formData.append('file', file);
-        const uploaded = await post('/api/files/private', formData, {
-            query: {domain: 'resource'},
-        });
         const targetScope = readValue('upTarget');
-        const created = await post('/api/resource-management', {
+        const metadata = {
             targetScope,
-            teamId: targetTeamId(targetScope, member),
+            teamId: targetTeamId(targetScope, member, 'upTeam'),
             categoryCode: readValue('upCat'),
             title: readValue('upName'),
             description: readValue('upDescription'),
             pinned: document.getElementById('upPinned').checked,
-            storedFileIds: [uploaded.id],
-        });
-        await post(`/api/resource-management/${created.resourceId}/publish`);
+        };
+        let uploaded = null;
+        if (file) {
+            const formData = new FormData();
+            formData.append('file', file);
+            uploaded = await post('/api/files/private', formData, {
+                query: {domain: 'resource'},
+            });
+        }
+        if (editingResource) {
+            await put(`/api/resource-management/${editingResource.resourceId}`,
+                    metadata);
+            if (uploaded) {
+                await post(`/api/resource-management/${editingResource.resourceId}/revisions`, {
+                    storedFileIds: [uploaded.id],
+                });
+            }
+        } else {
+            const created = await post('/api/resource-management', {
+                ...metadata, storedFileIds: [uploaded.id],
+            });
+            await post(`/api/resource-management/${created.resourceId}/publish`);
+        }
         closeActionModal(trigger);
         resetResourceForm();
-        showToast('자료를 업로드하고 게시했습니다.');
+        showToast(editingResource ? '자료를 수정했습니다.'
+            : '자료를 업로드하고 게시했습니다.');
+        editingResource = null;
         await loadResources();
     } catch (error) {
         setInlineError('[data-resource-form-error]', errorMessage(error));
@@ -324,6 +434,7 @@ async function openNotice(trigger) {
     try {
         const card = trigger.closest('[data-notice-card]');
         const detail = await get(`/api/internal-notices/${card.dataset.noticeId}`);
+        currentNoticeDetail = detail;
         const badges = lookup('[data-notice-detail-badges]');
         badges.replaceChildren();
         if (detail.important) {
@@ -345,12 +456,131 @@ async function openNotice(trigger) {
         if (notice) {
             notice.read = true;
         }
+        const managementActions = lookup('[data-notice-management-actions]');
+        managementActions.classList.toggle('hidden', !canManage(detail));
+        managementActions.classList.toggle('flex', canManage(detail));
         openModal('noticeDetailModal', trigger);
     } catch (error) {
         showToast(errorMessage(error));
     } finally {
         trigger.disabled = false;
     }
+}
+
+async function editNotice(trigger) {
+    if (!currentNoticeDetail) return;
+    trigger.disabled = true;
+    try {
+        editingNotice = await get(`/api/internal-notice-management/${currentNoticeDetail.internalNoticeId}`);
+        document.getElementById('ntTarget').value = editingNotice.targetScope;
+        if (editingNotice.teamId) document.getElementById('ntTeam').value = String(editingNotice.teamId);
+        updateTargetField('ntTarget', '[data-notice-team-field]');
+        document.getElementById('ntTitle').value = editingNotice.title;
+        document.getElementById('ntBody').value = editingNotice.body;
+        document.getElementById('ntImportant').checked = editingNotice.important;
+        document.getElementById('noticeModalTitle').textContent = '공지 수정';
+        lookup('[data-notice-submit-label]').textContent = '수정 저장';
+        closeActionModal(trigger);
+        openModal('noticeModal', trigger);
+    } catch (error) {
+        showToast(errorMessage(error));
+    } finally {
+        trigger.disabled = false;
+    }
+}
+
+async function showNoticeReads(trigger) {
+    if (!currentNoticeDetail) return;
+    await withButtonBusy(trigger, async () => {
+        const statuses = await get(`/api/internal-notice-management/${currentNoticeDetail.internalNoticeId}/read-statuses`);
+        const list = lookup('[data-notice-read-list]');
+        list.replaceChildren();
+        if (!statuses.length) {
+            list.appendChild(element('p', 'py-8 text-center text-sm text-muted-foreground',
+                    '확인 대상 멤버가 없습니다.'));
+        }
+        statuses.forEach((status) => {
+            const row = element('div', 'flex items-center gap-2 border-b py-3 last:border-b-0');
+            row.append(element('strong', 'min-w-0 flex-1 text-sm',
+                    `${status.memberName} · ${status.studentNo}`),
+                    badge(status.read ? '확인' : '미확인', status.read ? 'success' : 'warning'));
+            if (status.firstReadDttm) row.appendChild(element('span',
+                    'text-xs text-muted-foreground', formatDate(status.firstReadDttm)));
+            list.appendChild(row);
+        });
+        closeActionModal(trigger);
+        openModal('noticeReadModal', trigger);
+    });
+}
+
+async function changeNoticeState(trigger, action) {
+    if (!currentNoticeDetail) return;
+    await withButtonBusy(trigger, async () => {
+        await post(`/api/internal-notice-management/${currentNoticeDetail.internalNoticeId}/${action}`);
+        closeActionModal(trigger);
+        currentNoticeDetail = null;
+        await loadNotices();
+        showToast(action === 'close' ? '공지 게시를 종료했습니다.' : '공지를 보관했습니다.');
+    });
+}
+
+async function withButtonBusy(trigger, task) {
+    trigger.disabled = true;
+    try {
+        await task();
+    } catch (error) {
+        showToast(errorMessage(error));
+    } finally {
+        trigger.disabled = false;
+    }
+}
+
+async function editResource(trigger) {
+    await withButtonBusy(trigger, async () => {
+        editingResource = await get(`/api/resource-management/${trigger.dataset.targetId}`);
+        document.getElementById('upName').value = editingResource.title;
+        document.getElementById('upCat').value = editingResource.categoryCode;
+        document.getElementById('upTarget').value = editingResource.targetScope;
+        if (editingResource.teamId) document.getElementById('upTeam').value = String(editingResource.teamId);
+        updateTargetField('upTarget', '[data-resource-team-field]');
+        document.getElementById('upDescription').value = editingResource.description;
+        document.getElementById('upPinned').checked = editingResource.pinned;
+        document.getElementById('upFile').value = '';
+        document.getElementById('upFile').required = false;
+        document.getElementById('uploadModalTitle').textContent = '자료 수정·새 리비전';
+        lookup('[data-resource-submit-label]').textContent = '변경 저장';
+        openModal('uploadModal', trigger);
+    });
+}
+
+async function showResourceHistory(trigger) {
+    await withButtonBusy(trigger, async () => {
+        const detail = await get(`/api/resource-management/${trigger.dataset.targetId}`);
+        lookup('[data-resource-history-title]').textContent = detail.title;
+        const list = lookup('[data-resource-history-list]');
+        list.replaceChildren();
+        if (!detail.revisions.length) {
+            list.appendChild(element('p', 'py-8 text-center text-sm text-muted-foreground',
+                    '등록된 파일 리비전이 없습니다.'));
+        }
+        detail.revisions.slice().reverse().forEach((revision) => {
+            const section = element('section', 'border-b py-3 last:border-b-0');
+            section.appendChild(element('h4', 'text-sm font-black', `v${revision.revisionNo}`));
+            revision.files.forEach((file) => section.appendChild(element('p',
+                    'mt-1 text-xs text-muted-foreground',
+                    `${file.originalName} · ${file.uploadedByName || '업로더 미상'} · ${formatDate(file.uploadedDttm)}`)));
+            list.appendChild(section);
+        });
+        openModal('resourceHistoryModal', trigger);
+    });
+}
+
+async function archiveResource(trigger) {
+    await withButtonBusy(trigger, async () => {
+        await post(`/api/resource-management/${trigger.dataset.targetId}/archive`);
+        await loadResources();
+        showToast('자료를 보관했습니다.');
+    });
 }
 
 async function downloadResource(trigger) {
@@ -395,13 +625,33 @@ document.addEventListener('click', (event) => {
     }
     filterResources();
 });
+document.getElementById('ntTarget').addEventListener('change', () =>
+    updateTargetField('ntTarget', '[data-notice-team-field]'));
+document.getElementById('upTarget').addEventListener('change', () =>
+    updateTargetField('upTarget', '[data-resource-team-field]'));
 
 bindPageActions({
     [ACTIONS.DOWNLOAD]: downloadResource,
+    [ACTIONS.RESOURCE_CREATE]: openResourceForm,
     [ACTIONS.UPLOAD]: uploadResource,
+    [ACTIONS.RESOURCE_EDIT]: editResource,
+    [ACTIONS.RESOURCE_HISTORY]: showResourceHistory,
+    [ACTIONS.RESOURCE_ARCHIVE]: archiveResource,
+    [ACTIONS.NOTICE_CREATE]: openNoticeForm,
     [ACTIONS.NOTICE_ADD]: addNotice,
     [ACTIONS.NOTICE_OPEN]: openNotice,
+    [ACTIONS.NOTICE_EDIT]: editNotice,
+    [ACTIONS.NOTICE_READS]: showNoticeReads,
+    [ACTIONS.NOTICE_CLOSE]: (trigger) => changeNoticeState(trigger, 'close'),
+    [ACTIONS.NOTICE_ARCHIVE]: (trigger) => changeNoticeState(trigger, 'archive'),
 });
 
-loadNotices();
-loadResources();
+async function initialize() {
+    [loginMember, teams] = await Promise.all([
+        lookupLoginMember(), get('/api/members/reference/teams'),
+    ]);
+    fillTeamOptions();
+    await Promise.all([loadNotices(), loadResources()]);
+}
+
+initialize().catch((error) => showToast(errorMessage(error)));
