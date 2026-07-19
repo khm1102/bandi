@@ -29,6 +29,9 @@
         <a href="<c:url value='/activity'/>" class="${navBase} ${active == 'activity' ? navOn : navOff}" aria-current="${active == 'activity' ? 'page' : 'false'}">
             <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>활동 기록
         </a>
+        <a href="<c:url value='/production'/>" class="${navBase} ${active == 'production' ? navOn : navOff}" aria-current="${active == 'production' ? 'page' : 'false'}">
+            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5M4 19h16M8 15l3-3 3 2 5-6"/></svg>팀별 제작 진행
+        </a>
         <a href="<c:url value='/props'/>" class="${navBase} ${active == 'props' ? navOn : navOff}" aria-current="${active == 'props' ? 'page' : 'false'}">
             <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8"/></svg>소품·장비
         </a>
