@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import kr.ac.tukorea.bandi.domain.event.dto.request.AttendanceProcessRequest;
+import kr.ac.tukorea.bandi.domain.event.dto.request.AttendanceRosterFilter;
 import kr.ac.tukorea.bandi.domain.event.dto.request.ClubEventWriteRequest;
 import kr.ac.tukorea.bandi.domain.event.dto.request.EventTargetConfirmRequest;
 import kr.ac.tukorea.bandi.domain.event.dto.response.AttendanceHistoryResponse;
@@ -14,10 +15,11 @@ import kr.ac.tukorea.bandi.domain.event.dto.response.AttendanceStatusCountRespon
 import kr.ac.tukorea.bandi.domain.event.dto.response.ClubEventCreatedResponse;
 import kr.ac.tukorea.bandi.domain.event.dto.response.EventAttendanceResponse;
 import kr.ac.tukorea.bandi.domain.event.dto.response.EventTargetConfirmedResponse;
-import kr.ac.tukorea.bandi.domain.event.model.AttendanceStatus;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -82,7 +84,7 @@ public interface EventManagementApiDocs {
     ResponseEntity<List<EventAttendanceResponse>> searchRoster(
             @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @PathVariable Long clubEventId,
-            @RequestParam(required = false) AttendanceStatus status);
+            @ParameterObject @ModelAttribute AttendanceRosterFilter filter);
 
     @Operation(summary = "행사 출석 상태 집계")
     @GetMapping("/{clubEventId}/attendance-counts")

@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import kr.ac.tukorea.bandi.domain.performance.dto.request.PerformanceProjectFilter;
 import kr.ac.tukorea.bandi.domain.performance.dto.request.PerformanceProjectRequest;
 import kr.ac.tukorea.bandi.domain.performance.dto.request.PerformanceProjectStatusRequest;
 import kr.ac.tukorea.bandi.domain.performance.dto.request.PerformanceRoundRequest;
@@ -14,11 +15,12 @@ import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceIdentifier
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceProjectResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceRoundAccessibilityResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceRoundResponse;
-import kr.ac.tukorea.bandi.domain.performance.model.PerformanceProjectStatus;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -40,7 +42,7 @@ public interface PerformanceCoreApiDocs {
             @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @RequestParam(required = false) Short academicYear,
             @RequestParam(required = false) String termCode,
-            @RequestParam(required = false) PerformanceProjectStatus status,
+            @ParameterObject @ModelAttribute PerformanceProjectFilter filter,
             @RequestParam(defaultValue = "0") int offset,
             @RequestParam(defaultValue = "20") int limit);
 

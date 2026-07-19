@@ -6,14 +6,16 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import kr.ac.tukorea.bandi.domain.notice.dto.request.NoticePublishRequest;
+import kr.ac.tukorea.bandi.domain.notice.dto.request.PublicNoticeManageFilter;
 import kr.ac.tukorea.bandi.domain.notice.dto.request.PublicNoticeWriteRequest;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.PublicNoticeAdminDetailResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.PublicNoticeAdminSummaryResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.PublicNoticeCreatedResponse;
-import kr.ac.tukorea.bandi.domain.notice.model.PublicNoticeStatus;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -33,7 +35,7 @@ public interface PublicNoticeManagementApiDocs {
     ResponseEntity<List<PublicNoticeAdminSummaryResponse>> search(
             @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) PublicNoticeStatus status,
+            @ParameterObject @ModelAttribute PublicNoticeManageFilter filter,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int pageSize);
 

@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.domain.event.controller;
 
 import kr.ac.tukorea.bandi.domain.event.dto.request.AttendanceProcessRequest;
+import kr.ac.tukorea.bandi.domain.event.dto.request.AttendanceRosterFilter;
 import kr.ac.tukorea.bandi.domain.event.dto.request.ClubEventWriteRequest;
 import kr.ac.tukorea.bandi.domain.event.dto.request.EventTargetConfirmRequest;
 import kr.ac.tukorea.bandi.domain.event.dto.response.AttendanceHistoryResponse;
@@ -9,7 +10,6 @@ import kr.ac.tukorea.bandi.domain.event.dto.response.AttendanceStatusCountRespon
 import kr.ac.tukorea.bandi.domain.event.dto.response.ClubEventCreatedResponse;
 import kr.ac.tukorea.bandi.domain.event.dto.response.EventAttendanceResponse;
 import kr.ac.tukorea.bandi.domain.event.dto.response.EventTargetConfirmedResponse;
-import kr.ac.tukorea.bandi.domain.event.model.AttendanceStatus;
 import kr.ac.tukorea.bandi.domain.event.service.ClubEventService;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import kr.ac.tukorea.bandi.global.swagger.EventManagementApiDocs;
@@ -84,9 +84,9 @@ public class EventManagementApiController implements EventManagementApiDocs {
     @Override
     public ResponseEntity<List<EventAttendanceResponse>> searchRoster(
             @LoginMember Long actorMemberId, Long clubEventId,
-            AttendanceStatus status) {
+            AttendanceRosterFilter filter) {
         return ResponseEntity.ok(clubEventService.searchAttendanceRoster(
-                actorMemberId, clubEventId, status));
+                actorMemberId, clubEventId, filter.status()));
     }
 
     @Override

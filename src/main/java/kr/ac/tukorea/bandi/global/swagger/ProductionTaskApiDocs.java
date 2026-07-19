@@ -6,17 +6,19 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import kr.ac.tukorea.bandi.domain.production.dto.request.ProductionTaskCreateRequest;
+import kr.ac.tukorea.bandi.domain.production.dto.request.ProductionTaskFilter;
 import kr.ac.tukorea.bandi.domain.production.dto.request.ProductionTaskStatusRequest;
 import kr.ac.tukorea.bandi.domain.production.dto.request.ProductionTaskUpdateRequest;
 import kr.ac.tukorea.bandi.domain.production.dto.response.ProductionProgressResponse;
 import kr.ac.tukorea.bandi.domain.production.dto.response.ProductionTaskCreatedResponse;
 import kr.ac.tukorea.bandi.domain.production.dto.response.ProductionTaskHistoryResponse;
 import kr.ac.tukorea.bandi.domain.production.dto.response.ProductionTaskResponse;
-import kr.ac.tukorea.bandi.domain.production.model.ProductionTaskStatus;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,7 +39,7 @@ public interface ProductionTaskApiDocs {
             @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @RequestParam Long performanceProjectId,
             @RequestParam(required = false) Long teamId,
-            @RequestParam(required = false) ProductionTaskStatus status,
+            @ParameterObject @ModelAttribute ProductionTaskFilter filter,
             @RequestParam(defaultValue = "false") boolean overdueOnly,
             @RequestParam(defaultValue = "0") int offset,
             @RequestParam(defaultValue = "20") int limit);

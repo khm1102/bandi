@@ -5,17 +5,18 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import kr.ac.tukorea.bandi.domain.notice.dto.request.InternalNoticeManageFilter;
 import kr.ac.tukorea.bandi.domain.notice.dto.request.InternalNoticeWriteRequest;
 import kr.ac.tukorea.bandi.domain.notice.dto.request.NoticePublishRequest;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeCreatedResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeManageDetailResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeManageSummaryResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeReadStatusResponse;
-import kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeStatus;
-import kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeTargetScope;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -35,8 +36,7 @@ public interface InternalNoticeManagementApiDocs {
     ResponseEntity<List<InternalNoticeManageSummaryResponse>> search(
             @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @RequestParam(required = false) String keyword,
-            @RequestParam(required = false) InternalNoticeStatus status,
-            @RequestParam(required = false) InternalNoticeTargetScope targetScope,
+            @ParameterObject @ModelAttribute InternalNoticeManageFilter filter,
             @RequestParam(required = false) Long teamId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int pageSize);

@@ -10,16 +10,18 @@ import kr.ac.tukorea.bandi.domain.reservation.dto.request.EntryCheckInRequest;
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.EntrySearchRequest;
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.EntryTokenRequest;
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.ReservationManagementCancelRequest;
+import kr.ac.tukorea.bandi.domain.reservation.dto.request.ReservationManageFilter;
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.RoundSeatRequest;
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.RoundSeatStatusRequest;
 import kr.ac.tukorea.bandi.domain.reservation.dto.response.ReservationDetailResponse;
 import kr.ac.tukorea.bandi.domain.reservation.dto.response.ReservationIdentifierResponse;
 import kr.ac.tukorea.bandi.domain.reservation.dto.response.ReservationMetricsResponse;
 import kr.ac.tukorea.bandi.domain.reservation.dto.response.RoundSeatResponse;
-import kr.ac.tukorea.bandi.domain.reservation.model.ReservationStatus;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -61,7 +63,7 @@ public interface ReservationManagementApiDocs {
             @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @PathVariable Long roundId,
             @RequestParam Long projectId,
-            @RequestParam(required = false) ReservationStatus status,
+            @ParameterObject @ModelAttribute ReservationManageFilter filter,
             @RequestParam(defaultValue = "0") int offset,
             @RequestParam(defaultValue = "20") int limit);
 

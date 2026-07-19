@@ -8,14 +8,16 @@ import jakarta.validation.Valid;
 import kr.ac.tukorea.bandi.domain.checklist.dto.request.ChecklistCompletionRequest;
 import kr.ac.tukorea.bandi.domain.checklist.dto.request.ChecklistItemCreateRequest;
 import kr.ac.tukorea.bandi.domain.checklist.dto.request.ChecklistItemUpdateRequest;
+import kr.ac.tukorea.bandi.domain.checklist.dto.request.ChecklistSearchFilter;
 import kr.ac.tukorea.bandi.domain.checklist.dto.response.ChecklistItemCreatedResponse;
 import kr.ac.tukorea.bandi.domain.checklist.dto.response.ChecklistItemHistoryResponse;
 import kr.ac.tukorea.bandi.domain.checklist.dto.response.ChecklistItemResponse;
-import kr.ac.tukorea.bandi.domain.checklist.model.ChecklistScope;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,7 +39,7 @@ public interface ChecklistApiDocs {
             @RequestParam Long performanceProjectId,
             @RequestParam(required = false) Long performanceRoundId,
             @RequestParam(required = false) Long teamId,
-            @RequestParam(required = false) ChecklistScope scope);
+            @ParameterObject @ModelAttribute ChecklistSearchFilter filter);
 
     @Operation(summary = "체크리스트 항목 등록")
     @PostMapping

@@ -1,5 +1,6 @@
 package kr.ac.tukorea.bandi.domain.performance.controller;
 
+import kr.ac.tukorea.bandi.domain.performance.dto.request.PerformanceProjectFilter;
 import kr.ac.tukorea.bandi.domain.performance.dto.request.PerformanceProjectRequest;
 import kr.ac.tukorea.bandi.domain.performance.dto.request.PerformanceProjectSearchCondition;
 import kr.ac.tukorea.bandi.domain.performance.dto.request.PerformanceProjectStatusParam;
@@ -12,7 +13,6 @@ import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceIdentifier
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceProjectResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceRoundAccessibilityResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceRoundResponse;
-import kr.ac.tukorea.bandi.domain.performance.model.PerformanceProjectStatus;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceProjectService;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceRoundService;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
@@ -34,10 +34,10 @@ public class PerformanceCoreApiController implements PerformanceCoreApiDocs {
     @Override
     public ResponseEntity<List<PerformanceProjectResponse>> searchProjects(
             @LoginMember Long actorMemberId, Short academicYear, String termCode,
-            PerformanceProjectStatus status, int offset, int limit) {
+            PerformanceProjectFilter filter, int offset, int limit) {
         return ResponseEntity.ok(projectService.search(actorMemberId,
                 new PerformanceProjectSearchCondition(academicYear, termCode,
-                        status, offset, limit)));
+                        filter.status(), offset, limit)));
     }
 
     @Override

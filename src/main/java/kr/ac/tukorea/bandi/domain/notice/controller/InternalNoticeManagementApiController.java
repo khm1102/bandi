@@ -1,5 +1,6 @@
 package kr.ac.tukorea.bandi.domain.notice.controller;
 
+import kr.ac.tukorea.bandi.domain.notice.dto.request.InternalNoticeManageFilter;
 import kr.ac.tukorea.bandi.domain.notice.dto.request.InternalNoticeManageSearchParam;
 import kr.ac.tukorea.bandi.domain.notice.dto.request.InternalNoticeWriteRequest;
 import kr.ac.tukorea.bandi.domain.notice.dto.request.NoticePublishRequest;
@@ -7,8 +8,6 @@ import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeCreatedRespo
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeManageDetailResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeManageSummaryResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeReadStatusResponse;
-import kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeStatus;
-import kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeTargetScope;
 import kr.ac.tukorea.bandi.domain.notice.service.InternalNoticeService;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import kr.ac.tukorea.bandi.global.swagger.InternalNoticeManagementApiDocs;
@@ -29,11 +28,11 @@ public class InternalNoticeManagementApiController
     @Override
     public ResponseEntity<List<InternalNoticeManageSummaryResponse>> search(
             @LoginMember Long actorMemberId, String keyword,
-            InternalNoticeStatus status, InternalNoticeTargetScope targetScope,
-            Long teamId, int page, int pageSize) {
+            InternalNoticeManageFilter filter, Long teamId, int page,
+            int pageSize) {
         return ResponseEntity.ok(internalNoticeService.searchManageable(actorMemberId,
-                new InternalNoticeManageSearchParam(keyword, status, targetScope,
-                        teamId, page, pageSize)));
+                new InternalNoticeManageSearchParam(keyword, filter.status(),
+                        filter.targetScope(), teamId, page, pageSize)));
     }
 
     @Override

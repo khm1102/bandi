@@ -2,11 +2,11 @@ package kr.ac.tukorea.bandi.domain.notice.controller;
 
 import kr.ac.tukorea.bandi.domain.notice.dto.request.NoticePublishRequest;
 import kr.ac.tukorea.bandi.domain.notice.dto.request.PublicNoticeAdminSearchParam;
+import kr.ac.tukorea.bandi.domain.notice.dto.request.PublicNoticeManageFilter;
 import kr.ac.tukorea.bandi.domain.notice.dto.request.PublicNoticeWriteRequest;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.PublicNoticeAdminDetailResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.PublicNoticeAdminSummaryResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.PublicNoticeCreatedResponse;
-import kr.ac.tukorea.bandi.domain.notice.model.PublicNoticeStatus;
 import kr.ac.tukorea.bandi.domain.notice.service.PublicNoticeService;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import kr.ac.tukorea.bandi.global.swagger.PublicNoticeManagementApiDocs;
@@ -27,9 +27,10 @@ public class PublicNoticeManagementApiController
     @Override
     public ResponseEntity<List<PublicNoticeAdminSummaryResponse>> search(
             @LoginMember Long actorMemberId, String keyword,
-            PublicNoticeStatus status, int page, int pageSize) {
+            PublicNoticeManageFilter filter, int page, int pageSize) {
         return ResponseEntity.ok(publicNoticeService.searchAdmin(actorMemberId,
-                new PublicNoticeAdminSearchParam(keyword, status, page, pageSize)));
+                new PublicNoticeAdminSearchParam(keyword, filter.status(), page,
+                        pageSize)));
     }
 
     @Override

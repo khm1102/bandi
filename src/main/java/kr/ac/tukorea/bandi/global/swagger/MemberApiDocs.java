@@ -2,12 +2,12 @@ package kr.ac.tukorea.bandi.global.swagger;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import kr.ac.tukorea.bandi.domain.member.dto.request.CohortChangeRequest;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPreRegisterRequest;
+import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchFilter;
 import kr.ac.tukorea.bandi.domain.member.dto.request.RoleChangeRequest;
 import kr.ac.tukorea.bandi.domain.member.dto.request.StatusChangeRequest;
 import kr.ac.tukorea.bandi.domain.member.dto.request.TeamChangeRequest;
@@ -16,12 +16,11 @@ import kr.ac.tukorea.bandi.domain.member.dto.response.MemberCreatedResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberHistoryResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.TeamResponse;
-import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
-import kr.ac.tukorea.bandi.domain.member.model.MemberStatus;
-import kr.ac.tukorea.bandi.domain.member.model.SsoLinkStatus;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -41,9 +40,7 @@ public interface MemberApiDocs {
     ResponseEntity<List<MemberResponse>> searchMembers(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long teamId,
-            @RequestParam(required = false) MemberStatus status,
-            @RequestParam(required = false) ClubRole role,
-            @RequestParam(required = false) SsoLinkStatus ssoLinkStatus);
+            @ParameterObject @ModelAttribute MemberSearchFilter filter);
 
     @Operation(summary = "멤버 상세 조회")
     @GetMapping("/{memberId}")
