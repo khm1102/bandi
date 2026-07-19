@@ -119,6 +119,25 @@ class PolicyMapperTest {
     }
 
     @Test
+    void 유형과_대상이_맞는_현재_최신_유효_버전을_조회한다() {
+        PolicyDocument document = insertDocument(
+                PolicyType.RESERVATION_PRIVACY, PolicyAudience.VISITOR);
+        insertVersion(document, 1, NOW.minusDays(1), NOW.minusDays(1));
+        PolicyDocumentVersion current = insertVersion(
+                document, 2, NOW, NOW);
+        insertVersion(document, 3, NOW.plusHours(1), NOW.plusHours(1));
+
+        assertThat(policyMapper.lookupCurrentEffectiveVersion(
+                PolicyType.RESERVATION_PRIVACY,
+                PolicyAudience.VISITOR, NOW)).isPresent().get()
+                .extracting("policyDocumentVersionId")
+                .isEqualTo(current.getPolicyDocumentVersionId());
+        assertThat(policyMapper.lookupCurrentEffectiveVersion(
+                PolicyType.RESERVATION_PRIVACY,
+                PolicyAudience.MEMBER, NOW)).isEmpty();
+    }
+
+    @Test
     void 같은_문서의_버전_번호는_중복할_수_없다() {
         PolicyDocument document = insertDocument();
         insertVersion(document, 1, NOW, NOW);
@@ -150,9 +169,13 @@ class PolicyMapperTest {
     }
 
     private PolicyDocument insertDocument() {
-        PolicyDocument document = PolicyDocument.create(
-                PolicyType.PRIVACY, "공개 프로필 동의",
-                PolicyAudience.MEMBER);
+        return insertDocument(PolicyType.PRIVACY, PolicyAudience.MEMBER);
+    }
+
+    private PolicyDocument insertDocument(
+            PolicyType type, PolicyAudience audience) {
+        PolicyDocument document = PolicyDocument.create(type,
+                "정책 동의", audience);
         policyMapper.insertDocument(document);
         return document;
     }

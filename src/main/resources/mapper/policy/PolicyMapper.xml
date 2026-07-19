@@ -76,6 +76,31 @@
         WHERE policy_document_version_id = #{policyDocumentVersionId}
     </select>
 
+    <select id="lookupCurrentEffectiveVersion"
+            resultMap="policyVersionResponseMap">
+        SELECT
+            version.policy_document_version_id,
+            version.policy_document_id,
+            version.version_no,
+            version.body,
+            version.published_dttm,
+            version.published_by_member_id,
+            version.effective_from_dttm,
+            version.is_required
+        FROM policy_document_version version
+        JOIN policy_document document
+          ON document.policy_document_id = version.policy_document_id
+        WHERE document.policy_type_code = #{policyType}
+          AND document.audience_code = #{audience}
+          AND document.is_active = 1
+          AND version.published_dttm &lt;= #{currentDttm}
+          AND version.effective_from_dttm &lt;= #{currentDttm}
+        ORDER BY version.effective_from_dttm DESC,
+                 version.version_no DESC,
+                 version.policy_document_version_id DESC
+        LIMIT 1
+    </select>
+
     <select id="lookupNextVersionNo" resultType="_int">
         SELECT COALESCE(MAX(version_no), 0) + 1
         FROM policy_document_version

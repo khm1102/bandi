@@ -36,12 +36,14 @@ public class SecurityConfig {
                         "/style-guide/**").permitAll()
                 .requestMatchers(HttpMethod.GET,
                         "/api/public-notices/**",
-                        "/api/public-performances/**").permitAll()
+                        "/api/public-performances/**",
+                        "/api/public-policies/**").permitAll()
                 .requestMatchers("/api/public-reservations/**").permitAll()
                 .requestMatchers("/members/**", "/reservations/**",
                         "/showops/**", "/api/members/**",
                         "/api/reservations/**", "/api/showops/**",
-                        "/api/reservation-management/**")
+                        "/api/reservation-management/**",
+                        "/api/policies/**")
                 .hasRole("ADMIN")
                 .anyRequest().authenticated());
         http.exceptionHandling(exception -> exception
