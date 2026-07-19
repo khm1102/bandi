@@ -174,6 +174,19 @@ class SecurityConfigTest {
     }
 
     @Test
+    void 로그인_멤버는_팀_기준정보를_조회할_수_있다() throws Exception {
+        for (String role : new String[]{"MEMBER", "LEADER", "ADMIN"}) {
+            mockMvc.perform(get("/api/members/reference/teams")
+                            .with(user("tester").roles(role)))
+                    .andExpect(status().isOk());
+        }
+
+        mockMvc.perform(get("/api/members/reference/cohorts")
+                        .with(user("member").roles("MEMBER")))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void 로그아웃은_POST_CSRF로_세션을_무효화한다() throws Exception {
         HttpSession session = mockMvc.perform(get("/dashboard")
                         .with(user("member").roles("MEMBER")))
@@ -196,7 +209,8 @@ class SecurityTestController {
     @GetMapping({"/dashboard", "/members/test", "/reservations/test",
             "/showops/test", "/notices/test", "/performances/show",
             "/reserve/test", "/swagger-ui/test", "/api/test",
-            "/api/members/me", "/api/members/test",
+            "/api/members/me", "/api/members/reference/teams",
+            "/api/members/reference/cohorts", "/api/members/test",
             "/api/public-notices/test",
             "/api/reservation-management/test", "/api/policies/test"})
     ResponseEntity<Void> page() {
