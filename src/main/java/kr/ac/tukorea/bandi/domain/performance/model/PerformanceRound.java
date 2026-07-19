@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.domain.performance.model;
 
 import kr.ac.tukorea.bandi.domain.performance.exception.InvalidPerformanceContentException;
+import kr.ac.tukorea.bandi.domain.performance.exception.InvalidPerformanceRoundStateException;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -65,8 +66,9 @@ public class PerformanceRound {
     }
 
     public PerformanceRound changeStatus(PerformanceRoundStatus status) {
-        if (status == null || this.status == status) {
-            throw new InvalidPerformanceContentException("status");
+        if (!this.status.canTransitionTo(status)) {
+            throw new InvalidPerformanceRoundStateException(
+                    "%s-to-%s".formatted(this.status, status));
         }
         return copy(roundNo, startDttm, entryStartDttm,
                 reservationOpenDttm, reservationCloseDttm, status);

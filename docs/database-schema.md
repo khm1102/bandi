@@ -1022,6 +1022,8 @@ erDiagram
 
 동일 프로젝트의 같은 시작 시각을 DB에서 금지하지 않는다. 중복 등록 경고가 필요하면 운영 정책 확정 후 Service에서 제공한다.
 
+회차 상태는 `SCHEDULED → RESERVATION_OPEN → RESERVATION_CLOSED → ENTRY_OPEN → ENDED` 순서로만 전환한다. `ENDED` 전의 각 상태에서는 `CANCELLED` 전환을 허용하고, `ENDED`와 `CANCELLED`에서는 더 전환하지 않는다. 상태 값의 화이트리스트는 DB CHECK가 보장하고, 상태 간 전이 규칙은 도메인 모델이 보장한다.
+
 ### 17.2 `performance_round_seat`
 
 좌석 템플릿과 무관하게 해당 회차에서 실제 신청 가능한 좌석을 나타낸다.

@@ -1,9 +1,10 @@
 import {get, post, put} from '../common/api.js';
 import {all, bindPageActions, element, lookup, readValue} from '../common/dom.js';
 import {openModal} from '../common/modal.js';
+import {closeSheetOf, openSheet} from '../common/sheet.js';
 import {currentUserRole} from '../common/session.js';
 import {showToast} from '../common/toast.js';
-import {activateFilterChip, badge, closeActionModal} from '../common/view.js';
+import {activateFilterChip, badge} from '../common/view.js';
 
 const ACTIONS = Object.freeze({
     RETRY: 'event-retry',
@@ -216,6 +217,53 @@ function renderStats() {
             Array.from(myAttendances.values()).filter((attendance) =>
                 attendance.status === 'PENDING'
                 && activeEventIds.has(attendance.clubEventId)).length);
+    renderNextEvent();
+}
+
+function renderNextEvent() {
+    const visible = clubEvents.filter((event) => event.status !== 'ARCHIVED');
+    const pendingEventIds = new Set(Array.from(myAttendances.values())
+            .filter((attendance) => attendance.status === 'PENDING')
+            .map((attendance) => attendance.clubEventId));
+    const ordered = visible.slice().sort((first, second) =>
+        new Date(first.startDttm) - new Date(second.startDttm));
+    const event = ordered.find((candidate) => candidate.status === 'IN_PROGRESS')
+            || ordered.find((candidate) => pendingEventIds.has(candidate.clubEventId))
+            || ordered.find((candidate) => candidate.status === 'DRAFT')
+            || ordered.find((candidate) => candidate.status === 'SCHEDULED');
+    const action = lookup('[data-event-next-action]');
+    if (!event) {
+        setText('[data-event-next-title]', '지금 확인할 행사가 없어요');
+        setText('[data-event-next-message]', canManage
+                ? '새 행사를 만들면 일정과 출석 대상을 이곳에서 관리할 수 있어요.'
+                : '새 행사가 확정되면 이곳에 가장 먼저 표시돼요.');
+        action?.classList.add('hidden');
+        return;
+    }
+    setText('[data-event-next-title]', event.title);
+    const statusMessage = event.status === 'IN_PROGRESS'
+            ? '출석 확인이 진행 중이에요.'
+            : event.status === 'DRAFT'
+                ? '참석 대상을 확정해야 행사 준비를 이어갈 수 있어요.'
+                : pendingEventIds.has(event.clubEventId)
+                    ? '내 출석 상태가 아직 처리되지 않았어요.'
+                    : '다가오는 행사 일정과 출석 시간을 확인해 주세요.';
+    setText('[data-event-next-message]',
+            `${formatDateTime(event.startDttm)} · ${event.place} · ${statusMessage}`);
+    if (!action) {
+        return;
+    }
+    const button = lookup('button', action);
+    action.classList.remove('hidden');
+    button.dataset.targetId = String(event.clubEventId);
+    if (event.status === 'DRAFT') {
+        button.dataset.pageAction = ACTIONS.TARGET_OPEN;
+        button.textContent = '참석 대상 확정';
+        return;
+    }
+    button.dataset.pageAction = ACTIONS.ROSTER_OPEN;
+    button.textContent = event.status === 'IN_PROGRESS'
+            ? '출석 명단 열기' : '출석 명단 미리 보기';
 }
 
 function renderEvents() {
@@ -232,7 +280,6 @@ function renderEvents() {
     visible.forEach((event) => list.appendChild(createEventCard(event)));
     lookup('[data-event-state]').classList.add('hidden');
     list.classList.remove('hidden');
-    list.classList.add('grid');
 }
 
 async function loadReferences() {
@@ -319,20 +366,21 @@ function resetEventForm() {
     document.getElementById('eventPlace').value = '';
     setDefaultDates();
     updateTargetScopeFields();
-    setText('#eventModalTitle', '행사 생성');
+    setText('#eventSheetTitle', '행사 생성');
     setText('[data-event-save-label]', '행사 저장');
     setError('[data-event-form-error]', '');
 }
 
 function openCreateModal(trigger) {
     resetEventForm();
-    openModal('eventModal', trigger);
+    openSheet('eventSheet', trigger);
 }
 
 function lookupEventFromTrigger(trigger) {
     const card = trigger.closest('[data-event-card]');
+    const eventId = Number(trigger.dataset.targetId || card?.dataset.eventId);
     return clubEvents.find((event) =>
-        event.clubEventId === Number(card?.dataset.eventId));
+        event.clubEventId === eventId);
 }
 
 function openEditModal(trigger) {
@@ -352,10 +400,10 @@ function openEditModal(trigger) {
     document.getElementById('checkInStart').value = toDateTimeInput(event.checkInStartDttm);
     document.getElementById('checkInEnd').value = toDateTimeInput(event.checkInEndDttm);
     updateTargetScopeFields();
-    setText('#eventModalTitle', '행사 초안 수정');
+    setText('#eventSheetTitle', '행사 초안 수정');
     setText('[data-event-save-label]', '수정 저장');
     setError('[data-event-form-error]', '');
-    openModal('eventModal', trigger);
+    openSheet('eventSheet', trigger);
 }
 
 function eventPayload() {
@@ -407,7 +455,7 @@ async function saveEvent(trigger) {
             await post('/api/event-management', payload);
             showToast('행사를 저장했습니다. 참석 대상을 확정해 주세요.');
         }
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         await loadEvents();
     } catch (error) {
         setError('[data-event-form-error]', errorMessage(error));
@@ -453,7 +501,7 @@ function openTargetModal(trigger) {
         renderTargetMembers();
     }
     setError('[data-target-error]', '');
-    openModal('targetModal', trigger);
+    openSheet('targetSheet', trigger);
 }
 
 async function confirmTargets(trigger) {
@@ -472,7 +520,7 @@ async function confirmTargets(trigger) {
         const result = await post(`/api/event-management/${targetEvent.clubEventId}/targets`, {
             selectedMemberIds,
         });
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         showToast(`${result.targetCount}명을 참석 대상으로 확정했습니다.`);
         targetEvent = null;
         await loadEvents();
@@ -623,7 +671,7 @@ async function showAttendanceHistory(trigger) {
     region.replaceChildren(element('p',
             'py-8 text-center text-sm text-muted-foreground',
             '변경 이력을 불러오는 중입니다.'));
-    openModal('attendanceHistoryModal', trigger);
+    openSheet('attendanceHistorySheet', trigger);
     try {
         const histories = await get(
                 `/api/event-management/attendances/${trigger.dataset.attendanceId}/histories`);

@@ -1,5 +1,5 @@
 /* shadcn 디자인 토큰 — 라이트 전용 (컨벤션 13.2, 공유 자원 — 22.5)
-   팔레트: 화이트/네이비/민트 (근거: docs/design-guide.md, 레퍼런스 목업의 DESIGN OVERRIDE 섹션)
+   팔레트: 화이트/네이비/버건디 (근거·대비 수치: docs/design-guide.md 1~2장)
    값 변경은 이 파일에서만. 새 토큰 추가 시 WEB-INF/tags/head.tag의 @theme inline 매핑에도 함께 추가한다. */
 :root {
     --radius: 0.75rem;
@@ -11,22 +11,23 @@
     --popover: #ffffff;
     --popover-foreground: #102235;
 
-    /* 주색(민트) — 민트 위 글자는 흰색이 아니라 다크 네이비. hover는 primary-strong + 흰 글자 */
-    --primary: #2cc7a5;
-    --primary-foreground: #08251f;
-    --primary-strong: #0b715f;
+    /* 주색(버건디) — 흰 글자 대비 9.7:1. hover는 primary-strong(흰 글자 12.4:1) */
+    --primary: #8e0015;
+    --primary-foreground: #ffffff;
+    --primary-strong: #6f0011;
 
     --secondary: #f5f8fa;
     --secondary-foreground: #102235;
     --muted: #f5f8fa;
     --muted-foreground: #56697c;
-    --accent: #e9fbf6;
-    --accent-foreground: #0f6f5d;
+    --accent: #f9eaed;
+    --accent-foreground: #7a0012;
 
-    /* 상태색 — 배지/배너는 *-soft 배경 + 본색 글자 조합 */
-    --destructive: #a63c4d;
+    /* 상태색 — 배지/배너는 *-soft 배경 + 본색 글자 조합.
+       destructive는 primary(버건디)와 색상만으로 구분하지 않는다 — 아이콘·문구·확인 구조 병행 (design-guide 6장) */
+    --destructive: #b42318;
     --destructive-foreground: #ffffff;
-    --destructive-soft: #fff0f2;
+    --destructive-soft: #feeceb;
     --success: #087054;
     --success-soft: #e8f8f2;
     --warning: #80530a;
@@ -36,7 +37,7 @@
 
     --border: #dfe7ec;
     --input: #dfe7ec;
-    --ring: #2cc7a5;
+    --ring: #8e0015;
 
     /* 네이비 셸 (사이드바/공개 내비/스테이지 바) */
     --sidebar: #0b1f33;

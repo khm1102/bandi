@@ -2,23 +2,35 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
 <c:set var="input" value="h-11 w-full rounded-md border border-input bg-card px-3 text-base transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm"/>
-<c:set var="label" value="mb-1.5 block text-xs font-extrabold text-muted-foreground"/>
+<c:set var="label" value="mb-1.5 block text-xs font-bold text-muted-foreground"/>
 <c:set var="canManage" value="${role == 'admin'}"/>
 <t:layout title="출석" active="attendance" role="${role}" scriptPath="attendance/index">
-    <t:pageHead title="행사 · 출석 관리" description="행사 일정과 내 출석 상태를 확인합니다. 출석은 운영진이 현장에서 처리합니다.">
+    <main class="mx-auto w-full max-w-5xl">
+    <t:pageHead title="행사 · 출석 관리" description="진행 중인 행사를 먼저 확인하고, 운영진이 현장에서 출석을 기록해요">
         <c:if test="${canManage}">
-            <t:button pageAction="event-create-open">+ 행사 생성</t:button>
+            <t:button pageAction="event-create-open">새 행사 만들기</t:button>
         </c:if>
     </t:pageHead>
 
-    <div class="mb-4 grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-4">
-        <t:statCard label="전체 행사" value="—" valueHook="event-total" icon="calendar"/>
-        <t:statCard label="예정" value="—" valueHook="event-scheduled" tone="success"/>
-        <t:statCard label="출석 확인 중" value="—" valueHook="event-progress" featured="true"/>
-        <t:statCard label="내 미처리 출석" value="—" valueHook="attendance-pending" tone="danger"/>
-    </div>
+    <section class="mb-8" aria-labelledby="eventNextTitle">
+        <p class="text-sm font-bold text-accent-foreground">지금 확인할 행사</p>
+        <div class="mt-2 grid gap-4 border-l-4 border-primary bg-accent px-5 py-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+            <div>
+                <h2 id="eventNextTitle" class="text-lg font-bold" data-event-next-title>행사를 불러오고 있어요</h2>
+                <p class="mt-1 text-sm leading-6 text-muted-foreground" data-event-next-message>잠시만 기다려 주세요.</p>
+            </div>
+            <c:if test="${canManage}"><span class="hidden" data-event-next-action><t:button pageAction="event-roster-open" cssClass="w-full md:w-auto">출석 명단 열기</t:button></span></c:if>
+        </div>
+    </section>
 
-    <div class="mb-4 flex flex-wrap gap-2" aria-label="행사 상태 필터">
+    <dl class="mb-6 grid grid-cols-2 divide-x border-y py-4 text-center sm:grid-cols-4" aria-label="행사 요약">
+        <div class="px-2"><dt class="text-xs text-muted-foreground">전체 행사</dt><dd class="mt-1 text-lg font-bold tabular-nums" data-stat-value="event-total">—</dd></div>
+        <div class="px-2"><dt class="text-xs text-muted-foreground">예정</dt><dd class="mt-1 text-lg font-bold tabular-nums" data-stat-value="event-scheduled">—</dd></div>
+        <div class="px-2"><dt class="text-xs text-muted-foreground">확인 중</dt><dd class="mt-1 text-lg font-bold tabular-nums" data-stat-value="event-progress">—</dd></div>
+        <div class="px-2"><dt class="text-xs text-muted-foreground">내 미처리</dt><dd class="mt-1 text-lg font-bold tabular-nums text-destructive" data-stat-value="attendance-pending">—</dd></div>
+    </dl>
+
+    <div class="mb-5 flex gap-2 overflow-x-auto pb-1" aria-label="행사 상태 필터">
         <t:filterChip group="event" value="ALL" label="전체" active="true"/>
         <c:if test="${canManage}"><t:filterChip group="event" value="DRAFT" label="초안"/></c:if>
         <t:filterChip group="event" value="SCHEDULED" label="예정"/>
@@ -27,29 +39,29 @@
         <t:filterChip group="event" value="ARCHIVED" label="보관"/>
     </div>
 
-    <div class="rounded-lg border bg-card px-5 py-11 text-center" data-event-state>
-        <b class="block text-sm font-extrabold" data-event-state-title>행사를 불러오는 중입니다</b>
-        <p class="mt-1 text-xs text-muted-foreground" data-event-state-message>잠시만 기다려 주세요.</p>
-        <button type="button" class="mx-auto mt-4 hidden min-h-11 rounded-md border bg-card px-4 text-xs font-bold" data-page-action="event-retry" data-event-retry>다시 시도</button>
+    <div class="border-y px-5 py-12 text-center" data-event-state>
+        <b class="block text-sm font-bold" data-event-state-title>행사를 불러오는 중입니다</b>
+        <p class="mt-1 text-sm text-muted-foreground" data-event-state-message>잠시만 기다려 주세요.</p>
+        <button type="button" class="mx-auto mt-4 hidden min-h-11 rounded-md border bg-card px-4 text-sm font-bold" data-page-action="event-retry" data-event-retry>다시 시도</button>
     </div>
-    <div class="hidden grid-cols-1 gap-4 lg:grid-cols-2" data-event-list></div>
+    <div class="hidden divide-y border-y" data-event-list></div>
 
     <template data-event-card-template>
-        <article class="overflow-hidden rounded-lg border bg-card" data-event-card>
-            <header class="border-b px-5 py-4">
+        <article class="px-4 py-5 md:px-5" data-event-card>
+            <header>
                 <div class="flex flex-wrap items-center gap-2">
                     <h2 class="min-w-0 flex-1 text-base font-extrabold" data-event-title></h2>
                     <span data-event-status></span>
                 </div>
                 <p class="mt-1.5 text-xs font-bold text-muted-foreground" data-event-schedule></p>
             </header>
-            <div class="p-5">
+            <div class="pt-4">
                 <p class="hidden whitespace-pre-wrap text-sm leading-6 text-muted-foreground" data-event-description></p>
-                <div class="mt-4 grid grid-cols-2 gap-2 rounded-md bg-secondary p-3 text-xs">
+                <div class="mt-4 grid grid-cols-1 gap-3 border-y py-3 text-xs sm:grid-cols-2">
                     <div><span class="block font-bold text-muted-foreground">참석 대상</span><b class="mt-1 block" data-event-target></b></div>
                     <div><span class="block font-bold text-muted-foreground">출석 확인 시간</span><b class="mt-1 block" data-event-checkin-window></b></div>
                 </div>
-                <div class="mt-4 hidden rounded-md border border-primary/40 bg-accent/60 px-3 py-2.5" data-my-attendance>
+                <div class="mt-4 hidden border-l-4 border-primary bg-accent px-4 py-3" data-my-attendance>
                     <div class="flex flex-wrap items-center gap-2">
                         <b class="text-xs">내 출석 상태</b>
                         <span data-my-attendance-status></span>
@@ -68,11 +80,12 @@
             </div>
         </article>
     </template>
+    </main>
 
     <c:if test="${canManage}">
-        <t:modal id="eventModal" title="행사 생성" description="행사를 저장한 뒤 참석 대상을 확정합니다.">
+        <t:sheet id="eventSheet" title="행사 생성" description="행사를 저장한 뒤 참석 대상을 확정해요.">
             <jsp:attribute name="footer">
-                <t:button variant="outline" action="close-modal">취소</t:button>
+                <t:button variant="outline" action="close-sheet">취소</t:button>
                 <t:button pageAction="event-save"><span data-event-save-label>행사 저장</span></t:button>
             </jsp:attribute>
             <jsp:body>
@@ -115,11 +128,11 @@
                     <p class="hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-xs text-destructive" data-event-form-error role="alert"></p>
                 </div>
             </jsp:body>
-        </t:modal>
+        </t:sheet>
 
-        <t:modal id="targetModal" title="참석 대상 확정" description="확정하면 출석 명단이 생성되며 대상은 다시 바꿀 수 없습니다.">
+        <t:sheet id="targetSheet" title="참석 대상 확정" description="확정하면 출석 명단이 생성되며 대상은 다시 바꿀 수 없어요.">
             <jsp:attribute name="footer">
-                <t:button variant="outline" action="close-modal">취소</t:button>
+                <t:button variant="outline" action="close-sheet">취소</t:button>
                 <t:button pageAction="event-target-confirm">대상 확정</t:button>
             </jsp:attribute>
             <jsp:body>
@@ -138,12 +151,12 @@
                 </div>
                 <p class="mt-3 hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-xs text-destructive" data-target-error role="alert"></p>
             </jsp:body>
-        </t:modal>
+        </t:sheet>
 
         <template data-target-member-template>
             <label class="flex min-h-11 cursor-pointer items-center gap-3 border-b px-3 py-2 last:border-b-0">
                 <input type="checkbox" class="size-4 accent-primary" data-target-member>
-                <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-foreground" data-target-member-avatar></span>
+                <span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-extrabold text-primary-foreground" data-target-member-avatar></span>
                 <span class="min-w-0"><b class="block truncate text-sm" data-target-member-name></b><small class="block truncate text-xs text-muted-foreground" data-target-member-meta></small></span>
             </label>
         </template>
@@ -165,23 +178,29 @@
                     </div>
                 </div>
                 <p class="mt-3 hidden rounded-md bg-warning-soft px-3 py-2.5 text-xs text-warning" data-roster-readonly>출석 확인 중인 행사에서만 상태를 처리할 수 있습니다.</p>
-                <div class="mt-4 overflow-hidden rounded-md border">
-                    <t:dataTable caption="행사 출석 명단">
-                        <thead><tr><th class="w-11"><input type="checkbox" class="size-4 accent-primary" data-roster-all aria-label="전체 선택"></th><th>멤버</th><th>팀</th><th>상태</th><th>처리 정보</th><th class="text-right">이력</th></tr></thead>
-                        <tbody data-roster-list><tr data-roster-state><td colspan="6" class="px-5 py-11 text-center"><b data-roster-state-title>명단을 불러오는 중입니다</b><p class="mt-1 text-xs text-muted-foreground" data-roster-state-message>잠시만 기다려 주세요.</p></td></tr></tbody>
-                    </t:dataTable>
+                <div class="mt-4 border-y">
+                    <label class="flex min-h-11 items-center gap-3 border-b px-4 text-sm font-bold"><input type="checkbox" class="size-4 accent-primary" data-roster-all> 현재 명단 전체 선택</label>
+                    <div data-roster-list></div>
+                    <div data-roster-state class="px-5 py-12 text-center"><b data-roster-state-title>명단을 불러오는 중입니다</b><p class="mt-1 text-sm text-muted-foreground" data-roster-state-message>잠시만 기다려 주세요.</p></div>
                 </div>
                 <p class="mt-3 hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-xs text-destructive" data-roster-error role="alert"></p>
             </jsp:body>
         </t:modal>
 
         <template data-roster-row-template>
-            <tr data-roster-row><td><input type="checkbox" class="size-4 accent-primary" data-roster-member></td><td><span class="flex items-center gap-2"><span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-foreground" data-roster-avatar></span><b data-roster-name></b></span></td><td data-roster-team></td><td data-roster-status></td><td><span class="block text-xs" data-roster-processor></span><small class="block text-xs text-muted-foreground" data-roster-reason></small></td><td class="text-right"><t:button variant="outline" size="compact" pageAction="attendance-history-open" cssClass="min-h-9">이력</t:button></td></tr>
+            <article data-roster-row class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 border-b px-4 py-4 last:border-b-0">
+                <input type="checkbox" class="mt-1 size-4 accent-primary" data-roster-member>
+                <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-2"><span class="flex size-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-extrabold text-primary-foreground" data-roster-avatar></span><b data-roster-name></b><span data-roster-status></span></div>
+                    <p class="mt-1 text-xs text-muted-foreground"><span data-roster-team></span> · <span data-roster-processor></span></p>
+                    <small class="mt-1 block text-xs text-muted-foreground" data-roster-reason></small>
+                    <t:button variant="outline" size="compact" pageAction="attendance-history-open" cssClass="mt-3 w-full sm:w-auto">변경 이력</t:button>
+                </div>
+            </article>
         </template>
 
-        <t:modal id="attendanceHistoryModal" title="출석 상태 변경 이력" description="처리 상태와 담당자, 사유를 시간순으로 확인합니다.">
-            <jsp:attribute name="footer"><t:button variant="outline" action="close-modal">닫기</t:button></jsp:attribute>
+        <t:sheet id="attendanceHistorySheet" title="출석 상태 변경 이력" description="처리 상태와 담당자, 사유를 시간순으로 확인해요.">
             <jsp:body><p class="mb-3 text-sm font-extrabold" data-attendance-history-member></p><div class="flex flex-col gap-2" data-attendance-history></div></jsp:body>
-        </t:modal>
+        </t:sheet>
     </c:if>
 </t:layout>

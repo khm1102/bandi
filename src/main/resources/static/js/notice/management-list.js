@@ -1,13 +1,13 @@
 import {get, post} from '../common/api.js';
 import {bindPageActions, element, lookup, readValue} from '../common/dom.js';
-import {openModal} from '../common/modal.js';
+import {closeSheetOf, openSheet} from '../common/sheet.js';
 import {showToast} from '../common/toast.js';
-import {badge, closeActionModal} from '../common/view.js';
+import {badge} from '../common/view.js';
 
 const ACTIONS = Object.freeze({
     SEARCH: 'notice-search', PUBLISH_OPEN: 'notice-publish-open',
     PUBLISH_SAVE: 'notice-publish-save', CLOSE: 'notice-close',
-    ARCHIVE: 'notice-archive',
+    ARCHIVE: 'notice-archive', NEXT: 'notice-next-action',
 });
 const STATUS = Object.freeze({
     DRAFT: ['초안', 'neutral'], SCHEDULED: ['게시 예정', 'warning'],
@@ -32,31 +32,29 @@ function actionButton(label, action, noticeId, danger = false) {
 function render() {
     const body = lookup('[data-notice-manage-list]');
     body.replaceChildren();
+    renderNextNotice();
     if (notices.length === 0) {
-        const row = element('tr');
-        const cell = element('td', 'px-5 py-12 text-center text-sm text-muted-foreground', '조건에 맞는 공시가 없습니다.');
-        cell.colSpan = 5;
-        row.appendChild(cell);
-        body.appendChild(row);
+        body.appendChild(element('p', 'px-5 py-12 text-center text-sm text-muted-foreground',
+                '조건에 맞는 공시가 없습니다.'));
         return;
     }
     notices.forEach((notice) => {
-        const row = element('tr');
-        const info = element('td');
+        const row = element('article',
+                'grid gap-3 border-b px-4 py-5 last:border-b-0 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:px-5');
+        const info = element('div', 'min-w-0');
         const title = element(notice.status === 'ARCHIVED' ? 'span' : 'a',
-                'inline-flex min-h-11 items-center font-black hover:text-accent-foreground hover:underline',
+                'inline-flex min-h-11 items-center text-base font-bold hover:text-accent-foreground hover:underline',
                 notice.title);
         if (notice.status !== 'ARCHIVED') {
             title.href = `/notice-management/${notice.publicNoticeId}/edit`;
         }
-        info.append(title, element('p', 'text-xs text-muted-foreground', notice.categoryCode));
-        const statusCell = element('td');
+        const meta = element('div', 'flex flex-wrap items-center gap-2');
         const [statusLabel, tone] = STATUS[notice.status] || [notice.status, 'neutral'];
-        statusCell.appendChild(badge(statusLabel, tone));
-        const period = element('td', 'text-xs text-muted-foreground', `${formatDateTime(notice.publishStartDttm)} — ${formatDateTime(notice.publishEndDttm)}`);
-        const updated = element('td', 'text-xs text-muted-foreground', `${notice.updatedByName || '-'} · ${formatDateTime(notice.updatedDttm)}`);
-        const actions = element('td', 'text-right');
-        const group = element('div', 'inline-flex flex-wrap justify-end gap-1');
+        meta.append(badge(statusLabel, tone), element('span', 'text-xs text-muted-foreground',
+                notice.categoryCode));
+        info.append(meta, title, element('p', 'text-xs text-muted-foreground',
+                `게시 ${formatDateTime(notice.publishStartDttm)} — ${formatDateTime(notice.publishEndDttm)} · ${notice.updatedByName || '-'} 수정`));
+        const group = element('div', 'grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end');
         if (['DRAFT', 'SCHEDULED', 'PUBLISHED'].includes(notice.status)) {
             group.appendChild(actionButton('게시 설정', ACTIONS.PUBLISH_OPEN, notice.publicNoticeId));
         }
@@ -69,10 +67,34 @@ function render() {
             archive.dataset.confirmAction = '공시 보관';
             group.appendChild(archive);
         }
-        actions.appendChild(group);
-        row.append(info, statusCell, period, updated, actions);
+        row.append(info, group);
         body.appendChild(row);
     });
+}
+
+function renderNextNotice() {
+    const notice = notices.find((item) => item.status === 'DRAFT')
+            || notices.find((item) => item.status === 'SCHEDULED')
+            || notices.find((item) => item.status === 'PUBLISHED');
+    const action = lookup('[data-notice-next-action]');
+    action.classList.toggle('hidden', !notice);
+    if (!notice) {
+        lookup('[data-notice-next-title]').textContent = notices.length === 0
+                ? '작성 중이거나 게시 중인 공시가 없어요' : '지금 처리할 공시가 없어요';
+        lookup('[data-notice-next-message]').textContent =
+                '새 공식 안내가 필요하면 공시를 작성해 주세요.';
+        return;
+    }
+    lookup('[data-notice-next-title]').textContent = notice.title;
+    lookup('[data-notice-next-message]').textContent = notice.status === 'DRAFT'
+            ? '초안의 본문과 첨부를 마치고 게시 기간을 설정해 주세요.'
+            : notice.status === 'SCHEDULED'
+                ? `${formatDateTime(notice.publishStartDttm)}에 게시될 예정이에요.`
+                : `현재 외부에 게시 중이며 ${formatDateTime(notice.publishEndDttm)}에 종료돼요.`;
+    const button = lookup('button', action);
+    button.dataset.noticeId = String(notice.publicNoticeId);
+    button.dataset.nextMode = notice.status === 'DRAFT' ? 'edit' : 'publish';
+    button.textContent = notice.status === 'DRAFT' ? '공시 이어서 작성' : '게시 설정 확인';
 }
 
 async function load() {
@@ -97,7 +119,7 @@ function openPublish(trigger) {
                     .toISOString().slice(0, 16);
     document.getElementById('noticePublishEnd').value =
             toLocalInput(publishingNotice.publishEndDttm);
-    openModal('noticePublishModal', trigger);
+    openSheet('noticePublishSheet', trigger);
 }
 
 async function withBusy(trigger, task) {
@@ -121,7 +143,7 @@ async function savePublish(trigger) {
             publishStartDttm: start,
             publishEndDttm: end || null,
         });
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         await load();
         showToast('공시 게시 설정을 저장했습니다.');
     });
@@ -141,5 +163,12 @@ bindPageActions({
     [ACTIONS.PUBLISH_SAVE]: savePublish,
     [ACTIONS.CLOSE]: (trigger) => transition(trigger, 'close', '공시 게시를 종료했습니다.'),
     [ACTIONS.ARCHIVE]: (trigger) => transition(trigger, 'archive', '공시를 보관했습니다.'),
+    [ACTIONS.NEXT]: (trigger) => {
+        if (trigger.dataset.nextMode === 'edit') {
+            window.location.assign(`/notice-management/${trigger.dataset.noticeId}/edit`);
+            return;
+        }
+        openPublish(trigger);
+    },
 });
 load().catch((error) => showToast(error.message || '공시를 불러오지 못했습니다.'));

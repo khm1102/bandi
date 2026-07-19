@@ -1,11 +1,13 @@
 import {get, patch, post, put} from '../common/api.js';
 import {openModal} from '../common/modal.js';
+import {closeSheetOf, openSheet} from '../common/sheet.js';
 import {showToast} from '../common/toast.js';
-import {all, appendCell, bindPageActions, debounce, element, lookup, readValue} from '../common/dom.js';
+import {all, bindPageActions, debounce, element, lookup, readValue} from '../common/dom.js';
 import {currentUserRole} from '../common/session.js';
 import {activateFilterChip, badge, closeActionModal} from '../common/view.js';
 
 const ACTIONS = Object.freeze({
+    CREATE: 'asset-create',
     DETAIL: 'asset-detail',
     EDIT: 'asset-edit',
     SAVE: 'asset-save',
@@ -135,37 +137,37 @@ function actionButton(label, action, variant = 'outline') {
 }
 
 function emptyRow(message) {
-    const row = element('tr');
-    const cell = appendCell(row, message, 'py-11 text-center text-muted-foreground');
-    cell.colSpan = 6;
-    return row;
+    return element('p', 'px-5 py-12 text-center text-sm text-muted-foreground',
+            message);
 }
 
 function buildItemRow(item) {
-    const row = element('tr');
+    const row = element('article',
+            'grid gap-3 border-b px-4 py-5 last:border-b-0 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:px-5');
     row.dataset.assetRow = '';
     row.dataset.itemId = String(item.assetItemId);
     row.dataset.status = item.status;
     row.dataset.searchText = `${item.name} ${item.categoryCode} ${categoryLabel(item.categoryCode)} ${item.storageLocation}`.toLowerCase();
 
-    const nameCell = appendCell(row, '', 'min-w-48');
+    const body = element('div', 'min-w-0');
     const nameGroup = element('div', 'flex items-center gap-3');
     const photoMark = element('span', 'flex size-9 shrink-0 items-center justify-center rounded-md bg-accent text-xs font-black text-accent-foreground', item.photoFileId ? '사진' : '품목');
     const nameText = element('div', 'min-w-0');
     nameText.appendChild(element('strong', 'block truncate text-sm', item.name));
     nameText.appendChild(element('span', 'mt-0.5 block text-xs text-muted-foreground', item.trackingType === 'INDIVIDUAL' ? '개별 관리' : '수량 관리'));
     nameGroup.append(photoMark, nameText);
-    nameCell.appendChild(nameGroup);
-
-    const categoryCell = appendCell(row, '');
-    categoryCell.appendChild(badge(categoryLabel(item.categoryCode)));
+    body.appendChild(nameGroup);
+    const meta = element('div', 'mt-3 flex flex-wrap items-center gap-2');
+    meta.appendChild(badge(categoryLabel(item.categoryCode)));
     const used = usedQuantity(item.assetItemId);
-    appendCell(row, `${used} / ${item.totalQuantity} 사용`, used > 0 ? 'font-bold text-warning tabular-nums' : 'tabular-nums');
-    appendCell(row, item.storageLocation);
-    const statusCell = appendCell(row, '');
-    statusCell.appendChild(badge(statusLabel(item.status), statusTone(item.status)));
-    const actionsCell = appendCell(row, '', 'min-w-52 text-right');
+    meta.appendChild(badge(statusLabel(item.status), statusTone(item.status)));
+    meta.appendChild(element('span', `text-xs ${used > 0 ? 'font-bold text-warning' : 'text-muted-foreground'} tabular-nums`, `${used} / ${item.totalQuantity} 사용`));
+    meta.appendChild(element('span', 'text-xs text-muted-foreground',
+            `보관 ${item.storageLocation}`));
+    body.appendChild(meta);
+    const actionsCell = element('div');
     actionsCell.appendChild(lookup('[data-asset-actions-template]').content.cloneNode(true));
+    row.append(body, actionsCell);
     return row;
 }
 
@@ -188,6 +190,35 @@ function renderItems() {
         list.append(...visibleItems.map(buildItemRow));
     }
     lookup('[data-asset-region]').setAttribute('aria-busy', 'false');
+    renderNextAsset();
+}
+
+function renderNextAsset() {
+    const now = new Date();
+    const attention = items.find((item) => ['LOST', 'REPAIR'].includes(item.status));
+    const overdueUsage = items.flatMap((item) => activeUsages(item.assetItemId)
+            .filter((usage) => usage.expectedReturnDttm
+                    && new Date(usage.expectedReturnDttm) < now)
+            .map((usage) => ({item, usage})))[0];
+    const item = attention || overdueUsage?.item
+            || items.find((candidate) => activeUsages(candidate.assetItemId).length > 0);
+    const action = lookup('[data-asset-next-action]');
+    action.classList.toggle('hidden', !item);
+    if (!item) {
+        lookup('[data-asset-next-title]').textContent = items.length === 0
+                ? '아직 등록된 품목이 없어요' : '점검이 필요한 품목이 없어요';
+        lookup('[data-asset-next-message]').textContent = items.length === 0
+                ? '품목을 등록하면 재고와 사용 이력을 관리할 수 있어요.'
+                : '현재 모든 품목이 사용 가능한 상태예요.';
+        return;
+    }
+    lookup('[data-asset-next-title]').textContent = item.name;
+    lookup('[data-asset-next-message]').textContent = attention
+            ? `${statusLabel(item.status)} 상태예요. 현재 상태와 변경 이력을 확인해 주세요.`
+            : overdueUsage
+                ? `${teamName(overdueUsage.usage.teamId)}의 반납 예정 시각이 지났어요.`
+                : `${usedQuantity(item.assetItemId)}개가 사용 중이에요. 반납 일정을 확인해 주세요.`;
+    lookup('button', action).dataset.itemId = String(item.assetItemId);
 }
 
 function updateSummary() {
@@ -266,7 +297,12 @@ function resetItemForm() {
     document.getElementById('assetPhoto').value = '';
     editingItem = null;
     updateOwnerFields();
-    document.getElementById('assetModalTitle').textContent = '품목 등록';
+    document.getElementById('assetSheetTitle').textContent = '품목 등록';
+}
+
+function openCreate(trigger) {
+    resetItemForm();
+    openSheet('assetSheet', trigger);
 }
 
 function openEdit(trigger) {
@@ -292,8 +328,8 @@ function openEdit(trigger) {
     document.getElementById('assetNote').value = editingItem.note || '';
     document.getElementById('assetPhoto').value = '';
     updateOwnerFields();
-    document.getElementById('assetModalTitle').textContent = '품목 수정';
-    openModal('assetModal');
+    document.getElementById('assetSheetTitle').textContent = '품목 수정';
+    openSheet('assetSheet', trigger);
 }
 
 async function uploadPhoto(file) {
@@ -349,7 +385,7 @@ async function saveItem(trigger) {
                 trackingType: readValue('assetTrackingType'),
             });
         }
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         await loadItems();
         showToast(editingItem ? '품목 정보를 수정했습니다.' : '품목을 등록했습니다.');
         resetItemForm();
@@ -478,6 +514,7 @@ function buildAdminStatus(item) {
 
 async function renderDetail(itemId) {
     const detail = lookup('[data-asset-detail]');
+    lookup('[data-asset-detail-status]').textContent = '품목 상세 정보를 불러오는 중입니다.';
     detail.replaceChildren(element('p', 'py-8 text-center text-sm text-muted-foreground', '상세 정보를 불러오는 중입니다.'));
     const item = items.find((candidate) => candidate.assetItemId === itemId);
     const requests = [
@@ -518,6 +555,7 @@ async function renderDetail(itemId) {
     }
     detail.appendChild(buildUsageList(item, usagesByItem.get(itemId) || []));
     detail.appendChild(buildHistoryList(histories));
+    lookup('[data-asset-detail-status]').textContent = `${item.name} 품목 상세 정보를 불러왔습니다.`;
 }
 
 async function openDetail(trigger) {
@@ -528,6 +566,7 @@ async function openDetail(trigger) {
         await renderDetail(selectedItemId);
     } catch (error) {
         lookup('[data-asset-detail]').replaceChildren(element('p', 'rounded-lg bg-destructive-soft px-4 py-3 text-sm text-destructive', error.message || '상세 정보를 불러오지 못했습니다.'));
+        lookup('[data-asset-detail-status]').textContent = '품목 상세 정보를 불러오지 못했습니다.';
     }
 }
 
@@ -673,9 +712,9 @@ document.addEventListener('click', (event) => {
     }
 });
 document.getElementById('assetOwnerType')?.addEventListener('change', updateOwnerFields);
-document.querySelector('[data-open-modal="assetModal"]')?.addEventListener('click', resetItemForm);
 
 bindPageActions({
+    [ACTIONS.CREATE]: openCreate,
     [ACTIONS.DETAIL]: openDetail,
     [ACTIONS.EDIT]: openEdit,
     [ACTIONS.SAVE]: saveItem,
@@ -689,7 +728,7 @@ bindPageActions({
     [ACTIONS.UNIT_SAVE]: saveUnit,
 });
 
-Promise.all([loadReferences(), loadItems()]).catch((error) => {
+Promise.all([loadReferences(), loadItems()]).then(renderNextAsset).catch((error) => {
     lookup('[data-asset-region]').setAttribute('aria-busy', 'false');
     lookup('[data-asset-list]').replaceChildren(emptyRow('품목을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.'));
     showToast(error.message || '소품·장비 정보를 불러오지 못했습니다.');

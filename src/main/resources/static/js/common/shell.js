@@ -32,6 +32,15 @@ function renderError() {
     lookupProfilePart('meta').textContent = '새로고침 후 다시 확인해 주세요';
 }
 
+function showSessionExpired() {
+    const banner = document.querySelector('[data-session-expired]');
+    if (!banner || !banner.hidden) {
+        return;
+    }
+    banner.hidden = false;
+    banner.focus();
+}
+
 async function loadLoginMember() {
     const profile = document.querySelector('[data-session-profile]');
     if (!profile) {
@@ -41,7 +50,7 @@ async function loadLoginMember() {
         renderMember(await get('/api/members/me'));
     } catch (error) {
         if (error instanceof ApiError && error.status === 401) {
-            window.location.replace('/login');
+            showSessionExpired();
             return;
         }
         renderError();
@@ -50,4 +59,5 @@ async function loadLoginMember() {
     }
 }
 
+window.addEventListener('bandi:session-expired', showSessionExpired);
 loadLoginMember();

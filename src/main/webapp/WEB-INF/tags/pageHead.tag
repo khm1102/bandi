@@ -4,7 +4,7 @@
 <%@ attribute name="description" %>
 <div class="mb-5 flex min-w-0 flex-wrap items-end gap-3.5">
     <div class="min-w-0">
-        <h1 class="text-2xl font-black tracking-tight"><c:out value="${title}"/></h1>
+        <h1 class="text-2xl font-extrabold tracking-tight"><c:out value="${title}"/></h1>
         <c:if test="${not empty description}">
             <p class="mt-1 text-sm text-muted-foreground"><c:out value="${description}"/></p>
         </c:if>

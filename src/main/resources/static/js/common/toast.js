@@ -1,6 +1,6 @@
 const TOAST_ID = 'toast';
 const TOAST_VISIBLE_MS = 2400;
-const TOAST_BASE_CLASS = 'fixed bottom-8 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-sidebar px-5 py-3 text-sm font-bold text-white shadow-lg transition-all duration-300';
+const TOAST_BASE_CLASS = 'fixed bottom-8 left-1/2 z-50 -translate-x-1/2 rounded-lg bg-sidebar px-5 py-3 text-sm font-bold text-white shadow-lg transition duration-300';
 
 let hideTimerId = null;
 

@@ -1,10 +1,10 @@
 import {lockBodyScroll, unlockBodyScroll} from './scroll-lock.js';
+import {pushLayer, removeLayer} from './layer.js';
 
 const navigationPanel = document.querySelector('[data-navigation-panel]');
 const navigationBackdrop = document.querySelector('[data-navigation-backdrop]');
 const navigationToggle = document.querySelector('[data-navigation-toggle]');
 const desktopMedia = window.matchMedia('(min-width: 1024px)');
-const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 function setNavigation(open) {
     if (!navigationPanel || !navigationBackdrop || !navigationToggle) {
@@ -18,15 +18,14 @@ function setNavigation(open) {
     navigationPanel.inert = !open;
     if (open) {
         lockBodyScroll(navigationPanel);
-    } else {
-        unlockBodyScroll(navigationPanel);
-    }
-    if (open) {
+        pushLayer(navigationPanel, () => setNavigation(false));
         const currentLink = navigationPanel.querySelector('[aria-current="page"]');
         const firstLink = navigationPanel.querySelector('a[href]');
         (currentLink || firstLink)?.focus();
         return;
     }
+    unlockBodyScroll(navigationPanel);
+    removeLayer(navigationPanel);
     navigationToggle.focus();
 }
 
@@ -41,6 +40,7 @@ function syncNavigationViewport(desktop) {
     navigationPanel.setAttribute('aria-hidden', String(!desktop));
     navigationPanel.inert = !desktop;
     unlockBodyScroll(navigationPanel);
+    removeLayer(navigationPanel);
 }
 
 navigationToggle?.addEventListener('click', () => {
@@ -54,32 +54,6 @@ navigationBackdrop?.addEventListener('click', () => {
 navigationPanel?.addEventListener('click', (event) => {
     if (event.target.closest('a[href]') && !desktopMedia.matches) {
         setNavigation(false);
-    }
-});
-
-document.addEventListener('keydown', (event) => {
-    const navigationOpen = navigationToggle?.getAttribute('aria-expanded') === 'true';
-    if (event.key === 'Escape' && navigationOpen) {
-        setNavigation(false);
-        return;
-    }
-    if (event.key !== 'Tab' || !navigationOpen || !navigationPanel) {
-        return;
-    }
-    const focusables = navigationPanel.querySelectorAll(FOCUSABLE_SELECTOR);
-    if (focusables.length === 0) {
-        return;
-    }
-    const first = focusables[0];
-    const last = focusables[focusables.length - 1];
-    if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-        return;
-    }
-    if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
     }
 });
 

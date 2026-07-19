@@ -1,8 +1,9 @@
 import {del, get, patch, post, put} from '../common/api.js';
 import {all, bindPageActions, element, lookup, readValue} from '../common/dom.js';
 import {openModal} from '../common/modal.js';
+import {closeSheetOf, openSheet} from '../common/sheet.js';
 import {showToast} from '../common/toast.js';
-import {badge, closeActionModal} from '../common/view.js';
+import {badge} from '../common/view.js';
 
 const ACTIONS = Object.freeze({
     PROFILE_CREATE: 'profile-create-open', PROFILE_EDIT: 'profile-edit-open',
@@ -32,6 +33,7 @@ const MEDIA_TYPE_LABELS = {
 const CONSENT_LABELS = {NAME: '공개 이름', PHOTO: '사진', BIO: '소개', SOCIAL: 'SNS'};
 const HISTORY_ACTION_LABELS = {ASSIGN: '배정', CHANGE: '변경', REMOVE: '해제'};
 const HISTORY_SCOPE_LABELS = {PROJECT: '작품', ROUND: '회차'};
+const CONTENT_TABS = new Set(['profiles', 'casting', 'rounds', 'credits']);
 
 let projects = [];
 let profiles = [];
@@ -130,9 +132,137 @@ function setSelectItems(id, items, valueKey, label) {
 }
 
 function requireProject() {
-    if (project()) return true;
+    if (project()) {
+        return true;
+    }
     showToast('먼저 공연 프로젝트를 선택해 주세요.');
     return false;
+}
+
+function announce(message) {
+    lookup('[data-content-status]').textContent = message;
+}
+
+function selectContentTab(name, options = {}) {
+    const selectedName = CONTENT_TABS.has(name) ? name : 'profiles';
+    all('[data-content-tab]').forEach((tab) => {
+        const active = tab.dataset.contentTab === selectedName;
+        tab.setAttribute('aria-selected', String(active));
+        tab.tabIndex = active ? 0 : -1;
+        tab.classList.toggle('border-primary', active);
+        tab.classList.toggle('border-transparent', !active);
+        tab.classList.toggle('text-foreground', active);
+        tab.classList.toggle('text-muted-foreground', !active);
+    });
+    all('[data-content-panel]').forEach((panel) => {
+        panel.classList.toggle('hidden', panel.dataset.contentPanel !== selectedName);
+    });
+    if (options.updateHash !== false) {
+        history.replaceState(null, '', `#${selectedName}`);
+    }
+    if (options.focus) {
+        lookup(`[data-content-tab="${selectedName}"]`).focus();
+    }
+}
+
+function renderSummary() {
+    lookup('[data-summary-profiles]').textContent = String(profiles.filter(
+            (profile) => profile.visibilityStatus === 'PUBLISHED').length);
+    lookup('[data-summary-characters]').textContent = String(characters.length);
+    lookup('[data-summary-casts]').textContent = String(casts.length);
+    lookup('[data-summary-media]').textContent = String(mediaItems.filter(
+            (media) => media.published).length);
+}
+
+function setNextAction(kind, title, description, label, tabName = null, targetId = null) {
+    lookup('[data-content-next-title]').textContent = title;
+    lookup('[data-content-next-description]').textContent = description;
+    const button = lookup('[data-content-next-action]');
+    button.textContent = label;
+    button.dataset.nextAction = kind;
+    if (tabName) {
+        button.dataset.nextTab = tabName;
+    } else {
+        delete button.dataset.nextTab;
+    }
+    if (targetId) {
+        button.dataset.targetId = String(targetId);
+    } else {
+        delete button.dataset.targetId;
+    }
+}
+
+function renderNextAction() {
+    const selected = project();
+    if (!selected) {
+        setNextAction('project', '먼저 공연 프로젝트를 만들어 주세요',
+                '공연 콘텐츠는 학기별 공연 프로젝트에 연결돼요.', '공연 운영 설정으로 이동');
+        return;
+    }
+    if (!profiles.length) {
+        setNextAction(ACTIONS.PROFILE_CREATE, '첫 공개 프로필을 등록해 주세요',
+                '배우와 제작진의 공개 이름을 먼저 준비해야 캐스팅을 연결할 수 있어요.',
+                '공개 프로필 추가', 'profiles');
+        return;
+    }
+    const profileWithoutNameConsent = profiles.find((profile) =>
+        profile.visibilityStatus !== 'ARCHIVED' && !hasConsent(profile.publicProfileId, 'NAME'));
+    if (profileWithoutNameConsent) {
+        setNextAction(ACTIONS.CONSENT_OPEN, `${profileWithoutNameConsent.publicName}님의 공개 동의가 필요해요`,
+                '공개 이름 동의를 기록해야 프로필을 게시하고 캐스팅에 배정할 수 있어요.',
+                '동의 기록하기', 'profiles', profileWithoutNameConsent.publicProfileId);
+        return;
+    }
+    const draftProfile = profiles.find((profile) => profile.visibilityStatus === 'DRAFT');
+    if (draftProfile) {
+        setNextAction('review-profile', `${draftProfile.publicName} 프로필을 게시할지 확인해 주세요`,
+                '사진과 소개, 공개 동의 범위를 검토한 뒤 목록에서 게시할 수 있어요.',
+                '프로필 검토', 'profiles', draftProfile.publicProfileId);
+        return;
+    }
+    if (!characters.length) {
+        setNextAction(ACTIONS.CHARACTER_CREATE, '첫 등장인물을 등록해 주세요',
+                '배역을 만든 뒤 공개 프로필을 작품 캐스팅에 연결할 수 있어요.',
+                '등장인물 추가', 'casting');
+        return;
+    }
+    const unassignedCharacter = characters.find((character) => !casts.some((cast) =>
+        cast.performanceCharacterId === character.performanceCharacterId));
+    if (unassignedCharacter) {
+        setNextAction(ACTIONS.CAST_CREATE, `${unassignedCharacter.name} 배역의 배우를 정해 주세요`,
+                '등장인물마다 작품 전체의 기본 캐스팅을 연결해요.',
+                '작품 캐스팅 배정', 'casting');
+        return;
+    }
+    const currentRound = selectedRound();
+    if (currentRound && !roundCasts.length) {
+        setNextAction(ACTIONS.ROUND_CAST_CREATE, `${currentRound.roundNo}회차 캐스팅을 확정해 주세요`,
+                '회차별 실제 출연자가 작품 기본 캐스팅과 다를 수 있어요.',
+                '회차 캐스팅 배정', 'rounds', currentRound.performanceRoundId);
+        return;
+    }
+    if (!credits.length) {
+        setNextAction(ACTIONS.CREDIT_CREATE, '제작진 크레딧을 등록해 주세요',
+                '연출, 무대, 조명 등 관객에게 공개할 제작진을 순서대로 기록해요.',
+                '크레딧 추가', 'credits');
+        return;
+    }
+    if (!mediaItems.length) {
+        setNextAction(ACTIONS.MEDIA_CREATE, '공연을 소개할 사진을 추가해 주세요',
+                '포스터나 연습 사진에 대체 텍스트와 제작 크레딧을 함께 기록해요.',
+                '미디어 추가', 'credits');
+        return;
+    }
+    const unpublishedMedia = mediaItems.find((media) => !media.published);
+    if (unpublishedMedia) {
+        setNextAction('review-media', `${unpublishedMedia.title}의 게시 여부를 확인해 주세요`,
+                '설명과 대체 텍스트를 검토한 뒤 목록에서 게시할 수 있어요.',
+                '미디어 검토', 'credits', unpublishedMedia.performanceMediaId);
+        return;
+    }
+    setNextAction('public-page', '관객에게 보여줄 콘텐츠가 준비됐어요',
+            '외부 공연 페이지의 공개 상태와 관람 안내를 마지막으로 확인해 주세요.',
+            '외부 공개 설정으로 이동');
 }
 
 async function withBusy(trigger, task) {
@@ -171,8 +301,8 @@ function renderProjectSelect() {
         select.value = previous;
     }
     lookup('[data-content-project-state]').textContent = project()
-            ? `${project().title}의 공개 콘텐츠를 편집하고 있습니다.`
-            : '등록된 공연 프로젝트가 없습니다.';
+            ? `${project().title}의 공개 콘텐츠를 편집하고 있어요.`
+            : '등록된 공연 프로젝트가 없어요.';
     [ACTIONS.CHARACTER_CREATE, ACTIONS.CAST_CREATE, ACTIONS.CAST_HISTORY,
         ACTIONS.ROUND_CAST_CREATE, ACTIONS.CREDIT_CREATE, ACTIONS.MEDIA_CREATE]
             .forEach((action) => {
@@ -190,7 +320,8 @@ function renderProfiles() {
     }
     const memberMap = new Map(members.map((item) => [item.memberId, item]));
     profiles.forEach((profile) => {
-        const row = element('article', 'px-5 py-4');
+        const row = element('article', 'py-4');
+        row.dataset.profileId = String(profile.publicProfileId);
         const head = element('div', 'flex flex-wrap items-center gap-2');
         head.append(element('h3', 'text-sm font-black', profile.publicName),
                 badge(VISIBILITY_LABELS[profile.visibilityStatus],
@@ -237,7 +368,7 @@ function renderCharacters() {
         return;
     }
     characters.forEach((character) => {
-        const row = element('article', 'px-5 py-4');
+        const row = element('article', 'py-4');
         const head = element('div', 'flex items-center gap-2');
         head.append(element('h3', 'font-black', character.name),
                 badge(IMPORTANCE_LABELS[character.importance], 'info'),
@@ -265,7 +396,7 @@ function renderCasts() {
         return;
     }
     casts.forEach((cast) => {
-        const row = element('article', 'px-5 py-4');
+        const row = element('article', 'py-4');
         const profile = profileById(cast.publicProfileId);
         const head = element('div', 'flex flex-wrap items-center gap-2');
         head.append(element('strong', '', cast.characterName),
@@ -307,7 +438,7 @@ function renderRoundCasts() {
         return;
     }
     roundCasts.forEach((cast) => {
-        const row = element('article', 'px-5 py-4');
+        const row = element('article', 'py-4');
         const profile = profileById(cast.publicProfileId);
         const head = element('div', 'flex flex-wrap items-center gap-2');
         head.append(element('strong', '', cast.characterName),
@@ -336,7 +467,7 @@ function renderCredits() {
         return;
     }
     credits.forEach((credit) => {
-        const row = element('article', 'flex items-center gap-2 px-5 py-4');
+        const row = element('article', 'flex flex-wrap items-center gap-2 py-4');
         row.append(element('strong', 'text-sm', credit.creditRole),
                 element('span', 'text-muted-foreground', '—'),
                 element('span', 'text-sm', credit.publicName));
@@ -360,7 +491,8 @@ function renderMedia() {
         return;
     }
     mediaItems.forEach((media) => {
-        const row = element('article', 'px-5 py-4');
+        const row = element('article', 'py-4');
+        row.dataset.mediaId = String(media.performanceMediaId);
         const head = element('div', 'flex flex-wrap items-center gap-2');
         head.append(element('strong', 'text-sm', media.title),
                 badge(MEDIA_TYPE_LABELS[media.mediaType], 'info'),
@@ -425,6 +557,7 @@ async function loadRoundCasts() {
             ? await get(`/api/performance-content-management/rounds/${selectedRound().performanceRoundId}/casts`)
             : [];
     renderRoundCasts();
+    renderNextAction();
 }
 
 async function loadProjectContent() {
@@ -446,6 +579,9 @@ async function loadProjectContent() {
     renderCredits();
     renderMedia();
     await loadRoundCasts();
+    renderSummary();
+    renderNextAction();
+    announce(`${selected?.title || '공연'} 콘텐츠를 불러왔어요.`);
 }
 
 async function loadAll() {
@@ -474,7 +610,7 @@ function openProfileForm(trigger) {
     document.getElementById('profileBio').value = editingProfile?.bio || '';
     document.getElementById('profileSocial').value = editingProfile?.socialUrl || '';
     document.getElementById('profileImage').value = '';
-    openModal('publicProfileModal', trigger);
+    openSheet('publicProfileSheet', trigger);
 }
 
 async function saveProfile(trigger) {
@@ -491,7 +627,7 @@ async function saveProfile(trigger) {
                 memberId: Number(readValue('profileMember')) || null, ...body,
             });
         }
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         await loadReferences();
         await loadProjectContent();
         showToast('공개 프로필을 저장했습니다.');
@@ -553,7 +689,7 @@ function openConsent(trigger) {
         appendOption(scopeSelect, scope, CONSENT_LABELS[scope]));
     updateConsentPolicyOptions();
     renderConsentList();
-    openModal('profileConsentModal', trigger);
+    openSheet('profileConsentSheet', trigger);
 }
 
 function updateConsentPolicyOptions() {
@@ -590,7 +726,7 @@ function openPolicyForm(trigger) {
     document.getElementById('policyEffectiveFrom').value = currentLocalDateTime();
     document.getElementById('policyRequired').checked = true;
     togglePolicyTitle();
-    openModal('profilePolicyModal', trigger);
+    openSheet('profilePolicySheet', trigger);
 }
 
 async function savePolicy(trigger) {
@@ -608,7 +744,7 @@ async function savePolicy(trigger) {
             effectiveFromDttm: readValue('policyEffectiveFrom'),
             required: document.getElementById('policyRequired').checked,
         });
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         const documents = await get('/api/policies');
         policyDocuments = documents;
         await loadPolicyVersions(documents);
@@ -653,7 +789,7 @@ function openCharacterForm(trigger) {
     document.getElementById('characterDescription').value = editingCharacter?.description || '';
     document.getElementById('characterImportance').value = editingCharacter?.importance || 'LEAD';
     document.getElementById('characterOrder').value = editingCharacter?.displayOrder || 0;
-    openModal('characterModal', trigger);
+    openSheet('characterSheet', trigger);
 }
 
 async function saveCharacter(trigger) {
@@ -668,7 +804,7 @@ async function saveCharacter(trigger) {
         } else {
             await post('/api/performance-content-management/characters', body);
         }
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         await loadProjectContent();
         showToast('등장인물을 저장했습니다.');
     });
@@ -703,7 +839,7 @@ function openCastForm(trigger) {
     document.getElementById('castType').value = editingCast?.castType || 'PRIMARY';
     document.getElementById('castOrder').value = editingCast?.displayOrder || 0;
     document.getElementById('castReason').value = '';
-    openModal('castModal', trigger);
+    openSheet('castSheet', trigger);
 }
 
 async function saveCast(trigger) {
@@ -720,7 +856,7 @@ async function saveCast(trigger) {
                 performanceCharacterId: Number(readValue('castCharacter')), ...common,
             });
         }
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         await loadProjectContent();
         showToast('작품 캐스팅을 저장했습니다.');
     });
@@ -776,7 +912,7 @@ function openRoundCastForm(trigger) {
     document.getElementById('roundCastProfile').value = editingRoundCast?.publicProfileId || availableProfiles()[0].publicProfileId;
     document.getElementById('roundCastType').value = editingRoundCast?.castType || 'PRIMARY';
     document.getElementById('roundCastReason').value = '';
-    openModal('roundCastModal', trigger);
+    openSheet('roundCastSheet', trigger);
 }
 
 async function saveRoundCast(trigger) {
@@ -793,7 +929,7 @@ async function saveRoundCast(trigger) {
                 performanceCharacterId: Number(readValue('roundCastCharacter')), ...common,
             });
         }
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         await loadRoundCasts();
         showToast('회차별 캐스팅을 저장했습니다.');
     });
@@ -825,7 +961,7 @@ function openCreditForm(trigger) {
     document.getElementById('creditName').value = editingCredit?.publicName || '';
     document.getElementById('creditProfile').value = editingCredit?.publicProfileId || '';
     document.getElementById('creditOrder').value = editingCredit?.displayOrder || 0;
-    openModal('creditModal', trigger);
+    openSheet('creditSheet', trigger);
 }
 
 async function saveCredit(trigger) {
@@ -840,7 +976,7 @@ async function saveCredit(trigger) {
         } else {
             await post('/api/performance-content-management/credits', body);
         }
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         await loadProjectContent();
         showToast('제작진 크레딧을 저장했습니다.');
     });
@@ -868,7 +1004,7 @@ function openMediaForm(trigger) {
     document.getElementById('mediaCredit').value = editingMedia?.creditText || '';
     document.getElementById('mediaExternalUrl').value = editingMedia?.externalUrl || '';
     document.getElementById('mediaOrder').value = editingMedia?.displayOrder || 0;
-    openModal('mediaModal', trigger);
+    openSheet('mediaSheet', trigger);
 }
 
 async function saveMedia(trigger) {
@@ -893,7 +1029,7 @@ async function saveMedia(trigger) {
         } else {
             await post('/api/performance-content-management/media', body);
         }
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         await loadProjectContent();
         showToast('공연 미디어를 저장했습니다.');
     });
@@ -916,25 +1052,109 @@ async function deleteMedia(trigger) {
     });
 }
 
-all('[data-content-tab]').forEach((tab) => tab.addEventListener('click', () => {
-    all('[data-content-tab]').forEach((candidate) => {
-        const active = candidate === tab;
-        candidate.setAttribute('aria-selected', String(active));
-        candidate.classList.toggle('border', active);
-        candidate.classList.toggle('bg-card', active);
-        candidate.classList.toggle('text-muted-foreground', !active);
+function focusContentItem(selector) {
+    const item = lookup(selector);
+    if (!item) {
+        return;
+    }
+    item.tabIndex = -1;
+    item.focus({preventScroll: true});
+    item.scrollIntoView({behavior: 'smooth', block: 'center'});
+}
+
+async function handleNextAction(trigger) {
+    const action = trigger.dataset.nextAction;
+    const tabName = trigger.dataset.nextTab;
+    if (tabName) {
+        selectContentTab(tabName);
+    }
+    if (action === 'project') {
+        window.location.href = '/performance-management';
+        return;
+    }
+    if (action === 'public-page') {
+        window.location.href = '/performance-management#public';
+        return;
+    }
+    if (action === 'retry') {
+        trigger.disabled = true;
+        try {
+            await loadAll();
+        } finally {
+            trigger.disabled = false;
+        }
+        return;
+    }
+    if (action === 'review-profile') {
+        focusContentItem(`[data-profile-id="${trigger.dataset.targetId}"]`);
+        return;
+    }
+    if (action === 'review-media') {
+        focusContentItem(`[data-media-id="${trigger.dataset.targetId}"]`);
+        return;
+    }
+    if (action === ACTIONS.PROFILE_CREATE) {
+        openProfileForm(trigger);
+    } else if (action === ACTIONS.CONSENT_OPEN) {
+        openConsent(trigger);
+    } else if (action === ACTIONS.CHARACTER_CREATE) {
+        openCharacterForm(trigger);
+    } else if (action === ACTIONS.CAST_CREATE) {
+        openCastForm(trigger);
+    } else if (action === ACTIONS.ROUND_CAST_CREATE) {
+        const roundId = trigger.dataset.targetId;
+        delete trigger.dataset.targetId;
+        document.getElementById('roundCastRoundSelect').value = roundId;
+        await loadRoundCasts();
+        openRoundCastForm(trigger);
+        trigger.dataset.targetId = roundId;
+    } else if (action === ACTIONS.CREDIT_CREATE) {
+        openCreditForm(trigger);
+    } else if (action === ACTIONS.MEDIA_CREATE) {
+        openMediaForm(trigger);
+    }
+}
+
+function showLoadError(error) {
+    setNextAction('retry', '공연 콘텐츠를 불러오지 못했어요',
+            `${error.message || '잠시 후 다시 시도해 주세요.'} 입력한 내용은 없어서 잃어버린 정보는 없어요.`,
+            '다시 불러오기');
+    announce('공연 콘텐츠를 불러오지 못했어요.');
+}
+
+all('[data-content-tab]').forEach((tab) => {
+    tab.addEventListener('click', () => selectContentTab(tab.dataset.contentTab));
+    tab.addEventListener('keydown', (event) => {
+        if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) {
+            return;
+        }
+        event.preventDefault();
+        const tabs = all('[data-content-tab]');
+        const current = tabs.indexOf(tab);
+        let next = current;
+        if (event.key === 'ArrowLeft') {
+            next = (current - 1 + tabs.length) % tabs.length;
+        } else if (event.key === 'ArrowRight') {
+            next = (current + 1) % tabs.length;
+        } else if (event.key === 'Home') {
+            next = 0;
+        } else if (event.key === 'End') {
+            next = tabs.length - 1;
+        }
+        selectContentTab(tabs[next].dataset.contentTab, {focus: true});
     });
-    all('[data-content-panel]').forEach((panel) =>
-        panel.classList.toggle('hidden', panel.dataset.contentPanel !== tab.dataset.contentTab));
-}));
+});
+lookup('[data-content-next-action]').addEventListener('click', (event) => {
+    handleNextAction(event.currentTarget).catch(showLoadError);
+});
 document.getElementById('contentProjectSelect').addEventListener('change', () => {
     lookup('[data-content-project-state]').textContent = project()
-            ? `${project().title}의 공개 콘텐츠를 편집하고 있습니다.`
-            : '등록된 공연 프로젝트가 없습니다.';
-    loadProjectContent().catch((error) => showToast(error.message));
+            ? `${project().title}의 공개 콘텐츠를 편집하고 있어요.`
+            : '등록된 공연 프로젝트가 없어요.';
+    loadProjectContent().catch(showLoadError);
 });
 document.getElementById('roundCastRoundSelect').addEventListener('change', () =>
-    loadRoundCasts().catch((error) => showToast(error.message)));
+    loadRoundCasts().catch(showLoadError));
 document.getElementById('consentScope').addEventListener('change',
         updateConsentPolicyOptions);
 document.getElementById('policyDocument').addEventListener('change', togglePolicyTitle);
@@ -957,4 +1177,8 @@ bindPageActions({
     [ACTIONS.MEDIA_SAVE]: saveMedia, [ACTIONS.MEDIA_PUBLISHED]: changeMediaPublished,
     [ACTIONS.MEDIA_DELETE]: deleteMedia,
 });
-loadAll().catch((error) => showToast(error.message || '공연 콘텐츠를 불러오지 못했습니다.'));
+window.addEventListener('hashchange', () => {
+    selectContentTab(window.location.hash.slice(1), {updateHash: false});
+});
+selectContentTab(window.location.hash.slice(1), {updateHash: false});
+loadAll().catch(showLoadError);

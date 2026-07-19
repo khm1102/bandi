@@ -2,6 +2,7 @@ package kr.ac.tukorea.bandi.domain.performance.controller;
 
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformancePublicPageResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformancePublicNoticeResponse;
+import kr.ac.tukorea.bandi.domain.performance.exception.PerformancePublicPageNotFoundException;
 import kr.ac.tukorea.bandi.domain.performance.model.PublicPageStatus;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceContentService;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformancePublicNoticeService;
@@ -79,6 +80,17 @@ class PerformancePageControllerTest {
         mockMvc.perform(get("/performances/house-boy"))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute("notices", List.of()));
+    }
+
+    @Test
+    void 존재하지_않는_공연은_404_화면으로_응답한다() throws Exception {
+        when(publicPageService.lookupPublic("missing"))
+                .thenThrow(new PerformancePublicPageNotFoundException(
+                        "slug=missing"));
+
+        mockMvc.perform(get("/performances/missing"))
+                .andExpect(status().isNotFound())
+                .andExpect(view().name("error/404"));
     }
 
     private PerformancePublicPageResponse stubPublicPage() {

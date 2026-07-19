@@ -1,9 +1,9 @@
 import {ApiError, get, post, put} from '../common/api.js';
 import {all, bindPageActions, debounce, element, lookup, readValue} from '../common/dom.js';
-import {openModal} from '../common/modal.js';
+import {closeSheetOf, openSheet} from '../common/sheet.js';
 import {currentUserRole} from '../common/session.js';
 import {showToast} from '../common/toast.js';
-import {activateFilterChip, badge, closeActionModal} from '../common/view.js';
+import {activateFilterChip, badge} from '../common/view.js';
 
 const ACTIONS = Object.freeze({
     DOWNLOAD: 'resource-download',
@@ -12,6 +12,7 @@ const ACTIONS = Object.freeze({
     NOTICE_CREATE: 'notice-create-open',
     NOTICE_ADD: 'notice-add',
     NOTICE_OPEN: 'notice-open',
+    NOTICE_PRIORITY_OPEN: 'notice-priority-open',
     NOTICE_EDIT: 'notice-edit',
     NOTICE_READS: 'notice-read-statuses',
     NOTICE_CLOSE: 'notice-close',
@@ -68,12 +69,16 @@ function actionButton(label, action, id, tone = 'outline') {
             label);
     button.type = 'button';
     button.dataset.pageAction = action;
-    if (id !== undefined) button.dataset.targetId = String(id);
+    if (id !== undefined) {
+        button.dataset.targetId = String(id);
+    }
     return button;
 }
 
 function canManage(item) {
-    if (currentUserRole === 'admin') return true;
+    if (currentUserRole === 'admin') {
+        return true;
+    }
     return currentUserRole === 'leader' && item.targetScope === 'TEAM'
             && Number(item.teamId) === Number(loginMember?.teamId);
 }
@@ -83,8 +88,8 @@ function activateInfoTab(button) {
     all('[data-info-tab]').forEach((tab) => {
         const selected = tab === button;
         tab.setAttribute('aria-selected', String(selected));
-        tab.classList.toggle('border', selected);
-        tab.classList.toggle('bg-card', selected);
+        tab.classList.toggle('border-primary', selected);
+        tab.classList.toggle('border-transparent', !selected);
         tab.classList.toggle('text-foreground', selected);
         tab.classList.toggle('text-muted-foreground', !selected);
     });
@@ -127,8 +132,6 @@ function appendNoticeCard(notice) {
     const badges = lookup('[data-notice-badges]', card);
     if (notice.important) {
         badges.appendChild(badge('중요', 'accent'));
-        card.classList.add('border-primary/40', 'bg-accent/40');
-        card.classList.remove('bg-card');
     }
     badges.appendChild(badge(notice.targetScope === 'TEAM'
         ? notice.teamName || '팀 공지' : '전체', notice.targetScope === 'TEAM'
@@ -141,11 +144,29 @@ function appendNoticeCard(notice) {
     lookup('[data-notice-list]').appendChild(card);
 }
 
+function renderPriorityNotice() {
+    const container = lookup('[data-notice-priority]');
+    const notice = notices.find((item) => item.important && !item.read);
+    container.classList.toggle('hidden', !notice);
+    if (!notice) {
+        return;
+    }
+    lookup('[data-notice-priority-title]', container).textContent = notice.title;
+    lookup('[data-notice-priority-meta]', container).textContent =
+            `${notice.targetScope === 'TEAM' ? notice.teamName || '팀 공지' : '전체 공지'} · ${formatDate(notice.publishStartDttm)} 게시`;
+    lookup('[data-page-action="notice-priority-open"]', container)
+            .dataset.targetId = String(notice.internalNoticeId);
+}
+
 function filterNotices() {
     const selected = lookup('[data-filter-group="notice"][aria-pressed="true"]');
     const filter = selected?.dataset.filterValue || 'ALL';
     const visible = notices.filter((notice) => noticeMatchesFilter(notice,
-            filter));
+            filter)).sort((first, second) => {
+        const firstPriority = Number(!first.read) * 2 + Number(first.important);
+        const secondPriority = Number(!second.read) * 2 + Number(second.important);
+        return secondPriority - firstPriority;
+    });
     const list = lookup('[data-notice-list]');
     list.replaceChildren();
     if (visible.length === 0) {
@@ -156,15 +177,16 @@ function filterNotices() {
     }
     hideNoticeState();
     list.classList.remove('hidden');
-    list.classList.add('flex');
     visible.forEach(appendNoticeCard);
 }
 
 async function loadNotices() {
     lookup('[data-notice-list]').classList.add('hidden');
+    lookup('[data-notice-priority]').classList.add('hidden');
     setNoticeState('공지를 불러오는 중입니다', '잠시만 기다려 주세요.');
     try {
         notices = await get('/api/internal-notices', {pageSize: 100});
+        renderPriorityNotice();
         filterNotices();
     } catch (error) {
         setNoticeState('공지를 불러오지 못했습니다', errorMessage(error),
@@ -304,9 +326,9 @@ function resetNoticeForm() {
 function openNoticeForm(trigger) {
     editingNotice = null;
     resetNoticeForm();
-    document.getElementById('noticeModalTitle').textContent = '짧은 공지 작성';
+    document.getElementById('noticeSheetTitle').textContent = '짧은 공지 작성';
     lookup('[data-notice-submit-label]').textContent = '공지 게시';
-    openModal('noticeModal', trigger);
+    openSheet('noticeSheet', trigger);
 }
 
 async function addNotice(trigger) {
@@ -334,7 +356,7 @@ async function addNotice(trigger) {
                 publishEndDttm: null,
             });
         }
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         resetNoticeForm();
         showToast(editingNotice ? '공지를 수정했습니다.' : '공지를 게시했습니다.');
         editingNotice = null;
@@ -362,9 +384,9 @@ function openResourceForm(trigger) {
     editingResource = null;
     resetResourceForm();
     document.getElementById('upFile').required = true;
-    document.getElementById('uploadModalTitle').textContent = '자료 업로드';
+    document.getElementById('uploadSheetTitle').textContent = '자료 업로드';
     lookup('[data-resource-submit-label]').textContent = '업로드';
-    openModal('uploadModal', trigger);
+    openSheet('uploadSheet', trigger);
 }
 
 async function uploadResource(trigger) {
@@ -408,7 +430,7 @@ async function uploadResource(trigger) {
             });
             await post(`/api/resource-management/${created.resourceId}/publish`);
         }
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         resetResourceForm();
         showToast(editingResource ? '자료를 수정했습니다.'
             : '자료를 업로드하고 게시했습니다.');
@@ -432,8 +454,9 @@ function appendDetailFile(noticeId, attachment) {
 async function openNotice(trigger) {
     trigger.disabled = true;
     try {
-        const card = trigger.closest('[data-notice-card]');
-        const detail = await get(`/api/internal-notices/${card.dataset.noticeId}`);
+        const noticeId = trigger.dataset.targetId
+                || trigger.closest('[data-notice-card]')?.dataset.noticeId;
+        const detail = await get(`/api/internal-notices/${noticeId}`);
         currentNoticeDetail = detail;
         const badges = lookup('[data-notice-detail-badges]');
         badges.replaceChildren();
@@ -459,7 +482,8 @@ async function openNotice(trigger) {
         const managementActions = lookup('[data-notice-management-actions]');
         managementActions.classList.toggle('hidden', !canManage(detail));
         managementActions.classList.toggle('flex', canManage(detail));
-        openModal('noticeDetailModal', trigger);
+        renderPriorityNotice();
+        openSheet('noticeDetailSheet', trigger);
     } catch (error) {
         showToast(errorMessage(error));
     } finally {
@@ -478,10 +502,10 @@ async function editNotice(trigger) {
         document.getElementById('ntTitle').value = editingNotice.title;
         document.getElementById('ntBody').value = editingNotice.body;
         document.getElementById('ntImportant').checked = editingNotice.important;
-        document.getElementById('noticeModalTitle').textContent = '공지 수정';
+        document.getElementById('noticeSheetTitle').textContent = '공지 수정';
         lookup('[data-notice-submit-label]').textContent = '수정 저장';
-        closeActionModal(trigger);
-        openModal('noticeModal', trigger);
+        closeSheetOf(trigger);
+        openSheet('noticeSheet', trigger);
     } catch (error) {
         showToast(errorMessage(error));
     } finally {
@@ -508,8 +532,8 @@ async function showNoticeReads(trigger) {
                     'text-xs text-muted-foreground', formatDate(status.firstReadDttm)));
             list.appendChild(row);
         });
-        closeActionModal(trigger);
-        openModal('noticeReadModal', trigger);
+        closeSheetOf(trigger);
+        openSheet('noticeReadSheet', trigger);
     });
 }
 
@@ -517,7 +541,7 @@ async function changeNoticeState(trigger, action) {
     if (!currentNoticeDetail) return;
     await withButtonBusy(trigger, async () => {
         await post(`/api/internal-notice-management/${currentNoticeDetail.internalNoticeId}/${action}`);
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         currentNoticeDetail = null;
         await loadNotices();
         showToast(action === 'close' ? '공지 게시를 종료했습니다.' : '공지를 보관했습니다.');
@@ -547,9 +571,9 @@ async function editResource(trigger) {
         document.getElementById('upPinned').checked = editingResource.pinned;
         document.getElementById('upFile').value = '';
         document.getElementById('upFile').required = false;
-        document.getElementById('uploadModalTitle').textContent = '자료 수정·새 리비전';
+        document.getElementById('uploadSheetTitle').textContent = '자료 수정·새 리비전';
         lookup('[data-resource-submit-label]').textContent = '변경 저장';
-        openModal('uploadModal', trigger);
+        openSheet('uploadSheet', trigger);
     });
 }
 
@@ -571,7 +595,7 @@ async function showResourceHistory(trigger) {
                     `${file.originalName} · ${file.uploadedByName || '업로더 미상'} · ${formatDate(file.uploadedDttm)}`)));
             list.appendChild(section);
         });
-        openModal('resourceHistoryModal', trigger);
+        openSheet('resourceHistorySheet', trigger);
     });
 }
 
@@ -640,6 +664,7 @@ bindPageActions({
     [ACTIONS.NOTICE_CREATE]: openNoticeForm,
     [ACTIONS.NOTICE_ADD]: addNotice,
     [ACTIONS.NOTICE_OPEN]: openNotice,
+    [ACTIONS.NOTICE_PRIORITY_OPEN]: openNotice,
     [ACTIONS.NOTICE_EDIT]: editNotice,
     [ACTIONS.NOTICE_READS]: showNoticeReads,
     [ACTIONS.NOTICE_CLOSE]: (trigger) => changeNoticeState(trigger, 'close'),

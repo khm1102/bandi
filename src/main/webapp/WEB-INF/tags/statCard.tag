@@ -27,7 +27,7 @@
         </c:if>
         <c:out value="${label}"/>
     </span>
-    <strong class="mt-2 block text-xl font-black tracking-tight tabular-nums md:text-2xl ${featured ? 'text-accent-foreground' : toneClass}">
+    <strong class="mt-2 block text-xl font-extrabold tracking-tight tabular-nums md:text-2xl ${featured ? 'text-accent-foreground' : toneClass}">
         <span data-stat-value="${valueHook}"><c:out value="${value}"/></span>
         <c:if test="${not empty unit}"><small class="text-sm font-bold text-muted-foreground"><c:out value="${unit}"/></small></c:if>
     </strong>

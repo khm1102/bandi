@@ -11,6 +11,7 @@ const CAST_TYPE_LABELS = Object.freeze({
 
 const root = lookup('[data-performance-page]');
 const slug = root?.dataset.performanceSlug || '';
+let roundCastRequestId = 0;
 
 function profileImageUrl(cast) {
     const profile = cast.profile;
@@ -48,7 +49,7 @@ function renderRoundCasts(casts) {
     const host = lookup('[data-round-cast-list]');
     host.replaceChildren();
     if (casts.length === 0) {
-        host.appendChild(element('p', 'text-sm text-sidebar-foreground sm:col-span-2', '이 회차의 공개 캐스팅 정보가 아직 없습니다.'));
+        host.appendChild(element('p', 'text-sm text-sidebar-foreground sm:col-span-2', '이 회차의 공개 캐스팅 정보가 아직 없어요.'));
     } else {
         casts.forEach((cast) => host.appendChild(castCard(cast)));
     }
@@ -71,19 +72,26 @@ function setSelectedRound(button) {
 }
 
 async function loadRoundCasts(button) {
+    const requestId = ++roundCastRequestId;
     setSelectedRound(button);
     const panel = lookup('[data-round-cast-panel]');
     const host = lookup('[data-round-cast-list]');
     panel.setAttribute('aria-busy', 'true');
-    host.replaceChildren(element('p', 'text-sm text-sidebar-foreground', '회차별 캐스팅을 불러오는 중입니다.'));
+    host.replaceChildren(element('p', 'text-sm text-sidebar-foreground', '회차별 캐스팅을 불러오는 중이에요.'));
     try {
         const casts = await get(`/api/public-performances/${encodeURIComponent(slug)}/rounds/${button.dataset.roundId}/casts`);
-        if (button.getAttribute('aria-selected') === 'true') {
+        if (requestId === roundCastRequestId && button.getAttribute('aria-selected') === 'true') {
             renderRoundCasts(casts);
         }
     } catch (error) {
-        host.replaceChildren(element('p', 'text-sm text-warning sm:col-span-2', '회차별 캐스팅을 불러오지 못했습니다.'));
-        panel.setAttribute('aria-busy', 'false');
+        if (requestId === roundCastRequestId) {
+            const message = element('p', 'text-sm text-warning sm:col-span-2', '회차별 캐스팅을 불러오지 못했어요.');
+            const retry = element('button', 'min-h-11 w-fit text-sm font-bold text-primary underline-offset-4 hover:underline', '다시 불러오기');
+            retry.type = 'button';
+            retry.dataset.roundRetry = button.dataset.roundId;
+            host.replaceChildren(message, retry);
+            panel.setAttribute('aria-busy', 'false');
+        }
     }
 }
 
@@ -92,13 +100,21 @@ function moveRoundFocus(current, direction) {
     const index = buttons.indexOf(current);
     const next = buttons[(index + direction + buttons.length) % buttons.length];
     next.focus();
-    loadRoundCasts(next);
+    loadRoundCasts(next).catch(() => {});
 }
 
 document.addEventListener('click', (event) => {
     const button = event.target.closest('[data-round-select]');
     if (button) {
-        loadRoundCasts(button);
+        loadRoundCasts(button).catch(() => {});
+        return;
+    }
+    const retry = event.target.closest('[data-round-retry]');
+    if (retry) {
+        const selected = lookup(`[data-round-select][data-round-id="${retry.dataset.roundRetry}"]`);
+        if (selected) {
+            loadRoundCasts(selected).catch(() => {});
+        }
     }
 });
 
@@ -113,5 +129,5 @@ document.addEventListener('keydown', (event) => {
 
 const firstRound = lookup('[data-round-select]');
 if (firstRound && slug) {
-    loadRoundCasts(firstRound);
+    loadRoundCasts(firstRound).catch(() => {});
 }

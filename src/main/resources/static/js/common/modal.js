@@ -1,6 +1,6 @@
 import {lockBodyScroll, unlockBodyScroll} from './scroll-lock.js';
+import {focusables, pushLayer, removeLayer} from './layer.js';
 
-const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 const modalTriggers = new WeakMap();
 
 export function openModal(modalId, trigger = document.activeElement) {
@@ -13,15 +13,13 @@ export function openModal(modalId, trigger = document.activeElement) {
     modal.classList.add('flex');
     modal.setAttribute('aria-hidden', 'false');
     lockBodyScroll(modal);
-    const focusables = modal.querySelectorAll(FOCUSABLE_SELECTOR);
-    if (focusables.length > 0) {
-        focusables[0].focus();
+    pushLayer(modal, () => closeModal(modal));
+    const items = focusables(modal);
+    if (items.length > 0) {
+        items[0].focus();
         return;
     }
-    const panel = modal.querySelector('[data-modal-panel]');
-    if (panel) {
-        panel.focus();
-    }
+    modal.querySelector('[data-modal-panel]')?.focus();
 }
 
 export function closeModal(modal) {
@@ -32,15 +30,12 @@ export function closeModal(modal) {
     modal.classList.remove('flex');
     modal.setAttribute('aria-hidden', 'true');
     unlockBodyScroll(modal);
+    removeLayer(modal);
     const trigger = modalTriggers.get(modal);
-    if (trigger instanceof HTMLElement) {
+    if (trigger instanceof HTMLElement && trigger.getClientRects().length > 0) {
         trigger.focus();
     }
     modalTriggers.delete(modal);
-}
-
-function lookupOpenedModal() {
-    return document.querySelector('[data-modal-back].flex');
 }
 
 document.addEventListener('click', (event) => {
@@ -56,34 +51,5 @@ document.addEventListener('click', (event) => {
     }
     if (event.target.matches('[data-modal-back]')) {
         closeModal(event.target);
-    }
-});
-
-document.addEventListener('keydown', (event) => {
-    const modal = lookupOpenedModal();
-    if (!modal) {
-        return;
-    }
-    if (event.key === 'Escape') {
-        closeModal(modal);
-        return;
-    }
-    if (event.key !== 'Tab') {
-        return;
-    }
-    const focusables = modal.querySelectorAll(FOCUSABLE_SELECTOR);
-    if (focusables.length === 0) {
-        return;
-    }
-    const first = focusables[0];
-    const last = focusables[focusables.length - 1];
-    if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last.focus();
-        return;
-    }
-    if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first.focus();
     }
 });

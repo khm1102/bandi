@@ -3,8 +3,28 @@ import {bindPageActions, element, lookup, readValue} from '../common/dom.js';
 import {showToast} from '../common/toast.js';
 
 const root = lookup('[data-notice-editor]');
-const noticeId = Number(root.dataset.noticeId) || null;
+let noticeId = Number(root.dataset.noticeId) || null;
 let attachments = [];
+let dirty = false;
+
+function updateSaveState(message, saved = false) {
+    lookup('[data-notice-save-state]').textContent = message;
+    const dot = lookup('[data-notice-save-dot]');
+    dot.classList.toggle('bg-warning', !saved);
+    dot.classList.toggle('bg-success', saved);
+}
+
+function markDirty() {
+    dirty = true;
+    updateSaveState('저장하지 않은 변경이 있어요');
+}
+
+function markSaved() {
+    dirty = false;
+    updateSaveState('모든 변경을 저장했어요', true);
+    lookup('[data-notice-save-time]').textContent =
+            `${new Intl.DateTimeFormat('ko-KR', {hour: '2-digit', minute: '2-digit'}).format(new Date())} 저장`;
+}
 
 function renderAttachments() {
     const list = lookup('[data-notice-attachments]');
@@ -18,6 +38,7 @@ function renderAttachments() {
         remove.addEventListener('click', () => {
             attachments = attachments.filter((candidate) => candidate.id !== attachment.id);
             renderAttachments();
+            markDirty();
         });
         item.appendChild(remove);
         list.appendChild(item);
@@ -33,7 +54,10 @@ async function upload(file) {
 }
 
 async function loadDetail() {
-    if (!noticeId) return;
+    if (!noticeId) {
+        updateSaveState('아직 저장하지 않은 새 공시예요');
+        return;
+    }
     const notice = await get(`/api/admin/public-notices/${noticeId}`);
     document.getElementById('noticeTitle').value = notice.title;
     document.getElementById('noticeBody').value = notice.body;
@@ -48,6 +72,16 @@ async function loadDetail() {
     document.getElementById('noticePinned').checked = notice.pinned;
     attachments = notice.attachments.map((file) => ({...file, id: file.storedFileId}));
     renderAttachments();
+    dirty = false;
+    updateSaveState('저장된 초안을 불러왔어요', true);
+}
+
+function renderSelectedFiles() {
+    const region = lookup('[data-notice-selected-files]');
+    const files = Array.from(document.getElementById('noticeFiles').files);
+    region.classList.toggle('hidden', files.length === 0);
+    region.textContent = files.length === 0 ? ''
+        : `저장할 파일 ${files.length}개 · ${files.map((file) => file.name).join(', ')}`;
 }
 
 function setError(message) {
@@ -63,16 +97,28 @@ async function save(trigger) {
     setError('');
     try {
         const files = Array.from(document.getElementById('noticeFiles').files);
-        for (const file of files) attachments.push(await upload(file));
+        for (const file of files) {
+            attachments.push(await upload(file));
+        }
+        document.getElementById('noticeFiles').value = '';
+        renderSelectedFiles();
+        renderAttachments();
         const body = {
             categoryCode: readValue('noticeCategory'), title: readValue('noticeTitle'),
             body: readValue('noticeBody'),
             pinned: document.getElementById('noticePinned').checked,
             attachmentFileIds: attachments.map((file) => file.id),
         };
-        if (noticeId) await put(`/api/admin/public-notices/${noticeId}`, body);
-        else await post('/api/admin/public-notices', body);
-        window.location.assign('/notice-management');
+        if (noticeId) {
+            await put(`/api/admin/public-notices/${noticeId}`, body);
+            markSaved();
+            showToast('공시 초안을 저장했어요.');
+        } else {
+            const created = await post('/api/admin/public-notices', body);
+            noticeId = created.publicNoticeId;
+            dirty = false;
+            window.location.assign(`/notice-management/${noticeId}/edit?saved=1`);
+        }
     } catch (error) {
         setError(error.message || '공시를 저장하지 못했습니다.');
         renderAttachments();
@@ -80,6 +126,25 @@ async function save(trigger) {
 }
 
 bindPageActions({'notice-draft-save': save});
+lookup('[data-notice-editor-form]').addEventListener('input', markDirty);
+lookup('[data-notice-editor-form]').addEventListener('change', markDirty);
+document.getElementById('noticeFiles').addEventListener('change', () => {
+    renderSelectedFiles();
+    markDirty();
+});
+window.addEventListener('beforeunload', (event) => {
+    if (!dirty) {
+        return;
+    }
+    event.preventDefault();
+    event.returnValue = '';
+});
+document.querySelector('a[href="/notice-management"]')?.addEventListener('click', (event) => {
+    if (!dirty || window.confirm('저장하지 않은 변경이 있어요. 목록으로 나갈까요?')) {
+        return;
+    }
+    event.preventDefault();
+});
 loadDetail().catch((error) => {
     setError(error.message || '공시를 불러오지 못했습니다.');
     showToast(error.message || '공시를 불러오지 못했습니다.');

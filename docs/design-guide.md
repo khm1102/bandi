@@ -1,203 +1,244 @@
 # bandi 디자인 가이드
 
-> 초기 화면 프로토타입에서 확정한 화이트/네이비/민트 방향을 유지한다
-> 살아있는 데모: dev 프로파일(기본) `http://localhost:8080/style-guide` — 모든 레시피는 그 페이지에서 복사한다
-> 규칙 등급·스타일링 방식은 코딩 컨벤션 13장을 따른다. 이 문서는 "무슨 값·무슨 조합을 쓰는가"의 정본이다.
+> 정체성: **화이트 캔버스 + 네이비 셸 + 버건디 포인트** (2026-07-20 민트 → 버건디 전환)
+> 살아있는 데모: dev 프로파일(기본) `http://localhost:8080/style-guide` — 데모 페이지는 순차 갱신 중이며 값 충돌 시 이 문서가 정본이다.
+> 규칙 등급·스타일링 방식은 코딩 컨벤션 13장을 따른다. 이 문서는 "무슨 값·무슨 조합·무슨 구조를 쓰는가"의 정본이다.
+> 제품 원칙·화면별 spec: `.ui-craft/brief.md`, `.ui-craft/spec.md` · 마이그레이션 순서: `docs/frontend-redesign-plan.md`
+
+## 0. 제품 설계 원칙 (모든 화면 공통)
+
+1. **한 화면은 하나의 핵심 결정·행동을 돕는다.** 화면(뷰포트)당 primary CTA는 하나만 둔다. 나머지는 outline·텍스트 링크로 낮춘다.
+2. **다음 행동을 상태보다 먼저 보여준다.** 상태 나열·통계 그리드로 화면을 시작하지 않는다. "지금 무엇을 하면 되는지"가 첫 정보다.
+3. **점진 공개.** 첫 화면은 요약과 핵심 행동만, 세부는 섹션 전환·sheet·accordion·접기로 공개한다.
+4. **사용자 언어로 설명한다.** 내부 코드값(`ENTRY_OPEN` 등)을 그대로 노출하지 않고 결과 중심 문구로 번역한다.
+5. **중요한 작업은 토스트로 끝내지 않는다.** 결과와 다음 행동을 화면 안(result 영역, sheet 내부)에서 보여주고, 토스트는 보조 피드백으로만 쓴다.
+6. **실수 복구를 우선한다.** 확인 절차를 늘리기보다 취소·정정·이력 접근을 제공한다.
+7. **모바일 현장이 먼저다.** 320px부터 설계하고 데스크톱은 확장이다.
 
 ## 1. 아이덴티티
 
-- **화이트 캔버스 + 네이비 셸 + 민트 포인트.** 콘텐츠 영역은 밝고 조용하게, 좌측 사이드바(관리자)와 상단 내비(공개)는 딥 네이비, 행동 유도와 활성 상태만 민트.
-- **민트 위 글자는 흰색이 아니라 다크 네이비(`--primary-foreground: #08251f`)다.** 민트는 밝은 색이라 흰 글자는 대비가 부족하다. hover 시에는 AA 대비를 확보한 `primary-strong` + 흰 글자로 전환한다.
-- 카드는 그림자 없이 보더로 구분한다. 그림자는 부유 요소(모달, 토스트)와 데스크톱 인증 셸에만 `shadow-xl`/`shadow-lg`.
+- **화이트 캔버스 + 네이비 셸 + 버건디 포인트.** 콘텐츠 영역은 밝고 조용하게, 좌측 사이드바(관리자)와 상단 내비(공개)는 딥 네이비. 행동 유도·활성 상태만 버건디(#8E0015 — 무대 커튼).
+- **버건디 위 글자는 흰색이다** (`--primary-foreground: #FFFFFF`, 대비 9.73:1). hover는 `primary-strong`(#6F0011) + 흰 글자(12.47:1). 민트 시절의 "민트 위 다크 네이비" 규칙은 폐기.
+- 카드는 그림자 없이 보더로 구분한다. 그림자는 부유 요소(모달·sheet·토스트)와 데스크톱 인증 셸에만 `shadow-xl`/`shadow-lg`.
+- 한 화면(뷰포트)에 버건디 주요 배치는 **3~5곳 이하**: primary CTA 1 + 활성 내비 1 + 핵심 강조 1~2.
 
 ## 2. 색상 토큰 (tokens.css — 공유 자원)
 
-| 토큰 | 값 | 용도 |
-|---|---|---|
-| `background` / `foreground` | `#f4f7f9` / `#102235` | 페이지 바탕 / 기본 글자 |
-| `card` | `#ffffff` | 카드·패널·탑바 |
-| `primary` / `primary-foreground` | `#2cc7a5` / `#08251f` | 주 버튼, 활성 내비, 선택 상태 |
-| `primary-strong` | `#0b715f` | primary hover (흰 글자 대비 5.93:1) |
-| `secondary` / `muted` | `#f5f8fa` | 서브 배경, 테이블 헤더, hover 배경 |
-| `muted-foreground` | `#56697c` | 보조 텍스트·라벨 (페이지 바탕 대비 5.26:1) |
-| `accent` / `accent-foreground` | `#e9fbf6` / `#0f6f5d` | 민트 소프트 배경 / 링크·아이콘·강조 텍스트 |
-| `success` / `success-soft` | `#087054` / `#e8f8f2` | 완료·납부·긍정 |
-| `warning` / `warning-soft` | `#80530a` / `#fff6e6` | 확인 필요 |
-| `destructive` / `destructive-soft` | `#a63c4d` / `#fff0f2` | 삭제·미납·오류 |
-| `info` / `info-soft` | `#315f8f` / `#edf4fb` | 공지·중립 정보 |
-| `border` / `input` / `ring` | `#dfe7ec` / `#dfe7ec` / `#2cc7a5` | 보더 / 입력 보더 / 포커스 링 |
-| `sidebar` 계열 | `#0b1f33` 외 | 네이비 셸 전용 (아래 3장) |
+| 토큰 | 값 | 용도 | 대비 근거 (WCAG) |
+|---|---|---|---|
+| `background` / `foreground` | `#f4f7f9` / `#102235` | 페이지 바탕 / 기본 글자 | 14.9:1 |
+| `card` | `#ffffff` | 카드·패널·탑바 | — |
+| `primary` / `primary-foreground` | `#8e0015` / `#ffffff` | 주 버튼, 활성 내비, 선택 상태 | 흰 글자 9.73:1 AA·AAA |
+| `primary-strong` | `#6f0011` | primary hover | 흰 글자 12.47:1 |
+| `secondary` / `muted` | `#f5f8fa` | 서브 배경, 테이블 헤더, hover 배경 | — |
+| `muted-foreground` | `#56697c` | 보조 텍스트·라벨 | 바탕 대비 5.26:1 |
+| `accent` / `accent-foreground` | `#f9eaed` / `#7a0012` | 버건디 소프트 배경 / 링크·아이콘·강조 텍스트 | soft 위 본색 9.82:1 |
+| `success` / `success-soft` | `#087054` / `#e8f8f2` | 완료·납부·긍정 | 유지 |
+| `warning` / `warning-soft` | `#80530a` / `#fff6e6` | 확인 필요 | 유지 |
+| `destructive` / `destructive-soft` | `#b42318` / `#feeceb` | 삭제·미납·오류 | 흰 글자 6.57:1, soft 위 본색 5.77:1 |
+| `info` / `info-soft` | `#315f8f` / `#edf4fb` | 공지·중립 정보 | 유지 |
+| `border` / `input` / `ring` | `#dfe7ec` / `#dfe7ec` / `#8e0015` | 보더 / 입력 보더 / 포커스 링 | 링 바탕 대비 9.05:1 |
+| `sidebar` 계열 | `#0b1f33` 외 | 네이비 셸 전용 | 유지 |
 
-- 상태 표시는 항상 **`*-soft` 배경 + 본색 글자** 조합 (배지·배너). 본색 배경 + 흰 글자는 버튼(destructive)에만.
-- **팀 태그용 저채도 5색은 보류** — 팀 기능 확정 시 아래 후보로 토큰화한다: `#6b8499`(연출) `#527eaa`(무대) `#2cc7a5`(운영) `#b7984e`(디자인) `#7b8fa1`(영상)
+- 고정 primary 값(#8E0015)은 변경하지 않는다. 파생 토큰이 AA를 통과하지 못할 때만 더 어두운 값으로 조정하고 이 표에 근거를 기록한다.
+- 상태 표시는 항상 **`*-soft` 배경 + 본색 글자** 조합. 본색 배경 + 흰 글자는 버튼(primary·destructive)에만.
+- **primary(버건디)와 destructive(빨강)를 색상만으로 구분하지 않는다.** 위험 행동에는 경고 아이콘 + 결과 설명 + 명확한 동사 + 별도 확인 구조(6장)를 반드시 함께 쓴다.
+- 팀 태그용 저채도 5색은 계속 보류. 민트 후보(`#2cc7a5`)는 버건디 전환에 따라 재선정 대상.
 
 ## 3. 셸 (레이아웃 태그 3종)
 
 | 태그 | 용도 | 구조 |
 |---|---|---|
-| `<t:layout title active crumb>` | 관리자 화면 전부 | 네이비 사이드바(`w-56`, lg 미만 접근 가능한 서랍 내비) + 스티키 탑바 + `max-w-6xl` 반응형 본문 |
-| `<t:layoutPublic title>` | 예매 등 공개 화면, 에러 페이지 | 네이비 상단 내비(header.tag) + `max-w-5xl` 본문 + footer.tag |
-| `<t:layoutAuth title>` | 로그인/가입 | 데스크톱은 네이비 공연 맥락 패널 + `max-w-md` 폼의 분할 셸, 모바일은 폼에 집중하는 단일 열 |
+| `<t:layout title active crumb>` | 관리자 화면 전부 | 네이비 **그룹형 사이드바**(`w-56`, lg 미만 서랍) + 모바일 상단바(로고·현재 화면명·44px 메뉴 버튼) + 반응형 본문 |
+| `<t:layoutPublic title>` | 예매 등 공개 화면, 에러 페이지 | 네이비 상단 내비 + `max-w-5xl` 본문 + footer |
+| `<t:layoutAuth title>` | 로그인 | 데스크톱 분할 셸, 모바일 단일 열 |
 
-- 공통 `<head>`(폰트·tokens.css·Tailwind `@theme` 매핑)는 `head.tag` 한 곳에만 있다 — **공유 자원(22.5)**
-- 사이드바 내비 항목은 feature 확정 시 `layout.tag`에 추가하고, 페이지에서 `active="{key}"`로 활성 표시
+### 3.1 그룹형 사이드바 (sidebar.tag — 공유 자원)
+
+메뉴는 다음 그룹으로 묶는다. **역할 조건은 기존 그대로**(ADMIN 전용 항목을 다른 역할에 노출하지 않는다). URL도 변경하지 않는다.
+
+```
+홈
+동아리 운영: 통합 캘린더 · 공지·자료실 · 활동 기록 · 행사·출석 · 회비 · 멤버·권한(ADMIN)
+공연 제작: 팀별 제작 진행 · 소품·장비 · 체크리스트
+공연 운영(ADMIN): 공연 운영 설정 · 공연 콘텐츠 · 관람 신청 관리 · 공연 당일 입장 · 공시 관리
+```
+
+- 그룹 라벨은 `text-xs font-bold text-sidebar-muted`, 장식 대문자 금지.
+- 활성 항목: `bg-primary text-primary-foreground`(버건디+흰색). `aria-current="page"`.
+- 모바일 서랍: 열렸을 때만 배경 스크롤 잠금·`inert` 해제, Escape 닫기, 닫으면 토글 버튼으로 포커스 복귀. JS 실패 시 데스크톱(lg 이상)에서는 CSS만으로 항상 보인다.
 
 ## 4. 타이포그래피
 
-폰트: **Noto Sans KR** (Google Fonts, 400/500/700/800/900 — head.tag에서 로드). 크기·굵기는 프리셋만:
+폰트: **Noto Sans KR**. **900(font-black)을 화면 전체에 반복하지 않는다** — 극단 굵기는 쓰지 않고 800까지만 사용한다.
 
 | 용도 | 유틸리티 |
 |---|---|
-| 페이지 제목 | `text-2xl font-black tracking-tight` |
-| 섹션 제목 | `text-lg font-extrabold` |
-| 카드·모달 제목 | `text-sm font-extrabold` |
-| 본문·테이블 셀 | `text-sm` |
-| 보조 텍스트 | `text-xs text-muted-foreground` |
-| 폼 라벨·테이블 헤더 | `text-xs font-extrabold text-muted-foreground` |
-| 통계 값 | `text-2xl font-black tracking-tight` |
+| 페이지 제목 | `text-2xl font-extrabold tracking-tight` (24px/800) |
+| 섹션 제목 | `text-lg font-bold` (18px/700) |
+| 카드·sheet 제목 | `text-base font-bold` |
+| 본문·목록 셀 | `text-sm`(14px) ~ `text-base`(16px), 400~500 |
+| 라벨·테이블 헤더 | `text-xs font-bold text-muted-foreground` (12px — 13px는 프리셋에 없어 12px 사용) |
+| 통계 값·숫자 | `text-2xl font-extrabold tracking-tight tabular-nums` |
 
-## 5. 간격 · 라운드 · 그림자
+- 숫자는 항상 `tabular-nums`.
+- 장문 본문 컬럼은 `max-w-prose`(≈65자)를 유지한다.
 
-- 카드 내부 패딩 `p-5`, 페이지 본문 `p-7`, 카드 사이 `gap-4`, 통계 그리드 `gap-4`
-- 라운드: 카드·모달 `rounded-lg`(=`--radius` 12px)/`rounded-xl`, 버튼·입력 `rounded-md`, 배지 `rounded-full`
-- 그림자: 카드 **없음**(보더만), 모달·토스트·데스크톱 인증 셸만 `shadow-xl`/`shadow-lg`
-- 반응형: 모바일 퍼스트, 브레이크포인트는 `md`/`lg`만 (컨벤션 13.2). 사이드바는 `lg` 미만에서 메뉴 버튼으로 여는 서랍이 되며 가로 내비로 축약하지 않는다
-- 모든 주요 조작은 최소 `44px` 터치 영역을 확보한다. 작은 아이콘은 시각 크기와 별개로 버튼 영역을 `size-11`로 확장한다
+## 5. 레이아웃 · 간격 · 카드 기준
 
-## 6. 컴포넌트 태그 (attribute 명세)
+- 반응형: **모바일 퍼스트**, 브레이크포인트는 `md`/`lg`만. **최소 지원 폭 320px** — 320px에서 가로 넘침이 없어야 한다.
+- 모든 클릭·터치 대상 최소 **44×44px**(`min-h-11`). 데스크톱 전용 툴바만 `md:min-h-9` 축소 허용.
+- **모든 영역을 카드로 감싸지 않는다.** 카드 사용 기준:
+  - 카드 O: 컬렉션의 동질 항목(목록의 행 그룹), 명확히 독립된 부유 요소
+  - 카드 X: 페이지의 주요 섹션 구분 — 여백(`space-y-8`), 섹션 제목, 구분선(`border-t`), 배경 차이(`bg-secondary`)로 관계를 표현한다
+- 그림자는 sheet·modal·toast 등 실제 부유 요소에만.
+- 그라디언트, 장식용 원형 그래픽, glassmorphism, 과한 배지·상태색 금지.
+- 상태는 **색상 + 아이콘 + 텍스트**를 함께 쓴다. 색상 단독 표시는 금지.
+
+### 5.1 목록 패턴 (action-heavy vs 읽기 중심)
+
+- **action-heavy 목록**(행마다 조치가 있는 운영 목록 — 신청 관리, 멤버, 출석): 모바일은 세로 카드/리스트, 데스크톱은 구조화 목록(그리드 행). **모바일 가로 스크롤 테이블 금지.** 행 전체 또는 "열기" 버튼이 상세 sheet를 연다.
+- **`<t:dataTable>`은 읽기 중심의 고밀도 표에만** 사용한다(변경 이력, 통계 명세 등). 이때만 가로 스크롤 허용.
+
+### 5.2 sheet vs 페이지 섹션 vs modal
+
+- **sheet**: 짧은 생성·수정 폼(입력 ~7개 이하), 목록 항목의 상세·조치. 모바일 하단, 데스크톱 우측에서 열린다.
+- **페이지 내부 섹션**: 장문·복잡한 설정(외부 공개 폼, 관람 안내). 섹션 전환은 URL hash로 보존.
+- **modal**: 파괴적 동작의 최종 확인(공용 confirm) 등 초단문. 중첩 modal은 만들지 않는다.
+
+### 5.3 sticky action bar
+
+- 장문 폼(외부 공개·관람 안내)은 하단 sticky action bar에 저장 버튼과 저장하지 않은 변경 표시("저장하지 않은 변경이 있어요")를 둔다.
+- 모바일에서 `pb-[env(safe-area-inset-bottom)]` 상당의 안전 영역을 확보하고, 키보드 표시 상태에서도 primary action에 접근할 수 있어야 한다.
+- 저장 중에는 버튼을 잠그고 진행 상태를 표시한다(중복 제출 방지).
+
+## 6. 위험 작업 확인 패턴
+
+위험 행동(취소·삭제·입장 취소 등)은 다음을 **모두** 갖춘다:
+
+1. 경고 아이콘 + `destructive` 계열 시각 (색상 단독 금지)
+2. **대상·현재 상태·실행 후 결과**를 먼저 설명 ("A1·A2 좌석 2석의 신청을 취소해요. 취소한 좌석은 다시 신청할 수 있게 돌아가요.")
+3. 결과를 말하는 동사 버튼 ("신청 취소", "입장 취소" — "확인"·"삭제합니다" 금지)
+4. 필요 시 사유 입력 (운영 기록 명시: "사유는 운영 기록에 남아요.")
+5. 실행 후 복구 경로 안내 또는 이력 접근
+
+## 7. 상태 계약 (모든 화면 공통)
+
+| 상태 | 계약 |
+|---|---|
+| loading | 최종 레이아웃과 같은 형태의 placeholder(스켈레톤 또는 안정된 문구 블록). 레이아웃 이동 금지 |
+| empty | 비어 있는 **이유** + 시작 행동. 빈 표·"데이터 없음" 단독 금지 |
+| error | 실패 **원인** + 현재 입력 보존 여부 + 재시도 행동 |
+| partial | 일부 영역 실패 시 성공 데이터는 유지, 실패 영역만 인라인 오류 + 재시도 |
+| success | 결과 + 다음 행동을 화면 안에서. 토스트는 보조 |
+| conflict | "다른 곳에서 변경됐어요" + 새로고침·재조회 행동 |
+| unauthorized | 입력을 지우거나 즉시 리다이렉트하지 않는다. 재로그인 필요와 작성 데이터 보존 상태를 알린다 |
+
+## 8. UX Writing (해요체)
+
+- 친근하고 직접적인 **해요체**: "외부 공연 페이지를 저장했어요.", "입장할 좌석을 선택해 주세요."
+- 버튼은 결과를 말한다: "신청 취소", "선택 좌석 입장", "첫 회차 만들기". "확인"·"처리"·"제출" 같은 중립 단어 금지.
+- 오류 문구 3요소: 원인 + 데이터 보존 여부 + 복구 행동.
+- 영문 대문자 eyebrow·장식 문구·이모지 아이콘 금지.
+- 검증 메시지는 `messages.properties` 키 기준 문구와 일치시킨다.
+
+## 9. 모션 · 접근성
+
+- 모션은 **100~200ms opacity/transform만**. `transition-all` 금지 — 속성을 명시한다(`transition-opacity`, `transition-transform`, `transition-colors`).
+- **`prefers-reduced-motion` 전역 지원**(head.tag의 `@layer base`) — 감축 설정에서는 전환·애니메이션을 즉시 완료로 처리한다.
+- sheet/modal: 포커스 트랩, Escape 닫기, 닫은 후 트리거로 포커스 복귀, 배경 스크롤 잠금, `aria-modal`.
+- 여러 겹이 열리면 **최상단 레이어만** Escape·Tab을 처리한다.
+- `aria-live`는 짧은 상태 문구에만. 목록·달력 전체에 걸지 않는다.
+- 입력 오류는 `aria-invalid` + `aria-describedby`로 연결한다.
+- `focus-visible` 링은 전역 기본(head.tag) 유지.
+
+## 10. 컴포넌트 태그 (attribute 명세)
 
 | 태그 | attributes | 비고 |
 |---|---|---|
-| `<t:pageHead>` | `title`*, `description`, body=우측 액션 버튼 | 페이지 최상단 1회 |
-| `<t:card>` | `title`, `moreUrl`, `moreLabel`, `flush`(Boolean) | `flush=true`면 본문 패딩 제거 — 테이블/리스트 카드용 |
-| `<t:statCard>` | `label`*, `value`*, `unit`, `delta`, `tone`(default·success·danger), `featured`(Boolean), `valueHook`, `deltaHook` | 대시보드 통계 타일. 동적 통계는 hook으로 값·증감 영역만 갱신. 한 그룹에서 핵심 지표 하나만 `featured=true` |
-| `<t:badge>` | `tone`*(accent·success·warning·danger·info·neutral), `dot`(Boolean), body=텍스트 | 상태 표시 |
-| `<t:emptyState>` | `title`*, `message`, body=행동 유도 버튼 | 빈 목록/검색 결과 |
-| `<t:modal>` | `id`*, `title`*, `description`, `footer`(fragment), body | 기본 hidden. `openModal(id)`로 열기 |
-| `<t:formField>` | `label`*, `path`*, `type`(text·email·password·number·textarea), `required`(Boolean), `help` | `<form:form>` 내부 전용. errors 자동 출력 |
-| `<t:button>` | `type`, `href`, `variant`(primary·outline·dark·danger), `size`(default·compact), `action`, `pageAction`, `openModal`, `confirm`, `confirmAction`, `cssClass` | 기본 높이 44px. `href` 지정 시 같은 외형의 링크로 렌더링. 공통 이벤트 규약과 버튼 위계를 한 곳에서 관리 |
-| `<t:dataTable>` | `caption`*, `cssClass`, body=`thead`·`tbody` | 가로 스크롤과 접근성 caption, `th`·`td`·`tr` 기본 스타일을 관리. 셀별 정렬·강조·상태색만 페이지에 작성 |
-| `<t:filterChip>` | `group`*, `value`*, `label`*, `active`(Boolean), `count`, `dot`(Boolean) | 필터 그룹·값, `aria-pressed`, 활성·비활성 스타일을 관리. JS에서는 `activateFilterChip(button)` 사용 |
+| `<t:pageHead>` | `title`*, `description`, body=우측 액션 | 페이지 최상단 1회. primary CTA는 화면당 하나만 |
+| `<t:card>` | `title`, `moreUrl`, `moreLabel`, `flush` | 컬렉션·독립 블록에만 (5장 기준) |
+| `<t:statCard>` | 기존 동일 | **화면 상단 4연속 통계 그리드 금지** — compact summary(레시피 11.2)를 우선 |
+| `<t:badge>` | `tone`*, `dot`, body | 상태 표시 — 아이콘·문구 병행 |
+| `<t:emptyState>` | `title`*, `message`, body | 이유 + 시작 행동 포함 |
+| `<t:modal>` | `id`*, `title`*, `description`, `footer` | 확인 등 초단문 전용 |
+| `<t:sheet>` | `id`*, `title`*, `description`, `footer`(fragment), body | 모바일 하단·데스크톱 우측 패널. `openSheet(id)`/`data-open-sheet`. 포커스 트랩·Esc·복귀·스크롤 잠금 내장 |
+| `<t:formField>` | 기존 동일 | `<form:form>` 내부 전용 |
+| `<t:button>` | 기존 동일 | 기본 높이 44px |
+| `<t:dataTable>` | `caption`*, `cssClass` | **읽기 중심 고밀도 표 전용** (5.1) |
+| `<t:filterChip>` | 기존 동일 | 활성 상태는 네이비 유지 |
 
-(*=필수) select·라디오 등은 첫 실사용 때 formField에 확장하거나 레시피로 추가한다.
-
-### 6.1 상호작용 규약 (공통 JS — layout 셸이 자동 로드)
+### 10.1 상호작용 규약 (공통 JS)
 
 | 규약 | 사용법 |
 |---|---|
-| **토스트** | `js/common/toast.js`의 `showToast(message)` |
-| **flash 메시지** (SSR 표준 흐름) | 컨트롤러에서 `redirectAttributes.addFlashAttribute("toast", "저장되었습니다.")` → 리다이렉트 후 layout이 자동으로 토스트 표시. POST 성공 응답은 이 패턴을 기본으로 한다 |
-| **모달** | `<t:modal>` + `openModal(id)` 또는 버튼에 `data-open-modal="모달id"`(페이지 JS 불필요). ESC·배경 클릭·`data-action="close-modal"` 닫기, 포커스 트랩, 배경 스크롤 잠금 내장 |
-| **confirm** (파괴적 동작 — 컨벤션 13.3 이행 수단) | 폼 submit 버튼에 `data-confirm="정말 삭제할까요?"` 부착 → 공용 확인 모달(관리자 셸 내장)이 가로채고, 확인 시 폼 제출 |
-| **중복 제출 방지** | 상태 변경 폼에 `data-guard="true"` 기본 부착 → 제출 시 재제출 차단 + submit 버튼 비활성 표시. 제출 버튼의 `name`/`value`에 의존하지 않는다 |
+| 토스트 | `showToast(message)` — **보조 피드백 전용.** 결과는 화면 안에 먼저 표시 |
+| flash 메시지 | 기존 동일 (redirect 흐름) |
+| 모달 | `openModal(id)` / `data-open-modal` — 숨겨진 요소는 포커스 대상에서 제외, 최상단 레이어만 키 처리 |
+| sheet | `openSheet(id)` / `data-open-sheet` — 모달과 동일한 키보드 계약 |
+| confirm | `data-confirm` — 6장 위험 작업 패턴과 함께 사용 |
+| 중복 제출 방지 | `data-guard` 또는 페이지 JS의 busy 잠금 |
 
-- confirm 모달은 관리자 셸(layout.tag)에만 내장 — 공개 셸에서 파괴적 동작이 필요해지면 그때 layoutPublic에 추가
-- 버튼 문구는 실행 동작 그대로("삭제", "저장") — "확인/제출" 같은 중립 문구 금지, flash 문구는 완료형("저장되었습니다.")
+## 11. 레시피
 
-## 7. 레시피 (태그화하지 않은 조합)
-
-7.1~7.3은 `/style-guide`에 데모가 있다. 7.4~7.6은 목업에서 값만 미리 번역해 둔 것 — 해당 기능 구현 시 데모 페이지에 추가하고, 반복이 보이면 태그 파일로 승격한다.
-
-### 7.1 기본
+### 11.1 기본 (버튼·입력·칩 — 기존 유지, 색만 토큰 따라 변경)
 
 **버튼** — base: `inline-flex min-h-11 items-center justify-center rounded-md px-4 text-sm font-bold transition-colors disabled:pointer-events-none disabled:opacity-50`
 
 | variant | 추가 클래스 |
 |---|---|
-| primary | `bg-primary text-primary-foreground hover:bg-primary-strong hover:text-white focus-visible:ring-2 focus-visible:ring-ring` |
+| primary | `bg-primary text-primary-foreground hover:bg-primary-strong focus-visible:ring-2 focus-visible:ring-ring` |
 | outline | `border bg-card hover:bg-secondary` |
 | dark(네이비) | `bg-sidebar text-white hover:bg-sidebar-accent` |
-| danger | `bg-destructive text-destructive-foreground hover:bg-destructive/90` |
-| compact | 데스크톱 전용 툴바에서만 `min-h-9 px-3 text-xs`. 모바일·터치 화면에서는 기본 높이를 유지한다 |
+| danger | `bg-destructive text-destructive-foreground hover:bg-destructive/90` + 경고 아이콘 병행 |
 
-**테이블** — `<t:card flush="true">` 안에서 `<t:dataTable caption="목록 설명">`을 사용한다. 가로 스크롤과 `th`·`td`·`tr` 기본 스타일은 태그가 소유하며, 페이지에는 셀별 정렬·강조·상태색만 남긴다.
+**입력** — `h-11 w-full rounded-md border border-input bg-card px-3 text-base focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm` (모바일 16px로 iOS 확대 방지)
 
-**칩(필터)** — `<t:filterChip group="자료유형" value="all" label="전체" active="true" count="24"/>`처럼 사용한다. 같은 `group`의 칩은 공통 JS `activateFilterChip(button)`으로 단일 활성 상태를 유지한다.
+### 11.2 compact summary (통계 그리드 대체)
 
-**공지 배너** — `flex items-start gap-3 rounded-lg border bg-accent/50 px-4 py-3.5` + 의미 있는 리드 아이콘과 제목. 굵은 한쪽 색상선은 사용하지 않는다
+한 줄 요약: `flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground` + 값은 `font-bold text-foreground tabular-nums`.
+예: "신청 **12건** · 유효 좌석 **31석** · 입장 **8석** (26%)". 4칸 statCard 그리드는 대시보드성 화면에서만.
 
-**입력(formField 밖에서 쓸 때)** — `h-10 w-full rounded-md border border-input bg-card px-3 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20`
+### 11.3 준비 체크리스트 (설정 화면)
 
-### 7.2 리스트 · 미디어
+- 항목: `flex min-h-11 items-center gap-3` + 상태 아이콘(완료 ✓ success / 다음 → primary / 대기 ○ muted) + 라벨 + 이동 링크
+- "다음" 항목 하나만 버건디 강조. 완료 항목은 조용하게.
 
-**아바타(이니셜)** — `flex size-7 items-center justify-center rounded-full bg-sidebar-accent text-xs font-black text-white` (테이블 안 인물 표시는 `flex items-center gap-2`로 이름과 묶는다. 사용자별 색 구분은 팀 태그 토큰 확정 후)
+### 11.4 목록 행 (action-heavy, 모바일)
 
-**리스트 행** (일정·활동 내역 — 목업 `.row`) — 컨테이너는 `<t:card flush="true">`, 행: `flex items-center gap-3 border-b px-5 py-3 last:border-0`
-- 좌측 시간: `min-w-11 text-sm font-extrabold text-accent-foreground`
-- 리드 아이콘 박스: `flex size-8 shrink-0 items-center justify-center rounded-md bg-accent text-accent-foreground` (tone에 따라 `*-soft` 배경 교체)
-- 본문: 제목 `text-sm font-bold`, 부가 `mt-0.5 text-xs text-muted-foreground`, 래퍼 `min-w-0 flex-1`
+- 행: `w-full rounded-lg border bg-card p-4 text-left` (button 요소) — 탭하면 상세 sheet
+- 1행: 식별자(`font-mono text-xs`) + 이름(`font-bold`) / 2행: 좌석·부가 정보 + 상태 배지
+- 데스크톱(md+): `grid grid-cols-[...] items-center` 구조화 행으로 전환
 
-**진행 바** — 트랙 `h-2 overflow-hidden rounded-full bg-secondary`, 채움 `h-full rounded-full bg-primary transition-all` (완료 계열은 `bg-success`). 진행률은 서버 데이터 기반 연속값이므로 `style="width:63%"` 인라인 지정을 예외 허용한다 (컨벤션 13.2 예외 조항)
+### 11.5 sticky action bar
 
-**스크롤 목록** — `max-h-96 overflow-y-auto` (카드 안에서 긴 목록을 자를 때)
+`sticky bottom-0 z-10 -mx-4 border-t bg-card/95 px-4 py-3 backdrop-blur md:static md:mx-0 md:border-0 md:bg-transparent md:px-0`
++ 좌측 변경 상태 문구(`aria-live="polite"`), 우측 저장 버튼.
 
-### 7.3 컨트롤
+### 11.6 result feedback 영역 (현장 운영)
 
-**세그먼트 컨트롤** (역할 전환·기간 필터·인증 탭 — 목업 `.seg`/`.role-switch`/`.auth-tabs`) — 래퍼 `inline-flex rounded-lg border bg-secondary p-0.5`, 항목 `rounded-md px-3 py-1.5 text-xs font-bold text-muted-foreground transition-colors`, 활성 `border bg-card text-foreground`
+- 컨테이너: `rounded-lg border p-4` + 상태별 soft 배경(`bg-success-soft` 등) + 리드 아이콘 + 제목 + 설명 + 다음 행동 버튼
+- `role="status"` 또는 제목에 포커스 이동. 토스트 병행은 선택.
 
-**체크박스(커스텀)** — `<button type="button">` 기반: `flex size-5 items-center justify-center rounded-md border bg-card text-white transition-colors`, 체크 시 `border-success bg-success` + 내부 체크 svg. 토글은 `data-action` 위임(13.3)
+### 11.7 캘린더·시간 그리드 / 인증 / 예매·좌석맵
 
-**스테퍼(수량)** — 래퍼 `flex items-center justify-between rounded-lg border p-1.5`, 버튼 `flex size-8 items-center justify-center rounded-md border bg-card text-lg font-extrabold`, 값 `text-sm font-black`
+기존 레시피 유지하되 색상은 새 토큰을 따른다(민트 언급은 모두 버건디 계열로 대체). 세부 값은 이전 판 레시피를 승계하며 해당 기능 재설계 단계(frontend-redesign-plan 3장)에서 갱신한다.
 
-### 7.4 캘린더 · 시간 그리드 (일정 기능 구현 시)
+## 12. 금지/주의
 
-**월 캘린더** — `grid grid-cols-7 gap-1.5`, 요일 헤더 `py-1 text-center text-xs font-extrabold text-muted-foreground`
-- 날짜 셀: `min-h-20 cursor-pointer rounded-md border bg-card p-1.5 transition-colors hover:border-primary`, 날짜 숫자 `text-xs font-extrabold`
-- 오늘: `border-primary ring-2 ring-ring/20` / 비활성(전·다음 달): `bg-secondary opacity-50`
-- 일정 칩: `mt-1 truncate rounded-sm px-1 py-0.5 text-xs font-bold` + tone별 `*-soft` 배경
-
-**시간 투표 그리드** (연습 시간 조율) — `grid gap-1` + `grid-cols-[64px_repeat(5,1fr)]` (그리드 템플릿의 임의 값은 허용 — 13.2 금지는 색·간격·radius·폰트·z-index·브레이크포인트만)
-- 셀: `h-8 rounded-md border bg-secondary transition-colors hover:border-primary`, 선택 `border-success bg-success`
-
-### 7.5 인증 화면 (로그인 기능 구현 시 — layoutAuth 내부)
-
-**인증 셸** — 데스크톱에서 좌측 네이비 맥락 패널과 우측 폼을 분리한다. 좌측은 실제 공연 비주얼을 낮은 불투명도로 사용하고 제품 설명·현재 공연 정보만 담으며, 우측의 폼 폭은 `max-w-md`를 넘지 않는다. 모바일에서는 맥락 패널을 숨기고 로고·페이지 제목·폼을 단일 열로 제공한다. 영문 대문자 장식 레이블, 의미 없는 원호, 테스트 계정 노출, 장식용 그라디언트 배경이나 카드 안의 카드 중첩은 사용하지 않는다.
-
-**역할 선택 카드** — `flex w-full items-center gap-3 rounded-lg border-2 p-3.5 text-left transition-colors hover:border-primary hover:bg-accent` + 역할 아이콘 박스 `flex size-9 items-center justify-center rounded-md bg-sidebar text-sm font-black text-white`
-
-**구분선(또는)** — `flex items-center gap-2.5 text-xs font-bold text-muted-foreground/70 before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border`
-
-**초대 코드** — `font-mono text-sm font-black tracking-widest text-accent-foreground`
-
-### 7.6 예매 · 좌석맵 (예매 기능 구현 시 — layoutPublic 내부)
-
-**포스터/히어로** — `relative min-h-96 overflow-hidden rounded-xl bg-sidebar p-6 text-white` + 실제 공연·무대 비주얼 `absolute inset-0 size-full object-cover` + 텍스트 대비용 단색 오버레이 `absolute inset-0 bg-sidebar/35`. 이미지가 없다는 이유로 그라디언트 색면을 포스터처럼 사용하지 않는다
-- eyebrow `text-xs font-extrabold tracking-widest text-primary`, 공연명 `text-4xl font-black leading-none tracking-tight`
-
-**날짜/회차 선택** — 날짜 카드 `rounded-lg border-2 p-3 text-center text-base font-black transition-colors` + 보조 `block text-xs font-bold text-muted-foreground`, 선택 시 `border-primary bg-accent text-accent-foreground` (회차 카드도 동일 선택 상태)
-
-**결제 요약** — `flex items-center justify-between rounded-lg bg-secondary px-4 py-3.5 text-xs font-bold text-muted-foreground`, 금액 `text-base font-black text-foreground`
-**대형 CTA** — `h-12 w-full rounded-lg bg-primary text-base font-black text-primary-foreground transition-colors hover:bg-primary-strong hover:text-white`
-**시놉시스 인용** — `rounded-lg border bg-secondary px-5 py-4` + 제목 `text-sm font-extrabold` + 본문 `mt-2 text-sm leading-relaxed`
-
-**좌석맵**
-- 무대 바: `rounded-md bg-sidebar py-2 text-center text-xs font-extrabold tracking-widest text-sidebar-foreground`
-- 좌석: `size-11 rounded-md border bg-card text-xs font-extrabold text-muted-foreground transition-colors hover:border-primary hover:bg-accent hover:text-accent-foreground`, 각 버튼은 행·좌석을 포함한 접근 가능한 이름과 `aria-pressed`를 제공한다
-  - 선택: `border-primary bg-primary text-primary-foreground` / 매진: `cursor-not-allowed border-border bg-secondary text-muted-foreground/50`
-- 선택 좌석 칩: `inline-flex items-center gap-1 rounded-md bg-accent py-1 pl-2.5 pr-1.5 text-xs font-extrabold text-accent-foreground` + 제거 버튼 `flex size-8 items-center justify-center rounded-sm bg-primary/20`
-- 범례: `flex justify-center gap-4 text-xs font-bold text-muted-foreground`
-
-## 8. 금지/주의 (컨벤션 13.2 재확인 + 이 시스템 고유)
-
-- 민트 배경에 `text-white` 금지 (hover의 `primary-strong` 위에서만 허용)
 - 팔레트 유틸리티(`bg-red-500`)·임의 색값 금지 — 새 색은 tokens.css + head.tag 매핑에 함께 추가
 - 상태색 본색을 넓은 면적 배경으로 쓰지 않는다 (soft 배경 + 본색 글자)
-- 카드에 그림자 금지, `rounded-2xl` 이상 금지 (프리셋 sm~xl만)
-- 카드·배너·인용문에 `border-l-4`/`border-r-4` 굵은 색상선을 장식으로 사용하지 않는다. 배경 tint, 아이콘, 제목 위계로 의미를 전달한다
-- 가로 스크롤은 표처럼 구조상 필요한 경우에만 허용하며, 모바일 주 내비에는 사용하지 않는다
+- 카드에 그림자 금지, `rounded-2xl` 이상 금지
+- `border-l-4` 등 굵은 색상선 장식 금지
+- 가로 스크롤은 읽기 중심 표에만. 모바일 주 내비·action-heavy 목록에 금지
+- `transition-all` 금지, 900 굵기 반복 금지, 영문 대문자 eyebrow 금지
+- 한 화면 primary CTA 2개 이상 금지, 버건디 주요 배치 5곳 초과 금지
+- QR 토큰·개인정보를 URL·로그·DOM에 잔류시키지 않는다 (showops spec 참조)
 
-## 9. 아이콘
+## 13. 아이콘 · 포맷 (기존 유지)
 
-- **Lucide**(lucide.dev)에서 SVG를 복사해 **인라인**으로 쓴다 — 의존성·아이콘 폰트 없음
-- 복사 시 속성 고정: `viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"` (+ `stroke-linecap="round" stroke-linejoin="round"`)
-- 크기는 `size-4`(16px)/`size-5` 유틸리티, 색은 지정하지 않고 부모의 `text-*`에서 `currentColor`로 상속받는다
-- 아이콘마다 태그 파일을 만들지 않는다 — 같은 아이콘이 여러 화면에서 반복되면 그 아이콘을 포함한 **UI 블록** 단위로 태그화한다
-- 장식 아이콘에는 `aria-hidden="true"`, 의미 전달 아이콘에는 텍스트 라벨 병기
-
-## 10. 포맷 · 반응형 · 빌드 결정 (확정 사항)
-
-- **날짜/시간/금액 표기** — JSTL `fmt` 태그로 통일 (컨벤션 12.1 taglib 목록의 `fmt`):
-  - 날짜 `yyyy.MM.dd(E)` → `2026.07.12(일)`, 시간 `HH:mm` → `19:00`
-  - 금액 `<fmt:formatNumber value="${...}" pattern="#,##0"/>원` → `15,000원`
-- **테이블 모바일 전략** — 카드 전환 없이 `overflow-x-auto` 가로 스크롤로 통일 (7.1 테이블 레시피의 래퍼 필수)
-- **Tailwind Play CDN은 prod에서도 유지** — 버전·SRI 고정 전제. 런타임 컴파일 특성상 첫 페인트 깜빡임(FOUC)이 있음을 인지하고 수용(서비스 규모 판단). 트래픽·성능 문제가 실측되면 빌드 통합(Node)으로 재검토
+- **Lucide** SVG 인라인, `viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"`, 크기 `size-4`/`size-5`, 색은 `currentColor` 상속
+- 장식 아이콘 `aria-hidden="true"`, 의미 아이콘은 텍스트 병기
+- 날짜 `yyyy.MM.dd(E)`, 시간 `HH:mm`, 금액 `#,##0`원 (JSTL fmt)
+- 테이블 모바일 전략: 읽기 중심 표만 `overflow-x-auto`, action-heavy 목록은 카드 전환(5.1)
+- Tailwind Play CDN prod 유지 (버전·SRI 고정) — 재검토 조건 기존과 동일

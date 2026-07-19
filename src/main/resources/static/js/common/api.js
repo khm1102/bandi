@@ -89,6 +89,9 @@ async function request(method, url, options = {}) {
     });
     const payload = await parseResponse(response);
     if (!response.ok) {
+        if (response.status === 401) {
+            window.dispatchEvent(new CustomEvent('bandi:session-expired'));
+        }
         const message = payload?.message
                 || `요청을 처리하지 못했습니다. (${response.status})`;
         throw new ApiError(response.status, payload?.code || 'HTTP_ERROR',

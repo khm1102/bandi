@@ -1,9 +1,9 @@
 import {del, get, patch, post, put} from '../common/api.js';
-import {openModal} from '../common/modal.js';
+import {closeSheetOf, openSheet} from '../common/sheet.js';
 import {showToast} from '../common/toast.js';
 import {bindPageActions, element, lookup, readValue} from '../common/dom.js';
 import {currentUserRole} from '../common/session.js';
-import {activateFilterChip, badge, closeActionModal} from '../common/view.js';
+import {activateFilterChip, badge} from '../common/view.js';
 
 const ACTIONS = Object.freeze({
     CREATE_OPEN: 'production-create-open',
@@ -150,7 +150,7 @@ function renderTeamProgress(progressList) {
     progressList.forEach((progress) => {
         const percent = progress.totalCount === 0 ? 0
                 : Math.round(progress.completedCount / progress.totalCount * 100);
-        const card = element('article', 'rounded-lg border p-4');
+        const card = element('article', 'px-4 py-4 md:px-5');
         const head = element('div', 'flex items-center gap-2');
         head.append(element('h3', 'text-sm font-extrabold', progress.teamName),
                 badge(`${percent}%`, percent === 100 ? 'success' : 'neutral'));
@@ -173,23 +173,24 @@ function statusBadge(status) {
 }
 
 function buildTaskCard(task) {
-    const card = element('article', 'flex min-w-0 flex-col rounded-lg border bg-card p-5');
+    const card = element('article', 'grid min-w-0 gap-3 px-4 py-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-start md:px-5');
+    const body = element('div', 'min-w-0');
     const meta = element('div', 'flex flex-wrap items-center gap-2');
     meta.append(badge(task.teamName, 'accent'), statusBadge(task.status));
     if (task.status !== 'COMPLETED' && task.dueDate < currentDate()) {
         meta.appendChild(badge('마감 지연', 'danger'));
     }
-    card.appendChild(meta);
-    card.appendChild(element('h3', 'mt-3 text-base font-black', task.title));
+    body.appendChild(meta);
+    body.appendChild(element('h3', 'mt-3 text-base font-bold', task.title));
     if (task.description) {
-        card.appendChild(element('p', 'mt-2 whitespace-pre-line text-sm leading-6 text-muted-foreground', task.description));
+        body.appendChild(element('p', 'mt-2 whitespace-pre-line text-sm leading-6 text-muted-foreground', task.description));
     }
-    card.appendChild(element('p', 'mt-4 text-xs font-bold text-muted-foreground', `${formatDate(task.startDate)} — ${formatDate(task.dueDate)}`));
+    body.appendChild(element('p', 'mt-4 text-xs font-bold text-muted-foreground', `${formatDate(task.startDate)} — ${formatDate(task.dueDate)}`));
     if (task.status === 'BLOCKED' && task.blockedReason) {
-        const blocked = element('p', 'mt-3 rounded-md bg-destructive-soft px-3 py-2 text-xs font-bold text-destructive', `차단 사유 · ${task.blockedReason}`);
-        card.appendChild(blocked);
+        const blocked = element('p', 'mt-3 border-l-4 border-destructive bg-destructive-soft px-3 py-2 text-xs font-bold text-destructive', `차단 사유 · ${task.blockedReason}`);
+        body.appendChild(blocked);
     }
-    const actions = element('div', 'mt-auto flex flex-wrap gap-2 pt-5');
+    const actions = element('div', 'grid grid-cols-2 gap-2 md:flex md:flex-wrap md:justify-end');
     const history = actionButton('이력', ACTIONS.HISTORY);
     history.dataset.taskId = String(task.productionTaskId);
     history.dataset.taskTitle = task.title;
@@ -208,20 +209,58 @@ function buildTaskCard(task) {
         remove.dataset.confirmAction = '업무 삭제';
         actions.append(edit, remove);
     }
-    card.appendChild(actions);
+    card.append(body, actions);
     return card;
+}
+
+function renderNextTask() {
+    const action = lookup('[data-production-next-action]');
+    const candidate = tasks.filter((task) => canContribute(task.teamId)
+            && task.status !== 'COMPLETED').sort((first, second) => {
+        const priority = (task) => task.status === 'BLOCKED' ? 0
+            : task.dueDate < currentDate() ? 1
+                : task.status === 'REVIEW_REQUIRED' ? 2 : 3;
+        return priority(first) - priority(second)
+                || String(first.dueDate).localeCompare(String(second.dueDate));
+    })[0];
+    action.classList.toggle('hidden', !candidate || !projectMutable());
+    if (!candidate) {
+        lookup('[data-production-next-title]').textContent = tasks.length === 0
+                ? '아직 등록된 제작 업무가 없어요' : '내가 처리할 미완료 업무가 없어요';
+        lookup('[data-production-next-message]').textContent = tasks.length === 0
+                ? '첫 제작 업무를 등록해 팀별 진행을 시작해 주세요.'
+                : '다른 팀의 진행 상황은 아래에서 확인할 수 있어요.';
+        return;
+    }
+    lookup('[data-production-next-title]').textContent = candidate.title;
+    lookup('[data-production-next-message]').textContent = candidate.status === 'BLOCKED'
+            ? `차단 사유: ${candidate.blockedReason || '사유를 확인해 주세요.'}`
+            : candidate.dueDate < currentDate()
+                ? `${formatDate(candidate.dueDate)} 마감이 지났어요. 진행 상태를 갱신해 주세요.`
+                : `${candidate.teamName} · ${formatDate(candidate.dueDate)}까지`;
+    lookup('button', action).dataset.taskId = String(candidate.productionTaskId);
 }
 
 function renderTasks() {
     const region = lookup('[data-production-tasks]');
     region.replaceChildren();
     lookup('[data-production-count]').textContent = `${tasks.length}건`;
+    renderNextTask();
     if (tasks.length === 0) {
-        region.appendChild(element('p', 'rounded-lg border bg-card px-5 py-12 text-center text-sm text-muted-foreground md:col-span-2', projects.length === 0 ? '먼저 공연 프로젝트를 등록해 주세요.' : '조건에 맞는 제작 업무가 없습니다.'));
+        region.appendChild(element('p', 'px-5 py-12 text-center text-sm text-muted-foreground', projects.length === 0 ? '먼저 공연 프로젝트를 등록해 주세요.' : '조건에 맞는 제작 업무가 없습니다.'));
     } else {
-        tasks.forEach((task) => region.appendChild(buildTaskCard(task)));
+        tasks.slice().sort((first, second) => {
+            const firstPriority = first.status === 'BLOCKED' ? 0
+                : first.dueDate < currentDate() && first.status !== 'COMPLETED' ? 1 : 2;
+            const secondPriority = second.status === 'BLOCKED' ? 0
+                : second.dueDate < currentDate() && second.status !== 'COMPLETED' ? 1 : 2;
+            return firstPriority - secondPriority
+                    || String(first.dueDate).localeCompare(String(second.dueDate));
+        }).forEach((task) => region.appendChild(buildTaskCard(task)));
     }
     region.setAttribute('aria-busy', 'false');
+    lookup('[data-production-status-message]').textContent =
+            `제작 업무 ${tasks.length}건을 표시했어요.`;
 }
 
 function selectedStatus() {
@@ -277,17 +316,17 @@ function resetTaskForm() {
     document.getElementById('productionTaskTeam').disabled = false;
     document.getElementById('productionStartDate').value = selectedProject()?.productionStartDate || '';
     document.getElementById('productionDueDate').value = selectedProject()?.productionEndDate || '';
-    document.getElementById('productionTaskModalTitle').textContent = '제작 업무 추가';
+    document.getElementById('productionTaskSheetTitle').textContent = '제작 업무 추가';
     editingTask = null;
 }
 
-function openCreate() {
+function openCreate(trigger) {
     if (!projectMutable()) {
         showToast('종료·취소·보관된 공연에는 업무를 추가할 수 없습니다.');
         return;
     }
     resetTaskForm();
-    openModal('productionTaskModal');
+    openSheet('productionTaskSheet', trigger);
 }
 
 function openEdit(trigger) {
@@ -299,8 +338,8 @@ function openEdit(trigger) {
     document.getElementById('productionTaskDescription').value = editingTask.description || '';
     document.getElementById('productionStartDate').value = editingTask.startDate;
     document.getElementById('productionDueDate').value = editingTask.dueDate;
-    document.getElementById('productionTaskModalTitle').textContent = '제작 업무 수정';
-    openModal('productionTaskModal');
+    document.getElementById('productionTaskSheetTitle').textContent = '제작 업무 수정';
+    openSheet('productionTaskSheet', trigger);
 }
 
 async function withBusy(trigger, task) {
@@ -340,7 +379,7 @@ async function saveTask(trigger) {
                 teamId: Number(readValue('productionTaskTeam')),
             });
         }
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         await loadData();
         showToast(editingTask ? '제작 업무를 수정했습니다.' : '제작 업무를 추가했습니다.');
         editingTask = null;
@@ -360,7 +399,7 @@ function openStatus(trigger) {
     document.getElementById('productionTaskStatus').value = statusTask.status;
     document.getElementById('productionBlockedReason').value = statusTask.blockedReason || '';
     updateBlockedField();
-    openModal('productionStatusModal');
+    openSheet('productionStatusSheet', trigger);
 }
 
 async function saveStatus(trigger) {
@@ -379,7 +418,7 @@ async function saveStatus(trigger) {
             blockedReason: status === 'BLOCKED' ? readValue('productionBlockedReason') : null,
             comment: readValue('productionStatusComment') || null,
         });
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         await loadData();
         showToast('제작 업무 상태를 변경했습니다.');
     });
@@ -394,7 +433,7 @@ async function deleteTask(trigger) {
 }
 
 async function showHistory(trigger) {
-    openModal('productionHistoryModal');
+    openSheet('productionHistorySheet', trigger);
     const region = lookup('[data-production-history]');
     region.replaceChildren(element('p', 'py-8 text-center text-sm text-muted-foreground', '이력을 불러오는 중입니다.'));
     try {
@@ -404,7 +443,7 @@ async function showHistory(trigger) {
             region.appendChild(element('p', 'rounded-md bg-secondary px-4 py-3 text-sm text-muted-foreground', '상태 변경 이력이 없습니다.'));
         }
         histories.forEach((history) => {
-            const row = element('div', 'rounded-lg border px-4 py-3');
+            const row = element('div', 'border-b py-3 last:border-b-0');
             const head = element('div', 'flex flex-wrap items-center gap-2');
             head.append(statusBadge(history.previousStatus), element('span', 'text-xs text-muted-foreground', '→'), statusBadge(history.newStatus));
             row.append(head, element('p', 'mt-2 text-xs text-muted-foreground', `${history.changedByName || `부원 #${history.changedByMemberId}`} · ${formatDateTime(history.changedDttm)}`));

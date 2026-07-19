@@ -1,9 +1,9 @@
 import {del, get, patch, post, put} from '../common/api.js';
-import {openModal} from '../common/modal.js';
+import {closeSheetOf, openSheet} from '../common/sheet.js';
 import {showToast} from '../common/toast.js';
 import {bindPageActions, element, lookup, readValue} from '../common/dom.js';
 import {currentUserRole} from '../common/session.js';
-import {activateFilterChip, badge, closeActionModal} from '../common/view.js';
+import {activateFilterChip, badge} from '../common/view.js';
 
 const ACTIONS = Object.freeze({
     CREATE_OPEN: 'checklist-create-open',
@@ -103,10 +103,43 @@ function updateSummary() {
     progress.textContent = `${percent}%`;
     lookup('[data-checklist-summary]').replaceChildren(
             badge(`준비 ${percent}%`, percent === 100 ? 'success' : 'warning'));
+    updateNextAction();
+}
+
+function updateNextAction() {
+    const title = lookup('[data-checklist-next-title]');
+    const message = lookup('[data-checklist-next-message]');
+    const action = lookup('[data-checklist-next-action]');
+    const button = lookup('[data-page-action="checklist-toggle"]', action);
+    const pending = items.filter((item) => !item.completed)
+            .sort((first, second) => Number(second.required) - Number(first.required));
+    const actionable = pending.find(canCompleteItem);
+    action.classList.toggle('hidden', !actionable);
+    if (actionable) {
+        title.textContent = actionable.content;
+        message.textContent = `${actionable.teamName || '담당 팀'}의 ${actionable.required ? '필수 ' : ''}준비 항목이에요.`;
+        button.dataset.itemId = String(actionable.checklistItemId);
+        return;
+    }
+    button.removeAttribute('data-item-id');
+    if (items.length === 0) {
+        title.textContent = '아직 등록된 준비 항목이 없어요';
+        message.textContent = canManage
+                ? '첫 준비 항목을 추가해 공연 준비를 시작해 주세요.'
+                : '운영진이 준비 항목을 등록하면 이곳에 표시돼요.';
+        return;
+    }
+    if (pending.length > 0) {
+        title.textContent = '내가 바로 처리할 항목은 없어요';
+        message.textContent = '다른 팀의 미완료 항목은 아래 목록에서 진행 상태를 확인할 수 있어요.';
+        return;
+    }
+    title.textContent = '모든 준비 항목을 완료했어요';
+    message.textContent = '변경 사항이 생기면 완료 상태를 다시 조정할 수 있어요.';
 }
 
 function buildChecklistItem(item) {
-    const row = element('li', 'flex items-start gap-3 border-b px-4 py-3 last:border-0');
+    const row = element('li', 'grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 px-4 py-4 md:px-5');
     const toggle = element('button', `flex size-11 shrink-0 items-center justify-center rounded-md border text-lg font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${item.completed ? 'border-success bg-success text-white' : 'bg-card text-muted-foreground hover:border-primary'}`, item.completed ? '✓' : '');
     toggle.type = 'button';
     toggle.dataset.pageAction = ACTIONS.TOGGLE;
@@ -131,7 +164,7 @@ function buildChecklistItem(item) {
     }
     body.appendChild(meta);
 
-    const actions = element('div', 'flex shrink-0 flex-wrap justify-end gap-2');
+    const actions = element('div', 'col-start-2 flex flex-wrap gap-2');
     const history = actionButton('이력', ACTIONS.HISTORY);
     history.dataset.itemId = String(item.checklistItemId);
     history.dataset.itemContent = item.content;
@@ -152,9 +185,9 @@ function buildChecklistItem(item) {
 function buildTeamCard(teamItems) {
     const completed = teamItems.filter((item) => item.completed).length;
     const team = teams.find((candidate) => candidate.teamId === teamItems[0].teamId);
-    const card = element('section', 'overflow-hidden rounded-lg border bg-card');
-    const header = element('header', 'flex items-center gap-3 border-b px-5 py-4');
-    header.appendChild(element('h2', 'text-sm font-extrabold', team?.name || teamItems[0].teamName));
+    const card = element('section', 'py-2');
+    const header = element('header', 'flex items-center gap-3 px-4 py-3 md:px-5');
+    header.appendChild(element('h2', 'text-base font-bold', team?.name || teamItems[0].teamName));
     header.appendChild(badge(`${completed}/${teamItems.length}`, completed === teamItems.length ? 'success' : 'neutral'));
     if (canManageItem(teamItems[0])) {
         const add = actionButton('항목 추가', ACTIONS.CREATE_OPEN);
@@ -162,7 +195,7 @@ function buildTeamCard(teamItems) {
         add.classList.add('ml-auto');
         header.appendChild(add);
     }
-    const list = element('ul');
+    const list = element('ul', 'divide-y');
     teamItems.forEach((item) => list.appendChild(buildChecklistItem(item)));
     card.append(header, list);
     return card;
@@ -173,7 +206,7 @@ function renderItems() {
     const visible = filteredItems();
     region.replaceChildren();
     if (visible.length === 0) {
-        const message = element('div', 'rounded-lg border bg-card px-5 py-11 text-center text-sm text-muted-foreground md:col-span-2', items.length === 0
+        const message = element('div', 'px-5 py-12 text-center text-sm text-muted-foreground', items.length === 0
                 ? '이 범위에 등록된 체크리스트가 없습니다.'
                 : '필터 조건에 맞는 체크리스트가 없습니다.');
         region.appendChild(message);
@@ -189,6 +222,8 @@ function renderItems() {
         });
     }
     region.setAttribute('aria-busy', 'false');
+    lookup('[data-checklist-status-message]').textContent =
+            `체크리스트 ${visible.length}개를 표시했어요.`;
 }
 
 async function loadRounds(projectId) {
@@ -273,7 +308,7 @@ function resetForm(teamId) {
     document.getElementById('checkItemScope').value = readValue('checkScope');
     document.getElementById('checkItemRound').value = readValue('checkRound');
     updateItemScopeFields();
-    document.getElementById('checkModalTitle').textContent = '체크리스트 항목 추가';
+    document.getElementById('checkSheetTitle').textContent = '체크리스트 항목 추가';
     editingItem = null;
 }
 
@@ -283,7 +318,7 @@ function openCreate(trigger) {
         return;
     }
     resetForm(trigger.dataset.teamId ? Number(trigger.dataset.teamId) : null);
-    openModal('checkModal');
+    openSheet('checkSheet', trigger);
 }
 
 function openEdit(trigger) {
@@ -299,8 +334,8 @@ function openEdit(trigger) {
     document.getElementById('checkDisplayOrder').value = String(editingItem.displayOrder);
     document.getElementById('checkRequired').checked = editingItem.required;
     updateItemScopeFields();
-    document.getElementById('checkModalTitle').textContent = '체크리스트 항목 수정';
-    openModal('checkModal');
+    document.getElementById('checkSheetTitle').textContent = '체크리스트 항목 수정';
+    openSheet('checkSheet', trigger);
 }
 
 async function withBusy(trigger, task) {
@@ -338,7 +373,7 @@ async function saveItem(trigger) {
                 scope,
             });
         }
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         await loadItems();
         showToast(editingItem ? '체크리스트 항목을 수정했습니다.' : '체크리스트 항목을 추가했습니다.');
         editingItem = null;
@@ -367,7 +402,7 @@ async function deleteItem(trigger) {
 }
 
 async function showHistory(trigger) {
-    openModal('checkHistoryModal');
+    openSheet('checkHistorySheet', trigger);
     const region = lookup('[data-check-history]');
     region.replaceChildren(element('p', 'py-8 text-center text-sm text-muted-foreground', '이력을 불러오는 중입니다.'));
     try {
@@ -379,7 +414,7 @@ async function showHistory(trigger) {
             return;
         }
         histories.forEach((history) => {
-            const row = element('div', 'flex items-start gap-3 rounded-lg border px-4 py-3');
+            const row = element('div', 'flex items-start gap-3 border-b py-3 last:border-b-0');
             row.appendChild(badge(history.newCompleted ? '완료' : '미완료', history.newCompleted ? 'success' : 'warning'));
             const body = element('div', 'min-w-0 flex-1');
             body.appendChild(element('strong', 'block text-sm', history.changedByMemberName || `부원 #${history.changedByMemberId}`));

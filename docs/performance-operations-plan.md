@@ -454,6 +454,13 @@ Bandi의 공개 상단 내비와 기본 접근성 규칙은 유지하되, 본문
 
 좌석 배치 참조의 구체적인 구조는 별도 기획 결과를 반영한다.
 
+회차 상태는 실제 운영 순서를 거슬러 올라가지 않는다.
+
+- `SCHEDULED → RESERVATION_OPEN → RESERVATION_CLOSED → ENTRY_OPEN → ENDED`
+- `SCHEDULED`, `RESERVATION_OPEN`, `RESERVATION_CLOSED`, `ENTRY_OPEN`에서는 `CANCELLED`로 전환할 수 있다.
+- `ENDED`와 `CANCELLED`는 종결 상태이며 다른 상태로 전환하지 않는다.
+- 상태 전이는 화면 선택지를 줄이는 것에 그치지 않고 도메인 모델에서 최종 검증한다.
+
 ### 8.2 관람 신청
 
 - 외부 관람객은 로그인하지 않고 공연과 회차를 조회한다.

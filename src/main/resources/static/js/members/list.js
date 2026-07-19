@@ -1,11 +1,13 @@
 import {ApiError, get, patch, post} from '../common/api.js';
-import {all, bindPageActions, element, lookup, readValue} from '../common/dom.js';
-import {openModal} from '../common/modal.js';
+import {all, bindPageActions, debounce, element, lookup, readValue} from '../common/dom.js';
+import {closeSheetOf, openSheet} from '../common/sheet.js';
 import {showToast} from '../common/toast.js';
-import {badge, closeActionModal} from '../common/view.js';
+import {badge} from '../common/view.js';
 
 const ACTIONS = Object.freeze({
+    CREATE_OPEN: 'member-create-open',
     ADD_MEMBER: 'member-add',
+    ROLE_OPEN: 'member-role-open',
     SAVE_ROLE: 'member-role-save',
     MANAGE_OPEN: 'member-manage-open',
     SAVE_CHANGE: 'member-change-save',
@@ -51,6 +53,7 @@ const STATUS_TRANSITIONS = Object.freeze({
 let teamsById = new Map();
 let cohortsById = new Map();
 let membersById = new Map();
+let members = [];
 let teams = [];
 let cohorts = [];
 let pendingRoleChange = null;
@@ -78,8 +81,7 @@ function setState(title, message, retry = false) {
 }
 
 function clearRows() {
-    all('[data-member-list] tr:not([data-member-state])')
-            .forEach((row) => row.remove());
+    all('[data-member-row]').forEach((row) => row.remove());
 }
 
 function setSelectOptions(selectId, items, idKey) {
@@ -90,18 +92,6 @@ function setSelectOptions(selectId, items, idKey) {
         const option = element('option', '', item.name);
         option.value = item[idKey];
         select.appendChild(option);
-    });
-}
-
-function prepareRoleButtons(row, role) {
-    all('[data-member-role]', row).forEach((button) => {
-        const selected = button.dataset.memberRole === role;
-        button.setAttribute('aria-pressed', String(selected));
-        button.disabled = selected;
-        button.classList.toggle('border', selected);
-        button.classList.toggle('bg-card', selected);
-        button.classList.toggle('text-foreground', selected);
-        button.classList.toggle('text-muted-foreground', !selected);
     });
 }
 
@@ -126,7 +116,6 @@ function appendMemberRow(member) {
     lookup('[data-member-role-cell]', row).appendChild(badge(
             ROLE_LABELS[member.role] || member.role,
             ROLE_TONES[member.role] || 'neutral'));
-    prepareRoleButtons(row, member.role);
     lookup('[data-member-list]').appendChild(row);
 }
 
@@ -145,25 +134,66 @@ function renderStats(members, cohorts) {
 function renderMembers(members) {
     clearRows();
     if (members.length === 0) {
-        setState('등록된 멤버가 없습니다',
-                '멤버를 사전 등록하면 학교 SSO 연결을 시작할 수 있습니다.');
+        setState(membersById.size === 0 ? '등록된 멤버가 없습니다'
+            : '조건에 맞는 멤버가 없습니다', membersById.size === 0
+            ? '멤버를 사전 등록하면 학교 SSO 연결을 시작할 수 있습니다.'
+            : '검색어나 확인 상태를 바꿔 다시 찾아보세요.');
         return;
     }
     lookup('[data-member-state]').hidden = true;
     members.forEach(appendMemberRow);
 }
 
+function filteredMembers() {
+    const query = readValue('memberQuery').trim().toLowerCase();
+    const filter = readValue('memberFilter');
+    return members.filter((member) => {
+        const queryMatched = !query || `${member.name} ${member.studentNo}`
+                .toLowerCase().includes(query);
+        const statusMatched = filter === 'ALL'
+                || (filter === 'SSO_PENDING' && member.ssoLinkStatus !== 'LINKED')
+                || (filter === 'ACTIVE' && member.status === 'ACTIVE')
+                || (filter === 'INACTIVE' && ['SUSPENDED', 'WITHDRAWN',
+                    'REGISTRATION_CANCELLED'].includes(member.status));
+        return queryMatched && statusMatched;
+    });
+}
+
+function applyMemberFilters() {
+    renderMembers(filteredMembers());
+}
+
+function renderNextMember() {
+    const member = members.find((item) => item.ssoLinkStatus === 'REVIEW_REQUIRED')
+            || members.find((item) => item.ssoLinkStatus === 'WAITING')
+            || members.find((item) => item.status === 'PRE_REGISTERED');
+    const action = lookup('[data-member-next-action]');
+    action.classList.toggle('hidden', !member);
+    if (!member) {
+        lookup('[data-member-next-title]').textContent = '확인이 필요한 멤버가 없어요';
+        lookup('[data-member-next-message]').textContent =
+                '현재 등록된 멤버의 SSO 연결과 활동 상태가 모두 정상이에요.';
+        return;
+    }
+    lookup('[data-member-next-title]').textContent = member.name;
+    lookup('[data-member-next-message]').textContent = member.ssoLinkStatus === 'REVIEW_REQUIRED'
+            ? `${member.studentNo} · SSO 연결 정보를 운영진이 확인해야 해요.`
+            : `${member.studentNo} · 학교 계정으로 첫 로그인하기를 기다리고 있어요.`;
+    lookup('button', action).dataset.targetId = String(member.memberId);
+}
+
 async function loadMembers() {
     setState('멤버 목록을 불러오는 중입니다', '잠시만 기다려 주세요.');
     clearRows();
     try {
-        const [members, nextTeams, nextCohorts] = await Promise.all([
+        const [memberItems, nextTeams, nextCohorts] = await Promise.all([
             get('/api/members'),
             get('/api/members/reference/teams'),
             get('/api/members/reference/cohorts'),
         ]);
         teams = nextTeams;
         cohorts = nextCohorts;
+        members = memberItems;
         membersById = new Map(members.map((member) => [member.memberId,
             member]));
         teamsById = new Map(teams.map((team) => [team.teamId, team]));
@@ -172,7 +202,8 @@ async function loadMembers() {
         setSelectOptions('mbTeam', teams, 'teamId');
         setSelectOptions('mbCohort', cohorts, 'cohortId');
         renderStats(members, cohorts);
-        renderMembers(members);
+        renderNextMember();
+        applyMemberFilters();
     } catch (error) {
         setState('멤버 목록을 불러오지 못했습니다', errorMessage(error), true);
     }
@@ -183,6 +214,11 @@ function resetMemberForm() {
         document.getElementById(id).value = '';
     });
     setInlineError('[data-member-form-error]', '');
+}
+
+function openMemberForm(trigger) {
+    resetMemberForm();
+    openSheet('memberSheet', trigger);
 }
 
 async function addMember(trigger) {
@@ -196,7 +232,7 @@ async function addMember(trigger) {
     trigger.disabled = true;
     try {
         await post('/api/members', request);
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         showToast(`${request.name}님을 사전 등록했습니다.`);
         resetMemberForm();
         await loadMembers();
@@ -207,33 +243,51 @@ async function addMember(trigger) {
     }
 }
 
+function memberFromTrigger(trigger) {
+    const row = trigger.closest('[data-member-row]');
+    return membersById.get(Number(trigger.dataset.targetId || row?.dataset.memberId));
+}
+
 function prepareRoleChange(button) {
-    const row = button.closest('tr');
+    const member = memberFromTrigger(button);
+    if (!member) {
+        showToast('권한을 변경할 멤버를 찾을 수 없습니다.');
+        return;
+    }
     pendingRoleChange = {
-        memberId: row.dataset.memberId,
-        memberName: lookup('[data-member-name]', row).textContent.trim(),
-        newRole: button.dataset.memberRole,
+        memberId: member.memberId,
+        memberName: member.name,
+        currentRole: member.role,
     };
     lookup('[data-member-role-summary]').textContent =
-            `${pendingRoleChange.memberName}님의 권한을 ${ROLE_LABELS[pendingRoleChange.newRole]}(으)로 변경합니다.`;
+            `${pendingRoleChange.memberName}님의 현재 권한은 ${ROLE_LABELS[pendingRoleChange.currentRole]}이에요.`;
+    document.getElementById('memberRoleValue').value = member.role;
     document.getElementById('memberRoleReason').value = '';
     setInlineError('[data-member-role-error]', '');
-    openModal('memberRoleModal', button);
+    openSheet('memberRoleSheet', button);
 }
 
 async function saveRole(trigger) {
     const reason = readValue('memberRoleReason');
+    const newRole = readValue('memberRoleValue');
     if (!pendingRoleChange) {
+        return;
+    }
+    if (newRole === pendingRoleChange.currentRole || !reason) {
+        setInlineError('[data-member-role-error]',
+                newRole === pendingRoleChange.currentRole
+                    ? '현재 권한과 다른 권한을 선택해 주세요.'
+                    : '변경 사유를 입력해 주세요.');
         return;
     }
     setInlineError('[data-member-role-error]', '');
     trigger.disabled = true;
     try {
         await patch(`/api/members/${pendingRoleChange.memberId}/role`, {
-            newRole: pendingRoleChange.newRole,
+            newRole,
             reason,
         });
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         showToast(`${pendingRoleChange.memberName}님의 권한을 변경했습니다.`);
         pendingRoleChange = null;
         await loadMembers();
@@ -279,8 +333,11 @@ function updateChangeOptions() {
 }
 
 function prepareMemberChange(trigger) {
-    const row = trigger.closest('tr');
-    const member = membersById.get(Number(row.dataset.memberId));
+    const member = memberFromTrigger(trigger);
+    if (!member) {
+        showToast('변경할 멤버를 찾을 수 없습니다.');
+        return;
+    }
     pendingMemberChange = {...member};
     lookup('[data-member-change-summary]').textContent =
             `${member.name} · ${teamsById.get(member.teamId)?.name || '미배정'} · ${STATUS_LABELS[member.status]}`;
@@ -288,7 +345,7 @@ function prepareMemberChange(trigger) {
     document.getElementById('memberChangeReason').value = '';
     setInlineError('[data-member-change-error]', '');
     updateChangeOptions();
-    openModal('memberManageModal', trigger);
+    openSheet('memberManageSheet', trigger);
 }
 
 async function saveMemberChange(trigger) {
@@ -313,7 +370,7 @@ async function saveMemberChange(trigger) {
     try {
         await patch(`/api/members/${pendingMemberChange.memberId}/${type}`,
                 bodies[type]);
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         showToast(`${pendingMemberChange.name}님의 정보를 변경했습니다.`);
         pendingMemberChange = null;
         await loadMembers();
@@ -365,12 +422,15 @@ function flattenHistories(response) {
 }
 
 async function showMemberHistory(trigger) {
-    const row = trigger.closest('tr');
-    const member = membersById.get(Number(row.dataset.memberId));
+    const member = memberFromTrigger(trigger);
+    if (!member) {
+        showToast('이력을 확인할 멤버를 찾을 수 없습니다.');
+        return;
+    }
     const region = lookup('[data-member-history]');
     region.replaceChildren(element('p', 'py-8 text-center text-sm text-muted-foreground',
             '이력을 불러오는 중입니다.'));
-    openModal('memberHistoryModal', trigger);
+    openSheet('memberHistorySheet', trigger);
     try {
         const response = await get(`/api/members/${member.memberId}/histories`);
         const histories = flattenHistories(response);
@@ -381,7 +441,7 @@ async function showMemberHistory(trigger) {
                     '변경 이력이 없습니다.'));
         }
         histories.forEach((history) => {
-            const card = element('article', 'rounded-lg border px-4 py-3');
+            const card = element('article', 'border-b py-3 last:border-b-0');
             const head = element('div', 'flex flex-wrap items-center gap-2');
             head.append(badge(history.type, 'info'),
                     element('strong', 'text-sm',
@@ -404,17 +464,15 @@ async function showMemberHistory(trigger) {
 }
 
 lookup('[data-member-retry]').addEventListener('click', loadMembers);
-lookup('[data-member-list]').addEventListener('click', (event) => {
-    const button = event.target.closest('[data-member-role]');
-    if (button && !button.disabled) {
-        prepareRoleChange(button);
-    }
-});
+lookup('[data-member-search]').addEventListener('input', debounce(applyMemberFilters));
+lookup('[data-member-filter]').addEventListener('change', applyMemberFilters);
 document.getElementById('memberChangeType')
         .addEventListener('change', updateChangeOptions);
 
 bindPageActions({
+    [ACTIONS.CREATE_OPEN]: openMemberForm,
     [ACTIONS.ADD_MEMBER]: addMember,
+    [ACTIONS.ROLE_OPEN]: prepareRoleChange,
     [ACTIONS.SAVE_ROLE]: saveRole,
     [ACTIONS.MANAGE_OPEN]: prepareMemberChange,
     [ACTIONS.SAVE_CHANGE]: saveMemberChange,

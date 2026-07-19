@@ -1,9 +1,9 @@
 import {ApiError, get, post, put} from '../common/api.js';
 import {all, bindPageActions, element, lookup, readValue} from '../common/dom.js';
-import {openModal} from '../common/modal.js';
+import {closeSheetOf, openSheet} from '../common/sheet.js';
 import {currentUserRole} from '../common/session.js';
 import {showToast} from '../common/toast.js';
-import {badge, closeActionModal} from '../common/view.js';
+import {badge} from '../common/view.js';
 
 const ACTIONS = Object.freeze({
     PAY: 'fee-pay',
@@ -81,11 +81,11 @@ function setMyState(title, message, retry = false) {
 }
 
 function renderMyFees(items, summary) {
-    all('[data-my-fee-list] tr:not([data-my-fee-state])')
-            .forEach((row) => row.remove());
+    all('[data-my-fee-row]').forEach((row) => row.remove());
     lookup('[data-stat-value="my-total"]').textContent = money(summary.totalAmount);
     lookup('[data-stat-value="my-paid"]').textContent = money(summary.paidAmount);
     lookup('[data-stat-value="my-unpaid"]').textContent = money(summary.unpaidAmount);
+    renderMyNextFee(items);
     if (items.length === 0) {
         setMyState('부과된 회비가 없습니다', '현재 확인할 회비 항목이 없습니다.');
         return;
@@ -103,6 +103,24 @@ function renderMyFees(items, summary) {
         lookup('[data-my-fee-due-date]', row).textContent = date(item.dueDate);
         lookup('[data-my-fee-list]').appendChild(row);
     });
+}
+
+function renderMyNextFee(items) {
+    const unpaid = items.filter((item) => item.status === 'UNPAID')
+            .sort((first, second) => String(first.dueDate)
+                    .localeCompare(String(second.dueDate)))[0];
+    if (unpaid) {
+        lookup('[data-my-fee-next-title]').textContent =
+                `${unpaid.itemName} ${money(unpaid.chargedAmount)}원`;
+        lookup('[data-my-fee-next-message]').textContent =
+                `${date(unpaid.dueDate)}까지 납부해야 해요. 납부 방법은 운영진 안내를 확인해 주세요.`;
+        return;
+    }
+    lookup('[data-my-fee-next-title]').textContent = items.length === 0
+            ? '현재 부과된 회비가 없어요' : '미납 회비가 없어요';
+    lookup('[data-my-fee-next-message]').textContent = items.length === 0
+            ? '새 회비가 부과되면 이곳에 먼저 표시돼요.'
+            : '모든 회비의 납부 상태가 완료로 기록되어 있어요.';
 }
 
 async function loadMyFees() {
@@ -135,8 +153,8 @@ function activateTab(itemId) {
         const selected = Number(tab.dataset.feeItemId) === selectedItem.feeItemId;
         tab.setAttribute('aria-selected', String(selected));
         tab.tabIndex = selected ? 0 : -1;
-        tab.classList.toggle('border', selected);
-        tab.classList.toggle('bg-card', selected);
+        tab.classList.toggle('border-primary', selected);
+        tab.classList.toggle('border-transparent', !selected);
         tab.classList.toggle('text-foreground', selected);
         tab.classList.toggle('text-muted-foreground', !selected);
     });
@@ -293,13 +311,13 @@ function openFeeForm(trigger, item) {
     editingItemId = item?.feeItemId || null;
     fillFeeForm(item);
     setError('[data-fee-form-error]', '');
-    document.getElementById('feeModalTitle').textContent =
+    document.getElementById('feeSheetTitle').textContent =
             item ? '회비 초안 수정' : '회비 초안 추가';
-    document.getElementById('feeModalDescription').textContent = item
+    document.getElementById('feeSheetDescription').textContent = item
         ? '부과를 시작하기 전까지 항목 정보를 수정할 수 있습니다.'
         : '초안으로 저장한 뒤 내용을 확인하고 부과를 시작합니다.';
     lookup('[data-fee-submit-label]').textContent = item ? '수정 저장' : '초안 저장';
-    openModal('feeModal', trigger);
+    openSheet('feeSheet', trigger);
 }
 
 function openCreateForm(trigger) {
@@ -324,7 +342,7 @@ async function saveFee(trigger) {
             const created = await post('/api/fee-management', feeItemPayload());
             selectedItem = {feeItemId: created.feeItemId};
         }
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         showToast(targetId ? '회비 초안을 수정했습니다.' : '회비 초안을 저장했습니다.');
         editingItemId = null;
         await loadItems();
@@ -372,7 +390,7 @@ function openCancel(trigger) {
     }
     document.getElementById('feeCancelReason').value = '';
     setError('[data-fee-cancel-error]', '');
-    openModal('feeCancelModal', trigger);
+    openSheet('feeCancelSheet', trigger);
 }
 
 async function cancelFee(trigger) {
@@ -381,7 +399,7 @@ async function cancelFee(trigger) {
         await post(`/api/fee-management/${selectedItem.feeItemId}/cancel`, {
             reason: readValue('feeCancelReason'),
         });
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         showToast('회비 항목을 취소했습니다.');
         await loadItems();
     } catch (error) {
@@ -397,7 +415,7 @@ async function showChargeHistory(trigger) {
     region.replaceChildren(element('p',
             'py-8 text-center text-sm text-muted-foreground',
             '변경 이력을 불러오는 중입니다.'));
-    openModal('feeHistoryModal', trigger);
+    openSheet('feeHistorySheet', trigger);
     try {
         const histories = await get(
                 `/api/fee-management/charges/${trigger.dataset.feeChargeId}/histories`);
@@ -409,7 +427,7 @@ async function showChargeHistory(trigger) {
         }
         region.replaceChildren();
         histories.forEach((history) => {
-            const card = element('article', 'rounded-lg border px-4 py-3');
+            const card = element('article', 'border-b py-3 last:border-b-0');
             const head = element('div', 'flex flex-wrap items-center gap-2');
             head.append(statusBadge(history.previousStatus),
                     element('span', 'text-xs text-muted-foreground', '→'),

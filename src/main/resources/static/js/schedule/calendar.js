@@ -1,13 +1,14 @@
 import {ApiError, del, get, post, put} from '../common/api.js';
 import {all, bindPageActions, element, lookup, readValue} from '../common/dom.js';
-import {openModal} from '../common/modal.js';
+import {closeSheetOf, openSheet} from '../common/sheet.js';
 import {currentUserRole} from '../common/session.js';
 import {showToast} from '../common/toast.js';
-import {activateFilterChip, closeActionModal} from '../common/view.js';
+import {activateFilterChip} from '../common/view.js';
 
 const ACTIONS = Object.freeze({
     PREVIOUS: 'calendar-prev',
     NEXT: 'calendar-next',
+    NEXT_OPEN: 'calendar-next-open',
     CREATE: 'calendar-create',
     SAVE: 'calendar-save',
     DELETE: 'calendar-delete',
@@ -66,6 +67,19 @@ function selectedEvents(day) {
     });
 }
 
+function visibleEvents() {
+    return calendarState.events.filter((eventData) =>
+        calendarState.filterTeamId === 'ALL'
+                || String(eventData.teamId) === calendarState.filterTeamId);
+}
+
+function formatEventDate(value) {
+    return new Intl.DateTimeFormat('ko-KR', {
+        month: 'long', day: 'numeric', weekday: 'short',
+        hour: '2-digit', minute: '2-digit', hour12: false,
+    }).format(new Date(value));
+}
+
 function calendarEventNode(eventData) {
     const teamIndex = Math.max(0, calendarState.teams.findIndex(
             (team) => team.teamId === eventData.teamId));
@@ -116,6 +130,56 @@ function renderCalendar() {
     lookup('[data-calendar-month]').textContent = `${year}년 ${month + 1}월`;
     lookup('[data-calendar-filter-label]').textContent =
             `${calendarState.filterTeamId === 'ALL' ? '전체 팀' : teamLabel(Number(calendarState.filterTeamId))} 일정 표시 중`;
+    renderMobileList();
+    renderNextEvent();
+}
+
+function renderMobileList() {
+    const list = lookup('[data-calendar-list]');
+    list.replaceChildren();
+    const events = visibleEvents().slice().sort((first, second) =>
+        new Date(first.startDttm) - new Date(second.startDttm));
+    if (events.length === 0) {
+        list.appendChild(element('p', 'px-4 py-10 text-center text-sm text-muted-foreground',
+                '이 달에 표시할 일정이 없어요.'));
+        return;
+    }
+    events.forEach((eventData) => {
+        const button = element('button',
+                'grid min-h-20 w-full gap-1 px-4 py-4 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+                '');
+        button.type = 'button';
+        button.dataset.calendarEventId = String(eventData.calendarEventId);
+        const meta = element('span', 'flex flex-wrap items-center gap-2 text-xs text-muted-foreground');
+        meta.append(element('span', 'font-bold text-accent-foreground',
+                teamLabel(eventData.teamId)), element('span', '',
+                formatEventDate(eventData.startDttm)));
+        button.append(element('strong', 'text-base', eventData.title), meta,
+                element('span', 'text-xs text-muted-foreground',
+                        eventData.place || '장소 미정'));
+        list.appendChild(button);
+    });
+}
+
+function renderNextEvent() {
+    const events = visibleEvents().slice().sort((first, second) =>
+        new Date(first.startDttm) - new Date(second.startDttm));
+    const now = new Date();
+    const eventData = events.find((item) => new Date(item.endDttm) >= now)
+            || events[0];
+    const action = lookup('[data-calendar-next-action]');
+    action.classList.toggle('hidden', !eventData);
+    if (!eventData) {
+        lookup('[data-calendar-next-title]').textContent = '이 달에 예정된 일정이 없어요';
+        lookup('[data-calendar-next-message]').textContent =
+                currentUserRole === 'member' ? '새 일정이 등록되면 이곳에 먼저 표시돼요.'
+                    : '필요한 전체 또는 팀 일정을 등록해 주세요.';
+        return;
+    }
+    lookup('[data-calendar-next-title]').textContent = eventData.title;
+    lookup('[data-calendar-next-message]').textContent =
+            `${formatEventDate(eventData.startDttm)} · ${eventData.place || '장소 미정'} · ${teamLabel(eventData.teamId)}`;
+    lookup('button', action).dataset.targetId = String(eventData.calendarEventId);
 }
 
 function setState(title, message, retry = false) {
@@ -132,7 +196,7 @@ function hideState() {
 
 function createTeamFilter(team) {
     const button = element('button',
-            'inline-flex h-11 items-center gap-1.5 rounded-md border bg-card px-3 text-xs font-bold text-muted-foreground transition-colors hover:border-sidebar-muted md:h-8',
+            'inline-flex h-11 shrink-0 items-center gap-1.5 rounded-md border bg-card px-3 text-xs font-bold text-muted-foreground transition-colors hover:border-sidebar-muted',
             team.name);
     button.type = 'button';
     button.dataset.filterGroup = 'calendar';
@@ -254,8 +318,8 @@ function openCreateModal(trigger) {
     calendarState.editingEventId = null;
     fillForm(null);
     configureFormAccess(true, false);
-    document.getElementById('calendarEventModalTitle').textContent = '일정 등록';
-    openModal('calendarEventModal', trigger);
+    document.getElementById('calendarEventSheetTitle').textContent = '일정 등록';
+    openSheet('calendarEventSheet', trigger);
 }
 
 function openEventModal(eventId, trigger) {
@@ -267,9 +331,9 @@ function openEventModal(eventId, trigger) {
     calendarState.editingEventId = eventData.calendarEventId;
     fillForm(eventData);
     configureFormAccess(canEditEvent(eventData), true);
-    document.getElementById('calendarEventModalTitle').textContent =
+    document.getElementById('calendarEventSheetTitle').textContent =
             canEditEvent(eventData) ? '일정 수정' : '일정 상세';
-    openModal('calendarEventModal', trigger);
+    openSheet('calendarEventSheet', trigger);
 }
 
 function formRequest() {
@@ -300,7 +364,7 @@ async function saveEvent(trigger) {
         } else {
             await post('/api/calendar-events', request);
         }
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         showToast(calendarState.editingEventId ? '일정을 수정했습니다.'
             : '일정을 등록했습니다.');
         await loadCalendar();
@@ -318,7 +382,7 @@ async function deleteEvent(trigger) {
     trigger.disabled = true;
     try {
         await del(`/api/calendar-events/${calendarState.editingEventId}`);
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         showToast('일정을 삭제했습니다.');
         await loadCalendar();
     } catch (error) {
@@ -361,6 +425,8 @@ bindPageActions({
         await loadCalendar();
     },
     [ACTIONS.CREATE]: openCreateModal,
+    [ACTIONS.NEXT_OPEN]: (trigger) => openEventModal(
+            trigger.dataset.targetId, trigger),
     [ACTIONS.SAVE]: saveEvent,
     [ACTIONS.DELETE]: deleteEvent,
 });

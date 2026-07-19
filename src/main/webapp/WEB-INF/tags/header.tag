@@ -3,11 +3,11 @@
 <%@ attribute name="active" %>
 <header class="sticky top-0 z-20 bg-sidebar text-white">
     <nav class="mx-auto flex max-w-5xl items-center gap-1 px-3 py-3 md:gap-2.5 md:px-6" aria-label="공개 메뉴">
-        <a href="<c:url value='/notices'/>" class="flex min-h-11 shrink-0 items-center gap-2 font-black">
-            <span class="flex size-8 items-center justify-center rounded-md bg-primary text-sm font-black text-primary-foreground">B</span>
+        <a href="<c:url value='/notices'/>" class="flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-2 font-extrabold md:justify-start">
+            <span class="flex size-8 items-center justify-center rounded-md bg-primary text-sm font-extrabold text-primary-foreground">B</span>
             <span class="hidden md:inline">반디</span>
         </a>
-        <a href="<c:url value='/notices'/>" class="ml-auto inline-flex min-h-11 items-center rounded-md px-2.5 text-xs font-bold transition-colors hover:bg-sidebar-accent hover:text-white md:px-3 md:text-sm" aria-current="${active == 'notices' ? 'page' : 'false'}">공시</a>
+        <a href="<c:url value='/notices'/>" class="ml-auto inline-flex min-h-11 min-w-11 items-center justify-center rounded-md px-2.5 text-xs font-bold transition-colors hover:bg-sidebar-accent hover:text-white md:px-3 md:text-sm" aria-current="${active == 'notices' ? 'page' : 'false'}">공시</a>
         <a href="<c:url value='/reserve'/>" class="inline-flex min-h-11 items-center rounded-md bg-sidebar-accent px-2.5 text-xs font-bold text-white md:px-3 md:text-sm" aria-current="${active == 'reserve' ? 'page' : 'false'}">신청 조회</a>
         <a href="<c:url value='/login'/>" class="inline-flex min-h-11 items-center rounded-md border border-sidebar-border px-2.5 text-xs font-bold text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-white md:px-3">멤버 로그인</a>
     </nav>

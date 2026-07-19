@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.domain.performance.model;
 
 import kr.ac.tukorea.bandi.domain.performance.exception.InvalidPerformanceContentException;
+import kr.ac.tukorea.bandi.domain.performance.exception.InvalidPerformanceRoundStateException;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -70,15 +71,58 @@ class PerformanceRoundTest {
     }
 
     @Test
-    void 회차_상태를_변경하고_같은_상태로는_변경하지_않는다() {
-        PerformanceRound opened = scheduled().changeStatus(
-                PerformanceRoundStatus.RESERVATION_OPEN);
+    void 회차_상태를_운영_순서대로_전환한다() {
+        PerformanceRound ended = entryOpen().changeStatus(
+                PerformanceRoundStatus.ENDED);
 
-        assertThat(opened.getStatus())
-                .isEqualTo(PerformanceRoundStatus.RESERVATION_OPEN);
-        assertThatThrownBy(() -> opened.changeStatus(
+        assertThat(ended.getStatus())
+                .isEqualTo(PerformanceRoundStatus.ENDED);
+    }
+
+    @Test
+    void 종료_전_운영_상태에서는_회차를_취소할_수_있다() {
+        assertThat(scheduled().changeStatus(
+                PerformanceRoundStatus.CANCELLED).getStatus())
+                .isEqualTo(PerformanceRoundStatus.CANCELLED);
+        assertThat(reservationOpen().changeStatus(
+                PerformanceRoundStatus.CANCELLED).getStatus())
+                .isEqualTo(PerformanceRoundStatus.CANCELLED);
+        assertThat(reservationClosed().changeStatus(
+                PerformanceRoundStatus.CANCELLED).getStatus())
+                .isEqualTo(PerformanceRoundStatus.CANCELLED);
+        assertThat(entryOpen().changeStatus(
+                PerformanceRoundStatus.CANCELLED).getStatus())
+                .isEqualTo(PerformanceRoundStatus.CANCELLED);
+    }
+
+    @Test
+    void 회차_상태를_건너뛰거나_역행하거나_같게_변경할_수_없다() {
+        assertThatThrownBy(() -> scheduled().changeStatus(
+                PerformanceRoundStatus.ENTRY_OPEN))
+                .isInstanceOf(InvalidPerformanceRoundStateException.class);
+        assertThatThrownBy(() -> reservationOpen().changeStatus(
+                PerformanceRoundStatus.SCHEDULED))
+                .isInstanceOf(InvalidPerformanceRoundStateException.class);
+        assertThatThrownBy(() -> reservationOpen().changeStatus(
                 PerformanceRoundStatus.RESERVATION_OPEN))
-                .isInstanceOf(InvalidPerformanceContentException.class);
+                .isInstanceOf(InvalidPerformanceRoundStateException.class);
+        assertThatThrownBy(() -> scheduled().changeStatus(null))
+                .isInstanceOf(InvalidPerformanceRoundStateException.class);
+    }
+
+    @Test
+    void 종료와_취소_상태에서는_더_전환할_수_없다() {
+        PerformanceRound ended = entryOpen().changeStatus(
+                PerformanceRoundStatus.ENDED);
+        PerformanceRound cancelled = scheduled().changeStatus(
+                PerformanceRoundStatus.CANCELLED);
+
+        assertThatThrownBy(() -> ended.changeStatus(
+                PerformanceRoundStatus.CANCELLED))
+                .isInstanceOf(InvalidPerformanceRoundStateException.class);
+        assertThatThrownBy(() -> cancelled.changeStatus(
+                PerformanceRoundStatus.SCHEDULED))
+                .isInstanceOf(InvalidPerformanceRoundStateException.class);
     }
 
     @Test
@@ -103,15 +147,11 @@ class PerformanceRoundTest {
     @Test
     void 관람객_취소는_입장_오픈_전_상태까지만_허용한다() {
         assertThat(scheduled().isViewerCancellationOpen()).isTrue();
-        assertThat(scheduled().changeStatus(
-                PerformanceRoundStatus.RESERVATION_CLOSED)
-                .isViewerCancellationOpen()).isTrue();
-        assertThat(scheduled().changeStatus(
-                PerformanceRoundStatus.ENTRY_OPEN)
-                .isViewerCancellationOpen()).isFalse();
-        assertThat(scheduled().changeStatus(
-                PerformanceRoundStatus.ENDED)
-                .isViewerCancellationOpen()).isFalse();
+        assertThat(reservationClosed().isViewerCancellationOpen()).isTrue();
+        assertThat(entryOpen().isViewerCancellationOpen()).isFalse();
+        assertThat(entryOpen().changeStatus(
+                PerformanceRoundStatus.ENDED).isViewerCancellationOpen())
+                .isFalse();
         assertThat(scheduled().changeStatus(
                 PerformanceRoundStatus.CANCELLED)
                 .isViewerCancellationOpen()).isFalse();
@@ -120,12 +160,26 @@ class PerformanceRoundTest {
     @Test
     void 입장은_ENTRY_OPEN_상태에서만_허용한다() {
         assertThat(scheduled().isEntryOpen()).isFalse();
-        assertThat(scheduled().changeStatus(
-                PerformanceRoundStatus.ENTRY_OPEN).isEntryOpen()).isTrue();
+        assertThat(entryOpen().isEntryOpen()).isTrue();
     }
 
     private PerformanceRound scheduled() {
         return PerformanceRound.scheduled(PROJECT_ID, 1, START,
                 ENTRY_START, RESERVATION_OPEN, RESERVATION_CLOSE);
+    }
+
+    private PerformanceRound reservationOpen() {
+        return scheduled().changeStatus(
+                PerformanceRoundStatus.RESERVATION_OPEN);
+    }
+
+    private PerformanceRound reservationClosed() {
+        return reservationOpen().changeStatus(
+                PerformanceRoundStatus.RESERVATION_CLOSED);
+    }
+
+    private PerformanceRound entryOpen() {
+        return reservationClosed().changeStatus(
+                PerformanceRoundStatus.ENTRY_OPEN);
     }
 }

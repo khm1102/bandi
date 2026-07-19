@@ -1,6 +1,7 @@
 import {all, lookup, readValue} from '../common/dom.js';
 
 const authForm = lookup('#schoolLoginForm');
+const passwordToggle = lookup('[data-password-toggle]');
 
 function showAuthError(message, fieldId) {
     const error = lookup('[data-auth-error]');
@@ -16,7 +17,7 @@ function showAuthError(message, fieldId) {
 
 function validateLogin() {
     if (!readValue('studentNo')) {
-        showAuthError('학교 포털 아이디를 입력해 주세요.', 'studentNo');
+        showAuthError('학번을 입력해 주세요.', 'studentNo');
         return false;
     }
     if (!readValue('password')) {
@@ -30,6 +31,13 @@ if (authForm) {
     authForm.addEventListener('submit', (event) => {
         if (!validateLogin()) {
             event.preventDefault();
+            return;
+        }
+        authForm.setAttribute('aria-busy', 'true');
+        const submit = event.submitter || authForm.querySelector('button[type="submit"]');
+        if (submit) {
+            submit.disabled = true;
+            submit.textContent = '학교 계정 확인 중…';
         }
     });
 
@@ -44,3 +52,26 @@ if (authForm) {
         error.textContent = '';
     });
 }
+
+if (passwordToggle) {
+    passwordToggle.addEventListener('click', () => {
+        const password = document.getElementById('password');
+        const visible = password.type === 'text';
+        password.type = visible ? 'password' : 'text';
+        passwordToggle.textContent = visible ? '보기' : '숨기기';
+        passwordToggle.setAttribute('aria-pressed', String(!visible));
+        password.focus();
+    });
+}
+
+window.addEventListener('pageshow', () => {
+    if (!authForm) {
+        return;
+    }
+    authForm.removeAttribute('aria-busy');
+    const submit = authForm.querySelector('button[type="submit"]');
+    if (submit) {
+        submit.disabled = false;
+        submit.textContent = '학교 계정 확인하고 로그인';
+    }
+});

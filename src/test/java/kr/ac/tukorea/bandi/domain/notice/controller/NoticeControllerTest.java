@@ -3,6 +3,7 @@ package kr.ac.tukorea.bandi.domain.notice.controller;
 import kr.ac.tukorea.bandi.domain.notice.dto.request.PublicNoticeSearchParam;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.PublicNoticeDetailResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.PublicNoticeSummaryResponse;
+import kr.ac.tukorea.bandi.domain.notice.exception.PublicNoticeNotFoundException;
 import kr.ac.tukorea.bandi.domain.notice.service.PublicNoticeService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,5 +67,15 @@ class NoticeControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("notice/detail"))
                 .andExpect(model().attribute("notice", notice));
+    }
+
+    @Test
+    void 존재하지_않는_공시는_404_화면으로_응답한다() throws Exception {
+        given(publicNoticeService.lookupPublic(999L))
+                .willThrow(new PublicNoticeNotFoundException(999L));
+
+        mockMvc.perform(get("/notices/999"))
+                .andExpect(status().isNotFound())
+                .andExpect(view().name("error/404"));
     }
 }

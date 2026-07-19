@@ -79,4 +79,14 @@
             text-wrap: balance;
         }
     }
+    /* 레이어 밖 후순위 규칙으로 utilities보다 우선 적용한다. */
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation: none;
+            transition: none;
+            scroll-behavior: auto;
+        }
+    }
 </style>

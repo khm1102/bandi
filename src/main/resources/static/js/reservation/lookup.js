@@ -1,12 +1,13 @@
 import {post} from '../common/api.js';
-import {openModal} from '../common/modal.js';
+import {closeSheetOf, openSheet} from '../common/sheet.js';
 import {showToast} from '../common/toast.js';
 import {bindPageActions, element, lookup, readValue} from '../common/dom.js';
-import {badge, closeActionModal} from '../common/view.js';
+import {badge} from '../common/view.js';
 
 const ACTIONS = Object.freeze({
     CANCEL_OPEN: 'reservation-cancel-open',
     CANCEL_SAVE: 'reservation-cancel-save',
+    RESET: 'reservation-lookup-reset',
 });
 
 const STATUS_LABELS = Object.freeze({
@@ -50,6 +51,7 @@ function seatCard(seat) {
 
 function renderReservation(reservation) {
     currentReservation = reservation;
+    lookup('[data-lookup-entry]').classList.add('hidden');
     lookup('[data-lookup-empty]').classList.add('hidden');
     lookup('[data-lookup-result]').classList.remove('hidden');
     lookup('[data-lookup-reservation-no]').textContent = reservation.reservationNo;
@@ -71,12 +73,20 @@ function renderReservation(reservation) {
     cancelButton.classList.toggle('hidden', !reservation.cancelable);
 }
 
+function showFeedback(message, tone = 'danger') {
+    const feedback = lookup('[data-lookup-feedback]');
+    feedback.textContent = message;
+    feedback.className = tone === 'success'
+            ? 'mt-3 rounded-md border border-success bg-success-soft px-3 py-2.5 text-sm text-success'
+            : 'mt-3 rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-sm text-destructive';
+}
+
 function showLookupError(message) {
     currentReservation = null;
     currentLookupToken = null;
     lookup('[data-lookup-result]').classList.add('hidden');
-    lookup('[data-lookup-empty]').textContent = message;
-    lookup('[data-lookup-empty]').classList.remove('hidden');
+    lookup('[data-lookup-entry]').classList.remove('hidden');
+    showFeedback(`${message} 입력한 토큰은 유지했어요. 다시 확인해 주세요.`);
 }
 
 async function lookupReservation(trigger) {
@@ -85,26 +95,33 @@ async function lookupReservation(trigger) {
         return;
     }
     const token = readValue('lookupToken');
-    document.getElementById('lookupToken').value = '';
-    showLookupError('일치하는 신청을 찾지 못했습니다. 토큰을 다시 확인해 주세요.');
     trigger.disabled = true;
+    lookup('[data-lookup-feedback]').classList.add('hidden');
     try {
         const reservation = await post('/api/public-reservations/lookup', {
             lookupToken: token,
         });
         currentLookupToken = token;
+        document.getElementById('lookupToken').value = '';
         renderReservation(reservation);
-        showToast('관람 신청을 확인했습니다.');
+        showToast('관람 신청을 확인했어요.');
     } catch (error) {
-        showToast(error.message || '관람 신청을 조회하지 못했습니다.');
+        showLookupError(error.message || '관람 신청을 조회하지 못했어요.');
     } finally {
         trigger.disabled = false;
     }
 }
 
-function openCancel() {
+function openCancel(trigger) {
+    if (!currentReservation || !currentLookupToken) {
+        showFeedback('다시 조회한 뒤 취소를 시작해 주세요.');
+        return;
+    }
     document.getElementById('publicCancelReason').value = '';
-    openModal('publicReservationCancelModal');
+    const activeSeats = currentReservation.seats.filter((seat) => seat.status !== 'CANCELLED');
+    lookup('[data-cancel-reservation-summary]').textContent =
+            `${currentReservation.performanceTitle} · ${currentReservation.roundNo}회차 · ${activeSeats.length}석`;
+    openSheet('publicReservationCancelSheet', trigger);
 }
 
 async function cancelReservation(trigger) {
@@ -118,17 +135,30 @@ async function cancelReservation(trigger) {
             lookupToken: currentLookupToken,
             reason: readValue('publicCancelReason'),
         });
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         const reservation = await post('/api/public-reservations/lookup', {
             lookupToken: currentLookupToken,
         });
         renderReservation(reservation);
-        showToast('관람 신청을 취소했습니다.');
+        currentLookupToken = null;
+        showToast('관람 신청을 취소했어요.');
     } catch (error) {
         showToast(error.message || '관람 신청을 취소하지 못했습니다.');
     } finally {
         trigger.disabled = false;
     }
+}
+
+function resetLookup() {
+    currentLookupToken = null;
+    currentReservation = null;
+    lookup('[data-lookup-result]').classList.add('hidden');
+    lookup('[data-lookup-empty]').classList.remove('hidden');
+    lookup('[data-lookup-entry]').classList.remove('hidden');
+    lookup('[data-lookup-feedback]').classList.add('hidden');
+    const input = document.getElementById('lookupToken');
+    input.value = '';
+    input.focus();
 }
 
 lookup('[data-lookup-form]').addEventListener('submit', (event) => {
@@ -139,4 +169,11 @@ lookup('[data-lookup-form]').addEventListener('submit', (event) => {
 bindPageActions({
     [ACTIONS.CANCEL_OPEN]: openCancel,
     [ACTIONS.CANCEL_SAVE]: cancelReservation,
+    [ACTIONS.RESET]: resetLookup,
+});
+
+window.addEventListener('pagehide', () => {
+    currentLookupToken = null;
+    currentReservation = null;
+    document.getElementById('lookupToken').value = '';
 });

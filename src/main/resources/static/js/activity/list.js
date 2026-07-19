@@ -1,9 +1,9 @@
 import {ApiError, get, post, put} from '../common/api.js';
 import {all, bindPageActions, element, lookup, readValue} from '../common/dom.js';
-import {closeModal, openModal} from '../common/modal.js';
+import {closeSheet, closeSheetOf, openSheet} from '../common/sheet.js';
 import {currentUserRole} from '../common/session.js';
 import {showToast} from '../common/toast.js';
-import {activateFilterChip, badge, closeActionModal} from '../common/view.js';
+import {activateFilterChip, badge} from '../common/view.js';
 
 const ACTIONS = Object.freeze({
     RETRY: 'activity-retry',
@@ -154,15 +154,50 @@ function renderRecords() {
     const list = lookup('[data-activity-list]');
     list.replaceChildren();
     if (records.length === 0) {
+        renderNextRecord();
         setListState('표시할 활동 기록이 없습니다', currentView === 'manageable'
             ? '새 활동 기록을 작성하거나 다른 조건을 선택해 보세요.'
             : '아직 승인된 활동 기록이 없습니다.');
         return;
     }
     records.forEach((record) => list.appendChild(createActivityCard(record)));
+    renderNextRecord();
     lookup('[data-activity-state]').classList.add('hidden');
     list.classList.remove('hidden');
-    list.classList.add('grid');
+}
+
+function renderNextRecord() {
+    const action = lookup('[data-activity-next-action]');
+    const record = currentView === 'approved'
+            ? records[0]
+            : records.find((item) => item.status === 'REVISION_REQUESTED')
+                || (canReview ? records.find((item) => item.status === 'SUBMITTED') : null)
+                || records.find((item) => item.status === 'DRAFT')
+                || records.find((item) => item.status === 'SUBMITTED');
+    action.classList.toggle('hidden', !record);
+    if (!record) {
+        setText('[data-activity-next-title]', currentView === 'approved'
+                ? '아직 승인된 활동 기록이 없어요' : '지금 처리할 활동 기록이 없어요');
+        setText('[data-activity-next-message]', currentView === 'approved'
+                ? '검수가 끝난 기록이 생기면 이곳에서 함께 볼 수 있어요.'
+                : '새 기록을 작성하거나 다른 팀의 제출을 기다려 주세요.');
+        return;
+    }
+    const message = record.status === 'REVISION_REQUESTED'
+            ? '보완 요청 내용을 확인하고 사진이나 활동 내용을 다시 제출해 주세요.'
+            : record.status === 'SUBMITTED'
+                ? canReview ? '증빙 사진과 활동 내용을 확인해 검수를 마쳐 주세요.'
+                    : '운영진 검수를 기다리고 있어요.'
+                : record.status === 'DRAFT'
+                    ? '작성 중인 기록을 마치고 인증 사진과 함께 제출해 주세요.'
+                    : '승인된 활동 내용과 인증 사진을 확인할 수 있어요.';
+    setText('[data-activity-next-title]', record.title);
+    setText('[data-activity-next-message]', message);
+    const button = lookup('button', action);
+    button.dataset.targetId = String(record.activityRecordId);
+    button.textContent = record.status === 'REVISION_REQUESTED'
+            ? '보완 내용 확인' : record.status === 'SUBMITTED' && canReview
+                ? '검수 시작' : '기록 확인';
 }
 
 function selectedTeamId() {
@@ -217,8 +252,8 @@ function activateView(button) {
     all('[data-activity-view]').forEach((tab) => {
         const selected = tab === button;
         tab.setAttribute('aria-selected', String(selected));
-        tab.classList.toggle('border', selected);
-        tab.classList.toggle('bg-card', selected);
+        tab.classList.toggle('border-primary', selected);
+        tab.classList.toggle('border-transparent', !selected);
         tab.classList.toggle('text-foreground', selected);
         tab.classList.toggle('text-muted-foreground', !selected);
     });
@@ -248,7 +283,7 @@ function resetActivityForm() {
     document.getElementById('activityChangeReason').value = '';
     lookup('[data-activity-change-reason-field]').classList.add('hidden');
     lookup('[data-evidence-required]').classList.remove('hidden');
-    setText('#activityModalTitle', '활동 기록 작성');
+    setText('#activitySheetTitle', '활동 기록 작성');
     setError('[data-activity-form-error]', '');
 }
 
@@ -258,7 +293,7 @@ function openCreateModal(trigger) {
         return;
     }
     resetActivityForm();
-    openModal('activityModal', trigger);
+    openSheet('activitySheet', trigger);
 }
 
 function populateEditForm(detail) {
@@ -278,7 +313,7 @@ function populateEditForm(detail) {
     lookup('[data-evidence-required]').classList.add('hidden');
     lookup('[data-activity-change-reason-field]').classList.toggle('hidden',
             detail.status !== 'REVISION_REQUESTED');
-    setText('#activityModalTitle', detail.status === 'REVISION_REQUESTED'
+    setText('#activitySheetTitle', detail.status === 'REVISION_REQUESTED'
         ? '활동 기록 보완·재제출' : '활동 기록 수정');
     setError('[data-activity-form-error]', '');
 }
@@ -288,8 +323,8 @@ function openEditModal(trigger) {
         return;
     }
     populateEditForm(currentDetail);
-    closeModal(document.getElementById('activityDetailModal'));
-    openModal('activityModal', trigger);
+    closeSheet(document.getElementById('activityDetailSheet'));
+    openSheet('activitySheet', trigger);
 }
 
 function activityPayload() {
@@ -370,7 +405,7 @@ async function saveActivity(trigger, submitAfterSave) {
                 changeReason: readValue('activityChangeReason') || null,
             });
         }
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         showToast(submitAfterSave ? '활동 기록을 제출했습니다.' : '활동 기록 초안을 저장했습니다.');
         editingDetail = null;
         pendingRecordId = null;
@@ -486,7 +521,8 @@ function renderDetail(detail, manageable) {
 }
 
 async function openDetail(trigger) {
-    const recordId = Number(trigger.closest('[data-activity-card]')?.dataset.activityRecordId);
+    const recordId = Number(trigger.dataset.targetId
+            || trigger.closest('[data-activity-card]')?.dataset.activityRecordId);
     if (!recordId) {
         return;
     }
@@ -497,7 +533,7 @@ async function openDetail(trigger) {
             ? `/api/activity-management/${recordId}`
             : `/api/activity-records/${recordId}`);
         renderDetail(manageable ? detail : {...detail, status: 'APPROVED'}, manageable);
-        openModal('activityDetailModal', trigger);
+        openSheet('activityDetailSheet', trigger);
     } catch (error) {
         showToast(errorMessage(error));
     } finally {
@@ -514,7 +550,7 @@ async function submitCurrentDetail(trigger) {
         await post(`/api/activity-management/${currentDetail.activityRecordId}/submit`, {
             changeReason: null,
         });
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         showToast('활동 기록을 제출했습니다.');
         await loadRecords();
     } catch (error) {
@@ -531,7 +567,7 @@ async function approveActivity(trigger) {
     trigger.disabled = true;
     try {
         await post(`/api/activity-management/${currentDetail.activityRecordId}/approve`);
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         showToast('활동 기록을 승인했습니다.');
         await loadRecords();
     } catch (error) {
@@ -544,8 +580,8 @@ async function approveActivity(trigger) {
 function openRevisionModal(trigger) {
     document.getElementById('activityRevisionComment').value = '';
     setError('[data-activity-revision-error]', '');
-    closeModal(document.getElementById('activityDetailModal'));
-    openModal('activityRevisionModal', trigger);
+    closeSheet(document.getElementById('activityDetailSheet'));
+    openSheet('activityRevisionSheet', trigger);
 }
 
 async function requestRevision(trigger) {
@@ -559,7 +595,7 @@ async function requestRevision(trigger) {
         await post(`/api/activity-management/${currentDetail.activityRecordId}/revision-request`, {
             comment,
         });
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         showToast('보완 요청을 전달했습니다.');
         await loadRecords();
     } catch (error) {
@@ -576,7 +612,7 @@ async function archiveActivity(trigger) {
     trigger.disabled = true;
     try {
         await post(`/api/activity-management/${currentDetail.activityRecordId}/archive`);
-        closeActionModal(trigger);
+        closeSheetOf(trigger);
         showToast('활동 기록을 보관했습니다.');
         await loadRecords();
     } catch (error) {
