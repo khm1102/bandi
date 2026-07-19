@@ -1,9 +1,10 @@
 package kr.ac.tukorea.bandi.domain.reservation.mapper;
 
-import kr.ac.tukorea.bandi.domain.reservation.model.PerformanceRoundSeat;
-import kr.ac.tukorea.bandi.domain.reservation.dto.response.ReservationSeatResponse;
+import kr.ac.tukorea.bandi.domain.reservation.dto.response.PublicReservationContextResponse;
 import kr.ac.tukorea.bandi.domain.reservation.dto.response.ReservationMetricsResponse;
+import kr.ac.tukorea.bandi.domain.reservation.dto.response.ReservationSeatResponse;
 import kr.ac.tukorea.bandi.domain.reservation.model.ActiveSeatOccupancy;
+import kr.ac.tukorea.bandi.domain.reservation.model.PerformanceRoundSeat;
 import kr.ac.tukorea.bandi.domain.reservation.model.Reservation;
 import kr.ac.tukorea.bandi.domain.reservation.model.ReservationSeat;
 import kr.ac.tukorea.bandi.domain.reservation.model.ReservationStatusHistory;
@@ -41,6 +42,9 @@ public interface ReservationMapper {
     Optional<Reservation> lookupReservationByIdForUpdate(Long reservationId);
 
     Optional<Reservation> lookupReservationByNo(String reservationNo);
+
+    Optional<PublicReservationContextResponse>
+            lookupPublicReservationContext(Long reservationId);
 
     Optional<ReservationSeat> lookupReservationSeatForUpdate(
             Long reservationSeatId);

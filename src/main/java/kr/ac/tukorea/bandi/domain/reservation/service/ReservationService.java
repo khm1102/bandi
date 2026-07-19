@@ -3,6 +3,8 @@ package kr.ac.tukorea.bandi.domain.reservation.service;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceRoundService;
 import kr.ac.tukorea.bandi.domain.policy.service.PolicyService;
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.ReservationCreateParam;
+import kr.ac.tukorea.bandi.domain.reservation.dto.response.PublicReservationContextResponse;
+import kr.ac.tukorea.bandi.domain.reservation.dto.response.PublicReservationDetailResponse;
 import kr.ac.tukorea.bandi.domain.reservation.dto.response.ReservationCreatedResponse;
 import kr.ac.tukorea.bandi.domain.reservation.dto.response.ReservationDetailResponse;
 import kr.ac.tukorea.bandi.domain.reservation.dto.response.ReservationSeatResponse;
@@ -86,7 +88,7 @@ public class ReservationService {
                 credentials.lookupToken(), credentials.entryToken());
     }
 
-    public ReservationDetailResponse lookup(String lookupToken) {
+    public PublicReservationDetailResponse lookup(String lookupToken) {
         Reservation reservation = reservationMapper
                 .lookupReservationByLookupTokenHash(
                         tokenGenerator.hash(lookupToken))
@@ -97,8 +99,14 @@ public class ReservationService {
         boolean cancellationOpen = roundService
                 .isViewerCancellationOpen(
                         reservation.getPerformanceRoundId());
-        return detail(reservation, seats,
+        ReservationDetailResponse detail = detail(reservation, seats,
                 isCancelable(reservation, seats, cancellationOpen));
+        PublicReservationContextResponse context = reservationMapper
+                .lookupPublicReservationContext(
+                        reservation.getReservationId())
+                .orElseThrow(() -> new ReservationNotFoundException(
+                        reservation.getReservationId()));
+        return PublicReservationDetailResponse.from(context, detail);
     }
 
     @Transactional

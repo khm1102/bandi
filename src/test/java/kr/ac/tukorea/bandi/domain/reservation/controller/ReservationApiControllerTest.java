@@ -2,6 +2,7 @@ package kr.ac.tukorea.bandi.domain.reservation.controller;
 
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.ReservationCreateParam;
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.RoundSeatCreateParam;
+import kr.ac.tukorea.bandi.domain.reservation.dto.response.PublicReservationDetailResponse;
 import kr.ac.tukorea.bandi.domain.reservation.dto.response.ReservationCreatedResponse;
 import kr.ac.tukorea.bandi.domain.reservation.model.ReservationStatus;
 import kr.ac.tukorea.bandi.domain.reservation.service.EntryService;
@@ -24,6 +25,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -106,10 +108,22 @@ class ReservationApiControllerTest {
 
     @Test
     void 조회_토큰으로_신청을_조회하고_취소한다() throws Exception {
+        given(reservationService.lookup("lookup-token")).willReturn(
+                new PublicReservationDetailResponse(40L, PROJECT_ID,
+                        ROUND_ID, "햄릿", "hamlet", "소극장", 1,
+                        LocalDateTime.of(2026, 11, 21, 17, 0),
+                        LocalDateTime.of(2026, 11, 21, 16, 30),
+                        "R20260719ABC", "홍길동", "010-1234-5678",
+                        ReservationStatus.CONFIRMED, null, null, true,
+                        List.of()));
+
         mockMvc.perform(post("/api/public-reservations/lookup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"lookupToken\":\"lookup-token\"}"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.performanceTitle").value("햄릿"))
+                .andExpect(jsonPath("$.performanceSlug").value("hamlet"))
+                .andExpect(jsonPath("$.roundNo").value(1));
         mockMvc.perform(post("/api/public-reservations/cancel")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"lookupToken\":\"lookup-token\","

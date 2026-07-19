@@ -7,7 +7,7 @@ import kr.ac.tukorea.bandi.domain.reservation.dto.request.ReservationCancelReque
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.ReservationCreateRequest;
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.ReservationLookupRequest;
 import kr.ac.tukorea.bandi.domain.reservation.dto.response.ReservationCreatedResponse;
-import kr.ac.tukorea.bandi.domain.reservation.dto.response.ReservationDetailResponse;
+import kr.ac.tukorea.bandi.domain.reservation.dto.response.PublicReservationDetailResponse;
 import kr.ac.tukorea.bandi.domain.reservation.dto.response.RoundSeatResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -37,7 +37,7 @@ public interface PublicReservationApiDocs {
     @Operation(summary = "조회 토큰으로 관람 신청 조회",
             description = "조회 토큰이 URL과 서버 접근 로그에 남지 않도록 요청 본문으로 전달합니다.")
     @PostMapping("/lookup")
-    ResponseEntity<ReservationDetailResponse> lookup(
+    ResponseEntity<PublicReservationDetailResponse> lookup(
             @Valid @RequestBody ReservationLookupRequest request);
 
     @Operation(summary = "조회 토큰으로 관람 신청 전체 취소")

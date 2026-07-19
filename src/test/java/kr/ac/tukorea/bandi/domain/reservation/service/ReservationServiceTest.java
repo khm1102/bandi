@@ -3,6 +3,7 @@ package kr.ac.tukorea.bandi.domain.reservation.service;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceRoundService;
 import kr.ac.tukorea.bandi.domain.policy.service.PolicyService;
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.ReservationCreateParam;
+import kr.ac.tukorea.bandi.domain.reservation.dto.response.PublicReservationContextResponse;
 import kr.ac.tukorea.bandi.domain.reservation.exception.InvalidReservationException;
 import kr.ac.tukorea.bandi.domain.reservation.exception.InvalidReservationStateException;
 import kr.ac.tukorea.bandi.domain.reservation.exception.ReservationNotFoundException;
@@ -187,12 +188,23 @@ class ReservationServiceTest {
                 .willReturn("01012345678");
         given(roundService.isViewerCancellationOpen(ROUND_ID))
                 .willReturn(true);
+        given(reservationMapper.lookupPublicReservationContext(
+                RESERVATION_ID)).willReturn(Optional.of(
+                new PublicReservationContextResponse(PROJECT_ID, "햄릿",
+                        "hamlet", "소극장", 1,
+                        NOW.plusDays(11),
+                        NOW.plusDays(11).minusMinutes(30))));
 
         var result = service.lookup(LOOKUP_TOKEN);
 
         assertThat(result.applicantName()).isEqualTo("홍길동");
         assertThat(result.phone()).isEqualTo("01012345678");
         assertThat(result.cancelable()).isTrue();
+        assertThat(result.performanceTitle()).isEqualTo("햄릿");
+        assertThat(result.performanceSlug()).isEqualTo("hamlet");
+        assertThat(result.place()).isEqualTo("소극장");
+        assertThat(result.roundNo()).isEqualTo(1);
+        assertThat(result.startDttm()).isEqualTo(NOW.plusDays(11));
     }
 
     @Test

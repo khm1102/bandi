@@ -54,6 +54,7 @@ class ReservationMapperTest {
 
     private Long adminId;
     private Long policyVersionId;
+    private PerformanceProject project;
     private PerformanceRound round;
 
     @Autowired
@@ -76,7 +77,7 @@ class ReservationMapperTest {
     void setUp() {
         adminId = insertAdmin();
         policyVersionId = insertPolicyVersion();
-        PerformanceProject project = PerformanceProject.planning(
+        project = PerformanceProject.planning(
                 (short) 2032, "FIRST", "햄릿",
                 LocalDate.of(2032, 3, 1),
                 LocalDate.of(2032, 12, 31), "소극장", adminId);
@@ -138,6 +139,37 @@ class ReservationMapperTest {
                 .isPresent();
         assertThat(reservationMapper.lookupReservationByNo(
                 "R20321110AAA")).isPresent();
+    }
+
+    @Test
+    void 공개_신청_조회에_공연과_회차_정보를_함께_조회한다() {
+        Reservation reservation = insertReservation(
+                "R20321110AAA", LOOKUP_HASH, ENTRY_HASH);
+        jdbcTemplate.update("""
+                INSERT INTO performance_public_page (
+                    performance_project_id, slug, status_code,
+                    short_description, synopsis, genre, age_rating,
+                    runtime_minutes, admission_fee, contact_name,
+                    contact_channel, organizer_name
+                ) VALUES (?, 'hamlet', 'PUBLISHED', '소개', '줄거리',
+                          '연극', '12세 이상', 90, 0,
+                          '반디', 'contact', '반디')
+                """, project.getPerformanceProjectId());
+
+        assertThat(reservationMapper.lookupPublicReservationContext(
+                reservation.getReservationId())).isPresent().get()
+                .satisfies(context -> {
+                    assertThat(context.performanceProjectId())
+                            .isEqualTo(project.getPerformanceProjectId());
+                    assertThat(context.performanceTitle())
+                            .isEqualTo("햄릿");
+                    assertThat(context.performanceSlug())
+                            .isEqualTo("hamlet");
+                    assertThat(context.place()).isEqualTo("소극장");
+                    assertThat(context.roundNo()).isEqualTo(1);
+                    assertThat(context.startDttm())
+                            .isEqualTo(NOW.plusDays(11));
+                });
     }
 
     @Test

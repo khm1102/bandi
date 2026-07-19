@@ -9,7 +9,7 @@
         <div>
             <p class="text-xs font-extrabold text-foreground">관람 안내</p>
             <div class="mt-2 flex flex-col gap-1.5 text-xs">
-                <a href="<c:url value='/reserve'/>" class="w-fit underline-offset-4 hover:text-foreground hover:underline">관람 신청</a>
+                <a href="<c:url value='/reserve'/>" class="w-fit underline-offset-4 hover:text-foreground hover:underline">관람 신청 조회·취소</a>
                 <a href="<c:url value='/notices'/>" class="w-fit underline-offset-4 hover:text-foreground hover:underline">입장·취소·접근성 공시</a>
             </div>
         </div>
