@@ -61,6 +61,7 @@
 <script type="module" src="<c:url value='/js/common/confirm.js'/>"></script>
 <script type="module" src="<c:url value='/js/common/form-guard.js'/>"></script>
 <script type="module" src="<c:url value='/js/common/navigation.js'/>"></script>
+<script type="module" src="<c:url value='/js/common/shell.js'/>"></script>
 <c:if test="${not empty scriptPath}">
     <script type="module" src="<c:url value='/js/${scriptPath}.js'/>"></script>
 </c:if>
