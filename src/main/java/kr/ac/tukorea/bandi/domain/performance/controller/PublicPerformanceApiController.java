@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.domain.performance.controller;
 
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformancePublicPageResponse;
+import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformancePublicNoticeResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceMediaResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceViewingGuideResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PublicPerformanceCastResponse;
@@ -9,6 +10,7 @@ import kr.ac.tukorea.bandi.domain.performance.dto.response.PublicPerformanceRoun
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PublicProductionCreditResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PublicProfileViewResponse;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformancePublicPageService;
+import kr.ac.tukorea.bandi.domain.performance.service.PerformancePublicNoticeService;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceContentService;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceRoundCastService;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceRoundService;
@@ -32,6 +34,7 @@ public class PublicPerformanceApiController implements PublicPerformanceApiDocs 
     private final PerformanceContentService contentService;
     private final PerformanceRoundCastService roundCastService;
     private final PublicPerformanceFileService publicPerformanceFileService;
+    private final PerformancePublicNoticeService publicNoticeService;
 
     @Override
     public ResponseEntity<PerformancePublicPageResponse> lookup(String slug) {
@@ -78,6 +81,12 @@ public class PublicPerformanceApiController implements PublicPerformanceApiDocs 
     @Override
     public ResponseEntity<List<PerformanceMediaResponse>> searchMedia(String slug) {
         return ResponseEntity.ok(contentService.searchPublicMedia(slug));
+    }
+
+    @Override
+    public ResponseEntity<List<PerformancePublicNoticeResponse>> searchNotices(
+            String slug) {
+        return ResponseEntity.ok(publicNoticeService.searchPublic(slug));
     }
 
     @Override
