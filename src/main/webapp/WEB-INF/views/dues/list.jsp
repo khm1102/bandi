@@ -5,104 +5,63 @@
 <c:set var="label" value="mb-1.5 block text-xs font-extrabold text-muted-foreground"/>
 <t:layout title="회비" active="dues" role="${role}" scriptPath="dues/list">
     <c:choose>
-        <%-- ───── 부원/팀장 뷰: 내 납부 현황 ───── --%>
         <c:when test="${role != 'admin'}">
-            <c:choose>
-                <c:when test="${role == 'leader'}"><c:set var="who" value="26-1기 무대팀"/></c:when>
-                <c:otherwise><c:set var="who" value="26-2기 배우"/></c:otherwise>
-            </c:choose>
-            <t:pageHead title="내 회비 납부 현황" description="${who} · 항목별 납부 여부와 납부일을 확인할 수 있습니다"/>
-            <div class="mb-4 grid grid-cols-3 gap-4">
-                <t:statCard label="전체 항목" value="3"/>
-                <t:statCard label="납부 완료" value="${role == 'leader' ? '2' : '1'}" tone="success"/>
-                <t:statCard label="미납" value="${role == 'leader' ? '1' : '2'}" tone="danger"/>
+            <t:pageHead title="내 회비 납부 현황" description="항목별 부과 금액과 납부 여부, 납부일을 확인합니다"/>
+            <div class="mb-4 grid grid-cols-1 gap-2.5 md:grid-cols-3 md:gap-4">
+                <t:statCard label="전체 부과액" value="—" unit="원" valueHook="my-total"/>
+                <t:statCard label="납부 완료" value="—" unit="원" tone="success" valueHook="my-paid"/>
+                <t:statCard label="미납" value="—" unit="원" tone="danger" valueHook="my-unpaid"/>
             </div>
             <div class="rounded-lg border bg-card">
                 <t:dataTable caption="내 회비 납부 현황">
-                    <thead><tr><th>회비 항목</th><th>기준 시기</th><th>금액</th><th>납부 여부</th><th>납부일</th></tr></thead>
-                    <tbody>
-                    <tr><td class="font-bold">동아리 가입 회비</td><td>2025-1학기</td><td>30,000원</td><td><t:badge tone="success">납부 완료</t:badge></td><td>${role == 'leader' ? '05/03' : '05/05'}</td></tr>
-                    <c:choose>
-                        <c:when test="${role == 'leader'}">
-                            <tr><td class="font-bold">6월 정기 회식비</td><td>2025-06</td><td>15,000원</td><td><t:badge tone="success">납부 완료</t:badge></td><td>06/11</td></tr>
-                        </c:when>
-                        <c:otherwise>
-                            <tr><td class="font-bold">6월 정기 회식비</td><td>2025-06</td><td>15,000원</td><td><t:badge tone="warning">미납</t:badge></td><td class="text-muted-foreground">—</td></tr>
-                        </c:otherwise>
-                    </c:choose>
-                    <tr><td class="font-bold">공연 추가 납부</td><td>2025-06</td><td>10,000원</td><td><t:badge tone="warning">미납</t:badge></td><td class="text-muted-foreground">—</td></tr>
-                    </tbody>
+                    <thead><tr><th>회비 항목</th><th>기준 시기</th><th>금액</th><th>납부 상태</th><th>납부일</th><th>납부 기한</th></tr></thead>
+                    <tbody data-my-fee-list><tr data-my-fee-state><td colspan="6" class="px-5 py-11 text-center"><b data-my-fee-state-title>회비 내역을 불러오는 중입니다</b><p class="mt-1 text-xs text-muted-foreground" data-my-fee-state-message>잠시만 기다려 주세요.</p><button type="button" class="mx-auto mt-4 hidden min-h-11 rounded-md border bg-card px-4 text-xs font-bold" data-my-fee-retry>다시 시도</button></td></tr></tbody>
                 </t:dataTable>
             </div>
+            <template data-my-fee-row-template><tr><td class="font-bold" data-my-fee-name></td><td data-my-fee-term></td><td data-my-fee-amount></td><td data-my-fee-status></td><td data-my-fee-paid-date></td><td data-my-fee-due-date></td></tr></template>
         </c:when>
-
-        <%-- ───── 운영진 뷰: 회비 관리 ───── --%>
         <c:otherwise>
-            <t:pageHead title="회비 관리" description="부원을 선택하여 납부·미납 처리를 한 번에 적용할 수 있습니다">
-                <t:button variant="outline" pageAction="fee-delete" confirm="현재 회비 항목과 화면에 표시된 납부 기록을 삭제할까요?" confirmAction="항목 삭제" cssClass="text-destructive">현재 항목 삭제</t:button>
+            <t:pageHead title="회비 관리" description="회비 항목을 부과하고 멤버별 수납 상태를 일괄 처리합니다">
+                <t:button variant="outline" pageAction="fee-cancel-open" cssClass="text-destructive">현재 항목 취소</t:button>
                 <t:button openModal="feeModal">+ 회비 항목 추가</t:button>
             </t:pageHead>
 
-            <div class="mb-4 inline-flex max-w-full flex-wrap rounded-lg border bg-secondary p-0.5" role="tablist" aria-label="회비 항목">
-                <button type="button" role="tab" aria-selected="true" data-fee-tab data-amount="30000" data-paid-rows="0:05/02,1:05/03,2:05/05,5:05/06" class="min-h-11 rounded-md border bg-card px-3 text-xs font-bold text-foreground">동아리 가입 회비</button>
-                <button type="button" role="tab" aria-selected="false" data-fee-tab data-amount="15000" data-paid-rows="0:06/11,1:06/11,3:06/12,5:06/12" class="min-h-11 rounded-md px-3 text-xs font-bold text-muted-foreground transition-colors">6월 정기 회식비</button>
-                <button type="button" role="tab" aria-selected="false" data-fee-tab data-amount="10000" data-paid-rows="0:06/19,3:06/19,4:06/20" class="min-h-11 rounded-md px-3 text-xs font-bold text-muted-foreground transition-colors">공연 추가 납부</button>
-            </div>
+            <div class="mb-4 flex max-w-full flex-wrap gap-1 rounded-lg border bg-secondary p-1" role="tablist" aria-label="회비 항목" data-fee-tabs></div>
 
-            <div data-fee-workspace>
-                <div class="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-4">
-                    <t:statCard label="항목 금액" value="30,000" unit="원" valueHook="fee-amount"/>
-                    <t:statCard label="납부 완료" value="4" tone="success" valueHook="fee-paid"/>
-                    <t:statCard label="미납" value="2" tone="danger" valueHook="fee-unpaid"/>
-                    <t:statCard label="수납액" value="120,000" unit="원" valueHook="fee-collected"/>
+            <div data-fee-workspace class="hidden">
+                <div class="mb-4 grid grid-cols-2 gap-2.5 lg:grid-cols-4 lg:gap-4">
+                    <t:statCard label="항목 금액" value="—" unit="원" valueHook="fee-amount"/>
+                    <t:statCard label="납부 완료" value="—" tone="success" valueHook="fee-paid"/>
+                    <t:statCard label="미납" value="—" tone="danger" valueHook="fee-unpaid"/>
+                    <t:statCard label="수납액" value="—" unit="원" valueHook="fee-collected"/>
                 </div>
-
                 <div class="mb-3 rounded-lg border bg-card px-4 py-3">
                     <div class="flex flex-wrap items-center gap-3">
-                        <label class="flex cursor-pointer items-center gap-2 text-xs font-extrabold"><input type="checkbox" data-fee-all class="size-4 accent-primary"> 전체 선택</label>
-                        <span class="text-xs text-muted-foreground">체크한 부원에게 일괄 적용</span>
-                        <div class="ml-auto flex gap-1.5">
-                            <t:button size="compact" pageAction="fee-pay">선택 납부 처리</t:button>
-                            <t:button variant="outline" size="compact" pageAction="fee-unpay">선택 미납 처리</t:button>
-                        </div>
+                        <label class="flex min-h-11 cursor-pointer items-center gap-2 text-xs font-extrabold"><input type="checkbox" data-fee-all class="size-4 accent-primary"> 전체 선택</label>
+                        <span class="text-xs text-muted-foreground">체크한 멤버에게 일괄 적용</span>
+                        <div class="ml-auto flex flex-wrap gap-1.5"><t:button size="compact" pageAction="fee-pay">선택 납부 처리</t:button><t:button variant="outline" size="compact" pageAction="fee-unpay">선택 미납 처리</t:button></div>
                     </div>
                 </div>
-
                 <div class="rounded-lg border bg-card">
-                    <t:dataTable caption="부원별 회비 납부 현황">
-                        <thead><tr><th class="w-11">선택</th><th>부원</th><th>기수</th><th>소속팀</th><th>납부 상태</th><th>납부일</th></tr></thead>
-                        <tbody>
-                    <tr data-fee-row><td><input type="checkbox" data-fee-person class="size-4 accent-primary" aria-label="이서준 선택"></td><td><span class="flex items-center gap-2"><span class="flex size-7 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-foreground">LS</span><b>이서준</b></span></td><td>26-1기</td><td>운영진</td><td data-fee-status><t:badge tone="success">납부 완료</t:badge></td><td data-fee-date>05/02</td></tr>
-                    <tr data-fee-row><td><input type="checkbox" data-fee-person class="size-4 accent-primary" aria-label="정도윤 선택"></td><td><span class="flex items-center gap-2"><span class="flex size-7 items-center justify-center rounded-full bg-info text-xs font-black text-white">JD</span><b>정도윤</b></span></td><td>26-1기</td><td>무대</td><td data-fee-status><t:badge tone="success">납부 완료</t:badge></td><td data-fee-date>05/03</td></tr>
-                    <tr data-fee-row><td><input type="checkbox" data-fee-person class="size-4 accent-primary" aria-label="김하늘 선택"></td><td><span class="flex items-center gap-2"><span class="flex size-7 items-center justify-center rounded-full bg-sidebar-accent text-xs font-black text-white">KH</span><b>김하늘</b></span></td><td>26-2기</td><td>배우</td><td data-fee-status><t:badge tone="success">납부 완료</t:badge></td><td data-fee-date>05/05</td></tr>
-                    <tr data-fee-row><td><input type="checkbox" data-fee-person class="size-4 accent-primary" aria-label="박서연 선택"></td><td><span class="flex items-center gap-2"><span class="flex size-7 items-center justify-center rounded-full bg-accent-foreground text-xs font-black text-white">PS</span><b>박서연</b></span></td><td>26-2기</td><td>오퍼</td><td data-fee-status><t:badge tone="warning">미납</t:badge></td><td class="text-muted-foreground" data-fee-date>—</td></tr>
-                    <tr data-fee-row><td><input type="checkbox" data-fee-person class="size-4 accent-primary" aria-label="한지우 선택"></td><td><span class="flex items-center gap-2"><span class="flex size-7 items-center justify-center rounded-full bg-success text-xs font-black text-white">HJ</span><b>한지우</b></span></td><td>26-2기</td><td>디자인</td><td data-fee-status><t:badge tone="warning">미납</t:badge></td><td class="text-muted-foreground" data-fee-date>—</td></tr>
-                    <tr data-fee-row><td><input type="checkbox" data-fee-person class="size-4 accent-primary" aria-label="최민준 선택"></td><td><span class="flex items-center gap-2"><span class="flex size-7 items-center justify-center rounded-full bg-warning text-xs font-black text-white">CM</span><b>최민준</b></span></td><td>26-1기</td><td>영상</td><td data-fee-status><t:badge tone="success">납부 완료</t:badge></td><td data-fee-date>05/06</td></tr>
-                        </tbody>
+                    <t:dataTable caption="멤버별 회비 납부 현황">
+                        <thead><tr><th class="w-11">선택</th><th>멤버</th><th>부과 금액</th><th>납부 상태</th><th>납부일</th></tr></thead>
+                        <tbody data-fee-charge-list><tr data-fee-charge-state><td colspan="5" class="px-5 py-11 text-center"><b data-fee-charge-state-title>부과 명단을 불러오는 중입니다</b><p class="mt-1 text-xs text-muted-foreground" data-fee-charge-state-message>잠시만 기다려 주세요.</p></td></tr></tbody>
                     </t:dataTable>
                 </div>
             </div>
+            <div data-fee-empty class="hidden rounded-lg border bg-card"><t:emptyState title="등록된 회비 항목이 없습니다" message="새 회비 항목을 추가하면 전체 활성 멤버에게 부과할 수 있습니다."><t:button openModal="feeModal">+ 회비 항목 추가</t:button></t:emptyState></div>
 
-            <div data-fee-empty class="hidden rounded-lg border bg-card">
-                <t:emptyState title="등록된 회비 항목이 없습니다" message="새 회비 항목을 추가하면 부원별 납부 현황을 관리할 수 있습니다.">
-                    <t:button openModal="feeModal">+ 회비 항목 추가</t:button>
-                </t:emptyState>
-            </div>
+            <template data-fee-tab-template><button type="button" role="tab" aria-selected="false" data-fee-tab class="min-h-11 rounded-md px-3 text-xs font-bold text-muted-foreground transition-colors"></button></template>
+            <template data-fee-charge-row-template><tr data-fee-charge-row><td><input type="checkbox" data-fee-person class="size-4 accent-primary"></td><td><span class="flex items-center gap-2"><span class="flex size-7 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-foreground" data-fee-avatar></span><b data-fee-member-name></b></span></td><td data-fee-charged-amount></td><td data-fee-status></td><td data-fee-date></td></tr></template>
 
-            <t:modal id="feeModal" title="회비 항목 추가" description="가입비·회식비·추가 납부 등 새 항목을 만듭니다.">
-                <jsp:attribute name="footer">
-                    <t:button variant="outline" action="close-modal">취소</t:button>
-                    <t:button pageAction="fee-add">항목 추가</t:button>
-                </jsp:attribute>
-                <jsp:body>
-                    <div class="flex flex-col gap-3">
-                        <div><label class="${label}" for="feeName">항목명 <span aria-hidden="true">*</span></label><input class="${input}" id="feeName" type="text" placeholder="예) 7월 회식비" required aria-required="true"></div>
-                        <div class="grid grid-cols-2 gap-2.5">
-                            <div><label class="${label}" for="feeAmt">금액 (원)</label><input class="${input}" id="feeAmt" type="number" inputmode="numeric" value="15000" min="0" step="1"></div>
-                            <div><label class="${label}" for="feeWhen">기준 시기</label><input class="${input}" id="feeWhen" type="month"></div>
-                        </div>
-                    </div>
-                </jsp:body>
+            <t:modal id="feeModal" title="회비 항목 추가" description="항목을 만든 뒤 전체 활성 멤버에게 즉시 부과합니다.">
+                <jsp:attribute name="footer"><t:button variant="outline" action="close-modal">취소</t:button><t:button pageAction="fee-add">항목 추가·부과</t:button></jsp:attribute>
+                <jsp:body><div class="flex flex-col gap-3"><div><label class="${label}" for="feeName">항목명 <span class="text-accent-foreground">*</span></label><input class="${input}" id="feeName" type="text" maxlength="150" placeholder="예) 7월 회식비"></div><div><label class="${label}" for="feeDescription">설명</label><textarea class="min-h-20 w-full resize-y rounded-md border border-input bg-card px-3 py-2.5 text-sm" id="feeDescription"></textarea></div><div class="grid grid-cols-1 gap-3 md:grid-cols-2"><div><label class="${label}" for="feeAmt">금액 <span class="text-accent-foreground">*</span></label><input class="${input}" id="feeAmt" type="number" min="1" step="1" inputmode="numeric"></div><div><label class="${label}" for="feeDue">납부 기한 <span class="text-accent-foreground">*</span></label><input class="${input}" id="feeDue" type="date"></div></div><div><label class="${label}" for="feeTerm">기준 시기</label><input class="${input}" id="feeTerm" type="text" maxlength="20" placeholder="예) 2026-1"></div><p class="hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-xs text-destructive" data-fee-form-error role="alert"></p></div></jsp:body>
+            </t:modal>
+
+            <t:modal id="feeCancelModal" title="회비 항목 취소" description="부과 기록은 삭제하지 않고 취소 상태와 사유를 남깁니다.">
+                <jsp:attribute name="footer"><t:button variant="outline" action="close-modal">닫기</t:button><t:button variant="danger" pageAction="fee-cancel">항목 취소</t:button></jsp:attribute>
+                <jsp:body><label class="${label}" for="feeCancelReason">취소 사유 <span class="text-accent-foreground">*</span></label><textarea class="min-h-28 w-full resize-y rounded-md border border-input bg-card px-3 py-2.5 text-sm" id="feeCancelReason" maxlength="500"></textarea><p class="mt-2 hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-xs text-destructive" data-fee-cancel-error role="alert"></p></jsp:body>
             </t:modal>
         </c:otherwise>
     </c:choose>
