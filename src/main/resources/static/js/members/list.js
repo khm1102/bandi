@@ -1,23 +1,17 @@
 import {showToast} from '../common/toast.js';
 import {all, bindPageActions, lookup, readValue} from '../common/dom.js';
-import {badge, closeActionModal, today} from '../common/view.js';
+import {badge, closeActionModal} from '../common/view.js';
 
-const ACTIONS = Object.freeze({
-    COPY_INVITE: 'invite-copy',
-    TOGGLE_INVITE: 'invite-toggle',
-    ADD_INVITE: 'invite-add',
-    ADD_MEMBER: 'member-add'
-});
+const ACTIONS = Object.freeze({ADD_MEMBER: 'member-add'});
 
 function memberName(row) {
-    const name = lookup('[data-member-name]', row) || lookup('b', row.cells[0]);
-    return name.textContent.trim();
+    return lookup('[data-member-name]', row).textContent.trim();
 }
 
 function prepareMemberRoleButton(row, button) {
     const name = memberName(row);
-    const currentRole = row.cells[3].textContent.trim();
-    const selected = button.textContent.trim() === currentRole;
+    const roleCell = lookup('[data-member-role-cell]', row);
+    const selected = button.textContent.trim() === roleCell.textContent.trim();
     button.dataset.memberRole = '';
     button.setAttribute('aria-pressed', String(selected));
     button.classList.toggle('border', selected);
@@ -36,70 +30,39 @@ function prepareMemberRoleButton(row, button) {
 function changeMemberRole(row, button) {
     const roleName = button.textContent.trim();
     const tone = roleName === '운영진' ? 'accent' : roleName === '팀장' ? 'info' : 'neutral';
-    row.cells[3].replaceChildren(badge(roleName, tone));
+    lookup('[data-member-role-cell]', row).replaceChildren(badge(roleName, tone));
     all('td:last-child button', row).forEach((candidate) => prepareMemberRoleButton(row, candidate));
     showToast(`${memberName(row)}님 권한을 ${roleName}(으)로 변경했어요`);
 }
 
-function inviteCard(code, cohort) {
-    const template = lookup('[data-invite-card-template]');
-    const card = template.content.firstElementChild.cloneNode(true);
-    lookup('[data-invite-cohort]', card).replaceWith(badge(cohort, 'accent'));
-    lookup('[data-invite-code]', card).textContent = code;
-    lookup('[data-invite-meta]', card).textContent = `${today()} 생성 · 가입 0명 · 사용 가능`;
-    return card;
-}
-
-function addInvite(trigger) {
-    const cohort = readValue('ivCohort');
-    if (!cohort) {
-        showToast('기수를 입력해 주세요');
+function addMember(trigger) {
+    const studentNo = readValue('mbStudentNo');
+    const name = readValue('mbName');
+    if (!studentNo) {
+        showToast('학번을 입력해 주세요');
         return;
     }
-    const clean = cohort.replace(/[^0-9]/g, '').slice(0, 3) || 'NEW';
-    const random = Math.random().toString(36).slice(2, 6).toUpperCase();
-    const code = `BANDI-${clean}-${random}`;
-    lookup('[data-invite-list]').prepend(inviteCard(code, cohort));
-    closeActionModal(trigger);
-    showToast(`${cohort} 초대코드를 생성했어요`);
-}
-
-function addMember(trigger) {
-    const name = readValue('mbName');
     if (!name) {
         showToast('이름을 입력해 주세요');
         return;
     }
     const cohort = readValue('mbCohort') || '미분류';
-    const team = readValue('mbTeam') || '미소속';
+    const team = readValue('mbTeam');
     const roleName = readValue('mbRole');
     const template = lookup('[data-member-row-template]');
     const row = template.content.firstElementChild.cloneNode(true);
     lookup('[data-member-avatar]', row).textContent = name.slice(0, 2);
     lookup('[data-member-name]', row).textContent = name;
+    lookup('[data-member-student-no]', row).textContent = studentNo;
     lookup('[data-member-cohort]', row).appendChild(badge(cohort, 'info'));
     lookup('[data-member-team]', row).textContent = team;
-    const roleCell = lookup('[data-member-role-cell]', row);
+    lookup('[data-member-sso]', row).appendChild(badge('연결 대기', 'warning'));
     const tone = roleName === '운영진' ? 'accent' : roleName === '팀장' ? 'info' : 'neutral';
-    roleCell.appendChild(badge(roleName, tone));
+    lookup('[data-member-role-cell]', row).appendChild(badge(roleName, tone));
     all('td:last-child button', row).forEach((button) => prepareMemberRoleButton(row, button));
     lookup('[data-member-list]').appendChild(row);
     closeActionModal(trigger);
-    showToast(`${name}님을 ${team} 소속으로 추가했어요`);
-}
-
-async function copyInviteCode(trigger) {
-    const code = lookup('[data-invite-code]', trigger.closest('[data-invite-card]')).textContent.trim();
-    if (!navigator.clipboard) {
-        showToast('이 브라우저에서는 클립보드 복사를 지원하지 않아요');
-        return;
-    }
-    try {
-        await navigator.clipboard.writeText(code);
-        showToast(`${code} 복사 완료`);
-    } catch {
-        showToast('초대코드를 복사하지 못했어요');
-    }
+    showToast(`${name}님을 사전 등록했어요. 첫 학교 로그인 후 계정이 연결됩니다`);
 }
 
 all('[data-member-list] tr').forEach((row) => {
@@ -108,24 +71,10 @@ all('[data-member-list] tr').forEach((row) => {
 
 document.addEventListener('click', (event) => {
     const button = event.target.closest('[data-member-role]');
-    if (button) {
-        changeMemberRole(button.closest('tr'), button);
+    if (!button) {
+        return;
     }
+    changeMemberRole(button.closest('tr'), button);
 });
 
-bindPageActions({
-    [ACTIONS.COPY_INVITE]: copyInviteCode,
-    [ACTIONS.TOGGLE_INVITE]: (trigger) => {
-        const activating = trigger.textContent.trim() === '활성화';
-        const card = trigger.closest('[data-invite-card]');
-        const metadata = lookup('[data-invite-meta]', card);
-        trigger.textContent = activating ? '중지' : '활성화';
-        metadata.textContent = metadata.textContent.replace(
-            /사용 가능|사용 중지$/,
-            activating ? '사용 가능' : '사용 중지'
-        );
-        showToast(activating ? '초대코드를 활성화했어요' : '초대코드를 사용 중지했어요');
-    },
-    [ACTIONS.ADD_INVITE]: addInvite,
-    [ACTIONS.ADD_MEMBER]: addMember
-});
+bindPageActions({[ACTIONS.ADD_MEMBER]: addMember});

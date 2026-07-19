@@ -4,11 +4,34 @@ import {currentUserRole, memberProfiles} from '../common/session.js';
 import {activateFilterChip, badge, closeActionModal, today} from '../common/view.js';
 
 const ACTIONS = Object.freeze({
-    OPEN: 'resource-open',
     DOWNLOAD: 'resource-download',
     UPLOAD: 'resource-upload',
-    NOTICE: 'resource-notice'
+    NOTICE_ADD: 'notice-add',
+    NOTICE_OPEN: 'notice-open'
 });
+
+function activateInfoTab(button) {
+    const selectedTab = button.dataset.infoTab;
+    all('[data-info-tab]').forEach((tab) => {
+        const selected = tab === button;
+        tab.setAttribute('aria-selected', String(selected));
+        tab.classList.toggle('border', selected);
+        tab.classList.toggle('bg-card', selected);
+        tab.classList.toggle('text-foreground', selected);
+        tab.classList.toggle('text-muted-foreground', !selected);
+    });
+    all('[data-info-panel]').forEach((panel) => {
+        panel.classList.toggle('hidden', panel.dataset.infoPanel !== selectedTab);
+    });
+}
+
+function filterNotices() {
+    const selected = lookup('[data-filter-group="notice"][aria-pressed="true"]');
+    const category = selected ? selected.dataset.filterValue : '전체';
+    all('[data-notice-card]').forEach((card) => {
+        card.hidden = category !== '전체' && !card.dataset.category.split(' ').includes(category);
+    });
+}
 
 function filterResources() {
     const selected = lookup('[data-filter-group="resource"][aria-pressed="true"]');
@@ -23,48 +46,80 @@ function filterResources() {
     lookup('[data-resource-empty]').classList.toggle('hidden', hasVisibleResource);
 }
 
-function buildResourceRow(name, category, notice) {
+function buildResourceRow(name, category) {
     const template = lookup('[data-resource-row-template]');
     const row = template.content.firstElementChild.cloneNode(true);
-    row.dataset.category = notice ? `공지 ${category}` : category;
+    row.dataset.category = category;
     lookup('[data-resource-name]', row).textContent = name;
-    const categoryCell = lookup('[data-resource-category]', row);
-    categoryCell.appendChild(badge(notice ? '공지' : category, notice ? 'accent' : 'neutral'));
+    lookup('[data-resource-category]', row).appendChild(badge(category, 'neutral'));
+    lookup('[data-resource-version]', row).textContent = 'v1';
     lookup('[data-resource-uploader]', row).textContent = memberProfiles[currentUserRole][0];
     lookup('[data-resource-date]', row).textContent = today();
-    lookup('[data-resource-quality]', row).textContent = notice ? '—' : '원본';
     return row;
 }
 
-function addResource(trigger, noticeOnly) {
-    const name = readValue(noticeOnly ? 'ntName' : 'upName');
+function addResource(trigger) {
+    const name = readValue('upName');
     if (!name) {
-        showToast(noticeOnly ? '제목을 입력해 주세요' : '파일명을 입력해 주세요');
+        showToast('자료 제목을 입력해 주세요');
         return;
     }
-    const category = readValue(noticeOnly ? 'ntCat' : 'upCat');
-    const noticeCheckbox = document.getElementById('upNotice');
-    const notice = noticeOnly || Boolean(noticeCheckbox && noticeCheckbox.checked);
-    lookup('[data-resource-list]').prepend(buildResourceRow(name, category, notice));
+    const category = readValue('upCat');
+    lookup('[data-resource-list]').prepend(buildResourceRow(name, category));
     closeActionModal(trigger);
     filterResources();
-    showToast(notice ? '공지를 등록했어요. 상단에 고정됩니다' : '파일을 업로드했어요');
+    showToast('자료를 업로드했어요');
+}
+
+function buildNoticeCard(title, body, target) {
+    const template = lookup('[data-notice-card-template]');
+    const card = template.content.firstElementChild.cloneNode(true);
+    const teamNotice = target === '내 팀';
+    card.dataset.category = teamNotice ? '팀공지' : '전체공지';
+    const badgeContainer = lookup('[data-notice-badges]', card);
+    badgeContainer.appendChild(badge(teamNotice ? '내 팀' : '전체', teamNotice ? 'info' : 'neutral'));
+    badgeContainer.appendChild(badge('게시 중', 'success'));
+    lookup('[data-notice-title]', card).textContent = title;
+    lookup('[data-notice-body]', card).textContent = body || '내용이 없는 짧은 공지입니다.';
+    lookup('[data-notice-meta]', card).textContent = `${memberProfiles[currentUserRole][0]} · ${today()} 게시 · 확인 0명`;
+    return card;
+}
+
+function addNotice(trigger) {
+    const title = readValue('ntTitle');
+    if (!title) {
+        showToast('공지 제목을 입력해 주세요');
+        return;
+    }
+    lookup('[data-notice-list]').prepend(buildNoticeCard(title, readValue('ntBody'), readValue('ntTarget')));
+    closeActionModal(trigger);
+    filterNotices();
+    showToast('짧은 공지를 게시했어요');
 }
 
 lookup('[data-resource-search]').addEventListener('input', debounce(filterResources));
 
 document.addEventListener('click', (event) => {
-    const filter = event.target.closest('[data-filter-group="resource"]');
+    const infoTab = event.target.closest('[data-info-tab]');
+    if (infoTab) {
+        activateInfoTab(infoTab);
+        return;
+    }
+    const filter = event.target.closest('[data-filter-group]');
     if (!filter) {
         return;
     }
     activateFilterChip(filter);
+    if (filter.dataset.filterGroup === 'notice') {
+        filterNotices();
+        return;
+    }
     filterResources();
 });
 
 bindPageActions({
-    [ACTIONS.OPEN]: () => showToast('공지 파일을 열었어요'),
     [ACTIONS.DOWNLOAD]: () => showToast('다운로드를 시작했어요'),
-    [ACTIONS.UPLOAD]: (trigger) => addResource(trigger, false),
-    [ACTIONS.NOTICE]: (trigger) => addResource(trigger, true)
+    [ACTIONS.UPLOAD]: addResource,
+    [ACTIONS.NOTICE_ADD]: addNotice,
+    [ACTIONS.NOTICE_OPEN]: () => showToast('공지 상세 화면은 다음 구현 단계에서 연결합니다')
 });

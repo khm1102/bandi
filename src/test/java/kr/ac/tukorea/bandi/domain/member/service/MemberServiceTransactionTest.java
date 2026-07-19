@@ -7,11 +7,14 @@ import kr.ac.tukorea.bandi.domain.member.mapper.CohortMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.MemberHistoryMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.MemberMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.TeamMapper;
+import kr.ac.tukorea.bandi.domain.member.model.AcademicStatus;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
 import kr.ac.tukorea.bandi.domain.member.model.CohortTerm;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
 import kr.ac.tukorea.bandi.domain.member.model.MemberStatus;
+import kr.ac.tukorea.bandi.domain.member.model.SsoLinkStatus;
+import kr.ac.tukorea.bandi.domain.member.model.SchoolIdentity;
 import kr.ac.tukorea.bandi.domain.member.model.Team;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -161,6 +164,30 @@ class MemberServiceTransactionTest {
                 .get()
                 .extracting(Member::getStatus)
                 .isEqualTo(MemberStatus.PRE_REGISTERED);
+    }
+
+    @Test
+    void 최초_SSO_상태_이력_삽입이_실패하면_멤버_활성화도_롤백된다() {
+        // given
+        willThrow(new IllegalStateException("SSO 상태 이력 저장 실패"))
+                .given(memberHistoryMapper).insertStatusHistory(any());
+        SchoolIdentity identity = new SchoolIdentity(
+                "2999184000", "김하늘", "컴퓨터공학부", AcademicStatus.ENROLLED);
+
+        // when
+        assertThatThrownBy(() -> memberService.connectSchoolIdentity(identity))
+                .isInstanceOf(IllegalStateException.class);
+
+        // then
+        assertThat(memberMapper.lookupById(memberId))
+                .isPresent()
+                .get()
+                .satisfies(member -> {
+                    assertThat(member.getStatus()).isEqualTo(MemberStatus.PRE_REGISTERED);
+                    assertThat(member.getSsoLinkStatus()).isEqualTo(
+                            SsoLinkStatus.WAITING);
+                    assertThat(member.getAcademicStatus()).isNull();
+                });
     }
 
     private void executeUpdate(String sql) throws SQLException {

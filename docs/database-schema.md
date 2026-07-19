@@ -200,7 +200,7 @@ erDiagram
 | `student_no` | VARCHAR(20) | N | 학교 학번, 로그인 연결 키 |
 | `name` | VARCHAR(50) | N | 표시 이름 |
 | `department` | VARCHAR(100) | Y | 마지막 학교 확인 학과 |
-| `academic_status_code` | VARCHAR(30) | Y | 마지막 학적 상태 |
+| `academic_status_code` | VARCHAR(30) | Y | `ENROLLED`, `LEAVE_OF_ABSENCE`, `GRADUATED`, `UNKNOWN` |
 | `academic_status_verified_dttm` | DATETIME(6) | Y | 학교에서 확인한 시각 |
 | `team_id` | BIGINT FK | N | 현재 소속 팀, 한 명당 하나 |
 | `cohort_id` | BIGINT FK | N | 가입 기수 |
@@ -218,6 +218,7 @@ erDiagram
 - `idx_member_cohort_status(cohort_id, member_status_code)`
 - `idx_member_sso_link_status(sso_link_status_code)`
 - `role_code`는 세 값만 허용한다.
+- `ck_member_academic_status_code`: 학교 라벨을 정규화한 네 학적 코드만 허용하며 SSO 확인 전에는 NULL이다.
 - 운영진 사전 등록의 최초 권한은 항상 `MEMBER`다. `LEADER`, `ADMIN` 승격은 등록 후 별도 권한 변경 명령과 이력으로만 처리한다.
 - 일반 내부 접근은 `academic_status_code = 'ENROLLED'`, `member_status_code = 'ACTIVE'`, `sso_link_status_code = 'LINKED'`를 모두 만족해야 한다.
 - 온보딩 구현 전에는 사전 등록 정보가 일치한 최초 SSO 연결 트랜잭션에서 `PRE_REGISTERED → ACTIVE`, `WAITING → LINKED`로 전환하고 일반 세션을 생성한다. 이름·학번 대조가 불일치하면 활성화하지 않고 `REVIEW_REQUIRED`로 전환한다.
@@ -470,9 +471,9 @@ erDiagram
 
 ### 7.3 업로드·조회·삭제 흐름
 
-1. 1차 구현은 브라우저가 애플리케이션에 multipart 파일을 전송하고 서버가 확장자, MIME, 파일 시그니처, 용량과 권한을 검증한다.
-2. 서버가 `PENDING` 행을 만든 뒤 MinIO에 업로드하면서 SHA-256을 계산한다.
-3. MinIO 저장 결과를 확인해 `object_etag`, `size_bytes`, `sha256_hash`와 상태를 `READY`로 갱신한 뒤 업무 레코드와 연결한다.
+1. 1차 구현은 브라우저가 애플리케이션에 multipart 파일을 전송하고 서버가 확장자, 파일 시그니처, 용량과 권한을 검증한다. 클라이언트가 보낸 MIME은 신뢰하지 않고 서버가 판별한다.
+2. 재개방 가능한 입력 스트림을 먼저 순회해 실제 크기와 SHA-256을 확정한 뒤 `PENDING` 행을 만들고, 새 스트림으로 MinIO에 업로드한다. 검증 과정에서도 애플리케이션 로컬 디스크에 파일을 쓰지 않는다.
+3. MinIO 저장 결과를 확인해 `object_etag`와 상태를 `READY`로 갱신한 뒤 업무 레코드와 연결한다.
 4. 실패하면 `FAILED`로 전환하고 남은 객체와 장시간 `PENDING` 행은 보상 정리 작업에서 제거한다.
 5. `PRIVATE` 파일은 서버 권한 확인 후 짧은 만료시간의 presigned GET URL로 제공한다. URL 자체를 DB나 로그에 저장하지 않는다.
 6. `PUBLIC` 파일은 게시 상태를 확인한 공개 콘텐츠만 읽을 수 있게 하며, 게시 종료 시 공개 연결을 해제한다.
