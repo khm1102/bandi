@@ -134,6 +134,28 @@ class MemberMapperTest {
     }
 
     @Test
+    void 이름_또는_학번과_SSO_연결_상태로_멤버를_검색한다() {
+        Member linked = new Member(null, "2020184000", "이서준", null,
+                AcademicStatus.ENROLLED, null, actorTeamId, cohortId,
+                ClubRole.MEMBER, MemberStatus.ACTIVE, SsoLinkStatus.LINKED,
+                null, null, null);
+        memberMapper.insert(linked);
+        memberMapper.insert(preRegistered("2021184001", stageTeamId));
+
+        List<Member> byName = memberMapper.searchByCondition(
+                new MemberSearchCondition("서준", null, null, null,
+                        SsoLinkStatus.LINKED));
+        List<Member> byStudentNo = memberMapper.searchByCondition(
+                new MemberSearchCondition("202018", null, null, null,
+                        SsoLinkStatus.LINKED));
+
+        assertThat(byName).extracting(Member::getMemberId)
+                .containsExactly(linked.getMemberId());
+        assertThat(byStudentNo).extracting(Member::getMemberId)
+                .containsExactly(linked.getMemberId());
+    }
+
+    @Test
     void 팀을_변경하면_현재_팀이_갱신된다() {
         // given
         Member member = preRegistered("2021184000", actorTeamId);

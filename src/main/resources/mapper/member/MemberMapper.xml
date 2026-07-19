@@ -65,6 +65,10 @@
         SELECT <include refid="memberColumns"/>
         FROM member
         <where>
+            <if test="keyword != null">
+                AND (name LIKE CONCAT('%', #{keyword}, '%')
+                    OR student_no LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
             <if test="teamId != null">
                 AND team_id = #{teamId}
             </if>
@@ -73,6 +77,9 @@
             </if>
             <if test="role != null">
                 AND role_code = #{role}
+            </if>
+            <if test="ssoLinkStatus != null">
+                AND sso_link_status_code = #{ssoLinkStatus}
             </if>
         </where>
         ORDER BY name, member_id
