@@ -17,7 +17,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import kr.ac.tukorea.bandi.global.security.SchoolAuthenticationProvider;
+import kr.ac.tukorea.bandi.global.security.SchoolLoginFailureHandler;
 import kr.ac.tukorea.bandi.global.security.SecurityConfig;
 
 @WebMvcTest(PortalController.class)
@@ -40,6 +43,12 @@ class PortalControllerTest {
 
     private final MockMvc mockMvc;
 
+    @MockitoBean
+    private SchoolAuthenticationProvider authenticationProvider;
+
+    @MockitoBean
+    private SchoolLoginFailureHandler failureHandler;
+
     @Autowired
     PortalControllerTest(MockMvc mockMvc) {
         this.mockMvc = mockMvc;
@@ -49,7 +58,8 @@ class PortalControllerTest {
     @ValueSource(strings = {"dashboard", "calendar", "resources", "activity",
             "props", "reservations", "showops", "checklist", "attendance", "dues", "members"})
     void 관리자_포털_화면이_렌더링된다(String page) throws Exception {
-        mockMvc.perform(get("/" + page).with(user("tester")))
+        mockMvc.perform(get("/" + page)
+                        .with(user("tester").roles("ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(view().name(PAGE_VIEWS.get(page)))
                 .andExpect(model().attribute("role", "admin"));
@@ -57,14 +67,16 @@ class PortalControllerTest {
 
     @Test
     void role_파라미터가_모델로_전달된다() throws Exception {
-        mockMvc.perform(get("/dues").param("role", "member").with(user("tester")))
+        mockMvc.perform(get("/dues").param("role", "member")
+                        .with(user("tester").roles("MEMBER")))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute("role", "member"));
     }
 
     @Test
     void 허용되지_않은_role_값은_admin으로_대체된다() throws Exception {
-        mockMvc.perform(get("/dues").param("role", "hacker").with(user("tester")))
+        mockMvc.perform(get("/dues").param("role", "hacker")
+                        .with(user("tester").roles("ADMIN")))
                 .andExpect(status().isOk())
                 .andExpect(model().attribute("role", "admin"));
     }
@@ -73,7 +85,8 @@ class PortalControllerTest {
     @CsvSource({"reservations,member", "reservations,leader", "showops,member", "showops,leader",
             "members,member", "members,leader"})
     void 화면이_허용하지_않는_role은_대시보드로_리다이렉트된다(String page, String role) throws Exception {
-        mockMvc.perform(get("/" + page).param("role", role).with(user("tester")))
+        mockMvc.perform(get("/" + page).param("role", role)
+                        .with(user("tester").roles("ADMIN")))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/dashboard?role=" + role));
     }
@@ -82,7 +95,9 @@ class PortalControllerTest {
     @CsvSource({"reservations,admin", "showops,admin", "members,admin",
             "dues,member"})
     void 화면이_허용하는_role은_그대로_렌더링된다(String page, String role) throws Exception {
-        mockMvc.perform(get("/" + page).param("role", role).with(user("tester")))
+        String authorityRole = role.equals("admin") ? "ADMIN" : "MEMBER";
+        mockMvc.perform(get("/" + page).param("role", role)
+                        .with(user("tester").roles(authorityRole)))
                 .andExpect(status().isOk())
                 .andExpect(view().name(PAGE_VIEWS.get(page)))
                 .andExpect(model().attribute("role", role));
@@ -90,31 +105,35 @@ class PortalControllerTest {
 
     @Test
     void allowedRoles가_화면별_허용_역할로_모델에_전달된다() throws Exception {
-        mockMvc.perform(get("/reservations").with(user("tester")))
+        mockMvc.perform(get("/reservations")
+                        .with(user("tester").roles("ADMIN")))
                 .andExpect(model().attribute("allowedRoles", Set.of("admin")));
-        mockMvc.perform(get("/members").with(user("tester")))
+        mockMvc.perform(get("/members")
+                        .with(user("tester").roles("ADMIN")))
                 .andExpect(model().attribute("allowedRoles", Set.of("admin")));
-        mockMvc.perform(get("/dues").with(user("tester")))
+        mockMvc.perform(get("/dues")
+                        .with(user("tester").roles("MEMBER")))
                 .andExpect(model().attribute("allowedRoles", Set.of("member", "leader", "admin")));
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"schedule", "community"})
     void 폐기된_화면은_라우팅하지_않는다(String page) throws Exception {
-        mockMvc.perform(get("/" + page).with(user("tester")))
+        mockMvc.perform(get("/" + page)
+                        .with(user("tester").roles("ADMIN")))
                 .andExpect(status().isNotFound());
     }
 
     @Test
     void 공개_공시_화면이_렌더링된다() throws Exception {
-        mockMvc.perform(get("/notices").with(user("tester")))
+        mockMvc.perform(get("/notices"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("notice/list"));
     }
 
     @Test
     void 예매_화면이_렌더링된다() throws Exception {
-        mockMvc.perform(get("/reserve").with(user("tester")))
+        mockMvc.perform(get("/reserve"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("reservation/form"));
     }

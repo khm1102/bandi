@@ -1,6 +1,9 @@
 package kr.ac.tukorea.bandi.domain.member.controller;
 
 import kr.ac.tukorea.bandi.domain.member.dto.request.SchoolLoginForm;
+import kr.ac.tukorea.bandi.global.security.LoginPrincipal;
+import kr.ac.tukorea.bandi.global.security.SchoolAuthenticationProvider;
+import kr.ac.tukorea.bandi.global.security.SchoolLoginFailureHandler;
 import kr.ac.tukorea.bandi.global.security.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -8,11 +11,20 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.hamcrest.Matchers.instanceOf;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.authenticated;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
@@ -21,6 +33,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AuthenticationControllerTest {
 
     private final MockMvc mockMvc;
+
+    @MockitoBean
+    private SchoolAuthenticationProvider authenticationProvider;
+
+    @MockitoBean
+    private SchoolLoginFailureHandler failureHandler;
 
     @Autowired
     AuthenticationControllerTest(MockMvc mockMvc) {
@@ -58,5 +76,33 @@ class AuthenticationControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(model().attributeDoesNotExist(
                         "loginErrorTitle", "loginErrorMessage"));
+    }
+
+    @Test
+    void 학교_로그인에_성공하면_대시보드로_이동한다() throws Exception {
+        LoginPrincipal principal = new LoginPrincipal(10L, "MEMBER");
+        Authentication authenticatedToken =
+                UsernamePasswordAuthenticationToken.authenticated(
+                        principal, null, principal.authorities());
+        given(authenticationProvider.supports(
+                UsernamePasswordAuthenticationToken.class)).willReturn(true);
+        given(authenticationProvider.authenticate(any(Authentication.class)))
+                .willReturn(authenticatedToken);
+
+        mockMvc.perform(post("/login")
+                        .with(csrf())
+                        .param("studentNo", "2021184000")
+                        .param("password", "school-password"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/dashboard"))
+                .andExpect(authenticated().withAuthenticationPrincipal(principal));
+    }
+
+    @Test
+    void 로그인_POST도_CSRF가_없으면_거부한다() throws Exception {
+        mockMvc.perform(post("/login")
+                        .param("studentNo", "2021184000")
+                        .param("password", "school-password"))
+                .andExpect(status().isForbidden());
     }
 }
