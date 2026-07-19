@@ -165,6 +165,21 @@ class ReservationApiControllerTest {
     }
 
     @Test
+    void 운영진이_신청번호와_이름으로_선택_좌석을_입장_처리한다()
+            throws Exception {
+        mockMvc.perform(post("/api/reservation-management/rounds/"
+                        + "{roundId}/entry/manual-check-ins", ROUND_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"reservationNo\":\"R20261121ABC\","
+                                + "\"applicantName\":\"홍길동\","
+                                + "\"reservationSeatIds\":[71,72]}"))
+                .andExpect(status().isNoContent());
+
+        verify(entryService).checkInByNumberAndName(ACTOR_ID, ROUND_ID,
+                "R20261121ABC", "홍길동", List.of(71L, 72L));
+    }
+
+    @Test
     void 운영진이_잘못된_입장_처리를_사유와_함께_취소한다() throws Exception {
         mockMvc.perform(post("/api/reservation-management/rounds/"
                         + "{roundId}/entry/check-in-cancellations", ROUND_ID)

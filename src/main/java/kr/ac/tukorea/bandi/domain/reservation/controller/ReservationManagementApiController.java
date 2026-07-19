@@ -2,6 +2,7 @@ package kr.ac.tukorea.bandi.domain.reservation.controller;
 
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.EntryCancelRequest;
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.EntryCheckInRequest;
+import kr.ac.tukorea.bandi.domain.reservation.dto.request.EntryManualCheckInRequest;
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.EntrySearchRequest;
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.EntryTokenRequest;
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.ReservationManagementCancelRequest;
@@ -89,6 +90,16 @@ public class ReservationManagementApiController
                                         Long roundId,
                                         EntryCheckInRequest request) {
         entryService.checkIn(actorMemberId, roundId, request.entryToken(),
+                request.reservationSeatIds());
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public ResponseEntity<Void> manualCheckIn(
+            @LoginMember Long actorMemberId, Long roundId,
+            EntryManualCheckInRequest request) {
+        entryService.checkInByNumberAndName(actorMemberId, roundId,
+                request.reservationNo(), request.applicantName(),
                 request.reservationSeatIds());
         return ResponseEntity.noContent().build();
     }
