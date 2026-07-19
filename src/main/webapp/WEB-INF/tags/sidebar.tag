@@ -5,9 +5,6 @@
 <c:set var="navBase" value="flex min-h-11 items-center gap-2.5 whitespace-nowrap rounded-md px-3 py-2 text-sm font-semibold transition-colors"/>
 <c:set var="navOff" value=" hover:bg-sidebar-accent hover:text-white"/>
 <c:set var="navOn" value=" bg-primary font-extrabold text-primary-foreground"/>
-<c:set var="navBadgeBase" value="ml-auto inline-flex min-w-6 items-center justify-center rounded-full px-2 py-0.5 text-xs font-extrabold tabular-nums"/>
-<c:set var="navBadgeOff" value=" bg-primary-strong text-white"/>
-<c:set var="navBadgeOn" value=" bg-sidebar text-white"/>
 <aside id="mainNavigation"
        class="fixed inset-y-0 left-0 z-40 flex w-72 -translate-x-full flex-col overflow-y-auto overscroll-contain bg-sidebar p-4 text-sidebar-foreground transition-transform duration-200 lg:sticky lg:top-0 lg:h-screen lg:w-56 lg:translate-x-0"
        data-navigation-panel aria-hidden="true" inert>
@@ -38,7 +35,6 @@
         <c:if test="${role == 'admin'}">
             <a href="<c:url value='/reservations'/>" class="${navBase} ${active == 'reservations' ? navOn : navOff}" aria-current="${active == 'reservations' ? 'page' : 'false'}">
                 <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z"/></svg>관람 신청 관리
-                <span class="${navBadgeBase}${active == 'reservations' ? navBadgeOn : navBadgeOff}" aria-label="새 신청 2개">2</span>
             </a>
             <a href="<c:url value='/showops'/>" class="${navBase} ${active == 'showops' ? navOn : navOff}" aria-current="${active == 'showops' ? 'page' : 'false'}">
                 <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v13H4zM8 21h8M12 17v4M9 8l4 2.5L9 13z"/></svg>공연 당일 입장
@@ -52,9 +48,6 @@
         </a>
         <a href="<c:url value='/dues'/>" class="${navBase} ${active == 'dues' ? navOn : navOff}" aria-current="${active == 'dues' ? 'page' : 'false'}">
             <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 7V6a2 2 0 0 1 2-2h11M17 13h.01"/></svg>회비
-            <c:if test="${role == 'admin'}">
-                <span class="${navBadgeBase}${active == 'dues' ? navBadgeOn : navBadgeOff}" aria-label="미납 5건">5</span>
-            </c:if>
         </a>
         <c:if test="${role == 'admin'}">
             <a href="<c:url value='/members'/>" class="${navBase} ${active == 'members' ? navOn : navOff}" aria-current="${active == 'members' ? 'page' : 'false'}">
@@ -63,21 +56,12 @@
         </c:if>
     </nav>
     <div class="mt-auto flex flex-col gap-3 border-t border-sidebar-border px-2 pt-3">
-        <div class="flex min-w-0 items-center gap-2.5">
-            <c:choose>
-                <c:when test="${role == 'member'}">
-                    <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-xs font-black text-white">KH</span>
-                    <span class="min-w-0 flex-1"><b class="block truncate text-sm text-white">김하늘</b><span class="block break-keep text-xs leading-4 text-sidebar-muted">일반 부원 · 배우</span></span>
-                </c:when>
-                <c:when test="${role == 'leader'}">
-                    <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-info text-xs font-black text-white">JD</span>
-                    <span class="min-w-0 flex-1"><b class="block truncate text-sm text-white">정도윤</b><span class="block break-keep text-xs leading-4 text-sidebar-muted">무대팀장</span></span>
-                </c:when>
-                <c:otherwise>
-                    <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-foreground">LS</span>
-                    <span class="min-w-0 flex-1"><b class="block truncate text-sm text-white">이서준</b><span class="block break-keep text-xs leading-4 text-sidebar-muted">운영진 · 회장</span></span>
-                </c:otherwise>
-            </c:choose>
+        <div class="flex min-w-0 items-center gap-2.5" data-session-profile aria-busy="true">
+            <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-foreground" data-session-initial>·</span>
+            <span class="min-w-0 flex-1">
+                <b class="block truncate text-sm text-white" data-session-name>사용자 정보 불러오는 중</b>
+                <span class="block truncate text-xs leading-4 text-sidebar-muted" data-session-meta>잠시만 기다려 주세요</span>
+            </span>
         </div>
         <a href="<c:url value='/notices'/>" class="inline-flex min-h-11 items-center justify-center rounded-md px-3 text-xs font-bold text-sidebar-muted transition-colors hover:bg-sidebar-accent hover:text-white">공시·운영 안내</a>
         <p class="text-center text-xs text-sidebar-muted">개인정보 안내 · 운영 문의</p>
