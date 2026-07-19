@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.ac.tukorea.bandi.domain.fee.mapper.FeeMapper">
+
+    <resultMap id="feeItemMap" type="kr.ac.tukorea.bandi.domain.fee.model.FeeItem">
+        <constructor>
+            <idArg column="fee_item_id" javaType="java.lang.Long"/>
+            <arg column="name" javaType="java.lang.String"/>
+            <arg column="description" javaType="java.lang.String"/>
+            <arg column="reference_year" javaType="_short"/>
+            <arg column="reference_term_code" javaType="java.lang.String"/>
+            <arg column="amount" javaType="_long"/>
+            <arg column="due_date" javaType="java.time.LocalDate"/>
+            <arg column="status_code" javaType="kr.ac.tukorea.bandi.domain.fee.model.FeeItemStatus"/>
+            <arg column="created_by_member_id" javaType="java.lang.Long"/>
+            <arg column="updated_by_member_id" javaType="java.lang.Long"/>
+            <arg column="created_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="deleted_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="feeChargeMap" type="kr.ac.tukorea.bandi.domain.fee.model.FeeCharge">
+        <constructor>
+            <idArg column="fee_charge_id" javaType="java.lang.Long"/>
+            <arg column="fee_item_id" javaType="java.lang.Long"/>
+            <arg column="member_id" javaType="java.lang.Long"/>
+            <arg column="charged_amount" javaType="_long"/>
+            <arg column="status_code" javaType="kr.ac.tukorea.bandi.domain.fee.model.FeeChargeStatus"/>
+            <arg column="paid_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="processed_by_member_id" javaType="java.lang.Long"/>
+            <arg column="process_note" javaType="java.lang.String"/>
+            <arg column="created_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="feeItemResponseMap" type="kr.ac.tukorea.bandi.domain.fee.dto.response.FeeItemResponse">
+        <constructor>
+            <idArg column="fee_item_id" javaType="java.lang.Long"/>
+            <arg column="name" javaType="java.lang.String"/>
+            <arg column="description" javaType="java.lang.String"/>
+            <arg column="reference_year" javaType="_short"/>
+            <arg column="reference_term_code" javaType="java.lang.String"/>
+            <arg column="amount" javaType="_long"/>
+            <arg column="due_date" javaType="java.time.LocalDate"/>
+            <arg column="status_code" javaType="kr.ac.tukorea.bandi.domain.fee.model.FeeItemStatus"/>
+            <arg column="target_count" javaType="_int"/>
+            <arg column="paid_count" javaType="_int"/>
+            <arg column="unpaid_count" javaType="_int"/>
+            <arg column="paid_amount" javaType="_long"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="feeChargeResponseMap" type="kr.ac.tukorea.bandi.domain.fee.dto.response.FeeChargeResponse">
+        <constructor>
+            <idArg column="fee_charge_id" javaType="java.lang.Long"/>
+            <arg column="member_id" javaType="java.lang.Long"/>
+            <arg column="member_name" javaType="java.lang.String"/>
+            <arg column="charged_amount" javaType="_long"/>
+            <arg column="status_code" javaType="kr.ac.tukorea.bandi.domain.fee.model.FeeChargeStatus"/>
+            <arg column="paid_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="processed_by_name" javaType="java.lang.String"/>
+            <arg column="process_note" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="feeChargeHistoryResponseMap" type="kr.ac.tukorea.bandi.domain.fee.dto.response.FeeChargeHistoryResponse">
+        <constructor>
+            <idArg column="fee_charge_history_id" javaType="java.lang.Long"/>
+            <arg column="fee_charge_id" javaType="java.lang.Long"/>
+            <arg column="previous_status_code" javaType="kr.ac.tukorea.bandi.domain.fee.model.FeeChargeStatus"/>
+            <arg column="new_status_code" javaType="kr.ac.tukorea.bandi.domain.fee.model.FeeChargeStatus"/>
+            <arg column="amount" javaType="_long"/>
+            <arg column="reason" javaType="java.lang.String"/>
+            <arg column="changed_by_member_id" javaType="java.lang.Long"/>
+            <arg column="changed_by_name" javaType="java.lang.String"/>
+            <arg column="changed_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="feeItemColumns">
+        fee_item_id, name, description, reference_year,
+        reference_term_code, amount, due_date, status_code,
+        created_by_member_id, updated_by_member_id,
+        created_dttm, updated_dttm, deleted_dttm
+    </sql>
+
+    <sql id="feeChargeColumns">
+        charge.fee_charge_id, charge.fee_item_id, charge.member_id,
+        charge.charged_amount, charge.status_code, charge.paid_dttm,
+        charge.processed_by_member_id, charge.process_note,
+        charge.created_dttm, charge.updated_dttm
+    </sql>
+
+    <sql id="notDeleted">
+        deleted_dttm IS NULL
+    </sql>
+
+    <select id="lookupItemByIdForUpdate" resultMap="feeItemMap">
+        SELECT <include refid="feeItemColumns"/>
+        FROM fee_item
+        WHERE fee_item_id = #{feeItemId}
+          AND <include refid="notDeleted"/>
+        FOR UPDATE
+    </select>
+
+    <select id="searchChargesByIdsForUpdate" resultMap="feeChargeMap">
+        SELECT <include refid="feeChargeColumns"/>
+        FROM fee_charge charge
+        JOIN fee_item item ON item.fee_item_id = charge.fee_item_id
+        WHERE charge.fee_item_id = #{feeItemId}
+          AND item.deleted_dttm IS NULL
+          AND charge.fee_charge_id IN
+        <foreach collection="feeChargeIds" item="feeChargeId"
+                 open="(" separator="," close=")">
+            #{feeChargeId}
+        </foreach>
+        ORDER BY charge.fee_charge_id
+        FOR UPDATE
+    </select>
+
+    <select id="searchChargesByItemForUpdate" resultMap="feeChargeMap">
+        SELECT <include refid="feeChargeColumns"/>
+        FROM fee_charge charge
+        JOIN fee_item item ON item.fee_item_id = charge.fee_item_id
+        WHERE charge.fee_item_id = #{feeItemId}
+          AND item.deleted_dttm IS NULL
+        ORDER BY charge.fee_charge_id
+        FOR UPDATE
+    </select>
+
+    <select id="searchItems" resultMap="feeItemResponseMap">
+        SELECT item.fee_item_id, item.name, item.description,
+               item.reference_year, item.reference_term_code,
+               item.amount, item.due_date, item.status_code,
+               COUNT(charge.fee_charge_id) AS target_count,
+               COALESCE(SUM(charge.status_code = 'PAID'), 0) AS paid_count,
+               COALESCE(SUM(charge.status_code = 'UNPAID'), 0) AS unpaid_count,
+               COALESCE(SUM(CASE WHEN charge.status_code = 'PAID'
+                                 THEN charge.charged_amount ELSE 0 END), 0) AS paid_amount
+        FROM fee_item item
+        LEFT JOIN fee_charge charge ON charge.fee_item_id = item.fee_item_id
+        WHERE item.deleted_dttm IS NULL
+        GROUP BY item.fee_item_id, item.name, item.description,
+                 item.reference_year, item.reference_term_code,
+                 item.amount, item.due_date, item.status_code
+        ORDER BY item.reference_year DESC, item.reference_term_code DESC,
+                 item.due_date DESC, item.fee_item_id DESC
+    </select>
+
+    <select id="searchCharges" resultMap="feeChargeResponseMap">
+        SELECT charge.fee_charge_id, charge.member_id,
+               target.name AS member_name, charge.charged_amount,
+               charge.status_code, charge.paid_dttm,
+               processor.name AS processed_by_name, charge.process_note
+        FROM fee_charge charge
+        JOIN fee_item item ON item.fee_item_id = charge.fee_item_id
+        JOIN member target ON target.member_id = charge.member_id
+        LEFT JOIN member processor
+          ON processor.member_id = charge.processed_by_member_id
+        WHERE charge.fee_item_id = #{feeItemId}
+          AND item.deleted_dttm IS NULL
+        ORDER BY target.name, target.member_id
+    </select>
+
+    <select id="searchChargeHistories" resultMap="feeChargeHistoryResponseMap">
+        SELECT history.fee_charge_history_id, history.fee_charge_id,
+               history.previous_status_code, history.new_status_code,
+               history.amount, history.reason, history.changed_by_member_id,
+               member.name AS changed_by_name, history.changed_dttm
+        FROM fee_charge_history history
+        JOIN fee_charge charge
+          ON charge.fee_charge_id = history.fee_charge_id
+        JOIN fee_item item ON item.fee_item_id = charge.fee_item_id
+        JOIN member ON member.member_id = history.changed_by_member_id
+        WHERE history.fee_charge_id = #{feeChargeId}
+          AND item.deleted_dttm IS NULL
+        ORDER BY history.changed_dttm DESC,
+                 history.fee_charge_history_id DESC
+    </select>
+
+    <select id="searchMemberFees" resultType="kr.ac.tukorea.bandi.domain.fee.dto.response.MemberFeeResponse">
+        SELECT charge.fee_charge_id, item.fee_item_id,
+               item.name AS item_name, item.reference_year,
+               item.reference_term_code, charge.charged_amount,
+               charge.status_code AS status, item.due_date,
+               charge.paid_dttm
+        FROM fee_charge charge
+        JOIN fee_item item ON item.fee_item_id = charge.fee_item_id
+        WHERE charge.member_id = #{memberId}
+          AND charge.status_code &lt;&gt; 'CANCELLED'
+          AND item.status_code &lt;&gt; 'CANCELLED'
+          AND item.deleted_dttm IS NULL
+        ORDER BY item.due_date DESC, item.fee_item_id DESC
+    </select>
+
+    <select id="lookupMemberSummary" resultType="kr.ac.tukorea.bandi.domain.fee.dto.response.MemberFeeSummaryResponse">
+        SELECT COALESCE(SUM(CASE WHEN charge.status_code IN ('UNPAID', 'PAID')
+                                 THEN charge.charged_amount ELSE 0 END), 0) AS total_amount,
+               COALESCE(SUM(CASE WHEN charge.status_code = 'PAID'
+                                 THEN charge.charged_amount ELSE 0 END), 0) AS paid_amount,
+               COALESCE(SUM(CASE WHEN charge.status_code = 'UNPAID'
+                                 THEN charge.charged_amount ELSE 0 END), 0) AS unpaid_amount
+        FROM fee_charge charge
+        JOIN fee_item item ON item.fee_item_id = charge.fee_item_id
+        WHERE charge.member_id = #{memberId}
+          AND charge.status_code &lt;&gt; 'CANCELLED'
+          AND item.status_code &lt;&gt; 'CANCELLED'
+          AND item.deleted_dttm IS NULL
+    </select>
+
+    <insert id="insertItem" useGeneratedKeys="true" keyProperty="feeItemId">
+        INSERT INTO fee_item (
+            name, description, reference_year, reference_term_code,
+            amount, due_date, status_code,
+            created_by_member_id, updated_by_member_id
+        ) VALUES (
+            #{name}, #{description}, #{referenceYear}, #{referenceTermCode},
+            #{amount}, #{dueDate}, #{status},
+            #{createdByMemberId}, #{updatedByMemberId}
+        )
+    </insert>
+
+    <update id="updateItem">
+        UPDATE fee_item
+        SET name = #{name},
+            description = #{description},
+            reference_year = #{referenceYear},
+            reference_term_code = #{referenceTermCode},
+            amount = #{amount},
+            due_date = #{dueDate},
+            status_code = #{status},
+            updated_by_member_id = #{updatedByMemberId}
+        WHERE fee_item_id = #{feeItemId}
+          AND <include refid="notDeleted"/>
+    </update>
+
+    <insert id="insertCharges">
+        INSERT INTO fee_charge (
+            fee_item_id, member_id, charged_amount, status_code,
+            paid_dttm, processed_by_member_id, process_note
+        ) VALUES
+        <foreach collection="charges" item="charge" separator=",">
+            (
+                #{charge.feeItemId}, #{charge.memberId},
+                #{charge.chargedAmount}, #{charge.status},
+                #{charge.paidDttm}, #{charge.processedByMemberId},
+                #{charge.processNote}
+            )
+        </foreach>
+    </insert>
+
+    <update id="updateCharge">
+        UPDATE fee_charge
+        SET status_code = #{status},
+            paid_dttm = #{paidDttm},
+            processed_by_member_id = #{processedByMemberId},
+            process_note = #{processNote}
+        WHERE fee_charge_id = #{feeChargeId}
+    </update>
+
+    <insert id="insertChargeHistory" useGeneratedKeys="true"
+            keyProperty="feeChargeHistoryId">
+        INSERT INTO fee_charge_history (
+            fee_charge_id, previous_status_code, new_status_code,
+            amount, reason, changed_by_member_id, changed_dttm
+        ) VALUES (
+            #{feeChargeId}, #{previousStatus}, #{newStatus},
+            #{amount}, #{reason}, #{changedByMemberId}, #{changedDttm}
+        )
+    </insert>
+</mapper>
