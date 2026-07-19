@@ -18,6 +18,7 @@ public enum ErrorCode {
     // 공통 (C)
     INVALID_INPUT(HttpStatus.BAD_REQUEST, "C001", "입력값이 올바르지 않습니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "C002", "권한이 없습니다."),
+    UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "C003", "로그인이 필요합니다."),
     INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "C999", "일시적인 오류가 발생했습니다."),
 
     // member (M)

@@ -7,6 +7,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
+import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -15,10 +18,13 @@ public class SecurityConfig {
 
     private final SchoolAuthenticationProvider authenticationProvider;
     private final SchoolLoginFailureHandler loginFailureHandler;
+    private final ApiSecurityFailureHandler apiSecurityFailureHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http)
             throws Exception {
+        PathPatternRequestMatcher apiRequestMatcher =
+                PathPatternRequestMatcher.withDefaults().matcher("/api/**");
         http.authenticationProvider(authenticationProvider);
         http.authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(PathRequest.toStaticResources()
@@ -32,6 +38,14 @@ public class SecurityConfig {
                         "/api/reservations/**", "/api/showops/**")
                 .hasRole("ADMIN")
                 .anyRequest().authenticated());
+        http.exceptionHandling(exception -> exception
+                .defaultAuthenticationEntryPointFor(apiSecurityFailureHandler,
+                        apiRequestMatcher)
+                .defaultAuthenticationEntryPointFor(
+                        new LoginUrlAuthenticationEntryPoint("/login"),
+                        new NegatedRequestMatcher(apiRequestMatcher))
+                .defaultAccessDeniedHandlerFor(apiSecurityFailureHandler,
+                        apiRequestMatcher));
         http.formLogin(form -> form
                 .loginPage("/login")
                 .loginProcessingUrl("/login")

@@ -18,10 +18,11 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(SecurityTestController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, ApiSecurityFailureHandler.class})
 class SecurityConfigTest {
 
     private final MockMvc mockMvc;
@@ -89,6 +90,24 @@ class SecurityConfigTest {
     }
 
     @Test
+    void 미인증_API는_로그인_리다이렉트_대신_JSON_401을_반환한다()
+            throws Exception {
+        mockMvc.perform(get("/api/test"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("C003"))
+                .andExpect(jsonPath("$.message").value("로그인이 필요합니다."));
+    }
+
+    @Test
+    void 권한이_부족한_API는_JSON_403을_반환한다() throws Exception {
+        mockMvc.perform(get("/api/members/test")
+                        .with(user("member").roles("MEMBER")))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value("C002"))
+                .andExpect(jsonPath("$.message").value("권한이 없습니다."));
+    }
+
+    @Test
     void 로그아웃은_POST_CSRF로_세션을_무효화한다() throws Exception {
         HttpSession session = mockMvc.perform(get("/dashboard")
                         .with(user("member").roles("MEMBER")))
@@ -110,7 +129,8 @@ class SecurityTestController {
 
     @GetMapping({"/dashboard", "/members/test", "/reservations/test",
             "/showops/test", "/notices/test", "/performances/show",
-            "/reserve/test", "/swagger-ui/test"})
+            "/reserve/test", "/swagger-ui/test", "/api/test",
+            "/api/members/test"})
     ResponseEntity<Void> page() {
         return ResponseEntity.ok().build();
     }
