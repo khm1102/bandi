@@ -1,0 +1,378 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.ac.tukorea.bandi.domain.performance.mapper.PerformanceContentMapper">
+
+    <resultMap id="characterMap"
+               type="kr.ac.tukorea.bandi.domain.performance.model.PerformanceCharacter">
+        <constructor>
+            <idArg column="performance_character_id" javaType="java.lang.Long"/>
+            <arg column="performance_project_id" javaType="java.lang.Long"/>
+            <arg column="name" javaType="java.lang.String"/>
+            <arg column="description" javaType="java.lang.String"/>
+            <arg column="importance_code"
+                 javaType="kr.ac.tukorea.bandi.domain.performance.model.CharacterImportance"/>
+            <arg column="display_order" javaType="java.lang.Integer"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="characterResponseMap"
+               type="kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceCharacterResponse">
+        <constructor>
+            <idArg column="performance_character_id" javaType="java.lang.Long"/>
+            <arg column="performance_project_id" javaType="java.lang.Long"/>
+            <arg column="name" javaType="java.lang.String"/>
+            <arg column="description" javaType="java.lang.String"/>
+            <arg column="importance_code"
+                 javaType="kr.ac.tukorea.bandi.domain.performance.model.CharacterImportance"/>
+            <arg column="display_order" javaType="_int"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="castMap"
+               type="kr.ac.tukorea.bandi.domain.performance.model.PerformanceCast">
+        <constructor>
+            <idArg column="performance_cast_id" javaType="java.lang.Long"/>
+            <arg column="performance_project_id" javaType="java.lang.Long"/>
+            <arg column="performance_character_id" javaType="java.lang.Long"/>
+            <arg column="public_profile_id" javaType="java.lang.Long"/>
+            <arg column="cast_type_code"
+                 javaType="kr.ac.tukorea.bandi.domain.performance.model.CastType"/>
+            <arg column="display_order" javaType="java.lang.Integer"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="castResponseMap"
+               type="kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceCastResponse">
+        <constructor>
+            <idArg column="performance_cast_id" javaType="java.lang.Long"/>
+            <arg column="performance_project_id" javaType="java.lang.Long"/>
+            <arg column="performance_character_id" javaType="java.lang.Long"/>
+            <arg column="character_name" javaType="java.lang.String"/>
+            <arg column="character_description" javaType="java.lang.String"/>
+            <arg column="character_importance_code"
+                 javaType="kr.ac.tukorea.bandi.domain.performance.model.CharacterImportance"/>
+            <arg column="public_profile_id" javaType="java.lang.Long"/>
+            <arg column="cast_type_code"
+                 javaType="kr.ac.tukorea.bandi.domain.performance.model.CastType"/>
+            <arg column="display_order" javaType="_int"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="castHistoryResponseMap"
+               type="kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceCastHistoryResponse">
+        <constructor>
+            <idArg column="performance_cast_history_id" javaType="java.lang.Long"/>
+            <arg column="performance_project_id" javaType="java.lang.Long"/>
+            <arg column="performance_round_id" javaType="java.lang.Long"/>
+            <arg column="performance_character_id" javaType="java.lang.Long"/>
+            <arg column="previous_public_profile_id" javaType="java.lang.Long"/>
+            <arg column="new_public_profile_id" javaType="java.lang.Long"/>
+            <arg column="previous_cast_type_code"
+                 javaType="kr.ac.tukorea.bandi.domain.performance.model.CastType"/>
+            <arg column="new_cast_type_code"
+                 javaType="kr.ac.tukorea.bandi.domain.performance.model.CastType"/>
+            <arg column="scope_code"
+                 javaType="kr.ac.tukorea.bandi.domain.performance.model.CastScope"/>
+            <arg column="action_code"
+                 javaType="kr.ac.tukorea.bandi.domain.performance.model.CastAction"/>
+            <arg column="reason" javaType="java.lang.String"/>
+            <arg column="changed_by_member_id" javaType="java.lang.Long"/>
+            <arg column="changed_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="creditMap"
+               type="kr.ac.tukorea.bandi.domain.performance.model.ProductionCredit">
+        <constructor>
+            <idArg column="production_credit_id" javaType="java.lang.Long"/>
+            <arg column="performance_project_id" javaType="java.lang.Long"/>
+            <arg column="credit_role" javaType="java.lang.String"/>
+            <arg column="public_name" javaType="java.lang.String"/>
+            <arg column="public_profile_id" javaType="java.lang.Long"/>
+            <arg column="display_order" javaType="java.lang.Integer"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="creditResponseMap"
+               type="kr.ac.tukorea.bandi.domain.performance.dto.response.ProductionCreditResponse">
+        <constructor>
+            <idArg column="production_credit_id" javaType="java.lang.Long"/>
+            <arg column="performance_project_id" javaType="java.lang.Long"/>
+            <arg column="credit_role" javaType="java.lang.String"/>
+            <arg column="public_name" javaType="java.lang.String"/>
+            <arg column="public_profile_id" javaType="java.lang.Long"/>
+            <arg column="display_order" javaType="_int"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="mediaMap"
+               type="kr.ac.tukorea.bandi.domain.performance.model.PerformanceMedia">
+        <constructor>
+            <idArg column="performance_media_id" javaType="java.lang.Long"/>
+            <arg column="performance_project_id" javaType="java.lang.Long"/>
+            <arg column="stored_file_id" javaType="java.lang.Long"/>
+            <arg column="media_type_code"
+                 javaType="kr.ac.tukorea.bandi.domain.performance.model.MediaType"/>
+            <arg column="title" javaType="java.lang.String"/>
+            <arg column="description" javaType="java.lang.String"/>
+            <arg column="alt_text" javaType="java.lang.String"/>
+            <arg column="credit_text" javaType="java.lang.String"/>
+            <arg column="external_url" javaType="java.lang.String"/>
+            <arg column="display_order" javaType="java.lang.Integer"/>
+            <arg column="is_published" javaType="_boolean"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="mediaResponseMap"
+               type="kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceMediaResponse">
+        <constructor>
+            <idArg column="performance_media_id" javaType="java.lang.Long"/>
+            <arg column="performance_project_id" javaType="java.lang.Long"/>
+            <arg column="stored_file_id" javaType="java.lang.Long"/>
+            <arg column="media_type_code"
+                 javaType="kr.ac.tukorea.bandi.domain.performance.model.MediaType"/>
+            <arg column="title" javaType="java.lang.String"/>
+            <arg column="description" javaType="java.lang.String"/>
+            <arg column="alt_text" javaType="java.lang.String"/>
+            <arg column="credit_text" javaType="java.lang.String"/>
+            <arg column="external_url" javaType="java.lang.String"/>
+            <arg column="display_order" javaType="_int"/>
+            <arg column="is_published" javaType="_boolean"/>
+        </constructor>
+    </resultMap>
+
+    <select id="lookupCharacterForUpdate" resultMap="characterMap">
+        SELECT performance_character_id, performance_project_id,
+               name, description, importance_code, display_order
+        FROM performance_character
+        WHERE performance_character_id = #{performanceCharacterId}
+        FOR UPDATE
+    </select>
+
+    <select id="lookupCastForUpdate" resultMap="castMap">
+        SELECT performance_cast_id, performance_project_id,
+               performance_character_id, public_profile_id,
+               cast_type_code, display_order
+        FROM performance_cast
+        WHERE performance_cast_id = #{performanceCastId}
+        FOR UPDATE
+    </select>
+
+    <select id="lookupCreditForUpdate" resultMap="creditMap">
+        SELECT production_credit_id, performance_project_id,
+               credit_role, public_name, public_profile_id, display_order
+        FROM production_credit
+        WHERE production_credit_id = #{productionCreditId}
+        FOR UPDATE
+    </select>
+
+    <select id="lookupMediaForUpdate" resultMap="mediaMap">
+        SELECT performance_media_id, performance_project_id,
+               stored_file_id, media_type_code, title, description,
+               alt_text, credit_text, external_url,
+               display_order, is_published
+        FROM performance_media
+        WHERE performance_media_id = #{performanceMediaId}
+        FOR UPDATE
+    </select>
+
+    <select id="existsCastByCharacter" resultType="_boolean">
+        SELECT EXISTS (
+            SELECT 1 FROM performance_cast
+            WHERE performance_character_id = #{performanceCharacterId}
+        )
+    </select>
+
+    <select id="existsCastHistoryByCharacter" resultType="_boolean">
+        SELECT EXISTS (
+            SELECT 1 FROM performance_cast_history
+            WHERE performance_character_id = #{performanceCharacterId}
+        )
+    </select>
+
+    <select id="searchCharacters" resultMap="characterResponseMap">
+        SELECT performance_character_id, performance_project_id,
+               name, description, importance_code, display_order
+        FROM performance_character
+        WHERE performance_project_id = #{performanceProjectId}
+        ORDER BY FIELD(importance_code, 'LEAD', 'SUPPORT', 'ENSEMBLE'),
+                 display_order, performance_character_id
+    </select>
+
+    <select id="searchCasts" resultMap="castResponseMap">
+        SELECT pcast.performance_cast_id, pcast.performance_project_id,
+               pcast.performance_character_id,
+               pc.name AS character_name,
+               pc.description AS character_description,
+               pc.importance_code AS character_importance_code,
+               pcast.public_profile_id, pcast.cast_type_code,
+               pcast.display_order
+        FROM performance_cast pcast
+        JOIN performance_character pc
+          ON pc.performance_character_id =
+             pcast.performance_character_id
+         AND pc.performance_project_id = pcast.performance_project_id
+        WHERE pcast.performance_project_id = #{performanceProjectId}
+        ORDER BY FIELD(pc.importance_code,
+                       'LEAD', 'SUPPORT', 'ENSEMBLE'),
+                 pc.display_order, pcast.display_order,
+                 pcast.performance_cast_id
+    </select>
+
+    <select id="searchCastHistories" resultMap="castHistoryResponseMap">
+        SELECT performance_cast_history_id, performance_project_id,
+               performance_round_id, performance_character_id,
+               previous_public_profile_id, new_public_profile_id,
+               previous_cast_type_code, new_cast_type_code,
+               scope_code, action_code, reason,
+               changed_by_member_id, changed_dttm
+        FROM performance_cast_history
+        WHERE performance_project_id = #{performanceProjectId}
+        ORDER BY changed_dttm DESC, performance_cast_history_id DESC
+    </select>
+
+    <select id="searchCredits" resultMap="creditResponseMap">
+        SELECT production_credit_id, performance_project_id,
+               credit_role, public_name, public_profile_id, display_order
+        FROM production_credit
+        WHERE performance_project_id = #{performanceProjectId}
+        ORDER BY display_order, production_credit_id
+    </select>
+
+    <select id="searchMedia" resultMap="mediaResponseMap">
+        SELECT performance_media_id, performance_project_id,
+               stored_file_id, media_type_code, title, description,
+               alt_text, credit_text, external_url,
+               display_order, is_published
+        FROM performance_media
+        WHERE performance_project_id = #{performanceProjectId}
+        <if test="publishedOnly">
+          AND is_published = 1
+        </if>
+        ORDER BY display_order, performance_media_id
+    </select>
+
+    <insert id="insertCharacter" useGeneratedKeys="true"
+            keyProperty="performanceCharacterId">
+        INSERT INTO performance_character (
+            performance_project_id, name, description,
+            importance_code, display_order
+        ) VALUES (
+            #{performanceProjectId}, #{name}, #{description},
+            #{importance}, #{displayOrder}
+        )
+    </insert>
+
+    <update id="updateCharacter">
+        UPDATE performance_character
+        SET name = #{name},
+            description = #{description},
+            importance_code = #{importance},
+            display_order = #{displayOrder}
+        WHERE performance_character_id = #{performanceCharacterId}
+    </update>
+
+    <delete id="removeCharacter">
+        DELETE FROM performance_character
+        WHERE performance_character_id = #{performanceCharacterId}
+    </delete>
+
+    <insert id="insertCast" useGeneratedKeys="true"
+            keyProperty="performanceCastId">
+        INSERT INTO performance_cast (
+            performance_project_id, performance_character_id,
+            public_profile_id, cast_type_code, display_order
+        ) VALUES (
+            #{performanceProjectId}, #{performanceCharacterId},
+            #{publicProfileId}, #{castType}, #{displayOrder}
+        )
+    </insert>
+
+    <update id="updateCast">
+        UPDATE performance_cast
+        SET public_profile_id = #{publicProfileId},
+            cast_type_code = #{castType},
+            display_order = #{displayOrder}
+        WHERE performance_cast_id = #{performanceCastId}
+    </update>
+
+    <delete id="removeCast">
+        DELETE FROM performance_cast
+        WHERE performance_cast_id = #{performanceCastId}
+    </delete>
+
+    <insert id="insertCastHistory" useGeneratedKeys="true"
+            keyProperty="performanceCastHistoryId">
+        INSERT INTO performance_cast_history (
+            performance_project_id, performance_round_id,
+            performance_character_id, previous_public_profile_id,
+            new_public_profile_id, previous_cast_type_code,
+            new_cast_type_code, scope_code, action_code, reason,
+            changed_by_member_id, changed_dttm
+        ) VALUES (
+            #{performanceProjectId}, #{performanceRoundId},
+            #{performanceCharacterId}, #{previousPublicProfileId},
+            #{newPublicProfileId}, #{previousCastType},
+            #{newCastType}, #{scope}, #{action}, #{reason},
+            #{changedByMemberId}, #{changedDttm}
+        )
+    </insert>
+
+    <insert id="insertCredit" useGeneratedKeys="true"
+            keyProperty="productionCreditId">
+        INSERT INTO production_credit (
+            performance_project_id, credit_role, public_name,
+            public_profile_id, display_order
+        ) VALUES (
+            #{performanceProjectId}, #{creditRole}, #{publicName},
+            #{publicProfileId}, #{displayOrder}
+        )
+    </insert>
+
+    <update id="updateCredit">
+        UPDATE production_credit
+        SET credit_role = #{creditRole},
+            public_name = #{publicName},
+            public_profile_id = #{publicProfileId},
+            display_order = #{displayOrder}
+        WHERE production_credit_id = #{productionCreditId}
+    </update>
+
+    <delete id="removeCredit">
+        DELETE FROM production_credit
+        WHERE production_credit_id = #{productionCreditId}
+    </delete>
+
+    <insert id="insertMedia" useGeneratedKeys="true"
+            keyProperty="performanceMediaId">
+        INSERT INTO performance_media (
+            performance_project_id, stored_file_id, media_type_code,
+            title, description, alt_text, credit_text, external_url,
+            display_order, is_published
+        ) VALUES (
+            #{performanceProjectId}, #{storedFileId}, #{mediaType},
+            #{title}, #{description}, #{altText}, #{creditText},
+            #{externalUrl}, #{displayOrder}, #{published}
+        )
+    </insert>
+
+    <update id="updateMedia">
+        UPDATE performance_media
+        SET media_type_code = #{mediaType},
+            title = #{title},
+            description = #{description},
+            alt_text = #{altText},
+            credit_text = #{creditText},
+            external_url = #{externalUrl},
+            display_order = #{displayOrder},
+            is_published = #{published}
+        WHERE performance_media_id = #{performanceMediaId}
+    </update>
+
+    <delete id="removeMedia">
+        DELETE FROM performance_media
+        WHERE performance_media_id = #{performanceMediaId}
+    </delete>
+</mapper>
