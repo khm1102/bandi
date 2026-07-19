@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.ac.tukorea.bandi.domain.checklist.mapper.ChecklistMapper">
+
+    <sql id="notDeleted">
+        ci.deleted_dttm IS NULL
+    </sql>
+
+    <resultMap id="itemMap"
+               type="kr.ac.tukorea.bandi.domain.checklist.model.ChecklistItem">
+        <constructor>
+            <idArg column="checklist_item_id" javaType="java.lang.Long"/>
+            <arg column="performance_project_id" javaType="java.lang.Long"/>
+            <arg column="performance_round_id" javaType="java.lang.Long"/>
+            <arg column="team_id" javaType="java.lang.Long"/>
+            <arg column="scope_code"
+                 javaType="kr.ac.tukorea.bandi.domain.checklist.model.ChecklistScope"/>
+            <arg column="content" javaType="java.lang.String"/>
+            <arg column="is_required" javaType="_boolean"/>
+            <arg column="display_order" javaType="java.lang.Integer"/>
+            <arg column="is_completed" javaType="_boolean"/>
+            <arg column="completed_by_member_id"
+                 javaType="java.lang.Long"/>
+            <arg column="completed_dttm"
+                 javaType="java.time.LocalDateTime"/>
+            <arg column="created_by_member_id" javaType="java.lang.Long"/>
+            <arg column="updated_by_member_id" javaType="java.lang.Long"/>
+            <arg column="created_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="deleted_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="itemResponseMap"
+               type="kr.ac.tukorea.bandi.domain.checklist.dto.response.ChecklistItemResponse">
+        <constructor>
+            <idArg column="checklist_item_id" javaType="java.lang.Long"/>
+            <arg column="performance_project_id" javaType="java.lang.Long"/>
+            <arg column="performance_round_id" javaType="java.lang.Long"/>
+            <arg column="team_id" javaType="java.lang.Long"/>
+            <arg column="team_name" javaType="java.lang.String"/>
+            <arg column="scope_code"
+                 javaType="kr.ac.tukorea.bandi.domain.checklist.model.ChecklistScope"/>
+            <arg column="content" javaType="java.lang.String"/>
+            <arg column="is_required" javaType="_boolean"/>
+            <arg column="display_order" javaType="_int"/>
+            <arg column="is_completed" javaType="_boolean"/>
+            <arg column="completed_by_member_id"
+                 javaType="java.lang.Long"/>
+            <arg column="completed_by_member_name"
+                 javaType="java.lang.String"/>
+            <arg column="completed_dttm"
+                 javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="historyResponseMap"
+               type="kr.ac.tukorea.bandi.domain.checklist.dto.response.ChecklistItemHistoryResponse">
+        <constructor>
+            <idArg column="checklist_item_history_id"
+                   javaType="java.lang.Long"/>
+            <arg column="checklist_item_id" javaType="java.lang.Long"/>
+            <arg column="previous_completed" javaType="_boolean"/>
+            <arg column="new_completed" javaType="_boolean"/>
+            <arg column="changed_by_member_id" javaType="java.lang.Long"/>
+            <arg column="changed_by_member_name"
+                 javaType="java.lang.String"/>
+            <arg column="changed_dttm"
+                 javaType="java.time.LocalDateTime"/>
+            <arg column="reason" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+
+    <select id="lookupByIdForUpdate" resultMap="itemMap">
+        SELECT ci.checklist_item_id, ci.performance_project_id,
+               ci.performance_round_id, ci.team_id, ci.scope_code,
+               ci.content, ci.is_required, ci.display_order,
+               ci.is_completed, ci.completed_by_member_id,
+               ci.completed_dttm, ci.created_by_member_id,
+               ci.updated_by_member_id, ci.created_dttm,
+               ci.updated_dttm, ci.deleted_dttm
+        FROM checklist_item ci
+        WHERE ci.checklist_item_id = #{checklistItemId}
+          AND <include refid="notDeleted"/>
+        FOR UPDATE
+    </select>
+
+    <select id="search" resultMap="itemResponseMap">
+        SELECT ci.checklist_item_id, ci.performance_project_id,
+               ci.performance_round_id, ci.team_id,
+               t.name AS team_name, ci.scope_code, ci.content,
+               ci.is_required, ci.display_order, ci.is_completed,
+               ci.completed_by_member_id,
+               completed_member.name AS completed_by_member_name,
+               ci.completed_dttm
+        FROM checklist_item ci
+        JOIN team t ON t.team_id = ci.team_id
+        LEFT JOIN member completed_member
+          ON completed_member.member_id = ci.completed_by_member_id
+        WHERE <include refid="notDeleted"/>
+          AND ci.performance_project_id = #{performanceProjectId}
+        <if test="performanceRoundId != null">
+          AND ci.performance_round_id = #{performanceRoundId}
+        </if>
+        <if test="teamId != null">
+          AND ci.team_id = #{teamId}
+        </if>
+        <if test="scope != null">
+          AND ci.scope_code = #{scope}
+        </if>
+        ORDER BY FIELD(ci.scope_code, 'PROJECT', 'ROUND'),
+                 ci.performance_round_id, t.name,
+                 ci.display_order, ci.checklist_item_id
+    </select>
+
+    <select id="searchHistories" resultMap="historyResponseMap">
+        SELECT cih.checklist_item_history_id, cih.checklist_item_id,
+               cih.previous_completed, cih.new_completed,
+               cih.changed_by_member_id,
+               m.name AS changed_by_member_name,
+               cih.changed_dttm, cih.reason
+        FROM checklist_item_history cih
+        JOIN member m ON m.member_id = cih.changed_by_member_id
+        WHERE cih.checklist_item_id = #{checklistItemId}
+        ORDER BY cih.changed_dttm DESC,
+                 cih.checklist_item_history_id DESC
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true"
+            keyProperty="checklistItemId">
+        INSERT INTO checklist_item (
+            performance_project_id, performance_round_id,
+            team_id, scope_code, content, is_required,
+            display_order, is_completed,
+            completed_by_member_id, completed_dttm,
+            created_by_member_id, updated_by_member_id
+        ) VALUES (
+            #{performanceProjectId}, #{performanceRoundId},
+            #{teamId}, #{scope}, #{content}, #{required},
+            #{displayOrder}, #{completed},
+            #{completedByMemberId}, #{completedDttm},
+            #{createdByMemberId}, #{updatedByMemberId}
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE checklist_item
+        SET content = #{content},
+            is_required = #{required},
+            display_order = #{displayOrder},
+            is_completed = #{completed},
+            completed_by_member_id = #{completedByMemberId},
+            completed_dttm = #{completedDttm},
+            updated_by_member_id = #{updatedByMemberId}
+        WHERE checklist_item_id = #{checklistItemId}
+          AND deleted_dttm IS NULL
+    </update>
+
+    <update id="delete">
+        UPDATE checklist_item
+        SET deleted_dttm = #{deletedDttm},
+            updated_by_member_id = #{actorMemberId}
+        WHERE checklist_item_id = #{checklistItemId}
+          AND deleted_dttm IS NULL
+    </update>
+
+    <insert id="insertHistory" useGeneratedKeys="true"
+            keyProperty="checklistItemHistoryId">
+        INSERT INTO checklist_item_history (
+            checklist_item_id, previous_completed,
+            new_completed, changed_by_member_id,
+            changed_dttm, reason
+        ) VALUES (
+            #{checklistItemId}, #{previousCompleted},
+            #{newCompleted}, #{changedByMemberId},
+            #{changedDttm}, #{reason}
+        )
+    </insert>
+</mapper>

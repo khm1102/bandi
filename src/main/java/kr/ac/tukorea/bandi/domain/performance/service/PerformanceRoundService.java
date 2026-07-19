@@ -138,6 +138,13 @@ public class PerformanceRoundService {
         return roundMapper.searchAccessibilities(performanceRoundId);
     }
 
+    @Transactional
+    public void validateExists(Long actorMemberId, Long performanceRoundId,
+                               Long performanceProjectId) {
+        validateInternal(actorMemberId);
+        lockRound(performanceRoundId).validateProject(performanceProjectId);
+    }
+
     public List<PublicPerformanceRoundResponse> searchPublicRounds(
             String slug) {
         Long projectId = publicPageService.lookupPublic(slug)
@@ -186,6 +193,13 @@ public class PerformanceRoundService {
         MemberAccessContext access = memberService
                 .lookupAccessContext(actorMemberId);
         if (!access.canManageGlobal()) {
+            throw new PerformanceAccessDeniedException();
+        }
+    }
+    private void validateInternal(Long actorMemberId) {
+        MemberAccessContext access = memberService
+                .lookupAccessContext(actorMemberId);
+        if (!access.canReadInternal()) {
             throw new PerformanceAccessDeniedException();
         }
     }
