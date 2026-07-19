@@ -48,3 +48,9 @@ bandi:
       1: ${RESERVATION_ENCRYPTION_KEY_V1_BASE64}
     hmac-key-base64: ${RESERVATION_HMAC_KEY_BASE64}
     personal-data-retention: ${RESERVATION_PERSONAL_DATA_RETENTION:90d}
+  school-sso:
+    login-page-url: "https://ksc.tukorea.ac.kr/sso/login_stand.jsp"
+    login-process-url: "https://ksc.tukorea.ac.kr/sso/login_proc.jsp?returnurl=null"
+    connect-timeout: 5s
+    request-timeout: 15s
+    user-agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"

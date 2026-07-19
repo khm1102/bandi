@@ -235,7 +235,6 @@ public class PerformanceRoundService {
             throw new PerformanceAccessDeniedException();
         }
     }
-
     private void validateInternal(Long actorMemberId) {
         MemberAccessContext access = memberService
                 .lookupAccessContext(actorMemberId);
