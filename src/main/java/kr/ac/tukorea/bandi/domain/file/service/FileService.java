@@ -2,6 +2,7 @@ package kr.ac.tukorea.bandi.domain.file.service;
 
 import kr.ac.tukorea.bandi.domain.file.dto.response.FileReferenceResponse;
 import kr.ac.tukorea.bandi.domain.file.exception.FileAccessDeniedException;
+import kr.ac.tukorea.bandi.domain.file.exception.InvalidFileException;
 import kr.ac.tukorea.bandi.domain.file.model.StorageScope;
 import kr.ac.tukorea.bandi.domain.file.model.StoredFile;
 import kr.ac.tukorea.bandi.global.config.FileStorageProperties;
@@ -70,6 +71,24 @@ public class FileService {
         StoredFile file = metadataService.lookup(storedFileId);
         file.validatePrivateDownload();
         return FileReferenceResponse.from(file);
+    }
+
+    public void validatePublicReady(Long storedFileId) {
+        lookupPublicReady(storedFileId);
+    }
+
+    public FileReferenceResponse lookupPublicReady(Long storedFileId) {
+        StoredFile file = metadataService.lookup(storedFileId);
+        file.validatePublicUse();
+        return FileReferenceResponse.from(file);
+    }
+
+    public void validatePublicImageReady(Long storedFileId) {
+        FileReferenceResponse file = lookupPublicReady(storedFileId);
+        if (file.contentType() == null
+                || !file.contentType().startsWith("image/")) {
+            throw new InvalidFileException("contentType");
+        }
     }
 
     public Long promoteToPublic(Long privateStoredFileId, String domain,

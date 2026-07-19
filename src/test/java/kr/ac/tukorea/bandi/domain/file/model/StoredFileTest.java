@@ -74,6 +74,24 @@ class StoredFileTest {
     }
 
     @Test
+    void 준비된_공개_파일은_외부_콘텐츠에_연결할_수_있다() {
+        StoredFile file = readyPublicFile();
+
+        file.validatePublicUse();
+
+        assertThat(file.getStorageScope()).isEqualTo(StorageScope.PUBLIC);
+    }
+
+    @Test
+    void 비공개_파일은_외부_콘텐츠에_연결할_수_없다() {
+        StoredFile file = pendingFile();
+        file.markReady("private-etag");
+
+        assertThatThrownBy(file::validatePublicUse)
+                .isInstanceOf(InvalidFileScopeException.class);
+    }
+
+    @Test
     void 공개_승격은_별도_PUBLIC_대기_파일을_만든다() {
         StoredFile source = pendingFile();
         source.markReady("private-etag");

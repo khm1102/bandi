@@ -5,6 +5,7 @@ import kr.ac.tukorea.bandi.domain.file.exception.FileAccessDeniedException;
 import kr.ac.tukorea.bandi.domain.file.exception.FileStorageUnavailableException;
 import kr.ac.tukorea.bandi.domain.file.exception.InvalidFileScopeException;
 import kr.ac.tukorea.bandi.domain.file.exception.InvalidFileStateException;
+import kr.ac.tukorea.bandi.domain.file.exception.InvalidFileException;
 import kr.ac.tukorea.bandi.domain.file.model.StorageScope;
 import kr.ac.tukorea.bandi.domain.file.model.StoredFile;
 import kr.ac.tukorea.bandi.global.config.FileStorageProperties;
@@ -171,6 +172,53 @@ class FileServiceTest {
 
         assertThatThrownBy(() -> fileService.validatePrivateReady(PUBLIC_FILE_ID))
                 .isInstanceOf(InvalidFileScopeException.class);
+    }
+
+    @Test
+    void READY_공개_파일은_외부_콘텐츠에_연결할_수_있다() {
+        StoredFile source = readyPublic(PUBLIC_KEY);
+        assignId(source, PUBLIC_FILE_ID);
+        given(metadataService.lookup(PUBLIC_FILE_ID)).willReturn(source);
+
+        FileReferenceResponse result =
+                fileService.lookupPublicReady(PUBLIC_FILE_ID);
+
+        assertThat(result.storedFileId()).isEqualTo(PUBLIC_FILE_ID);
+    }
+
+    @Test
+    void 비공개_파일은_외부_콘텐츠에_연결할_수_없다() {
+        StoredFile source = readyPrivate(PRIVATE_KEY);
+        assignId(source, PRIVATE_FILE_ID);
+        given(metadataService.lookup(PRIVATE_FILE_ID)).willReturn(source);
+
+        assertThatThrownBy(() -> fileService.validatePublicReady(PRIVATE_FILE_ID))
+                .isInstanceOf(InvalidFileScopeException.class);
+    }
+
+    @Test
+    void 공개_READY_이미지는_외부_이미지_콘텐츠에_연결할_수_있다() {
+        StoredFile source = readyPublic(PUBLIC_KEY);
+        assignId(source, PUBLIC_FILE_ID);
+        given(metadataService.lookup(PUBLIC_FILE_ID)).willReturn(source);
+
+        fileService.validatePublicImageReady(PUBLIC_FILE_ID);
+
+        verify(metadataService).lookup(PUBLIC_FILE_ID);
+    }
+
+    @Test
+    void 이미지가_아닌_공개_파일은_이미지_콘텐츠에_연결할_수_없다() {
+        StoredFile source = StoredFile.pending("profile.pdf",
+                StorageScope.PUBLIC, PUBLIC_KEY, "application/pdf",
+                CONTENT.length, "abc123", MEMBER_ID);
+        source.markReady("public-etag");
+        assignId(source, PUBLIC_FILE_ID);
+        given(metadataService.lookup(PUBLIC_FILE_ID)).willReturn(source);
+
+        assertThatThrownBy(() ->
+                fileService.validatePublicImageReady(PUBLIC_FILE_ID))
+                .isInstanceOf(InvalidFileException.class);
     }
 
     @Test

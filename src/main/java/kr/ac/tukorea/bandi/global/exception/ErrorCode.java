@@ -6,7 +6,9 @@ import org.springframework.http.HttpStatus;
 
 /**
  * 에러의 단일 출처 (컨벤션 9.4).
- * 코드 접두사는 feature별 고정 — C 공통, A auth, M member, CA calendar, FI file, PN public notice, NI internal notice, RS resource, AR activity record, EV event, F fee, P performance.
+ * 코드 접두사는 feature별 고정 — C 공통, A auth, M member, CA calendar, FI file,
+ * PN public notice, NI internal notice, RS resource, AR activity record,
+ * EV event, F fee, PO policy, P performance.
  * message는 사용자에게 그대로 보여줄 문장으로 작성하고 내부 사정을 노출하지 않는다.
  */
 @Getter
@@ -82,12 +84,22 @@ public enum ErrorCode {
     FEE_CHARGE_NOT_FOUND(HttpStatus.NOT_FOUND, "F002", "존재하지 않는 회비 부과 내역입니다."),
     INVALID_FEE_STATE(HttpStatus.CONFLICT, "F003", "현재 상태에서는 회비를 변경할 수 없습니다."),
 
+    // policy (PO)
+    POLICY_DOCUMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PO001", "존재하지 않는 정책 문서입니다."),
+    POLICY_VERSION_NOT_FOUND(HttpStatus.NOT_FOUND, "PO002", "존재하지 않는 정책 버전입니다."),
+    DUPLICATE_POLICY_VERSION(HttpStatus.CONFLICT, "PO003", "이미 등록된 정책 버전입니다."),
+    INVALID_POLICY_VERSION(HttpStatus.CONFLICT, "PO004", "동의에 사용할 수 없는 정책 버전입니다."),
+
     // performance (P)
     PERFORMANCE_PROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "존재하지 않는 공연 프로젝트입니다."),
     DUPLICATE_PERFORMANCE_TERM(HttpStatus.CONFLICT, "P002", "해당 학기에 이미 공연 프로젝트가 있습니다."),
     INVALID_PERFORMANCE_PROJECT_STATE(HttpStatus.CONFLICT, "P003", "현재 상태에서는 공연 프로젝트를 변경할 수 없습니다."),
     PRODUCTION_TASK_NOT_FOUND(HttpStatus.NOT_FOUND, "P004", "존재하지 않는 제작 업무입니다."),
-    INVALID_PRODUCTION_TASK_STATE(HttpStatus.CONFLICT, "P005", "현재 상태에서는 제작 업무를 변경할 수 없습니다.");
+    INVALID_PRODUCTION_TASK_STATE(HttpStatus.CONFLICT, "P005", "현재 상태에서는 제작 업무를 변경할 수 없습니다."),
+    PUBLIC_PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "P006", "존재하지 않는 공개 프로필입니다."),
+    DUPLICATE_PUBLIC_PROFILE(HttpStatus.CONFLICT, "P007", "이미 공개 프로필이 등록된 멤버입니다."),
+    PUBLIC_PROFILE_CONSENT_NOT_FOUND(HttpStatus.NOT_FOUND, "P008", "존재하지 않는 공개 동의입니다."),
+    INVALID_PUBLIC_PROFILE_STATE(HttpStatus.CONFLICT, "P009", "현재 상태에서는 공개 프로필을 변경할 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;
