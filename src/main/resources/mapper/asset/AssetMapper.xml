@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.ac.tukorea.bandi.domain.asset.mapper.AssetMapper">
+
+    <resultMap id="itemMap" type="kr.ac.tukorea.bandi.domain.asset.model.AssetItem">
+        <constructor>
+            <idArg column="asset_item_id" javaType="java.lang.Long"/>
+            <arg column="name" javaType="java.lang.String"/>
+            <arg column="category_code" javaType="java.lang.String"/>
+            <arg column="tracking_type_code" javaType="kr.ac.tukorea.bandi.domain.asset.model.AssetTrackingType"/>
+            <arg column="owner_type_code" javaType="kr.ac.tukorea.bandi.domain.asset.model.AssetOwnerType"/>
+            <arg column="owner_member_id" javaType="java.lang.Long"/>
+            <arg column="external_owner_name" javaType="java.lang.String"/>
+            <arg column="total_quantity" javaType="_int"/>
+            <arg column="storage_location" javaType="java.lang.String"/>
+            <arg column="status_code" javaType="kr.ac.tukorea.bandi.domain.asset.model.AssetStatus"/>
+            <arg column="photo_file_id" javaType="java.lang.Long"/>
+            <arg column="note" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="unitMap" type="kr.ac.tukorea.bandi.domain.asset.model.AssetUnit">
+        <constructor>
+            <idArg column="asset_unit_id" javaType="java.lang.Long"/>
+            <arg column="asset_item_id" javaType="java.lang.Long"/>
+            <arg column="management_no" javaType="java.lang.String"/>
+            <arg column="status_code" javaType="kr.ac.tukorea.bandi.domain.asset.model.AssetStatus"/>
+            <arg column="storage_location" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="usageMap" type="kr.ac.tukorea.bandi.domain.asset.model.AssetUsage">
+        <constructor>
+            <idArg column="asset_usage_id" javaType="java.lang.Long"/>
+            <arg column="asset_item_id" javaType="java.lang.Long"/>
+            <arg column="asset_unit_id" javaType="java.lang.Long"/>
+            <arg column="performance_project_id" javaType="java.lang.Long"/>
+            <arg column="team_id" javaType="java.lang.Long"/>
+            <arg column="quantity" javaType="_int"/>
+            <arg column="status_code" javaType="kr.ac.tukorea.bandi.domain.asset.model.AssetUsageStatus"/>
+            <arg column="start_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="expected_return_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="returned_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="created_by_member_id" javaType="java.lang.Long"/>
+            <arg column="processed_by_member_id" javaType="java.lang.Long"/>
+            <arg column="note" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="itemColumns">
+        asset_item_id, name, category_code, tracking_type_code,
+        owner_type_code, owner_member_id, external_owner_name,
+        total_quantity, storage_location, status_code, photo_file_id, note
+    </sql>
+
+    <select id="searchItems" resultMap="itemMap">
+        SELECT <include refid="itemColumns"/>
+        FROM asset_item
+        <where>
+            deleted_dttm IS NULL
+            <if test="keyword != null">
+                AND (name LIKE CONCAT('%', #{keyword}, '%')
+                    OR storage_location LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="categoryCode != null">
+                AND category_code = #{categoryCode}
+            </if>
+            <if test="trackingType != null">
+                AND tracking_type_code = #{trackingType}
+            </if>
+            <if test="status != null">
+                AND status_code = #{status}
+            </if>
+        </where>
+        ORDER BY name, asset_item_id
+    </select>
+
+    <select id="searchUnitsByItemId" resultMap="unitMap">
+        SELECT asset_unit_id, asset_item_id, management_no, status_code,
+               storage_location
+        FROM asset_unit
+        WHERE asset_item_id = #{assetItemId}
+        ORDER BY management_no, asset_unit_id
+    </select>
+
+    <select id="searchUsagesByItemId" resultMap="usageMap">
+        SELECT asset_usage_id, asset_item_id, asset_unit_id,
+               performance_project_id, team_id, quantity, status_code,
+               start_dttm, expected_return_dttm, returned_dttm,
+               created_by_member_id, processed_by_member_id, note
+        FROM asset_usage
+        WHERE asset_item_id = #{assetItemId}
+        ORDER BY start_dttm DESC, asset_usage_id DESC
+    </select>
+
+    <select id="lookupItemByIdForUpdate" resultMap="itemMap">
+        SELECT <include refid="itemColumns"/>
+        FROM asset_item
+        WHERE asset_item_id = #{assetItemId}
+          AND deleted_dttm IS NULL
+        FOR UPDATE
+    </select>
+
+    <select id="lookupItemById" resultMap="itemMap">
+        SELECT <include refid="itemColumns"/>
+        FROM asset_item
+        WHERE asset_item_id = #{assetItemId}
+          AND deleted_dttm IS NULL
+    </select>
+
+    <select id="lookupUnitByIdForUpdate" resultMap="unitMap">
+        SELECT asset_unit_id, asset_item_id, management_no, status_code,
+               storage_location
+        FROM asset_unit
+        WHERE asset_unit_id = #{assetUnitId}
+        FOR UPDATE
+    </select>
+
+    <select id="lookupUsageByIdForUpdate" resultMap="usageMap">
+        SELECT asset_usage_id, asset_item_id, asset_unit_id,
+               performance_project_id, team_id, quantity, status_code,
+               start_dttm, expected_return_dttm, returned_dttm,
+               created_by_member_id, processed_by_member_id, note
+        FROM asset_usage
+        WHERE asset_usage_id = #{assetUsageId}
+        FOR UPDATE
+    </select>
+
+    <select id="sumActiveUsageQuantity" resultType="_int">
+        SELECT COALESCE(SUM(quantity), 0)
+        FROM asset_usage
+        WHERE asset_item_id = #{assetItemId}
+          AND status_code IN ('RESERVED', 'IN_USE')
+    </select>
+
+    <select id="existsActiveUsageByUnitId" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1 FROM asset_usage
+            WHERE asset_unit_id = #{assetUnitId}
+              AND status_code IN ('RESERVED', 'IN_USE')
+        )
+    </select>
+
+    <insert id="insertItem" useGeneratedKeys="true" keyProperty="assetItemId">
+        INSERT INTO asset_item (
+            name, category_code, tracking_type_code, owner_type_code,
+            owner_member_id, external_owner_name, total_quantity,
+            storage_location, status_code, photo_file_id, note
+        ) VALUES (
+            #{name}, #{categoryCode}, #{trackingType}, #{ownerType},
+            #{ownerMemberId}, #{externalOwnerName}, #{totalQuantity},
+            #{storageLocation}, #{status}, #{photoFileId}, #{note}
+        )
+    </insert>
+
+    <insert id="insertUnit" useGeneratedKeys="true" keyProperty="assetUnitId">
+        INSERT INTO asset_unit (
+            asset_item_id, management_no, status_code, storage_location
+        ) VALUES (
+            #{assetItemId}, #{managementNo}, #{status}, #{storageLocation}
+        )
+    </insert>
+
+    <insert id="insertUsage" useGeneratedKeys="true" keyProperty="assetUsageId">
+        INSERT INTO asset_usage (
+            asset_item_id, asset_unit_id, performance_project_id, team_id,
+            quantity, status_code, start_dttm, expected_return_dttm,
+            returned_dttm, created_by_member_id, processed_by_member_id, note
+        ) VALUES (
+            #{assetItemId}, #{assetUnitId}, #{performanceProjectId}, #{teamId},
+            #{quantity}, #{status}, #{startDttm}, #{expectedReturnDttm},
+            #{returnedDttm}, #{createdByMemberId}, #{processedByMemberId}, #{note}
+        )
+    </insert>
+
+    <insert id="insertHistory">
+        INSERT INTO asset_history (
+            asset_item_id, asset_unit_id, action_code, quantity,
+            previous_status_code, new_status_code, note,
+            changed_by_member_id, changed_dttm
+        ) VALUES (
+            #{assetItemId}, #{assetUnitId}, #{action}, #{quantity},
+            #{previousStatus}, #{newStatus}, #{note},
+            #{changedByMemberId}, #{changedDttm}
+        )
+    </insert>
+
+    <update id="updateUsage">
+        UPDATE asset_usage
+        SET status_code = #{status}, returned_dttm = #{returnedDttm},
+            processed_by_member_id = #{processedByMemberId}
+        WHERE asset_usage_id = #{assetUsageId}
+    </update>
+
+    <update id="updateUnitStatus">
+        UPDATE asset_unit
+        SET status_code = #{status}
+        WHERE asset_unit_id = #{assetUnitId}
+    </update>
+</mapper>
