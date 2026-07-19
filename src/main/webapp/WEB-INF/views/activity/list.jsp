@@ -106,11 +106,11 @@
         <jsp:attribute name="footer">
             <t:button variant="outline" action="close-modal">닫기</t:button>
             <span class="hidden" data-detail-action="edit"><t:button variant="outline" pageAction="activity-edit-open">수정·사진 추가</t:button></span>
-            <span class="hidden" data-detail-action="submit"><t:button pageAction="activity-submit">제출</t:button></span>
+            <span class="hidden" data-detail-action="submit"><t:button pageAction="activity-submit" confirm="이 활동 기록을 검수 대상으로 제출할까요?" confirmAction="검수 제출">제출</t:button></span>
             <c:if test="${canReview}">
                 <span class="hidden" data-detail-action="revision"><t:button variant="outline" pageAction="activity-revision-open">보완 요청</t:button></span>
-                <span class="hidden" data-detail-action="approve"><t:button pageAction="activity-approve">승인</t:button></span>
-                <span class="hidden" data-detail-action="archive"><t:button variant="outline" pageAction="activity-archive" cssClass="text-destructive">보관</t:button></span>
+                <span class="hidden" data-detail-action="approve"><t:button pageAction="activity-approve" confirm="증빙 사진과 내용을 확인하고 승인할까요?" confirmAction="활동 승인">승인</t:button></span>
+                <span class="hidden" data-detail-action="archive"><t:button variant="outline" pageAction="activity-archive" confirm="이 활동 기록을 보관할까요?" confirmAction="활동 보관" cssClass="text-destructive">보관</t:button></span>
             </c:if>
         </jsp:attribute>
         <jsp:body>

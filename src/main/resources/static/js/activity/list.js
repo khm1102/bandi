@@ -506,7 +506,7 @@ async function openDetail(trigger) {
 }
 
 async function submitCurrentDetail(trigger) {
-    if (!currentDetail || !window.confirm('이 활동 기록을 검수 대상으로 제출하시겠어요?')) {
+    if (!currentDetail) {
         return;
     }
     trigger.disabled = true;
@@ -525,7 +525,7 @@ async function submitCurrentDetail(trigger) {
 }
 
 async function approveActivity(trigger) {
-    if (!currentDetail || !window.confirm('증빙 사진과 내용을 확인하고 승인하시겠어요?')) {
+    if (!currentDetail) {
         return;
     }
     trigger.disabled = true;
@@ -570,7 +570,7 @@ async function requestRevision(trigger) {
 }
 
 async function archiveActivity(trigger) {
-    if (!currentDetail || !window.confirm('이 활동 기록을 보관하시겠어요?')) {
+    if (!currentDetail) {
         return;
     }
     trigger.disabled = true;
