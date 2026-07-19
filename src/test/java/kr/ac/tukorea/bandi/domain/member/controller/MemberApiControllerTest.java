@@ -95,6 +95,17 @@ class MemberApiControllerTest {
     }
 
     @Test
+    void 로그인_멤버가_본인_정보를_조회한다() throws Exception {
+        given(memberService.lookupMember(ACTOR_ID)).willReturn(member());
+
+        mockMvc.perform(get("/api/members/me"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("이서준"));
+
+        verify(memberService).lookupMember(ACTOR_ID);
+    }
+
+    @Test
     void 멤버_상세와_이력을_조회한다() throws Exception {
         given(memberService.lookupMember(MEMBER_ID)).willReturn(member());
         given(memberService.lookupMemberHistory(MEMBER_ID))

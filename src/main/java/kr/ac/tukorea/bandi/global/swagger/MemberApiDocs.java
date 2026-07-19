@@ -35,6 +35,11 @@ import java.util.List;
 @SecurityRequirement(name = OpenApiConfig.SESSION_COOKIE_SCHEME)
 public interface MemberApiDocs {
 
+    @Operation(summary = "로그인 멤버 조회")
+    @GetMapping("/me")
+    ResponseEntity<MemberResponse> lookupLoginMember(
+            @Parameter(hidden = true) @LoginMember Long memberId);
+
     @Operation(summary = "멤버 목록 조회")
     @GetMapping
     ResponseEntity<List<MemberResponse>> searchMembers(

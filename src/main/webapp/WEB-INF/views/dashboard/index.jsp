@@ -1,7 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
-<c:set var="rq" value="?role=${role}"/>
 <c:choose>
     <c:when test="${role == 'member'}"><c:set var="userName" value="김하늘"/></c:when>
     <c:when test="${role == 'leader'}"><c:set var="userName" value="정도윤"/></c:when>
@@ -9,9 +8,9 @@
 </c:choose>
 <t:layout title="홈" active="dashboard" role="${role}">
     <t:pageHead title="안녕하세요, ${userName}님" description="2025년 6월 20일 금요일 · 정기공연 D-1">
-        <t:button href="/resources${rq}" variant="outline">미확인 공지 보기</t:button>
+        <t:button href="/resources" variant="outline">미확인 공지 보기</t:button>
         <c:if test="${role != 'member'}">
-            <t:button href="/calendar${rq}">+ 일정 등록</t:button>
+            <t:button href="/calendar">+ 일정 등록</t:button>
         </c:if>
     </t:pageHead>
 
@@ -43,12 +42,12 @@
             </div>
             <p class="mt-0.5 text-xs text-muted-foreground">6/20(금) 18시 전원 소집. 의상·소품 지참 바랍니다. · 이서준</p>
         </div>
-        <a href="<c:url value='/resources'/>${rq}" class="inline-flex min-h-11 w-full shrink-0 items-center justify-center rounded-md bg-primary px-3 text-xs font-bold text-primary-foreground transition-colors hover:bg-primary-strong hover:text-white md:w-auto">공지 보기</a>
+        <a href="<c:url value='/resources'/>" class="inline-flex min-h-11 w-full shrink-0 items-center justify-center rounded-md bg-primary px-3 text-xs font-bold text-primary-foreground transition-colors hover:bg-primary-strong hover:text-white md:w-auto">공지 보기</a>
     </div>
 
     <div class="grid items-start gap-4 lg:grid-cols-[1.7fr_1fr]">
         <div class="flex flex-col gap-4">
-            <t:card title="오늘의 일정" icon="clock" moreUrl="/calendar${rq}" moreLabel="캘린더 →" flush="true">
+            <t:card title="오늘의 일정" icon="clock" moreUrl="/calendar" moreLabel="캘린더 →" flush="true">
                 <div class="flex items-center gap-3 border-b px-5 py-3">
                     <span class="min-w-11 text-sm font-extrabold text-accent-foreground">14:00</span>
                     <div class="min-w-0 flex-1"><p class="text-sm font-bold">2막 전체 런스루</p><p class="mt-0.5 text-xs text-muted-foreground">소극장 무대 · 배우</p></div>
@@ -71,7 +70,7 @@
                 </div>
             </t:card>
 
-            <t:card title="팀별 진행 현황" icon="activity" moreUrl="/activity${rq}" moreLabel="활동 기록 →">
+            <t:card title="팀별 진행 현황" icon="activity" moreUrl="/activity" moreLabel="활동 기록 →">
                 <div class="flex flex-col gap-3.5">
                     <div>
                         <div class="mb-1.5 flex items-center gap-2"><t:badge tone="neutral" dot="true">배우</t:badge><span class="flex-1 truncate text-xs text-muted-foreground">런스루 진행 중</span><b class="text-xs">82%</b></div>
@@ -98,7 +97,7 @@
         </div>
 
         <div class="flex flex-col gap-4">
-            <t:card title="중요·미확인 공지" icon="bell" moreUrl="/resources${rq}" moreLabel="전체 →" flush="true">
+            <t:card title="중요·미확인 공지" icon="bell" moreUrl="/resources" moreLabel="전체 →" flush="true">
                 <div class="flex items-center gap-3 border-b px-5 py-3">
                     <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-accent text-xs font-black text-accent-foreground">중요</span>
                     <div class="min-w-0 flex-1"><p class="truncate text-sm font-bold">정기공연 최종 리허설 안내</p><p class="mt-0.5 text-xs text-muted-foreground">전체 · 미확인 4명</p></div>
@@ -119,26 +118,26 @@
 
             <t:card title="지금 확인할 일">
                 <div class="flex flex-col gap-3">
-                    <a href="<c:url value='/checklist'/>${rq}" class="flex min-h-11 items-center gap-3 rounded-md px-2 transition-colors hover:bg-secondary">
+                    <a href="<c:url value='/checklist'/>" class="flex min-h-11 items-center gap-3 rounded-md px-2 transition-colors hover:bg-secondary">
                         <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-warning-soft text-sm font-black text-warning">3</span>
                         <span class="min-w-0 flex-1"><b class="block text-sm">공연 전 체크리스트</b><span class="text-xs text-muted-foreground">오늘 완료할 항목</span></span>
                         <span class="text-xs font-bold text-accent-foreground">보기</span>
                     </a>
-                    <a href="<c:url value='/props'/>${rq}" class="flex min-h-11 items-center gap-3 rounded-md px-2 transition-colors hover:bg-secondary">
+                    <a href="<c:url value='/props'/>" class="flex min-h-11 items-center gap-3 rounded-md px-2 transition-colors hover:bg-secondary">
                         <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-info-soft text-sm font-black text-info">3</span>
                         <span class="min-w-0 flex-1"><b class="block text-sm">반납 대기 물품</b><span class="text-xs text-muted-foreground">공연 후 반납 예정</span></span>
                         <span class="text-xs font-bold text-accent-foreground">보기</span>
                     </a>
                     <c:choose>
                         <c:when test="${role == 'admin'}">
-                            <a href="<c:url value='/dues'/>${rq}" class="flex min-h-11 items-center gap-3 rounded-md px-2 transition-colors hover:bg-secondary">
+                            <a href="<c:url value='/dues'/>" class="flex min-h-11 items-center gap-3 rounded-md px-2 transition-colors hover:bg-secondary">
                                 <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-destructive-soft text-sm font-black text-destructive">5</span>
                                 <span class="min-w-0 flex-1"><b class="block text-sm">회비 미납 확인</b><span class="text-xs text-muted-foreground">미수납 170,000원</span></span>
                                 <span class="text-xs font-bold text-accent-foreground">보기</span>
                             </a>
                         </c:when>
                         <c:otherwise>
-                            <a href="<c:url value='/dues'/>${rq}" class="flex min-h-11 items-center gap-3 rounded-md px-2 transition-colors hover:bg-secondary">
+                            <a href="<c:url value='/dues'/>" class="flex min-h-11 items-center gap-3 rounded-md px-2 transition-colors hover:bg-secondary">
                                 <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-destructive-soft text-sm font-black text-destructive">${role == 'leader' ? '1' : '2'}</span>
                                 <span class="min-w-0 flex-1"><b class="block text-sm">내 회비 납부 확인</b><span class="text-xs text-muted-foreground">아직 납부하지 않은 항목</span></span>
                                 <span class="text-xs font-bold text-accent-foreground">보기</span>
