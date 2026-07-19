@@ -22,10 +22,10 @@
 
     <div class="rounded-lg border bg-card">
         <t:dataTable caption="멤버와 권한 목록">
-            <thead><tr><th>이름</th><th>학번</th><th>기수</th><th>소속 팀</th><th>SSO 연결</th><th>역할</th><th class="text-right">권한 변경</th></tr></thead>
+            <thead><tr><th>이름</th><th>학번</th><th>기수</th><th>소속 팀</th><th>활동 상태</th><th>SSO 연결</th><th>역할</th><th class="text-right">권한 변경</th><th class="text-right">관리</th></tr></thead>
             <tbody data-member-list>
             <tr data-member-state>
-                <td colspan="7" class="px-5 py-11 text-center">
+                <td colspan="9" class="px-5 py-11 text-center">
                     <b class="block text-sm font-extrabold" data-member-state-title>멤버 목록을 불러오는 중입니다</b>
                     <p class="mt-1 text-xs text-muted-foreground" data-member-state-message>잠시만 기다려 주세요.</p>
                     <button type="button" class="mx-auto mt-4 hidden min-h-11 rounded-md border bg-card px-4 text-xs font-bold" data-member-retry>다시 시도</button>
@@ -41,9 +41,11 @@
             <td data-member-student-no></td>
             <td data-member-cohort></td>
             <td data-member-team></td>
+            <td data-member-status></td>
             <td data-member-sso></td>
             <td data-member-role-cell></td>
             <td class="text-right"><span class="inline-flex rounded-lg border bg-secondary p-0.5"><button type="button" data-member-role="MEMBER" class="${segOff}">일반 부원</button><button type="button" data-member-role="LEADER" class="${segOff}">팀장</button><button type="button" data-member-role="ADMIN" class="${segOff}">운영진</button></span></td>
+            <td class="text-right"><span class="inline-flex gap-1"><button type="button" data-page-action="member-manage-open" class="min-h-11 rounded-md border bg-card px-3 text-xs font-bold hover:bg-secondary">변경</button><button type="button" data-page-action="member-history-open" class="min-h-11 rounded-md border bg-card px-3 text-xs font-bold hover:bg-secondary">이력</button></span></td>
         </tr>
     </template>
 
@@ -70,5 +72,23 @@
             <textarea class="min-h-28 w-full resize-y rounded-md border border-input bg-card px-3 py-2.5 text-sm transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20" id="memberRoleReason" maxlength="500" placeholder="예) 2026-1학기 팀장 지정"></textarea>
             <p class="mt-2 hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-xs text-destructive" data-member-role-error role="alert"></p>
         </jsp:body>
+    </t:modal>
+
+    <t:modal id="memberManageModal" title="멤버 정보 변경" description="팀, 기수 또는 활동 상태 중 한 항목씩 변경합니다.">
+        <jsp:attribute name="footer"><t:button variant="outline" action="close-modal">취소</t:button><t:button pageAction="member-change-save">변경</t:button></jsp:attribute>
+        <jsp:body>
+            <p class="rounded-md bg-secondary px-3 py-2.5 text-sm font-bold" data-member-change-summary></p>
+            <div class="mt-4 grid gap-3 md:grid-cols-2">
+                <div><label class="${label}" for="memberChangeType">변경 항목 *</label><select class="${input}" id="memberChangeType"><option value="team">소속 팀</option><option value="cohort">기수</option><option value="status">활동 상태</option></select></div>
+                <div><label class="${label}" for="memberChangeValue">변경 값 *</label><select class="${input}" id="memberChangeValue"></select></div>
+            </div>
+            <label class="${label} mt-4" for="memberChangeReason">변경 사유 *</label>
+            <textarea class="min-h-28 w-full resize-y rounded-md border border-input bg-card px-3 py-2.5 text-sm transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20" id="memberChangeReason" maxlength="500" placeholder="예) 2026-1학기 제작팀 배정 변경"></textarea>
+            <p class="mt-2 hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-xs text-destructive" data-member-change-error role="alert"></p>
+        </jsp:body>
+    </t:modal>
+
+    <t:modal id="memberHistoryModal" title="멤버 변경 이력" description="팀·기수·권한·활동 상태 변경 기록을 확인합니다.">
+        <jsp:body><div data-member-history class="flex flex-col gap-2" aria-live="polite"></div></jsp:body>
     </t:modal>
 </t:layout>
