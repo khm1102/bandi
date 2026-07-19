@@ -83,6 +83,8 @@ class SecurityConfigTest {
             throws Exception {
         mockMvc.perform(get("/api/public-notices/test"))
                 .andExpect(status().isOk());
+        mockMvc.perform(get("/api/public-performances/test"))
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -156,6 +158,11 @@ class SecurityTestController {
 
     @PostMapping("/api/public-notices/test")
     ResponseEntity<Void> changePublicNotice() {
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/api/public-performances/test")
+    ResponseEntity<Void> publicPerformance() {
         return ResponseEntity.ok().build();
     }
 }

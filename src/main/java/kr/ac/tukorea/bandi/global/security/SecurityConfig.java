@@ -35,7 +35,8 @@ public class SecurityConfig {
                         "/api-docs/**", "/swagger-ui/**",
                         "/style-guide/**").permitAll()
                 .requestMatchers(HttpMethod.GET,
-                        "/api/public-notices/**").permitAll()
+                        "/api/public-notices/**",
+                        "/api/public-performances/**").permitAll()
                 .requestMatchers("/members/**", "/reservations/**",
                         "/showops/**", "/api/members/**",
                         "/api/reservations/**", "/api/showops/**")
