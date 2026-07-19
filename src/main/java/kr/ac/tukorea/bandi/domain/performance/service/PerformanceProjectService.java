@@ -100,6 +100,13 @@ public class PerformanceProjectService {
         lock(performanceProjectId).validateProductionMutable();
     }
 
+    @Transactional
+    public void validateExists(Long actorMemberId,
+                               Long performanceProjectId) {
+        validateInternal(actorMemberId);
+        lock(performanceProjectId);
+    }
+
     private PerformanceProject lock(Long performanceProjectId) {
         return performanceProjectMapper
                 .lookupByIdForUpdate(performanceProjectId)

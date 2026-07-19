@@ -177,6 +177,19 @@ class PerformanceProjectServiceTest {
         verify(performanceProjectMapper).lookupByIdForUpdate(PROJECT_ID);
     }
 
+    @Test
+    void 공개_콘텐츠가_연결할_프로젝트의_존재를_잠금_검증한다() {
+        given(memberService.lookupAccessContext(ACTOR_ID))
+                .willReturn(adminContext());
+        given(performanceProjectMapper.lookupByIdForUpdate(PROJECT_ID))
+                .willReturn(Optional.of(
+                        project(PerformanceProjectStatus.ENDED)));
+
+        service.validateExists(ACTOR_ID, PROJECT_ID);
+
+        verify(performanceProjectMapper).lookupByIdForUpdate(PROJECT_ID);
+    }
+
     private PerformanceProjectCreateParam createParam() {
         return new PerformanceProjectCreateParam((short) 2026, "FIRST",
                 "2026 봄 정기공연", START_DATE, END_DATE, "대강당");
