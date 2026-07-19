@@ -2,12 +2,13 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ attribute name="active" %>
 <header class="sticky top-0 z-20 bg-sidebar text-white">
-    <nav class="mx-auto flex max-w-5xl items-center gap-2.5 px-4 py-3 md:px-6" aria-label="공개 메뉴">
-        <a href="<c:url value='/reserve'/>" class="flex min-h-11 items-center gap-2.5 font-black">
+    <nav class="mx-auto flex max-w-5xl items-center gap-1 px-3 py-3 md:gap-2.5 md:px-6" aria-label="공개 메뉴">
+        <a href="<c:url value='/notices'/>" class="flex min-h-11 shrink-0 items-center gap-2 font-black">
             <span class="flex size-8 items-center justify-center rounded-md bg-primary text-sm font-black text-primary-foreground">B</span>
-            반디
+            <span class="hidden md:inline">반디</span>
         </a>
-        <a href="<c:url value='/reserve'/>" class="ml-auto inline-flex min-h-11 items-center rounded-md bg-sidebar-accent px-3 text-sm font-bold text-white" aria-current="${active == 'reserve' ? 'page' : 'false'}">관람 신청</a>
-        <a href="<c:url value='/login'/>" class="inline-flex min-h-11 items-center rounded-md border border-sidebar-border px-3 text-xs font-bold text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-white">멤버 로그인</a>
+        <a href="<c:url value='/notices'/>" class="ml-auto inline-flex min-h-11 items-center rounded-md px-2.5 text-xs font-bold transition-colors hover:bg-sidebar-accent hover:text-white md:px-3 md:text-sm" aria-current="${active == 'notices' ? 'page' : 'false'}">공시</a>
+        <a href="<c:url value='/reserve'/>" class="inline-flex min-h-11 items-center rounded-md bg-sidebar-accent px-2.5 text-xs font-bold text-white md:px-3 md:text-sm" aria-current="${active == 'reserve' ? 'page' : 'false'}">관람 신청</a>
+        <a href="<c:url value='/login'/>" class="inline-flex min-h-11 items-center rounded-md border border-sidebar-border px-2.5 text-xs font-bold text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-white md:px-3">멤버 로그인</a>
     </nav>
 </header>

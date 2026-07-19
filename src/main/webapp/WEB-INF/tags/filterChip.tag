@@ -6,7 +6,7 @@
 <%@ attribute name="active" type="java.lang.Boolean" %>
 <%@ attribute name="count" %>
 <%@ attribute name="dot" type="java.lang.Boolean" %>
-<c:set var="baseClass" value="inline-flex h-8 items-center gap-1.5 rounded-md border px-3 text-xs font-bold transition-colors focus-visible:ring-2 focus-visible:ring-ring"/>
+<c:set var="baseClass" value="inline-flex h-11 items-center gap-1.5 rounded-md border px-3 text-xs font-bold transition-colors focus-visible:ring-2 focus-visible:ring-ring md:h-8"/>
 <c:choose>
     <c:when test="${active}">
         <c:set var="stateClass" value=" border-sidebar bg-sidebar text-white"/>

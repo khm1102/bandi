@@ -3,6 +3,7 @@ package kr.ac.tukorea.bandi.domain.member.mapper;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchCondition;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
+import kr.ac.tukorea.bandi.domain.member.model.MemberSchoolConnection;
 import kr.ac.tukorea.bandi.domain.member.model.MemberStatus;
 import org.apache.ibatis.annotations.Param;
 
@@ -14,6 +15,8 @@ public interface MemberMapper {
     Optional<Member> lookupById(Long memberId);
 
     Optional<Member> lookupByStudentNo(String studentNo);
+
+    Optional<Member> lookupByStudentNoForUpdate(String studentNo);
 
     /**
      * 변경 대상 멤버를 잠금 조회한다. 팀·권한·상태 변경 트랜잭션의 시작점이다.
@@ -39,4 +42,6 @@ public interface MemberMapper {
     int updateRole(@Param("memberId") Long memberId, @Param("role") ClubRole role);
 
     int updateStatus(@Param("memberId") Long memberId, @Param("status") MemberStatus status);
+
+    int updateSchoolConnection(MemberSchoolConnection connection);
 }
