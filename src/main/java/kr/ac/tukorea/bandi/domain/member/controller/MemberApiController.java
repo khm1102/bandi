@@ -29,6 +29,12 @@ public class MemberApiController implements MemberApiDocs {
     private final MemberService memberService;
 
     @Override
+    public ResponseEntity<MemberResponse> lookupLoginMember(
+            @LoginMember Long memberId) {
+        return ResponseEntity.ok(memberService.lookupMember(memberId));
+    }
+
+    @Override
     public ResponseEntity<List<MemberResponse>> searchMembers(
             String keyword,
             Long teamId,

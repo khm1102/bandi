@@ -1,7 +1,6 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
-<c:set var="rq" value="?role=${role}"/>
 <c:set var="cell" value="min-h-20 rounded-md border bg-card p-1.5"/>
 <c:set var="dn" value="text-xs font-extrabold"/>
 <c:set var="ev" value="mt-1 block truncate rounded-sm bg-secondary px-1 py-0.5 text-xs font-bold text-muted-foreground"/>
