@@ -10,6 +10,7 @@ import kr.ac.tukorea.bandi.domain.event.controller.ClubEventController;
 import kr.ac.tukorea.bandi.domain.fee.controller.FeeController;
 import kr.ac.tukorea.bandi.domain.member.controller.MemberController;
 import kr.ac.tukorea.bandi.domain.notice.controller.NoticeController;
+import kr.ac.tukorea.bandi.domain.notice.controller.PublicNoticeManagementController;
 import kr.ac.tukorea.bandi.domain.notice.service.PublicNoticeService;
 import kr.ac.tukorea.bandi.domain.production.controller.ProductionTaskController;
 import kr.ac.tukorea.bandi.domain.reservation.controller.ReservationController;
@@ -30,6 +31,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -40,7 +42,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         AssetController.class, ReservationController.class,
         ChecklistController.class, ProductionTaskController.class,
         ClubEventController.class,
-        FeeController.class, MemberController.class, NoticeController.class})
+        FeeController.class, MemberController.class, NoticeController.class,
+        PublicNoticeManagementController.class})
 @AutoConfigureMockMvc(addFilters = false)
 @Import(LoginViewModelAdvice.class)
 @ActiveProfiles("test")
@@ -58,7 +61,8 @@ class SsrControllerRoutingTest {
             Map.entry("checklist", "checklist/index"),
             Map.entry("attendance", "attendance/index"),
             Map.entry("dues", "dues/list"),
-            Map.entry("members", "members/list"));
+            Map.entry("members", "members/list"),
+            Map.entry("notice-management", "notice/management-list"));
 
     private final MockMvc mockMvc;
 
@@ -78,7 +82,8 @@ class SsrControllerRoutingTest {
     @ParameterizedTest
     @ValueSource(strings = {"dashboard", "calendar", "resources",
             "activity", "props", "reservations", "showops", "checklist",
-            "production", "attendance", "dues", "members"})
+            "production", "attendance", "dues", "members",
+            "notice-management"})
     void 운영_프로파일에서_내부_화면이_렌더링된다(String page)
             throws Exception {
         LoginPrincipal principal = new LoginPrincipal(1L, "ADMIN");
@@ -106,6 +111,23 @@ class SsrControllerRoutingTest {
         mockMvc.perform(get("/reserve/house-boy"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("reservation/form"));
+    }
+
+    @Test
+    void 공시_작성과_수정_화면이_렌더링된다() throws Exception {
+        LoginPrincipal principal = new LoginPrincipal(1L, "ADMIN");
+        SecurityContextHolder.getContext().setAuthentication(
+                UsernamePasswordAuthenticationToken.authenticated(principal,
+                        null, principal.authorities()));
+
+        mockMvc.perform(get("/notice-management/write"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("notice/management-editor"))
+                .andExpect(model().attribute("publicNoticeId", nullValue()));
+        mockMvc.perform(get("/notice-management/3/edit"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("notice/management-editor"))
+                .andExpect(model().attribute("publicNoticeId", 3L));
     }
 
     @ParameterizedTest

@@ -57,6 +57,12 @@ class SecurityConfigTest {
             mockMvc.perform(get("/showops/test")
                             .with(user("tester").roles(role)))
                     .andExpect(status().isForbidden());
+            mockMvc.perform(get("/notice-management/test")
+                            .with(user("tester").roles(role)))
+                    .andExpect(status().isForbidden());
+            mockMvc.perform(get("/api/admin/public-notices/test")
+                            .with(user("tester").roles(role)))
+                    .andExpect(status().isForbidden());
             mockMvc.perform(get("/api/reservation-management/test")
                             .with(user("tester").roles(role)))
                     .andExpect(status().isForbidden());
@@ -70,6 +76,7 @@ class SecurityConfigTest {
     void 운영진은_관리자_화면에_접근할_수_있다() throws Exception {
         for (String path : new String[]{
                 "/members/test", "/reservations/test", "/showops/test",
+                "/notice-management/test", "/api/admin/public-notices/test",
                 "/api/reservation-management/test", "/api/policies/test"}) {
             mockMvc.perform(get(path).with(user("admin").roles("ADMIN")))
                     .andExpect(status().isOk());
@@ -207,12 +214,14 @@ class SecurityConfigTest {
 class SecurityTestController {
 
     @GetMapping({"/dashboard", "/members/test", "/reservations/test",
-            "/showops/test", "/notices/test", "/performances/show",
+            "/showops/test", "/notice-management/test", "/notices/test",
+            "/performances/show",
             "/reserve/test", "/swagger-ui/test", "/api/test",
             "/api/members/me", "/api/members/reference/teams",
             "/api/members/reference/cohorts", "/api/members/test",
             "/api/public-notices/test",
-            "/api/reservation-management/test", "/api/policies/test"})
+            "/api/reservation-management/test", "/api/policies/test",
+            "/api/admin/public-notices/test"})
     ResponseEntity<Void> page() {
         return ResponseEntity.ok().build();
     }
