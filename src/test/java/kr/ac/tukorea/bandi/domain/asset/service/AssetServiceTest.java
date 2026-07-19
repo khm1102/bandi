@@ -6,13 +6,17 @@ import kr.ac.tukorea.bandi.domain.asset.mapper.AssetMapper;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetItem;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetOwnerType;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetTrackingType;
+import kr.ac.tukorea.bandi.domain.asset.model.AssetUsage;
+import kr.ac.tukorea.bandi.domain.asset.model.AssetUsageStatus;
 import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceProjectService;
+import kr.ac.tukorea.bandi.domain.file.service.FileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Clock;
@@ -22,6 +26,7 @@ import java.time.ZoneOffset;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -38,13 +43,15 @@ class AssetServiceTest {
     private MemberService memberService;
     @Mock
     private PerformanceProjectService performanceProjectService;
+    @Mock
+    private FileService fileService;
 
     private AssetService assetService;
 
     @BeforeEach
     void setUp() {
         assetService = new AssetService(assetMapper, memberService,
-                performanceProjectService, Clock.fixed(
+                performanceProjectService, fileService, Clock.fixed(
                 Instant.parse("2026-07-19T05:00:00Z"), ZoneOffset.UTC));
         given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(
                 new MemberAccessContext(ACTOR_ID, 3L, true, false, true));
@@ -78,6 +85,28 @@ class AssetServiceTest {
         verify(performanceProjectService).validateExists(ACTOR_ID, 10L);
         verify(memberService).validateActiveTeam(3L);
         verify(assetMapper).insertUsage(org.mockito.ArgumentMatchers.any());
+        verify(assetMapper).insertHistory(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void 사용_기록을_반납하면_상태와_이력을_함께_저장한다() {
+        AssetUsage usage = new AssetUsage(30L, ITEM_ID, null, 10L, 3L,
+                2, AssetUsageStatus.RESERVED,
+                LocalDateTime.of(2026, 7, 20, 10, 0),
+                LocalDateTime.of(2026, 7, 21, 10, 0), null, ACTOR_ID,
+                ACTOR_ID, null);
+        given(assetMapper.lookupUsageByIdForUpdate(30L))
+                .willReturn(Optional.of(usage));
+
+        assetService.returnUsage(ACTOR_ID, 30L);
+
+        ArgumentCaptor<AssetUsage> captor =
+                ArgumentCaptor.forClass(AssetUsage.class);
+        verify(assetMapper).updateUsage(captor.capture());
+        assertThat(captor.getValue().getStatus())
+                .isEqualTo(AssetUsageStatus.RETURNED);
+        assertThat(captor.getValue().getReturnedDttm())
+                .isEqualTo(LocalDateTime.of(2026, 7, 19, 5, 0));
         verify(assetMapper).insertHistory(org.mockito.ArgumentMatchers.any());
     }
 

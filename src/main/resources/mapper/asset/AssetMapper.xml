@@ -55,12 +55,59 @@
         total_quantity, storage_location, status_code, photo_file_id, note
     </sql>
 
+    <select id="searchItems" resultMap="itemMap">
+        SELECT <include refid="itemColumns"/>
+        FROM asset_item
+        <where>
+            deleted_dttm IS NULL
+            <if test="keyword != null">
+                AND (name LIKE CONCAT('%', #{keyword}, '%')
+                    OR storage_location LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="categoryCode != null">
+                AND category_code = #{categoryCode}
+            </if>
+            <if test="trackingType != null">
+                AND tracking_type_code = #{trackingType}
+            </if>
+            <if test="status != null">
+                AND status_code = #{status}
+            </if>
+        </where>
+        ORDER BY name, asset_item_id
+    </select>
+
+    <select id="searchUnitsByItemId" resultMap="unitMap">
+        SELECT asset_unit_id, asset_item_id, management_no, status_code,
+               storage_location
+        FROM asset_unit
+        WHERE asset_item_id = #{assetItemId}
+        ORDER BY management_no, asset_unit_id
+    </select>
+
+    <select id="searchUsagesByItemId" resultMap="usageMap">
+        SELECT asset_usage_id, asset_item_id, asset_unit_id,
+               performance_project_id, team_id, quantity, status_code,
+               start_dttm, expected_return_dttm, returned_dttm,
+               created_by_member_id, processed_by_member_id, note
+        FROM asset_usage
+        WHERE asset_item_id = #{assetItemId}
+        ORDER BY start_dttm DESC, asset_usage_id DESC
+    </select>
+
     <select id="lookupItemByIdForUpdate" resultMap="itemMap">
         SELECT <include refid="itemColumns"/>
         FROM asset_item
         WHERE asset_item_id = #{assetItemId}
           AND deleted_dttm IS NULL
         FOR UPDATE
+    </select>
+
+    <select id="lookupItemById" resultMap="itemMap">
+        SELECT <include refid="itemColumns"/>
+        FROM asset_item
+        WHERE asset_item_id = #{assetItemId}
+          AND deleted_dttm IS NULL
     </select>
 
     <select id="lookupUnitByIdForUpdate" resultMap="unitMap">

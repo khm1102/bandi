@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.domain.asset.model;
 
 import kr.ac.tukorea.bandi.domain.asset.exception.InvalidAssetUsageStateException;
+import kr.ac.tukorea.bandi.domain.asset.exception.InvalidAssetException;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -48,6 +49,12 @@ public class AssetUsage {
                                      LocalDateTime startDttm,
                                      LocalDateTime expectedReturnDttm,
                                      Long actorMemberId, String note) {
+        if (itemId == null || projectId == null || teamId == null
+                || actorMemberId == null || startDttm == null
+                || expectedReturnDttm == null
+                || expectedReturnDttm.isBefore(startDttm)) {
+            throw new InvalidAssetException();
+        }
         return new AssetUsage(null, itemId, unitId, projectId, teamId,
                 quantity, AssetUsageStatus.RESERVED, startDttm,
                 expectedReturnDttm, null, actorMemberId, actorMemberId, note);
