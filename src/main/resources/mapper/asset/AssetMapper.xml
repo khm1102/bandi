@@ -49,6 +49,21 @@
         </constructor>
     </resultMap>
 
+    <resultMap id="historyMap" type="kr.ac.tukorea.bandi.domain.asset.model.AssetHistory">
+        <constructor>
+            <idArg column="asset_history_id" javaType="java.lang.Long"/>
+            <arg column="asset_item_id" javaType="java.lang.Long"/>
+            <arg column="asset_unit_id" javaType="java.lang.Long"/>
+            <arg column="action_code" javaType="kr.ac.tukorea.bandi.domain.asset.model.AssetAction"/>
+            <arg column="quantity" javaType="_int"/>
+            <arg column="previous_status_code" javaType="kr.ac.tukorea.bandi.domain.asset.model.AssetStatus"/>
+            <arg column="new_status_code" javaType="kr.ac.tukorea.bandi.domain.asset.model.AssetStatus"/>
+            <arg column="note" javaType="java.lang.String"/>
+            <arg column="changed_by_member_id" javaType="java.lang.Long"/>
+            <arg column="changed_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
     <sql id="itemColumns">
         asset_item_id, name, category_code, tracking_type_code,
         owner_type_code, owner_member_id, external_owner_name,
@@ -93,6 +108,15 @@
         FROM asset_usage
         WHERE asset_item_id = #{assetItemId}
         ORDER BY start_dttm DESC, asset_usage_id DESC
+    </select>
+
+    <select id="searchHistoriesByItemId" resultMap="historyMap">
+        SELECT asset_history_id, asset_item_id, asset_unit_id, action_code,
+               quantity, previous_status_code, new_status_code, note,
+               changed_by_member_id, changed_dttm
+        FROM asset_history
+        WHERE asset_item_id = #{assetItemId}
+        ORDER BY changed_dttm DESC, asset_history_id DESC
     </select>
 
     <select id="lookupItemByIdForUpdate" resultMap="itemMap">
@@ -192,6 +216,24 @@
         SET status_code = #{status}, returned_dttm = #{returnedDttm},
             processed_by_member_id = #{processedByMemberId}
         WHERE asset_usage_id = #{assetUsageId}
+    </update>
+
+    <update id="updateItem">
+        UPDATE asset_item
+        SET name = #{name}, category_code = #{categoryCode},
+            owner_type_code = #{ownerType}, owner_member_id = #{ownerMemberId},
+            external_owner_name = #{externalOwnerName},
+            total_quantity = #{totalQuantity},
+            storage_location = #{storageLocation}, status_code = #{status},
+            photo_file_id = #{photoFileId}, note = #{note}
+        WHERE asset_item_id = #{assetItemId}
+          AND deleted_dttm IS NULL
+    </update>
+
+    <update id="updateUnit">
+        UPDATE asset_unit
+        SET status_code = #{status}, storage_location = #{storageLocation}
+        WHERE asset_unit_id = #{assetUnitId}
     </update>
 
     <update id="updateUnitStatus">

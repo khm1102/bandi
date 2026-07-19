@@ -4,6 +4,7 @@ import kr.ac.tukorea.bandi.domain.asset.model.AssetItem;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetOwnerType;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetTrackingType;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetUnit;
+import kr.ac.tukorea.bandi.domain.asset.model.AssetStatus;
 import kr.ac.tukorea.bandi.global.annotation.MapperTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,5 +54,34 @@ class AssetMapperTest {
                 .get()
                 .extracting(AssetUnit::getManagementNo)
                 .isEqualTo("CAM-001");
+    }
+
+    @Test
+    void 품목과_개별_장비의_변경을_저장한다() {
+        AssetItem item = AssetItem.register("카메라", "VIDEO",
+                AssetTrackingType.INDIVIDUAL, AssetOwnerType.CLUB, null, null,
+                1, "영상팀", null, null);
+        assetMapper.insertItem(item);
+        AssetUnit unit = AssetUnit.register(item.getAssetItemId(), "CAM-002",
+                "영상팀");
+        assetMapper.insertUnit(unit);
+
+        assetMapper.updateItem(item.edit("공연 카메라", "VIDEO",
+                AssetOwnerType.CLUB, null, null, 1, "장비실",
+                null, "점검 완료"));
+        assetMapper.updateUnit(unit.edit(AssetStatus.REPAIR, "수리 업체"));
+
+        assertThat(assetMapper.lookupItemById(item.getAssetItemId()))
+                .isPresent().get()
+                .extracting(AssetItem::getStorageLocation)
+                .isEqualTo("장비실");
+        assertThat(assetMapper.lookupUnitByIdForUpdate(unit.getAssetUnitId()))
+                .isPresent().get()
+                .satisfies(found -> {
+                    assertThat(found.getStatus()).isEqualTo(AssetStatus.REPAIR);
+                    assertThat(found.getStorageLocation()).isEqualTo("수리 업체");
+                });
+        assertThat(assetMapper.searchHistoriesByItemId(item.getAssetItemId()))
+                .isEmpty();
     }
 }

@@ -4,16 +4,21 @@ import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetUsageCreateParam;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetItemCreateParam;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetSearchCondition;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetUnitCreateParam;
+import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetItemUpdateParam;
+import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetUnitUpdateParam;
 import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetItemResponse;
 import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetUnitResponse;
 import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetUsageResponse;
+import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetHistoryResponse;
 import kr.ac.tukorea.bandi.domain.asset.exception.AssetAccessDeniedException;
 import kr.ac.tukorea.bandi.domain.asset.exception.AssetItemNotFoundException;
 import kr.ac.tukorea.bandi.domain.asset.exception.AssetUnitNotFoundException;
 import kr.ac.tukorea.bandi.domain.asset.exception.AssetUsageNotFoundException;
+import kr.ac.tukorea.bandi.domain.asset.exception.AssetStockUnavailableException;
 import kr.ac.tukorea.bandi.domain.asset.exception.InvalidAssetException;
 import kr.ac.tukorea.bandi.domain.asset.mapper.AssetMapper;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetHistory;
+import kr.ac.tukorea.bandi.domain.asset.model.AssetAction;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetItem;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetTrackingType;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetStatus;
@@ -23,6 +28,7 @@ import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceProjectService;
 import kr.ac.tukorea.bandi.domain.file.service.FileService;
+import kr.ac.tukorea.bandi.domain.file.service.FileAccessDecision;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -103,6 +109,103 @@ public class AssetService {
         return assetMapper.searchUsagesByItemId(assetItemId).stream()
                 .map(AssetUsageResponse::from)
                 .toList();
+    }
+
+    public List<AssetHistoryResponse> searchHistories(Long actorMemberId,
+                                                       Long assetItemId) {
+        validateInternal(actorMemberId);
+        findItem(assetItemId);
+        return assetMapper.searchHistoriesByItemId(assetItemId).stream()
+                .map(AssetHistoryResponse::from)
+                .toList();
+    }
+
+    public String createPhotoDownloadUrl(Long actorMemberId,
+                                         Long assetItemId) {
+        validateInternal(actorMemberId);
+        AssetItem item = findItem(assetItemId);
+        if (item.getPhotoFileId() == null) {
+            throw new InvalidAssetException();
+        }
+        return fileService.createPrivateDownloadUrl(item.getPhotoFileId(),
+                FileAccessDecision.GRANTED);
+    }
+
+    @Transactional
+    public void updateItem(Long actorMemberId, Long assetItemId,
+                           AssetItemUpdateParam param) {
+        validateAdmin(actorMemberId);
+        AssetItem current = lockItem(assetItemId);
+        if (current.getTrackingType() == AssetTrackingType.QUANTITY
+                && param.totalQuantity()
+                < assetMapper.sumActiveUsageQuantity(assetItemId)) {
+            throw new AssetStockUnavailableException();
+        }
+        if (param.photoFileId() != null) {
+            fileService.validatePrivateReady(param.photoFileId());
+        }
+        AssetItem changed = current.edit(param.name(), param.categoryCode(),
+                param.ownerType(), param.ownerMemberId(),
+                param.externalOwnerName(), param.totalQuantity(),
+                param.storageLocation(), param.photoFileId(), param.note());
+        assetMapper.updateItem(changed);
+        if (current.getTotalQuantity() != changed.getTotalQuantity()) {
+            assetMapper.insertHistory(new AssetHistory(null, assetItemId,
+                    null, AssetAction.ADJUST,
+                    Math.abs(changed.getTotalQuantity()
+                            - current.getTotalQuantity()),
+                    current.getStatus(), changed.getStatus(), param.note(),
+                    actorMemberId, now()));
+        }
+        if (!current.getStorageLocation()
+                .equals(changed.getStorageLocation())) {
+            assetMapper.insertHistory(new AssetHistory(null, assetItemId,
+                    null, AssetAction.MOVE, changed.getTotalQuantity(),
+                    current.getStatus(), changed.getStatus(), param.note(),
+                    actorMemberId, now()));
+        }
+    }
+
+    @Transactional
+    public void changeItemStatus(Long actorMemberId, Long assetItemId,
+                                 AssetStatus status, String note) {
+        validateAdmin(actorMemberId);
+        AssetItem current = lockItem(assetItemId);
+        AssetItem changed = current.changeStatus(status);
+        assetMapper.updateItem(changed);
+        assetMapper.insertHistory(new AssetHistory(null, assetItemId, null,
+                actionForStatus(current.getStatus(), status),
+                changed.getTotalQuantity(), current.getStatus(), status,
+                note, actorMemberId, now()));
+    }
+
+    @Transactional
+    public void updateUnit(Long actorMemberId, AssetUnitUpdateParam param) {
+        validateAdmin(actorMemberId);
+        AssetUnit current = assetMapper.lookupUnitByIdForUpdate(
+                        param.assetUnitId())
+                .orElseThrow(() -> new AssetUnitNotFoundException(
+                        param.assetUnitId()));
+        if (assetMapper.existsActiveUsageByUnitId(param.assetUnitId())) {
+            throw new AssetStockUnavailableException();
+        }
+        AssetUnit changed = current.edit(param.status(),
+                param.storageLocation());
+        assetMapper.updateUnit(changed);
+        if (current.getStatus() != changed.getStatus()) {
+            assetMapper.insertHistory(new AssetHistory(null,
+                    changed.getAssetItemId(), changed.getAssetUnitId(),
+                    actionForStatus(current.getStatus(), changed.getStatus()),
+                    1, current.getStatus(), changed.getStatus(), param.note(),
+                    actorMemberId, now()));
+        }
+        if (!current.getStorageLocation()
+                .equals(changed.getStorageLocation())) {
+            assetMapper.insertHistory(new AssetHistory(null,
+                    changed.getAssetItemId(), changed.getAssetUnitId(),
+                    AssetAction.MOVE, 1, current.getStatus(),
+                    changed.getStatus(), param.note(), actorMemberId, now()));
+        }
     }
 
     @Transactional
@@ -192,6 +295,29 @@ public class AssetService {
                 .canReadInternal()) {
             throw new AssetAccessDeniedException();
         }
+    }
+
+    private AssetAction actionForStatus(AssetStatus previousStatus,
+                                        AssetStatus newStatus) {
+        if (newStatus == AssetStatus.REPAIR) {
+            return AssetAction.REPAIR;
+        }
+        if (newStatus == AssetStatus.LOST) {
+            return AssetAction.LOST;
+        }
+        if (newStatus == AssetStatus.DISPOSED) {
+            return AssetAction.DISPOSE;
+        }
+        if (newStatus == AssetStatus.AVAILABLE
+                && (previousStatus == AssetStatus.IN_USE
+                || previousStatus == AssetStatus.LOANED)) {
+            return AssetAction.RETURN;
+        }
+        if (newStatus == AssetStatus.IN_USE
+                || newStatus == AssetStatus.LOANED) {
+            return AssetAction.LOAN;
+        }
+        return AssetAction.DAMAGE;
     }
 
     private LocalDateTime now() {

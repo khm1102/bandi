@@ -1,11 +1,18 @@
 package kr.ac.tukorea.bandi.domain.asset.service;
 
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetUsageCreateParam;
+import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetItemUpdateParam;
+import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetUnitUpdateParam;
+import kr.ac.tukorea.bandi.domain.asset.exception.AssetAccessDeniedException;
 import kr.ac.tukorea.bandi.domain.asset.exception.AssetStockUnavailableException;
 import kr.ac.tukorea.bandi.domain.asset.mapper.AssetMapper;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetItem;
+import kr.ac.tukorea.bandi.domain.asset.model.AssetAction;
+import kr.ac.tukorea.bandi.domain.asset.model.AssetHistory;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetOwnerType;
+import kr.ac.tukorea.bandi.domain.asset.model.AssetStatus;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetTrackingType;
+import kr.ac.tukorea.bandi.domain.asset.model.AssetUnit;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetUsage;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetUsageStatus;
 import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
@@ -108,6 +115,103 @@ class AssetServiceTest {
         assertThat(captor.getValue().getReturnedDttm())
                 .isEqualTo(LocalDateTime.of(2026, 7, 19, 5, 0));
         verify(assetMapper).insertHistory(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void 관리자는_품목_수량과_위치를_수정하고_각각_이력을_남긴다() {
+        given(assetMapper.lookupItemByIdForUpdate(ITEM_ID))
+                .willReturn(Optional.of(quantityItem()));
+        AssetItemUpdateParam param = new AssetItemUpdateParam("전원 케이블",
+                "CABLE", AssetOwnerType.CLUB, null, null, 12,
+                "창고 B", null, "재고 정리");
+
+        assetService.updateItem(ACTOR_ID, ITEM_ID, param);
+
+        ArgumentCaptor<AssetHistory> captor =
+                ArgumentCaptor.forClass(AssetHistory.class);
+        verify(assetMapper).updateItem(org.mockito.ArgumentMatchers.any());
+        verify(assetMapper, org.mockito.Mockito.times(2))
+                .insertHistory(captor.capture());
+        assertThat(captor.getAllValues()).extracting(AssetHistory::action)
+                .containsExactly(AssetAction.ADJUST, AssetAction.MOVE);
+    }
+
+    @Test
+    void 전역_관리자가_아니면_품목을_수정할_수_없다() {
+        given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(
+                new MemberAccessContext(ACTOR_ID, 3L, false, false, true));
+
+        assertThatThrownBy(() -> assetService.updateItem(ACTOR_ID, ITEM_ID,
+                new AssetItemUpdateParam("케이블", "CABLE",
+                        AssetOwnerType.CLUB, null, null, 10,
+                        "창고", null, null)))
+                .isInstanceOf(AssetAccessDeniedException.class);
+        verify(assetMapper, never()).updateItem(
+                org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void 사용_중인_수량보다_총수량을_낮출_수_없다() {
+        given(assetMapper.lookupItemByIdForUpdate(ITEM_ID))
+                .willReturn(Optional.of(quantityItem()));
+        given(assetMapper.sumActiveUsageQuantity(ITEM_ID)).willReturn(8);
+
+        assertThatThrownBy(() -> assetService.updateItem(ACTOR_ID, ITEM_ID,
+                new AssetItemUpdateParam("케이블", "CABLE",
+                        AssetOwnerType.CLUB, null, null, 7,
+                        "창고", null, null)))
+                .isInstanceOf(AssetStockUnavailableException.class);
+        verify(assetMapper, never()).updateItem(
+                org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void 활성_대여가_있는_개별_장비는_직접_수정할_수_없다() {
+        AssetUnit unit = new AssetUnit(20L, ITEM_ID, "CAM-001",
+                AssetStatus.IN_USE, "영상팀");
+        given(assetMapper.lookupUnitByIdForUpdate(20L))
+                .willReturn(Optional.of(unit));
+        given(assetMapper.existsActiveUsageByUnitId(20L)).willReturn(true);
+
+        assertThatThrownBy(() -> assetService.updateUnit(ACTOR_ID,
+                new AssetUnitUpdateParam(20L, AssetStatus.REPAIR,
+                        "수리 업체", "점검")))
+                .isInstanceOf(AssetStockUnavailableException.class);
+        verify(assetMapper, never()).updateUnit(
+                org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void 개별_장비의_위치와_상태가_모두_바뀌면_이력을_각각_남긴다() {
+        AssetUnit unit = new AssetUnit(20L, ITEM_ID, "CAM-001",
+                AssetStatus.AVAILABLE, "영상팀");
+        given(assetMapper.lookupUnitByIdForUpdate(20L))
+                .willReturn(Optional.of(unit));
+
+        assetService.updateUnit(ACTOR_ID, new AssetUnitUpdateParam(20L,
+                AssetStatus.REPAIR, "수리 업체", "렌즈 점검"));
+
+        ArgumentCaptor<AssetHistory> captor =
+                ArgumentCaptor.forClass(AssetHistory.class);
+        verify(assetMapper, org.mockito.Mockito.times(2))
+                .insertHistory(captor.capture());
+        assertThat(captor.getAllValues()).extracting(AssetHistory::action)
+                .containsExactly(AssetAction.REPAIR, AssetAction.MOVE);
+    }
+
+    @Test
+    void 내부_멤버는_품목_사진의_다운로드_주소를_받는다() {
+        AssetItem item = new AssetItem(ITEM_ID, "카메라", "VIDEO",
+                AssetTrackingType.INDIVIDUAL, AssetOwnerType.CLUB, null, null,
+                1, "영상팀", AssetStatus.AVAILABLE, 50L, null);
+        given(assetMapper.lookupItemById(ITEM_ID)).willReturn(Optional.of(item));
+        given(fileService.createPrivateDownloadUrl(50L,
+                kr.ac.tukorea.bandi.domain.file.service.FileAccessDecision.GRANTED))
+                .willReturn("http://minio/photo");
+
+        String url = assetService.createPhotoDownloadUrl(ACTOR_ID, ITEM_ID);
+
+        assertThat(url).isEqualTo("http://minio/photo");
     }
 
     private AssetItem quantityItem() {

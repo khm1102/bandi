@@ -969,7 +969,8 @@ erDiagram
 
 - `asset_history_id` PK
 - `asset_item_id`, `asset_unit_id` FK NULL
-- `action_code`: `REGISTER`, `MOVE`, `LOAN`, `RETURN`, `REPAIR`, `DAMAGE`, `LOST`, `DISPOSE`
+- `action_code`: `REGISTER`, `ADJUST`, `MOVE`, `LOAN`, `RETURN`, `REPAIR`, `DAMAGE`, `LOST`, `DISPOSE`
+  - `ADJUST`는 수량형 품목의 총수량 증감 이력을 뜻한다.
 - `quantity`, `previous_status_code`, `new_status_code`
 - `note`, `changed_by_member_id`, `changed_dttm`
 
