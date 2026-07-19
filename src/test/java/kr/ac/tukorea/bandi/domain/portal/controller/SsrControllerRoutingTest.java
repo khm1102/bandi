@@ -12,6 +12,7 @@ import kr.ac.tukorea.bandi.domain.member.controller.MemberController;
 import kr.ac.tukorea.bandi.domain.notice.controller.NoticeController;
 import kr.ac.tukorea.bandi.domain.notice.controller.PublicNoticeManagementController;
 import kr.ac.tukorea.bandi.domain.notice.service.PublicNoticeService;
+import kr.ac.tukorea.bandi.domain.performance.controller.PerformanceContentManagementController;
 import kr.ac.tukorea.bandi.domain.performance.controller.PerformanceManagementController;
 import kr.ac.tukorea.bandi.domain.production.controller.ProductionTaskController;
 import kr.ac.tukorea.bandi.domain.reservation.controller.ReservationController;
@@ -45,7 +46,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         ClubEventController.class,
         FeeController.class, MemberController.class, NoticeController.class,
         PublicNoticeManagementController.class,
-        PerformanceManagementController.class})
+        PerformanceManagementController.class,
+        PerformanceContentManagementController.class})
 @AutoConfigureMockMvc(addFilters = false)
 @Import(LoginViewModelAdvice.class)
 @ActiveProfiles("test")
@@ -65,7 +67,9 @@ class SsrControllerRoutingTest {
             Map.entry("dues", "dues/list"),
             Map.entry("members", "members/list"),
             Map.entry("notice-management", "notice/management-list"),
-            Map.entry("performance-management", "performance/management"));
+            Map.entry("performance-management", "performance/management"),
+            Map.entry("performance-content-management",
+                    "performance/content-management"));
 
     private final MockMvc mockMvc;
 
@@ -86,7 +90,8 @@ class SsrControllerRoutingTest {
     @ValueSource(strings = {"dashboard", "calendar", "resources",
             "activity", "props", "reservations", "showops", "checklist",
             "production", "attendance", "dues", "members",
-            "notice-management", "performance-management"})
+            "notice-management", "performance-management",
+            "performance-content-management"})
     void 운영_프로파일에서_내부_화면이_렌더링된다(String page)
             throws Exception {
         LoginPrincipal principal = new LoginPrincipal(1L, "ADMIN");

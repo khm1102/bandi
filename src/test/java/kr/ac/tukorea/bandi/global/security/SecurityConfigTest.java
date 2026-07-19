@@ -63,7 +63,16 @@ class SecurityConfigTest {
             mockMvc.perform(get("/performance-management/test")
                             .with(user("tester").roles(role)))
                     .andExpect(status().isForbidden());
+            mockMvc.perform(get("/performance-content-management/test")
+                            .with(user("tester").roles(role)))
+                    .andExpect(status().isForbidden());
             mockMvc.perform(get("/api/performance-page-management/test")
+                            .with(user("tester").roles(role)))
+                    .andExpect(status().isForbidden());
+            mockMvc.perform(get("/api/performance-content-management/test")
+                            .with(user("tester").roles(role)))
+                    .andExpect(status().isForbidden());
+            mockMvc.perform(get("/api/public-profile-management/test")
                             .with(user("tester").roles(role)))
                     .andExpect(status().isForbidden());
             mockMvc.perform(get("/api/admin/public-notices/test")
@@ -85,6 +94,9 @@ class SecurityConfigTest {
                 "/notice-management/test", "/api/admin/public-notices/test",
                 "/performance-management/test",
                 "/api/performance-page-management/test",
+                "/performance-content-management/test",
+                "/api/performance-content-management/test",
+                "/api/public-profile-management/test",
                 "/api/reservation-management/test", "/api/policies/test"}) {
             mockMvc.perform(get(path).with(user("admin").roles("ADMIN")))
                     .andExpect(status().isOk());
@@ -224,6 +236,7 @@ class SecurityTestController {
     @GetMapping({"/dashboard", "/members/test", "/reservations/test",
             "/showops/test", "/notice-management/test",
             "/performance-management/test", "/notices/test",
+            "/performance-content-management/test",
             "/performances/show",
             "/reserve/test", "/swagger-ui/test", "/api/test",
             "/api/members/me", "/api/members/reference/teams",
@@ -231,7 +244,9 @@ class SecurityTestController {
             "/api/public-notices/test",
             "/api/reservation-management/test", "/api/policies/test",
             "/api/admin/public-notices/test",
-            "/api/performance-page-management/test"})
+            "/api/performance-page-management/test",
+            "/api/performance-content-management/test",
+            "/api/public-profile-management/test"})
     ResponseEntity<Void> page() {
         return ResponseEntity.ok().build();
     }

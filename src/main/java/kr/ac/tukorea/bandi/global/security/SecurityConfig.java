@@ -48,12 +48,15 @@ public class SecurityConfig {
                 .requestMatchers("/members/**", "/reservations/**",
                         "/notice-management/**",
                         "/performance-management/**",
+                        "/performance-content-management/**",
                         "/showops/**", "/api/members/**",
                         "/api/reservations/**", "/api/showops/**",
                         "/api/reservation-management/**",
                         "/api/policies/**",
                         "/api/admin/public-notices/**",
-                        "/api/performance-page-management/**")
+                        "/api/performance-page-management/**",
+                        "/api/performance-content-management/**",
+                        "/api/public-profile-management/**")
                 .hasRole("ADMIN")
                 .anyRequest().authenticated());
         http.exceptionHandling(exception -> exception
