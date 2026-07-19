@@ -14,10 +14,13 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.RestController;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -88,6 +91,13 @@ class ApiExceptionHandlerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("C001"));
     }
+
+    @Test
+    void 필수_multipart_파일_누락은_C001을_반환한다() throws Exception {
+        mockMvc.perform(multipart("/api/test/upload"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("C001"));
+    }
 }
 
 @RestController
@@ -113,6 +123,10 @@ class ApiExceptionTestController {
 
     @GetMapping("/api/test/query")
     void query(@RequestParam Long memberId) {
+    }
+
+    @PostMapping("/api/test/upload")
+    void upload(@RequestPart MultipartFile file) {
     }
 
     private record TestRequest(
