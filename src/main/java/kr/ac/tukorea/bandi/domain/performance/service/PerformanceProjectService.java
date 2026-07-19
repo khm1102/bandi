@@ -93,6 +93,13 @@ public class PerformanceProjectService {
                 academicYear, termCode.strip());
     }
 
+    @Transactional
+    public void validateProductionMutable(Long actorMemberId,
+                                          Long performanceProjectId) {
+        validateInternal(actorMemberId);
+        lock(performanceProjectId).validateProductionMutable();
+    }
+
     private PerformanceProject lock(Long performanceProjectId) {
         return performanceProjectMapper
                 .lookupByIdForUpdate(performanceProjectId)

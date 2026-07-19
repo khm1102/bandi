@@ -103,6 +103,23 @@ class PerformanceProjectTest {
                 .isInstanceOf(InvalidPerformanceProjectStateException.class);
     }
 
+    @Test
+    void 종료_취소_보관_프로젝트의_제작_업무는_변경할_수_없다() {
+        planning().validateProductionMutable();
+        PerformanceProject ended = planning()
+                .changeStatus(PerformanceProjectStatus.PRODUCING, ACTOR_ID)
+                .changeStatus(PerformanceProjectStatus.RESERVATION_OPEN, ACTOR_ID)
+                .changeStatus(PerformanceProjectStatus.PERFORMING, ACTOR_ID)
+                .changeStatus(PerformanceProjectStatus.ENDED, ACTOR_ID);
+
+        assertThatThrownBy(ended::validateProductionMutable)
+                .isInstanceOf(InvalidPerformanceProjectStateException.class);
+        assertThatThrownBy(() -> planning()
+                .changeStatus(PerformanceProjectStatus.CANCELLED, ACTOR_ID)
+                .validateProductionMutable())
+                .isInstanceOf(InvalidPerformanceProjectStateException.class);
+    }
+
     private PerformanceProject planning() {
         return PerformanceProject.planning((short) 2026, "FIRST",
                 "2026 봄 정기공연", START_DATE, END_DATE,

@@ -33,6 +33,8 @@ class MemberAccessContextTest {
         assertThat(context.canReadInternal()).isTrue();
         assertThat(context.canManageGlobal()).isFalse();
         assertThat(context.canManageTeam(4L)).isFalse();
+        assertThat(context.canContributeToTeam(4L)).isTrue();
+        assertThat(context.canContributeToTeam(5L)).isFalse();
     }
 
     @Test
@@ -42,5 +44,6 @@ class MemberAccessContextTest {
         assertThat(context.canReadInternal()).isFalse();
         assertThat(context.canManageGlobal()).isFalse();
         assertThat(context.canManageTeam(4L)).isFalse();
+        assertThat(context.canContributeToTeam(4L)).isFalse();
     }
 }

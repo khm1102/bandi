@@ -85,7 +85,9 @@ public enum ErrorCode {
     // performance (P)
     PERFORMANCE_PROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "존재하지 않는 공연 프로젝트입니다."),
     DUPLICATE_PERFORMANCE_TERM(HttpStatus.CONFLICT, "P002", "해당 학기에 이미 공연 프로젝트가 있습니다."),
-    INVALID_PERFORMANCE_PROJECT_STATE(HttpStatus.CONFLICT, "P003", "현재 상태에서는 공연 프로젝트를 변경할 수 없습니다.");
+    INVALID_PERFORMANCE_PROJECT_STATE(HttpStatus.CONFLICT, "P003", "현재 상태에서는 공연 프로젝트를 변경할 수 없습니다."),
+    PRODUCTION_TASK_NOT_FOUND(HttpStatus.NOT_FOUND, "P004", "존재하지 않는 제작 업무입니다."),
+    INVALID_PRODUCTION_TASK_STATE(HttpStatus.CONFLICT, "P005", "현재 상태에서는 제작 업무를 변경할 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;
