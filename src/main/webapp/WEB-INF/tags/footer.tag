@@ -1,7 +1,7 @@
 <%@ tag description="공개 셸 푸터 — 운영 주체, 관람 안내, 문의·개인정보 경로" pageEncoding="UTF-8" trimDirectiveWhitespaces="true" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <footer class="border-t bg-card px-4 py-7 text-sm text-muted-foreground md:px-6">
-    <div class="mx-auto grid max-w-5xl gap-6 md:grid-cols-3">
+    <div class="mx-auto grid max-w-6xl gap-6 md:grid-cols-3">
         <div>
             <p class="font-extrabold text-foreground">한국공학대학교 연극동아리 반디</p>
             <p class="mt-2 text-xs leading-5">공연 제작과 관람 운영에 관한 공식 안내는 공시에서 제공합니다.</p>
@@ -19,5 +19,5 @@
             <a href="<c:url value='/notices'/>" class="mt-2 inline-flex min-h-11 items-center text-xs font-bold text-accent-foreground underline-offset-4 hover:underline">운영 공시 확인</a>
         </div>
     </div>
-    <div class="mx-auto mt-6 max-w-5xl border-t pt-4 text-xs">&copy; bandi. 공연 사진과 포스터의 권리는 각 제작자에게 있습니다.</div>
+    <div class="mx-auto mt-6 max-w-6xl border-t pt-4 text-xs">&copy; bandi. 공연 사진과 포스터의 권리는 각 제작자에게 있습니다.</div>
 </footer>

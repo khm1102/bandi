@@ -33,7 +33,7 @@
 
     <div class="min-w-0 flex-1">
         <div data-session-expired hidden tabindex="-1" class="border-b border-warning/30 bg-warning/10 px-4 py-3 md:px-6 lg:px-7" role="alert">
-            <div class="mx-auto flex max-w-6xl flex-col gap-2 sm:flex-row sm:items-center">
+            <div class="mx-auto flex max-w-screen-2xl flex-col gap-2 sm:flex-row sm:items-center">
                 <p class="min-w-0 flex-1 text-sm"><b>로그인이 만료됐어요.</b> 작성 중인 내용은 이 화면에 남아 있어요. 다시 로그인한 뒤 저장을 다시 시도해 주세요.</p>
                 <a href="<c:url value='/login'/>" class="inline-flex min-h-11 shrink-0 items-center justify-center rounded-md border border-warning/40 bg-card px-4 text-sm font-bold">다시 로그인</a>
             </div>
@@ -41,7 +41,7 @@
         <header class="sticky top-14 z-20 hidden min-h-12 items-center gap-3 border-b bg-card/95 px-4 py-2.5 backdrop-blur md:flex md:px-6 lg:top-0 lg:px-7">
             <p class="hidden text-xs font-semibold text-muted-foreground md:block">반디 / <b class="font-extrabold text-foreground"><c:out value="${empty crumb ? title : crumb}"/></b></p>
         </header>
-        <main id="mainContent" class="mx-auto max-w-6xl p-4 md:p-6 lg:p-7" tabindex="-1">
+        <main id="mainContent" class="mx-auto w-full max-w-screen-2xl p-4 md:p-6 lg:p-7" tabindex="-1">
             <jsp:doBody/>
         </main>
     </div>

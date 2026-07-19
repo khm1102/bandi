@@ -4,12 +4,13 @@
 <c:set var="input" value="h-11 w-full rounded-md border border-input bg-card px-3 text-base focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm"/>
 <c:set var="label" value="mb-1.5 block text-xs font-bold text-muted-foreground"/>
 <t:layout title="관람 신청 관리" active="reservations" role="${role}" scriptPath="reservation/management">
-    <div class="mx-auto max-w-4xl">
+    <div class="w-full">
         <h1 class="text-2xl font-extrabold tracking-tight">관람 신청 관리</h1>
         <p class="mt-1 text-sm text-muted-foreground">회차를 선택해 신청을 확인하고 필요한 조치를 시작해요.</p>
 
+        <div class="mt-5 lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(24rem,0.85fr)] lg:items-end lg:gap-8">
         <%-- 프로젝트·회차 컨텍스트 --%>
-        <section class="mt-5 grid gap-3 md:grid-cols-2" aria-label="공연과 회차 선택">
+        <section class="grid gap-3 md:grid-cols-2" aria-label="공연과 회차 선택">
             <div>
                 <label class="${label}" for="reservationProject">공연 프로젝트</label>
                 <select class="${input}" id="reservationProject"></select>
@@ -19,7 +20,8 @@
                 <select class="${input}" id="reservationRound"></select>
             </div>
         </section>
-        <div class="mt-3 flex flex-wrap items-center gap-2 text-sm" aria-live="polite">
+        <div class="mt-3 lg:mt-0">
+        <div class="flex flex-wrap items-center gap-2 text-sm" aria-live="polite">
             <span class="text-xs font-bold text-muted-foreground">회차 상태</span>
             <span data-round-status></span>
         </div>
@@ -37,29 +39,37 @@
                 <t:button variant="outline" pageAction="reservation-metrics-retry">요약 다시 불러오기</t:button>
             </div>
         </div>
+        </div>
+        </div>
 
         <%-- 상태 필터 --%>
-        <div class="mt-4 flex flex-wrap gap-2" role="group" aria-label="신청 상태 필터">
-            <t:filterChip group="reservation-status" value="ALL" label="전체" active="true"/>
-            <t:filterChip group="reservation-status" value="CONFIRMED" label="확정"/>
-            <t:filterChip group="reservation-status" value="PARTIALLY_CANCELLED" label="일부 취소"/>
-            <t:filterChip group="reservation-status" value="CANCELLED" label="취소"/>
+        <div class="mt-5 flex flex-col gap-3 border-y py-3 lg:flex-row lg:items-center">
+            <div class="flex flex-wrap gap-2" role="group" aria-label="신청 상태 필터">
+                <t:filterChip group="reservation-status" value="ALL" label="전체" active="true"/>
+                <t:filterChip group="reservation-status" value="CONFIRMED" label="확정"/>
+                <t:filterChip group="reservation-status" value="PARTIALLY_CANCELLED" label="일부 취소"/>
+                <t:filterChip group="reservation-status" value="CANCELLED" label="취소"/>
+            </div>
+            <div class="flex flex-wrap items-center gap-3 lg:ml-auto">
+                <t:button variant="outline" pageAction="reservation-export">명단 CSV 내보내기</t:button>
+                <p data-export-progress class="text-xs text-muted-foreground" aria-live="polite"></p>
+            </div>
         </div>
 
         <%-- 목록 --%>
         <section class="mt-4" aria-label="관람 신청 목록" data-reservation-region aria-busy="true">
-            <div class="hidden grid-cols-[7rem_1fr_1fr_6rem_4rem] items-center gap-3 border-b px-4 pb-2 text-xs font-bold text-muted-foreground md:grid">
+            <div class="hidden grid-cols-[7rem_minmax(9rem,1.2fr)_minmax(10rem,1fr)_7rem_4rem] items-center gap-3 border-b px-4 pb-2 text-xs font-bold text-muted-foreground lg:grid">
                 <button type="button" data-sort-key="reservationNo" class="flex min-h-9 items-center gap-1 text-left font-bold hover:text-foreground">신청번호<span data-sort-mark="reservationNo" aria-hidden="true"></span></button>
-                <button type="button" data-sort-key="applicantName" class="flex min-h-9 items-center gap-1 text-left font-bold hover:text-foreground">관람객<span data-sort-mark="applicantName" aria-hidden="true"></span></button>
+                <button type="button" data-sort-key="applicantName" class="flex min-h-9 items-center gap-1 text-left font-bold hover:text-foreground">관람객·연락처<span data-sort-mark="applicantName" aria-hidden="true"></span></button>
                 <span>좌석</span>
                 <button type="button" data-sort-key="status" class="flex min-h-9 items-center gap-1 text-left font-bold hover:text-foreground">상태<span data-sort-mark="status" aria-hidden="true"></span></button>
                 <span class="sr-only">상세</span>
             </div>
-            <p data-sort-note class="hidden pt-1 text-right text-xs text-muted-foreground md:block">정렬은 지금까지 불러온 목록에만 적용돼요.</p>
-            <div data-reservation-list class="mt-2 flex flex-col gap-2 md:mt-1 md:gap-0"></div>
+            <p data-sort-note class="hidden pt-1 text-right text-xs text-muted-foreground lg:block">정렬은 지금까지 불러온 목록에만 적용돼요.</p>
+            <div data-reservation-list class="mt-2 flex flex-col gap-2 lg:mt-1 lg:gap-0"></div>
             <div data-list-loading class="hidden flex-col gap-2 pt-2" aria-hidden="true">
-                <div class="h-20 rounded-lg border bg-card md:h-12"></div>
-                <div class="h-20 rounded-lg border bg-card md:h-12"></div>
+                <div class="h-20 rounded-lg border bg-card lg:h-12"></div>
+                <div class="h-20 rounded-lg border bg-card lg:h-12"></div>
             </div>
             <div data-list-empty class="hidden rounded-lg border bg-card px-6 py-10 text-center">
                 <b data-list-empty-title class="block text-sm font-bold"></b>
@@ -79,11 +89,6 @@
             </div>
         </section>
 
-        <%-- CSV --%>
-        <div class="mt-6 flex flex-wrap items-center gap-3 border-t pt-4">
-            <t:button variant="outline" pageAction="reservation-export">명단 CSV 내보내기</t:button>
-            <p data-export-progress class="text-xs text-muted-foreground" aria-live="polite"></p>
-        </div>
     </div>
 
     <%-- 신청 상세 sheet --%>

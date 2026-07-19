@@ -2,7 +2,7 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ attribute name="active" %>
 <header class="sticky top-0 z-20 bg-sidebar text-white">
-    <nav class="mx-auto flex max-w-5xl items-center gap-1 px-3 py-3 md:gap-2.5 md:px-6" aria-label="공개 메뉴">
+    <nav class="mx-auto flex max-w-6xl items-center gap-1 px-3 py-3 md:gap-2.5 md:px-6" aria-label="공개 메뉴">
         <a href="<c:url value='/notices'/>" class="flex min-h-11 min-w-11 shrink-0 items-center justify-center gap-2 font-extrabold md:justify-start">
             <span class="flex size-8 items-center justify-center rounded-md bg-primary text-sm font-extrabold text-primary-foreground">B</span>
             <span class="hidden md:inline">반디</span>

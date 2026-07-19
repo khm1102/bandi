@@ -4,9 +4,9 @@
 <c:set var="input" value="h-11 w-full rounded-md border border-input bg-card px-3 text-base focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm"/>
 <c:set var="label" value="mb-1.5 block text-xs font-bold text-muted-foreground"/>
 <c:set var="textarea" value="min-h-24 w-full resize-y rounded-md border border-input bg-card px-3 py-2.5 text-sm leading-6 focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20"/>
-<c:set var="sectionTab" value="flex min-h-11 flex-1 items-center justify-center rounded-md px-2 text-sm font-bold text-muted-foreground transition-colors hover:text-foreground"/>
+<c:set var="sectionTab" value="flex min-h-11 flex-1 items-center justify-center rounded-md px-2 text-sm font-bold text-muted-foreground transition-colors hover:text-foreground lg:w-full lg:flex-none lg:justify-start lg:px-3"/>
 <t:layout title="공연 운영 설정" active="performance-management" role="${role}" scriptPath="performance/management">
-    <div class="mx-auto max-w-4xl">
+    <div class="w-full">
         <h1 class="text-2xl font-extrabold tracking-tight">공연 운영 설정</h1>
         <p class="mt-1 text-sm text-muted-foreground">준비 상태를 확인하고 다음 미완료 설정을 처리해요.</p>
 
@@ -56,17 +56,20 @@
                     </div>
                 </section>
 
-                <%-- 섹션 전환 --%>
-                <nav class="mt-6 flex rounded-lg border bg-secondary p-1" aria-label="설정 섹션">
-                    <button type="button" data-section-tab="overview" class="${sectionTab}">개요</button>
-                    <button type="button" data-section-tab="rounds" class="${sectionTab}">회차</button>
-                    <button type="button" data-section-tab="public" class="${sectionTab}">외부 공개</button>
-                    <button type="button" data-section-tab="guide" class="${sectionTab}">관람 안내</button>
-                </nav>
+                <div class="mt-6 lg:grid lg:grid-cols-[14rem_minmax(0,1fr)] lg:items-start lg:gap-8">
+                    <%-- 섹션 전환 --%>
+                    <nav class="flex rounded-lg border bg-secondary p-1 lg:sticky lg:top-20 lg:flex-col lg:self-start" aria-label="설정 섹션">
+                        <button type="button" data-section-tab="overview" class="${sectionTab}">개요</button>
+                        <button type="button" data-section-tab="rounds" class="${sectionTab}">회차</button>
+                        <button type="button" data-section-tab="public" class="${sectionTab}">외부 공개</button>
+                        <button type="button" data-section-tab="guide" class="${sectionTab}">관람 안내</button>
+                    </nav>
+
+                    <div class="min-w-0">
 
                 <%-- 개요 --%>
                 <section data-section-panel="overview" class="hidden" aria-labelledby="overviewTitle">
-                    <h2 id="overviewTitle" tabindex="-1" class="mt-6 text-lg font-bold">개요</h2>
+                    <h2 id="overviewTitle" tabindex="-1" class="mt-6 text-lg font-bold lg:mt-0">개요</h2>
                     <dl class="mt-3 flex flex-col gap-1.5 text-sm">
                         <div class="flex gap-2"><dt class="w-20 shrink-0 text-muted-foreground">제작 기간</dt><dd data-overview-period class="font-medium tabular-nums"></dd></div>
                         <div class="flex gap-2"><dt class="w-20 shrink-0 text-muted-foreground">공연 장소</dt><dd data-overview-place class="font-medium"></dd></div>
@@ -81,7 +84,7 @@
 
                 <%-- 회차 --%>
                 <section data-section-panel="rounds" class="hidden" aria-labelledby="roundsTitle">
-                    <div class="mt-6 flex items-center gap-3">
+                    <div class="mt-6 flex items-center gap-3 lg:mt-0">
                         <div>
                             <h2 id="roundsTitle" tabindex="-1" class="text-lg font-bold">회차</h2>
                             <p class="mt-1 text-sm text-muted-foreground">공연 시각, 신청 기간, 입장 시작과 접근성 지원을 회차 단위로 관리해요.</p>
@@ -99,7 +102,7 @@
 
                 <%-- 외부 공개 --%>
                 <section data-section-panel="public" class="hidden" aria-labelledby="publicTitle">
-                    <div class="mt-6 flex flex-wrap items-center gap-3">
+                    <div class="mt-6 flex flex-wrap items-center gap-3 lg:mt-0">
                         <div class="min-w-0">
                             <h2 id="publicTitle" tabindex="-1" class="text-lg font-bold">외부 공개</h2>
                             <p class="mt-1 text-sm text-muted-foreground">외부 관람객에게 보여줄 공연 페이지를 저장하고 공개 상태를 관리해요.</p>
@@ -198,7 +201,7 @@
 
                 <%-- 관람 안내 --%>
                 <section data-section-panel="guide" class="hidden" aria-labelledby="guideTitle">
-                    <h2 id="guideTitle" tabindex="-1" class="mt-6 text-lg font-bold">관람 안내</h2>
+                    <h2 id="guideTitle" tabindex="-1" class="mt-6 text-lg font-bold lg:mt-0">관람 안내</h2>
                     <p class="mt-1 text-sm text-muted-foreground">공연 전체에 적용되는 입장·취소·접근성 정책이에요. 항목을 하나씩 열어 작성해 주세요.</p>
                     <form data-viewing-guide-form class="mt-4 flex flex-col divide-y rounded-lg border bg-card">
                         <details open>
@@ -234,6 +237,8 @@
                         </div>
                     </div>
                 </section>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

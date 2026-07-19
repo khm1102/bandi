@@ -4,7 +4,7 @@
 <c:set var="input" value="h-11 w-full rounded-md border border-input bg-card px-3 text-base transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm"/>
 <c:set var="label" value="mb-1.5 block text-xs font-bold text-muted-foreground"/>
 <t:layout title="팀별 제작 진행" active="production" role="${role}" scriptPath="production/index">
-    <main class="mx-auto w-full max-w-5xl">
+    <main class="w-full">
     <t:pageHead title="팀별 제작 진행" description="차단되거나 마감이 지난 업무부터 해결해요">
         <t:button pageAction="production-create-open">새 제작 업무</t:button>
     </t:pageHead>

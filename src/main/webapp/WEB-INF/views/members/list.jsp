@@ -4,7 +4,7 @@
 <c:set var="input" value="h-11 w-full rounded-md border border-input bg-card px-3 text-base transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm"/>
 <c:set var="label" value="mb-1.5 block text-xs font-bold text-muted-foreground"/>
 <t:layout title="멤버·권한" active="members" role="${role}" scriptPath="members/list">
-    <main class="mx-auto w-full max-w-5xl">
+    <main class="w-full">
         <t:pageHead title="멤버 · 권한" description="SSO 연결 대기와 확인이 필요한 멤버부터 처리해요"><t:button pageAction="member-create-open">멤버 사전 등록</t:button></t:pageHead>
 
         <section class="mb-8" aria-labelledby="memberNextTitle">

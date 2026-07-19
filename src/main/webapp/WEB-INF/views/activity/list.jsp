@@ -5,7 +5,7 @@
 <c:set var="label" value="mb-1.5 block text-xs font-bold text-muted-foreground"/>
 <c:set var="canReview" value="${role == 'admin' || role == 'leader'}"/>
 <t:layout title="활동 기록" active="activity" role="${role}" scriptPath="activity/list">
-    <main class="mx-auto w-full max-w-5xl">
+    <main class="w-full">
         <t:pageHead title="활동 기록" description="팀 활동을 네이비즘 인증 사진과 함께 남기고 검수해요"><t:button pageAction="activity-create-open">새 활동 기록</t:button></t:pageHead>
 
         <nav class="mb-8 grid grid-cols-2 border-b" aria-label="활동 기록 구분">

@@ -5,7 +5,7 @@
 <c:set var="label" value="mb-1.5 block text-xs font-bold text-muted-foreground"/>
 <c:set var="canManage" value="${role == 'admin'}"/>
 <t:layout title="출석" active="attendance" role="${role}" scriptPath="attendance/index">
-    <main class="mx-auto w-full max-w-5xl">
+    <main class="w-full">
     <t:pageHead title="행사 · 출석 관리" description="진행 중인 행사를 먼저 확인하고, 운영진이 현장에서 출석을 기록해요">
         <c:if test="${canManage}">
             <t:button pageAction="event-create-open">새 행사 만들기</t:button>
@@ -47,7 +47,7 @@
     <div class="hidden divide-y border-y" data-event-list></div>
 
     <template data-event-card-template>
-        <article class="px-4 py-5 md:px-5" data-event-card>
+        <article class="px-4 py-5 md:px-5 lg:grid lg:grid-cols-[minmax(16rem,0.8fr)_minmax(24rem,1.2fr)] lg:items-start lg:gap-8" data-event-card>
             <header>
                 <div class="flex flex-wrap items-center gap-2">
                     <h2 class="min-w-0 flex-1 text-base font-extrabold" data-event-title></h2>
@@ -55,7 +55,7 @@
                 </div>
                 <p class="mt-1.5 text-xs font-bold text-muted-foreground" data-event-schedule></p>
             </header>
-            <div class="pt-4">
+            <div class="pt-4 lg:pt-0">
                 <p class="hidden whitespace-pre-wrap text-sm leading-6 text-muted-foreground" data-event-description></p>
                 <div class="mt-4 grid grid-cols-1 gap-3 border-y py-3 text-xs sm:grid-cols-2">
                     <div><span class="block font-bold text-muted-foreground">참석 대상</span><b class="mt-1 block" data-event-target></b></div>

@@ -4,12 +4,14 @@
 <c:set var="input" value="h-11 w-full rounded-md border border-input bg-card px-3 text-base focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 disabled:cursor-not-allowed disabled:bg-secondary disabled:text-muted-foreground md:text-sm"/>
 <c:set var="label" value="mb-1.5 block text-xs font-bold text-muted-foreground"/>
 <t:layout title="공연 당일 입장" active="showops" role="${role}" scriptPath="showops/operations">
-    <div class="mx-auto max-w-2xl">
+    <div class="w-full">
         <h1 class="text-2xl font-extrabold tracking-tight">공연 당일 입장</h1>
         <p class="mt-1 text-sm text-muted-foreground">QR을 읽고 실제 입장한 좌석만 처리해요.</p>
 
+        <div class="mt-5 lg:grid lg:grid-cols-[minmax(20rem,5fr)_minmax(0,7fr)] lg:items-start lg:gap-8">
+            <div class="lg:sticky lg:top-20 lg:self-start">
         <%-- 회차 컨텍스트 (선택 후 접기 가능) --%>
-        <details data-context-details open class="mt-5 rounded-lg border bg-card">
+        <details data-context-details open class="rounded-lg border bg-card">
             <summary class="flex min-h-11 cursor-pointer list-none flex-wrap items-center gap-2 px-4 py-2.5 [&::-webkit-details-marker]:hidden">
                 <svg class="size-4 shrink-0 text-muted-foreground transition-transform [details[open]_&]:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
                 <span data-context-summary class="min-w-0 flex-1 truncate text-sm font-bold">공연과 회차를 선택해 주세요</span>
@@ -63,9 +65,10 @@
                 </div>
             </form>
         </details>
+            </div>
 
         <%-- 결과 영역 --%>
-        <section class="mt-6" aria-label="조회 결과">
+        <section class="mt-6 min-w-0 lg:mt-0" aria-label="조회 결과">
             <div data-entry-feedback class="hidden rounded-lg border p-4" role="status"></div>
 
             <div data-entry-empty class="rounded-lg border border-dashed bg-card px-6 py-10 text-center text-sm text-muted-foreground">
@@ -86,7 +89,7 @@
                     <fieldset class="mt-5">
                         <legend class="text-sm font-bold">입장할 좌석 선택</legend>
                         <p class="mt-1 text-xs text-muted-foreground">미입장 좌석만 선택할 수 있어요. 이미 입장한 좌석은 취소로만 되돌릴 수 있어요.</p>
-                        <div data-entry-seats class="mt-3 grid gap-2 md:grid-cols-2"></div>
+                        <div data-entry-seats class="mt-3 grid gap-2 md:grid-cols-2 lg:grid-cols-3"></div>
                         <div class="mt-3">
                             <t:button variant="outline" size="compact" pageAction="entry-select-all">미입장 좌석 모두 선택</t:button>
                         </div>
@@ -100,6 +103,7 @@
                 </div>
             </div>
         </section>
+        </div>
     </div>
 
     <%-- 입장 취소 sheet --%>

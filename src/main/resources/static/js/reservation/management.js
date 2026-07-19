@@ -158,7 +158,7 @@ function renderSortMarks() {
 }
 
 function buildRow(reservation) {
-    const row = element('button', 'w-full rounded-lg border bg-card p-4 text-left transition-colors hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring md:grid md:min-h-14 md:grid-cols-[7rem_1fr_1fr_6rem_4rem] md:items-center md:gap-3 md:rounded-none md:border-x-0 md:border-b md:border-t-0 md:px-4 md:py-2');
+    const row = element('button', 'w-full rounded-lg border bg-card p-4 text-left transition-colors hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring lg:grid lg:min-h-14 lg:grid-cols-[7rem_minmax(9rem,1.2fr)_minmax(10rem,1fr)_7rem_4rem] lg:items-center lg:gap-3 lg:rounded-none lg:border-x-0 lg:border-b lg:border-t-0 lg:px-4 lg:py-2');
     row.type = 'button';
     row.dataset.pageAction = ACTIONS.DETAIL_OPEN;
     row.dataset.reservationId = String(reservation.reservationId);
@@ -166,21 +166,24 @@ function buildRow(reservation) {
 
     const no = element('span', 'font-mono text-xs font-bold', reservation.reservationNo);
     const name = element('span', 'text-sm font-bold', reservation.applicantName);
+    const phone = element('span', 'text-xs text-muted-foreground tabular-nums', reservation.phone || '-');
+    const person = element('span', 'hidden min-w-0 lg:block');
+    person.append(name, phone);
     const seats = validSeats(reservation);
     const seatText = seats.length > 0
             ? `${seats.map((seat) => seat.seatLabel).join(' ')} · ${seats.length}석`
             : '유효 좌석 없음';
     const seatSpan = element('span', 'text-xs text-muted-foreground', seatText);
-    const statusCell = element('span', 'hidden md:block');
+    const statusCell = element('span', 'hidden lg:block');
     statusCell.appendChild(badge(STATUS_LABELS[reservation.status] || reservation.status, statusTone(reservation.status)));
-    const openHint = element('span', 'hidden text-xs font-bold text-accent-foreground md:block', '상세');
+    const openHint = element('span', 'hidden text-xs font-bold text-accent-foreground lg:block', '상세');
 
-    const mobileTop = element('span', 'flex flex-wrap items-center gap-2 md:hidden');
+    const mobileTop = element('span', 'flex flex-wrap items-center gap-2 lg:hidden');
     mobileTop.append(no.cloneNode(true), name.cloneNode(true));
-    const mobileBottom = element('span', 'mt-1.5 flex flex-wrap items-center gap-2 md:hidden');
+    const mobileBottom = element('span', 'mt-1.5 flex flex-wrap items-center gap-2 lg:hidden');
     mobileBottom.append(seatSpan.cloneNode(true), badge(STATUS_LABELS[reservation.status] || reservation.status, statusTone(reservation.status)));
-    [no, name, seatSpan, openHint].forEach((node) => node.classList.add('hidden', 'md:block'));
-    row.append(mobileTop, mobileBottom, no, name, seatSpan, statusCell, openHint);
+    [no, seatSpan, openHint].forEach((node) => node.classList.add('hidden', 'lg:block'));
+    row.append(mobileTop, mobileBottom, no, person, seatSpan, statusCell, openHint);
     return row;
 }
 

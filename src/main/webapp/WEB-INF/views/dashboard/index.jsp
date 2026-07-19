@@ -2,7 +2,7 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
 <t:layout title="홈" active="dashboard" role="${role}" scriptPath="dashboard/index">
-    <div class="mx-auto max-w-5xl">
+    <div class="w-full">
     <header class="flex min-w-0 flex-wrap items-end gap-3.5">
         <div class="min-w-0">
             <h1 class="text-2xl font-extrabold tracking-tight" data-dashboard-greeting>오늘 할 일을 불러오고 있어요</h1>

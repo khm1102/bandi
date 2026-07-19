@@ -4,7 +4,7 @@
 <c:set var="input" value="h-11 w-full rounded-md border border-input bg-card px-3 text-base focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm"/>
 <c:set var="label" value="mb-1.5 block text-xs font-bold text-muted-foreground"/>
 <t:layout title="공시 작성" active="notice-management" role="${role}" scriptPath="notice/management-editor">
-    <main class="mx-auto w-full max-w-5xl" data-notice-editor data-notice-id="<c:out value='${publicNoticeId}'/>">
+    <main class="w-full" data-notice-editor data-notice-id="<c:out value='${publicNoticeId}'/>">
         <t:pageHead title="${empty publicNoticeId ? '공시 작성' : '공시 수정'}" description="긴 공식 안내를 작성하고 초안 상태로 안전하게 저장해요"><t:button href="/notice-management" variant="outline" cssClass="" >목록으로</t:button><t:button pageAction="notice-draft-save">초안 저장</t:button></t:pageHead>
 
         <div class="mb-6 flex items-center gap-2 border-y py-3 text-sm"><span class="size-2 rounded-full bg-warning" data-notice-save-dot></span><b data-notice-save-state>저장되지 않은 변경이 없어요</b><span class="ml-auto text-xs text-muted-foreground" data-notice-save-time></span></div>

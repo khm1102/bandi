@@ -16,7 +16,7 @@
 <a href="#mainContent" class="fixed left-4 top-4 z-50 inline-flex min-h-11 -translate-y-24 items-center rounded-md bg-primary px-4 text-sm font-bold text-primary-foreground transition-transform focus:translate-y-0">본문으로 바로가기</a>
 <t:header active="${active}"/>
 
-<main id="mainContent" class="mx-auto w-full max-w-5xl flex-1 px-4 py-6 md:px-6 md:py-7" tabindex="-1">
+<main id="mainContent" class="mx-auto w-full max-w-6xl flex-1 px-4 py-6 md:px-6 md:py-8" tabindex="-1">
     <jsp:doBody/>
 </main>
 

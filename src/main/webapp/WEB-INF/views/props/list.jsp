@@ -6,7 +6,7 @@
 <c:set var="canAdmin" value="${role eq 'admin'}"/>
 <c:set var="canReserve" value="${role eq 'admin' or role eq 'leader'}"/>
 <t:layout title="소품·장비" active="props" role="${role}" scriptPath="props/list">
-    <main class="mx-auto w-full max-w-5xl">
+    <main class="w-full">
     <t:pageHead title="소품·장비" description="점검이 필요하거나 사용 중인 품목부터 확인해요">
         <c:if test="${canAdmin}">
             <t:button pageAction="asset-create">새 품목 등록</t:button>
@@ -15,21 +15,23 @@
 
     <section class="mb-8" aria-labelledby="assetNextTitle"><p class="text-sm font-bold text-accent-foreground">다음에 확인할 품목</p><div class="mt-2 grid gap-4 border-l-4 border-primary bg-accent px-5 py-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center"><div><h2 id="assetNextTitle" class="text-lg font-bold" data-asset-next-title>품목 상태를 확인하고 있어요</h2><p class="mt-1 text-sm leading-6 text-muted-foreground" data-asset-next-message>잠시만 기다려 주세요.</p></div><span class="hidden" data-asset-next-action><t:button variant="outline" pageAction="asset-detail" cssClass="w-full md:w-auto">품목 상세 보기</t:button></span></div></section>
 
-    <section class="mb-6" aria-label="소품·장비 검색">
-        <label class="sr-only" for="assetSearch">품목명, 위치, 분류 검색</label>
-        <input id="assetSearch" data-asset-search class="h-11 w-full rounded-md border border-input bg-card px-4 text-base transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm"
-               type="search" placeholder="품목명, 위치, 분류 검색" autocomplete="off">
-    </section>
+    <div class="mb-6 lg:flex lg:items-center lg:gap-4" aria-label="소품·장비 검색과 필터">
+        <section class="lg:w-80 lg:shrink-0" aria-label="소품·장비 검색">
+            <label class="sr-only" for="assetSearch">품목명, 위치, 분류 검색</label>
+            <input id="assetSearch" data-asset-search class="h-11 w-full rounded-md border border-input bg-card px-4 text-base transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm"
+                   type="search" placeholder="품목명, 위치, 분류 검색" autocomplete="off">
+        </section>
+
+        <div class="mt-4 flex gap-2 overflow-x-auto pb-1 lg:mt-0 lg:min-w-0 lg:flex-1 lg:justify-end" aria-label="품목 상태 필터">
+            <t:filterChip group="asset-status" value="ALL" label="전체" active="true"/>
+            <t:filterChip group="asset-status" value="AVAILABLE" label="사용 가능"/>
+            <t:filterChip group="asset-status" value="IN_USE" label="사용 중"/>
+            <t:filterChip group="asset-status" value="REPAIR" label="수리 중"/>
+            <t:filterChip group="asset-status" value="LOST" label="분실"/>
+        </div>
+    </div>
 
     <dl class="mb-6 grid grid-cols-2 divide-x border-y py-4 text-center sm:grid-cols-4" aria-label="소품·장비 현황"><div class="px-2"><dt class="text-xs text-muted-foreground">전체 품목</dt><dd class="mt-1 text-lg font-bold tabular-nums"><span data-stat-value="asset-total">0</span>종</dd></div><div class="px-2"><dt class="text-xs text-muted-foreground">총 재고</dt><dd class="mt-1 text-lg font-bold tabular-nums"><span data-stat-value="asset-quantity">0</span>개</dd></div><div class="px-2"><dt class="text-xs text-muted-foreground">사용 중</dt><dd class="mt-1 text-lg font-bold tabular-nums text-warning"><span data-stat-value="asset-used">0</span>개</dd></div><div class="px-2"><dt class="text-xs text-muted-foreground">점검 필요</dt><dd class="mt-1 text-lg font-bold tabular-nums text-destructive"><span data-stat-value="asset-attention">0</span>종</dd></div></dl>
-
-    <div class="mb-5 flex gap-2 overflow-x-auto pb-1" aria-label="품목 상태 필터">
-        <t:filterChip group="asset-status" value="ALL" label="전체" active="true"/>
-        <t:filterChip group="asset-status" value="AVAILABLE" label="사용 가능"/>
-        <t:filterChip group="asset-status" value="IN_USE" label="사용 중"/>
-        <t:filterChip group="asset-status" value="REPAIR" label="수리 중"/>
-        <t:filterChip group="asset-status" value="LOST" label="분실"/>
-    </div>
 
     <div class="border-y" data-asset-region aria-busy="true">
         <div data-asset-list><p class="px-5 py-12 text-center text-sm text-muted-foreground">품목을 불러오는 중입니다.</p></div>

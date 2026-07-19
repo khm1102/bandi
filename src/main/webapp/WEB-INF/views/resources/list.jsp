@@ -4,7 +4,7 @@
 <c:set var="input" value="h-11 w-full rounded-md border border-input bg-card px-3 text-base transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm"/>
 <c:set var="label" value="mb-1.5 block text-xs font-bold text-muted-foreground"/>
 <t:layout title="공지·자료실" active="resources" role="${role}" scriptPath="resources/list">
-    <main class="mx-auto w-full max-w-5xl">
+    <main class="w-full">
         <t:pageHead title="공지·자료실" description="먼저 확인할 공지를 읽고, 필요한 업무 자료를 찾아요"/>
 
         <nav class="mb-8 grid grid-cols-2 border-b" aria-label="공지·자료실 구분">

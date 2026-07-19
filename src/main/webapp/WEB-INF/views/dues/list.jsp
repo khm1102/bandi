@@ -4,7 +4,7 @@
 <c:set var="input" value="h-11 w-full rounded-md border border-input bg-card px-3 text-base transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm"/>
 <c:set var="label" value="mb-1.5 block text-xs font-bold text-muted-foreground"/>
 <t:layout title="회비" active="dues" role="${role}" scriptPath="dues/list">
-    <main class="mx-auto w-full max-w-5xl">
+    <main class="w-full">
     <c:choose>
         <c:when test="${role != 'admin'}">
             <t:pageHead title="내 회비" description="아직 내지 않은 회비와 납부 기한부터 확인해요"/>

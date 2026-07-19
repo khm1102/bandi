@@ -139,7 +139,7 @@ function updateNextAction() {
 }
 
 function buildChecklistItem(item) {
-    const row = element('li', 'grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 px-4 py-4 md:px-5');
+    const row = element('li', 'grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 gap-y-2 px-4 py-4 md:px-5 lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center');
     const toggle = element('button', `flex size-11 shrink-0 items-center justify-center rounded-md border text-lg font-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${item.completed ? 'border-success bg-success text-white' : 'bg-card text-muted-foreground hover:border-primary'}`, item.completed ? '✓' : '');
     toggle.type = 'button';
     toggle.dataset.pageAction = ACTIONS.TOGGLE;
@@ -164,7 +164,7 @@ function buildChecklistItem(item) {
     }
     body.appendChild(meta);
 
-    const actions = element('div', 'col-start-2 flex flex-wrap gap-2');
+    const actions = element('div', 'col-start-2 flex flex-wrap gap-2 lg:col-start-auto lg:justify-end');
     const history = actionButton('이력', ACTIONS.HISTORY);
     history.dataset.itemId = String(item.checklistItemId);
     history.dataset.itemContent = item.content;

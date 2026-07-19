@@ -5,7 +5,7 @@
 <c:set var="label" value="mb-1.5 block text-xs font-bold text-muted-foreground"/>
 <c:set var="canManage" value="${role eq 'admin' or role eq 'leader'}"/>
 <t:layout title="체크리스트" active="checklist" role="${role}" scriptPath="checklist/index">
-    <main class="mx-auto w-full max-w-5xl">
+    <main class="w-full">
         <t:pageHead title="공연 체크리스트" description="이번 공연에서 아직 끝내지 못한 준비부터 처리해요">
             <c:if test="${canManage}"><t:button pageAction="checklist-create-open">준비 항목 추가</t:button></c:if>
         </t:pageHead>

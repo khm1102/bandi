@@ -3,7 +3,7 @@
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
 <c:set var="input" value="h-11 rounded-md border border-input bg-card px-3 text-base focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm"/>
 <t:layout title="공시 관리" active="notice-management" role="${role}" scriptPath="notice/management-list">
-    <main class="mx-auto w-full max-w-5xl">
+    <main class="w-full">
         <t:pageHead title="공시 관리" description="외부에 공개할 공식 안내의 게시 상태와 기간을 관리해요"><t:button href="/notice-management/write">새 공시 작성</t:button></t:pageHead>
 
         <section class="mb-8" aria-labelledby="noticeManageNextTitle"><p class="text-sm font-bold text-accent-foreground">다음에 할 일</p><div class="mt-2 grid gap-4 border-l-4 border-primary bg-accent px-5 py-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center"><div><h2 id="noticeManageNextTitle" class="text-lg font-bold" data-notice-next-title>공시 상태를 확인하고 있어요</h2><p class="mt-1 text-sm leading-6 text-muted-foreground" data-notice-next-message>잠시만 기다려 주세요.</p></div><span class="hidden" data-notice-next-action><t:button pageAction="notice-next-action" cssClass="w-full md:w-auto">공시 이어서 작성</t:button></span></div></section>
