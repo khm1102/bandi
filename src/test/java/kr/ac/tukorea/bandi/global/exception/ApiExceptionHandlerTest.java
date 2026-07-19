@@ -13,6 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -62,6 +63,31 @@ class ApiExceptionHandlerTest {
                 .andExpect(jsonPath("$.message").value(
                         "일시적인 오류가 발생했습니다."));
     }
+
+    @Test
+    void 잘못된_JSON_enum은_C001을_반환한다() throws Exception {
+        mockMvc.perform(post("/api/test/enum")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"INVALID\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("C001"))
+                .andExpect(jsonPath("$.message")
+                        .value("입력값이 올바르지 않습니다."));
+    }
+
+    @Test
+    void query_타입_변환_실패는_C001을_반환한다() throws Exception {
+        mockMvc.perform(get("/api/test/query").param("memberId", "abc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("C001"));
+    }
+
+    @Test
+    void 필수_query_누락은_C001을_반환한다() throws Exception {
+        mockMvc.perform(get("/api/test/query"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("C001"));
+    }
 }
 
 @RestController
@@ -81,8 +107,23 @@ class ApiExceptionTestController {
         throw new IllegalStateException("노출되면 안 되는 내부 메시지");
     }
 
+    @PostMapping("/api/test/enum")
+    void enumRequest(@RequestBody EnumRequest request) {
+    }
+
+    @GetMapping("/api/test/query")
+    void query(@RequestParam Long memberId) {
+    }
+
     private record TestRequest(
             @NotBlank(message = "이름을 입력해 주세요.") String name
     ) {
+    }
+
+    private record EnumRequest(TestStatus status) {
+    }
+
+    private enum TestStatus {
+        ACTIVE
     }
 }
