@@ -3,8 +3,10 @@ package kr.ac.tukorea.bandi.domain.performance.controller;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformancePublicPageResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceViewingGuideResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PublicPerformanceRoundResponse;
+import kr.ac.tukorea.bandi.domain.performance.dto.response.PublicProfileViewResponse;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformancePublicPageService;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceRoundService;
+import kr.ac.tukorea.bandi.domain.performance.service.PublicProfileService;
 import kr.ac.tukorea.bandi.global.swagger.PublicPerformanceApiDocs;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +19,7 @@ import java.util.List;
 public class PublicPerformanceApiController implements PublicPerformanceApiDocs {
     private final PerformancePublicPageService publicPageService;
     private final PerformanceRoundService roundService;
+    private final PublicProfileService publicProfileService;
 
     @Override
     public ResponseEntity<PerformancePublicPageResponse> lookup(String slug) {
@@ -35,5 +38,10 @@ public class PublicPerformanceApiController implements PublicPerformanceApiDocs 
         PerformancePublicPageResponse page = publicPageService.lookupPublic(slug);
         return ResponseEntity.of(publicPageService.lookupPublicViewingGuide(
                 page.performanceProjectId()));
+    }
+
+    @Override
+    public ResponseEntity<PublicProfileViewResponse> lookupProfile(Long profileId) {
+        return ResponseEntity.ok(publicProfileService.lookupPublic(profileId));
     }
 }

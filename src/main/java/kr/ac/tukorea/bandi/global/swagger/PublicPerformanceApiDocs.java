@@ -6,6 +6,7 @@ import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformancePublicPage
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceRoundResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceViewingGuideResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PublicPerformanceRoundResponse;
+import kr.ac.tukorea.bandi.domain.performance.dto.response.PublicProfileViewResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -29,4 +30,9 @@ public interface PublicPerformanceApiDocs {
     @GetMapping("/{slug}/viewing-guide")
     ResponseEntity<PerformanceViewingGuideResponse> lookupViewingGuide(
             @PathVariable String slug);
+
+    @Operation(summary = "동의 항목만 포함한 공개 프로필 조회")
+    @GetMapping("/profiles/{profileId}")
+    ResponseEntity<PublicProfileViewResponse> lookupProfile(
+            @PathVariable Long profileId);
 }
