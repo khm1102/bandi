@@ -66,14 +66,14 @@ public class TukoreaSchoolSsoClient implements SchoolSsoClient {
     }
 
     private void validateAuthenticationResponse(SchoolSsoHttpResponse response) {
-        htmlParser.extractAlert(response.body()).ifPresent(alert -> {
-            if (alert.contains("인증에 실패")) {
+        if (htmlParser.looksLikeLoginPage(response.body())) {
+            boolean invalidCredentials = htmlParser.extractAlert(response.body())
+                    .filter(alert -> alert.contains("인증에 실패"))
+                    .isPresent();
+            if (invalidCredentials) {
                 throw new SchoolCredentialsInvalidException();
             }
             throw new SchoolSsoResponseChangedException();
-        });
-        if (htmlParser.looksLikeLoginPage(response.body())) {
-            throw new SchoolCredentialsInvalidException();
         }
         String host = response.finalUri() == null ? "" : response.finalUri().getHost();
         if (!PORTAL_HOST.equalsIgnoreCase(host)) {

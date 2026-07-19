@@ -53,6 +53,19 @@ class TukoreaSchoolSsoClientTest {
     }
 
     @Test
+    void 정상_포털의_무관한_alert는_로그인_실패로_판정하지_않는다() {
+        FakeHttpSession session = new FakeHttpSession();
+        session.enqueue(response(200, LOGIN_PAGE, loginPageHtml()));
+        session.enqueue(response(200, PORTAL,
+                portalHtml() + "<script>alert(\"포털 안내\");</script>"));
+
+        SchoolIdentity identity = client(session).authenticate(credentials());
+
+        assertThat(identity.studentNo()).isEqualTo("2021184000");
+        assertThat(identity.academicStatus()).isEqualTo(AcademicStatus.ENROLLED);
+    }
+
+    @Test
     void 인증_실패_alert는_자격증명_오류로_분류한다() {
         FakeHttpSession session = new FakeHttpSession();
         session.enqueue(response(200, LOGIN_PAGE, loginPageHtml()));
@@ -61,6 +74,18 @@ class TukoreaSchoolSsoClientTest {
 
         assertThatThrownBy(() -> client(session).authenticate(credentials()))
                 .isInstanceOf(SchoolCredentialsInvalidException.class);
+    }
+
+    @Test
+    void 알_수_없는_alert와_로그인_페이지_반송은_응답_구조_변경으로_분류한다() {
+        FakeHttpSession session = new FakeHttpSession();
+        session.enqueue(response(200, LOGIN_PAGE, loginPageHtml()));
+        session.enqueue(response(200, LOGIN_PROCESS,
+                "<script>alert(\"알 수 없는 오류\"); "
+                        + "top.location.href = \"/sso/login_stand.jsp\";</script>"));
+
+        assertThatThrownBy(() -> client(session).authenticate(credentials()))
+                .isInstanceOf(SchoolSsoResponseChangedException.class);
     }
 
     @Test
