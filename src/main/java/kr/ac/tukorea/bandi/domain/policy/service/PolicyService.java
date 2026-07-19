@@ -10,9 +10,11 @@ import kr.ac.tukorea.bandi.domain.policy.exception.DuplicatePolicyVersionExcepti
 import kr.ac.tukorea.bandi.domain.policy.exception.InvalidPolicyVersionException;
 import kr.ac.tukorea.bandi.domain.policy.exception.PolicyAccessDeniedException;
 import kr.ac.tukorea.bandi.domain.policy.exception.PolicyDocumentNotFoundException;
+import kr.ac.tukorea.bandi.domain.policy.exception.PolicyVersionNotFoundException;
 import kr.ac.tukorea.bandi.domain.policy.mapper.PolicyMapper;
 import kr.ac.tukorea.bandi.domain.policy.model.PolicyDocument;
 import kr.ac.tukorea.bandi.domain.policy.model.PolicyDocumentVersion;
+import kr.ac.tukorea.bandi.domain.policy.model.PolicyAudience;
 import kr.ac.tukorea.bandi.domain.policy.model.PolicyType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DuplicateKeyException;
@@ -109,6 +111,14 @@ public class PolicyService {
             Long actorMemberId, Long policyDocumentId) {
         validateAdmin(actorMemberId);
         return policyMapper.searchVersions(policyDocumentId);
+    }
+
+    public PolicyVersionResponse lookupCurrentReservationPrivacy() {
+        return policyMapper.lookupCurrentEffectiveVersion(
+                        PolicyType.RESERVATION_PRIVACY,
+                        PolicyAudience.VISITOR, now())
+                .orElseThrow(() -> new PolicyVersionNotFoundException(
+                        "policyType=RESERVATION_PRIVACY,audience=VISITOR"));
     }
 
     private PolicyDocument lock(Long policyDocumentId) {

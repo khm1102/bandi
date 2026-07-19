@@ -60,6 +60,9 @@ class SecurityConfigTest {
             mockMvc.perform(get("/api/reservation-management/test")
                             .with(user("tester").roles(role)))
                     .andExpect(status().isForbidden());
+            mockMvc.perform(get("/api/policies/test")
+                            .with(user("tester").roles(role)))
+                    .andExpect(status().isForbidden());
         }
     }
 
@@ -67,7 +70,7 @@ class SecurityConfigTest {
     void 운영진은_관리자_화면에_접근할_수_있다() throws Exception {
         for (String path : new String[]{
                 "/members/test", "/reservations/test", "/showops/test",
-                "/api/reservation-management/test"}) {
+                "/api/reservation-management/test", "/api/policies/test"}) {
             mockMvc.perform(get(path).with(user("admin").roles("ADMIN")))
                     .andExpect(status().isOk());
         }
@@ -88,6 +91,8 @@ class SecurityConfigTest {
         mockMvc.perform(get("/api/public-notices/test"))
                 .andExpect(status().isOk());
         mockMvc.perform(get("/api/public-performances/test"))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/public-policies/test"))
                 .andExpect(status().isOk());
     }
 
@@ -159,7 +164,7 @@ class SecurityTestController {
             "/showops/test", "/notices/test", "/performances/show",
             "/reserve/test", "/swagger-ui/test", "/api/test",
             "/api/members/test", "/api/public-notices/test",
-            "/api/reservation-management/test"})
+            "/api/reservation-management/test", "/api/policies/test"})
     ResponseEntity<Void> page() {
         return ResponseEntity.ok().build();
     }
@@ -181,6 +186,11 @@ class SecurityTestController {
 
     @GetMapping("/api/public-performances/test")
     ResponseEntity<Void> publicPerformance() {
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/api/public-policies/test")
+    ResponseEntity<Void> publicPolicy() {
         return ResponseEntity.ok().build();
     }
 }

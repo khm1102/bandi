@@ -10,6 +10,7 @@ public final class ApiTag {
     public static final String ACTIVITY = "활동 기록";
     public static final String EVENT = "행사·출석";
     public static final String FEE = "회비";
+    public static final String POLICY = "정책";
     public static final String PERFORMANCE = "공연";
     public static final String PRODUCTION = "제작 진행";
     public static final String ASSET = "소품·장비";

@@ -4,6 +4,7 @@ import kr.ac.tukorea.bandi.domain.policy.dto.response.PolicyDocumentResponse;
 import kr.ac.tukorea.bandi.domain.policy.dto.response.PolicyVersionResponse;
 import kr.ac.tukorea.bandi.domain.policy.model.PolicyDocument;
 import kr.ac.tukorea.bandi.domain.policy.model.PolicyDocumentVersion;
+import kr.ac.tukorea.bandi.domain.policy.model.PolicyAudience;
 import kr.ac.tukorea.bandi.domain.policy.model.PolicyType;
 import org.apache.ibatis.annotations.Param;
 
@@ -17,6 +18,11 @@ public interface PolicyMapper {
 
     Optional<PolicyVersionResponse> lookupVersionById(
             Long policyDocumentVersionId);
+
+    Optional<PolicyVersionResponse> lookupCurrentEffectiveVersion(
+            @Param("policyType") PolicyType policyType,
+            @Param("audience") PolicyAudience audience,
+            @Param("currentDttm") LocalDateTime currentDttm);
 
     int lookupNextVersionNo(Long policyDocumentId);
 

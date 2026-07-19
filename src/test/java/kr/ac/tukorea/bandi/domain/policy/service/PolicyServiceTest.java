@@ -4,6 +4,7 @@ import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
 import kr.ac.tukorea.bandi.domain.policy.dto.request.PolicyDocumentCreateParam;
 import kr.ac.tukorea.bandi.domain.policy.dto.request.PolicyVersionPublishParam;
+import kr.ac.tukorea.bandi.domain.policy.dto.response.PolicyVersionResponse;
 import kr.ac.tukorea.bandi.domain.policy.exception.InvalidPolicyVersionException;
 import kr.ac.tukorea.bandi.domain.policy.exception.PolicyAccessDeniedException;
 import kr.ac.tukorea.bandi.domain.policy.mapper.PolicyMapper;
@@ -11,6 +12,8 @@ import kr.ac.tukorea.bandi.domain.policy.model.PolicyAudience;
 import kr.ac.tukorea.bandi.domain.policy.model.PolicyDocument;
 import kr.ac.tukorea.bandi.domain.policy.model.PolicyDocumentVersion;
 import kr.ac.tukorea.bandi.domain.policy.model.PolicyType;
+import kr.ac.tukorea.bandi.global.exception.BusinessException;
+import kr.ac.tukorea.bandi.global.exception.ErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -145,6 +148,35 @@ class PolicyServiceTest {
         assertThatThrownBy(() -> service.validateEffectiveVersion(
                 VERSION_ID, PolicyType.RESERVATION_PRIVACY))
                 .isInstanceOf(InvalidPolicyVersionException.class);
+    }
+
+    @Test
+    void 관람객에게_현재_유효한_관람_신청_개인정보_정책을_제공한다() {
+        PolicyVersionResponse current = new PolicyVersionResponse(
+                VERSION_ID, DOCUMENT_ID, 2, "수집 동의", NOW,
+                ACTOR_ID, NOW, true);
+        given(policyMapper.lookupCurrentEffectiveVersion(
+                PolicyType.RESERVATION_PRIVACY,
+                PolicyAudience.VISITOR, NOW))
+                .willReturn(Optional.of(current));
+
+        PolicyVersionResponse result =
+                service.lookupCurrentReservationPrivacy();
+
+        assertThat(result).isEqualTo(current);
+    }
+
+    @Test
+    void 현재_유효한_관람_신청_정책이_없으면_찾을_수_없다() {
+        given(policyMapper.lookupCurrentEffectiveVersion(
+                PolicyType.RESERVATION_PRIVACY,
+                PolicyAudience.VISITOR, NOW))
+                .willReturn(Optional.empty());
+
+        assertThatThrownBy(service::lookupCurrentReservationPrivacy)
+                .isInstanceOfSatisfying(BusinessException.class,
+                        exception -> assertThat(exception.getErrorCode())
+                                .isEqualTo(ErrorCode.POLICY_VERSION_NOT_FOUND));
     }
 
     private PolicyDocument document(boolean active) {
