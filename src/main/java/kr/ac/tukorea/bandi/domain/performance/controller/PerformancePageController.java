@@ -4,6 +4,7 @@ import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformancePublicPage
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PublicPerformanceRoundResponse;
 import kr.ac.tukorea.bandi.domain.performance.model.PerformanceRoundStatus;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceContentService;
+import kr.ac.tukorea.bandi.domain.performance.service.PerformancePublicNoticeService;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformancePublicPageService;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceRoundService;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +20,7 @@ import java.util.List;
 public class PerformancePageController {
 
     private final PerformancePublicPageService publicPageService;
+    private final PerformancePublicNoticeService publicNoticeService;
     private final PerformanceRoundService roundService;
     private final PerformanceContentService contentService;
 
@@ -39,6 +41,8 @@ public class PerformancePageController {
                 .searchPublicCredits(slug));
         model.addAttribute("media", contentService
                 .searchPublicMedia(slug));
+        model.addAttribute("notices", publicNoticeService
+                .searchPublic(slug));
         model.addAttribute("reservationAvailable", rounds.stream()
                 .anyMatch(round -> round.status()
                         == PerformanceRoundStatus.RESERVATION_OPEN));
