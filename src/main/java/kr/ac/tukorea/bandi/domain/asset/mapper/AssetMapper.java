@@ -17,6 +17,8 @@ public interface AssetMapper {
 
     List<AssetUsage> searchUsagesByItemId(Long assetItemId);
 
+    List<AssetHistory> searchHistoriesByItemId(Long assetItemId);
+
     Optional<AssetItem> lookupItemById(Long assetItemId);
 
     Optional<AssetItem> lookupItemByIdForUpdate(Long assetItemId);
@@ -38,6 +40,10 @@ public interface AssetMapper {
     int insertHistory(AssetHistory history);
 
     int updateUsage(AssetUsage usage);
+
+    int updateItem(AssetItem item);
+
+    int updateUnit(AssetUnit unit);
 
     int updateUnitStatus(AssetUnit unit);
 }

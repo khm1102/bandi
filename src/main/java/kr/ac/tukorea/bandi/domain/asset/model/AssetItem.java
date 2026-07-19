@@ -56,6 +56,29 @@ public class AssetItem {
                 normalize(note));
     }
 
+    public AssetItem edit(String name, String categoryCode,
+                          AssetOwnerType ownerType, Long ownerMemberId,
+                          String externalOwnerName, int totalQuantity,
+                          String storageLocation, Long photoFileId,
+                          String note) {
+        validate(name, categoryCode, trackingType, ownerType, ownerMemberId,
+                externalOwnerName, totalQuantity, storageLocation);
+        return new AssetItem(assetItemId, name.strip(), categoryCode.strip(),
+                trackingType, ownerType, ownerMemberId,
+                normalize(externalOwnerName), totalQuantity,
+                storageLocation.strip(), status, photoFileId,
+                normalize(note));
+    }
+
+    public AssetItem changeStatus(AssetStatus newStatus) {
+        if (newStatus == null) {
+            throw new InvalidAssetException();
+        }
+        return new AssetItem(assetItemId, name, categoryCode, trackingType,
+                ownerType, ownerMemberId, externalOwnerName, totalQuantity,
+                storageLocation, newStatus, photoFileId, note);
+    }
+
     public void validateReservation(Long assetUnitId, int quantity,
                                     int activeQuantity) {
         if (status != AssetStatus.AVAILABLE || quantity < 1) {

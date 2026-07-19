@@ -3,7 +3,10 @@ package kr.ac.tukorea.bandi.domain.asset.controller;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetItemCreateParam;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetSearchCondition;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetUsageCreateParam;
+import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetItemUpdateParam;
+import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetUnitUpdateParam;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetOwnerType;
+import kr.ac.tukorea.bandi.domain.asset.model.AssetStatus;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetTrackingType;
 import kr.ac.tukorea.bandi.domain.asset.service.AssetService;
 import kr.ac.tukorea.bandi.global.config.SecurityWebMvcConfig;
@@ -31,6 +34,8 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -140,5 +145,53 @@ class AssetApiControllerTest {
                 LocalDateTime.of(2027, 1, 1, 10, 0),
                 LocalDateTime.of(2027, 1, 2, 10, 0), null));
         verify(assetService).returnUsage(ACTOR_ID, 30L);
+    }
+
+    @Test
+    void 품목과_개별_장비를_수정한다() throws Exception {
+        mockMvc.perform(put("/api/assets/{assetItemId}", 20L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "name": "전원 케이블",
+                                  "categoryCode": "CABLE",
+                                  "ownerType": "CLUB",
+                                  "totalQuantity": 12,
+                                  "storageLocation": "창고 B"
+                                }
+                                """))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(patch("/api/assets/{assetItemId}/status", 20L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"status\":\"REPAIR\"}"))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(put("/api/assets/units/{assetUnitId}", 30L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "status": "REPAIR",
+                                  "storageLocation": "수리 업체"
+                                }
+                                """))
+                .andExpect(status().isNoContent());
+
+        verify(assetService).updateItem(ACTOR_ID, 20L,
+                new AssetItemUpdateParam("전원 케이블", "CABLE",
+                        AssetOwnerType.CLUB, null, null, 12,
+                        "창고 B", null, null));
+        verify(assetService).changeItemStatus(ACTOR_ID, 20L,
+                AssetStatus.REPAIR, null);
+        verify(assetService).updateUnit(ACTOR_ID,
+                new AssetUnitUpdateParam(30L, AssetStatus.REPAIR,
+                        "수리 업체", null));
+    }
+
+    @Test
+    void 품목_사진은_presigned_url로_리다이렉트한다() throws Exception {
+        given(assetService.createPhotoDownloadUrl(ACTOR_ID, 20L))
+                .willReturn("http://localhost:9000/bandi-private/photo");
+
+        mockMvc.perform(get("/api/assets/{assetItemId}/photo/download", 20L))
+                .andExpect(status().isFound());
     }
 }

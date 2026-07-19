@@ -44,7 +44,19 @@ public class AssetUnit {
     }
 
     public AssetUnit changeStatus(AssetStatus newStatus) {
+        if (newStatus == null) {
+            throw new InvalidAssetException();
+        }
         return new AssetUnit(assetUnitId, assetItemId, managementNo, newStatus,
                 storageLocation);
+    }
+
+    public AssetUnit edit(AssetStatus newStatus, String newStorageLocation) {
+        if (newStatus == null || newStorageLocation == null
+                || newStorageLocation.isBlank()) {
+            throw new InvalidAssetException();
+        }
+        return new AssetUnit(assetUnitId, assetItemId, managementNo, newStatus,
+                newStorageLocation.strip());
     }
 }
