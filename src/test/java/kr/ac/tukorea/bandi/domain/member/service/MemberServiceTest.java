@@ -21,6 +21,7 @@ import kr.ac.tukorea.bandi.domain.member.mapper.MemberHistoryMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.MemberMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.TeamMapper;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
+import kr.ac.tukorea.bandi.domain.member.model.AcademicStatus;
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
 import kr.ac.tukorea.bandi.domain.member.model.CohortTerm;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
@@ -87,7 +88,7 @@ class MemberServiceTest {
     }
 
     private static Member member(Long memberId, Long teamId, ClubRole role, MemberStatus status) {
-        return new Member(memberId, "2020184000", "이서준", "컴퓨터공학부", "ENROLLED", null,
+        return new Member(memberId, "2020184000", "이서준", "컴퓨터공학부", AcademicStatus.ENROLLED, null,
                 teamId, COHORT_ID, role, status, SsoLinkStatus.LINKED, null, null, ADMIN_ID);
     }
 
