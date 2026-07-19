@@ -71,7 +71,8 @@ class SecurityConfigTest {
     @Test
     void 외부_공개_화면은_로그인하지_않아도_접근할_수_있다() throws Exception {
         for (String path : new String[]{
-                "/notices/test", "/performances/show", "/reserve/test"}) {
+                "/notices/test", "/performances/show", "/reserve/test",
+                "/swagger-ui/test"}) {
             mockMvc.perform(get(path)).andExpect(status().isOk());
         }
     }
@@ -109,7 +110,7 @@ class SecurityTestController {
 
     @GetMapping({"/dashboard", "/members/test", "/reservations/test",
             "/showops/test", "/notices/test", "/performances/show",
-            "/reserve/test"})
+            "/reserve/test", "/swagger-ui/test"})
     ResponseEntity<Void> page() {
         return ResponseEntity.ok().build();
     }

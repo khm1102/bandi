@@ -62,6 +62,8 @@ feature 간 참조는 Service → 다른 feature의 Service 만 허용
 
 금지 방향: Controller→Mapper, Controller→model, Mapper→Service, model→상위 계층, feature의 mapper/model→다른 feature
 
+Swagger 문서 계약은 `global.swagger`가 단일 관리한다. 이 패키지의 `~ApiDocs`만 HTTP 계약 표현을 위해 feature request/response DTO를 참조할 수 있으며 Service·Mapper·model 참조는 금지한다.
+
 ## MUST 핵심 규칙 (위반 시 PR 반려)
 
 1. 소프트탭 4칸, K&R 중괄호, 조건/반복문 중괄호 필수, 한 줄 한 문장
