@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.ac.tukorea.bandi.domain.notice.mapper.InternalNoticeMapper">
+
+    <resultMap id="internalNoticeResultMap" type="kr.ac.tukorea.bandi.domain.notice.model.InternalNotice">
+        <constructor>
+            <idArg column="internal_notice_id" javaType="java.lang.Long"/>
+            <arg column="target_scope_code" javaType="kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeTargetScope"/>
+            <arg column="team_id" javaType="java.lang.Long"/>
+            <arg column="title" javaType="java.lang.String"/>
+            <arg column="body" javaType="java.lang.String"/>
+            <arg column="status_code" javaType="kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeStatus"/>
+            <arg column="is_important" javaType="_boolean"/>
+            <arg column="publish_start_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="publish_end_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="created_by_member_id" javaType="java.lang.Long"/>
+            <arg column="updated_by_member_id" javaType="java.lang.Long"/>
+            <arg column="published_by_member_id" javaType="java.lang.Long"/>
+            <arg column="created_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="deleted_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="manageSummaryResultMap" type="kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeManageSummaryResponse">
+        <constructor>
+            <idArg column="internal_notice_id" javaType="java.lang.Long"/>
+            <arg column="target_scope_code" javaType="kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeTargetScope"/>
+            <arg column="team_id" javaType="java.lang.Long"/>
+            <arg column="team_name" javaType="java.lang.String"/>
+            <arg column="title" javaType="java.lang.String"/>
+            <arg column="status_code" javaType="kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeStatus"/>
+            <arg column="is_important" javaType="_boolean"/>
+            <arg column="publish_start_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="publish_end_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="updated_by_name" javaType="java.lang.String"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="manageContentResultMap" type="kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeManageContentResponse">
+        <constructor>
+            <idArg column="internal_notice_id" javaType="java.lang.Long"/>
+            <arg column="target_scope_code" javaType="kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeTargetScope"/>
+            <arg column="team_id" javaType="java.lang.Long"/>
+            <arg column="team_name" javaType="java.lang.String"/>
+            <arg column="title" javaType="java.lang.String"/>
+            <arg column="body" javaType="java.lang.String"/>
+            <arg column="status_code" javaType="kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeStatus"/>
+            <arg column="is_important" javaType="_boolean"/>
+            <arg column="publish_start_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="publish_end_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="created_by_name" javaType="java.lang.String"/>
+            <arg column="updated_by_name" javaType="java.lang.String"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="readableSummaryResultMap" type="kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeSummaryResponse">
+        <constructor>
+            <idArg column="internal_notice_id" javaType="java.lang.Long"/>
+            <arg column="target_scope_code" javaType="kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeTargetScope"/>
+            <arg column="team_id" javaType="java.lang.Long"/>
+            <arg column="team_name" javaType="java.lang.String"/>
+            <arg column="title" javaType="java.lang.String"/>
+            <arg column="is_important" javaType="_boolean"/>
+            <arg column="publish_start_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="publish_end_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="is_read" javaType="_boolean"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="readableContentResultMap" type="kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeContentResponse">
+        <constructor>
+            <idArg column="internal_notice_id" javaType="java.lang.Long"/>
+            <arg column="target_scope_code" javaType="kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeTargetScope"/>
+            <arg column="team_id" javaType="java.lang.Long"/>
+            <arg column="team_name" javaType="java.lang.String"/>
+            <arg column="title" javaType="java.lang.String"/>
+            <arg column="body" javaType="java.lang.String"/>
+            <arg column="is_important" javaType="_boolean"/>
+            <arg column="publish_start_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="publish_end_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="published_by_name" javaType="java.lang.String"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="readStatusResultMap" type="kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeReadStatusResponse">
+        <constructor>
+            <idArg column="member_id" javaType="java.lang.Long"/>
+            <arg column="student_no" javaType="java.lang.String"/>
+            <arg column="member_name" javaType="java.lang.String"/>
+            <arg column="team_id" javaType="java.lang.Long"/>
+            <arg column="team_name" javaType="java.lang.String"/>
+            <arg column="first_read_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="last_read_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="internalNoticeColumns">
+        internal_notice_id, target_scope_code, team_id, title, body, status_code,
+        is_important, publish_start_dttm, publish_end_dttm, created_by_member_id,
+        updated_by_member_id, published_by_member_id, created_dttm, updated_dttm,
+        deleted_dttm
+    </sql>
+
+    <sql id="readableCondition">
+        n.deleted_dttm IS NULL
+        AND n.status_code IN ('SCHEDULED', 'PUBLISHED')
+        AND n.publish_start_dttm &lt;= #{currentDttm}
+        AND (n.publish_end_dttm IS NULL OR n.publish_end_dttm &gt; #{currentDttm})
+        AND (
+            #{admin} = TRUE
+            OR n.target_scope_code = 'ALL'
+            OR (n.target_scope_code = 'TEAM' AND n.team_id = #{memberTeamId})
+        )
+    </sql>
+
+    <select id="lookupById" resultMap="internalNoticeResultMap">
+        SELECT <include refid="internalNoticeColumns"/>
+        FROM internal_notice
+        WHERE internal_notice_id = #{internalNoticeId}
+          AND deleted_dttm IS NULL
+    </select>
+
+    <select id="lookupByIdForUpdate" resultMap="internalNoticeResultMap">
+        SELECT <include refid="internalNoticeColumns"/>
+        FROM internal_notice
+        WHERE internal_notice_id = #{internalNoticeId}
+          AND deleted_dttm IS NULL
+        FOR UPDATE
+    </select>
+
+    <select id="searchManageable" resultMap="manageSummaryResultMap">
+        SELECT n.internal_notice_id, n.target_scope_code, n.team_id,
+               t.name AS team_name, n.title, n.status_code, n.is_important,
+               n.publish_start_dttm, n.publish_end_dttm,
+               updater.name AS updated_by_name, n.updated_dttm
+        FROM internal_notice n
+        LEFT JOIN team t ON t.team_id = n.team_id
+        JOIN member updater ON updater.member_id = n.updated_by_member_id
+        WHERE n.deleted_dttm IS NULL
+        <if test="keyword != null">
+          AND (n.title LIKE CONCAT('%', #{keyword}, '%')
+               OR n.body LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="status != null">
+          AND n.status_code = #{status}
+        </if>
+        <if test="targetScope != null">
+          AND n.target_scope_code = #{targetScope}
+        </if>
+        <if test="teamId != null">
+          AND n.team_id = #{teamId}
+        </if>
+        ORDER BY n.updated_dttm DESC, n.internal_notice_id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="lookupManageContent" resultMap="manageContentResultMap">
+        SELECT n.internal_notice_id, n.target_scope_code, n.team_id,
+               t.name AS team_name, n.title, n.body, n.status_code, n.is_important,
+               n.publish_start_dttm, n.publish_end_dttm,
+               creator.name AS created_by_name, updater.name AS updated_by_name,
+               n.updated_dttm
+        FROM internal_notice n
+        LEFT JOIN team t ON t.team_id = n.team_id
+        JOIN member creator ON creator.member_id = n.created_by_member_id
+        JOIN member updater ON updater.member_id = n.updated_by_member_id
+        WHERE n.internal_notice_id = #{internalNoticeId}
+          AND n.deleted_dttm IS NULL
+    </select>
+
+    <select id="searchReadable" resultMap="readableSummaryResultMap">
+        SELECT n.internal_notice_id, n.target_scope_code, n.team_id,
+               t.name AS team_name, n.title, n.is_important,
+               n.publish_start_dttm, n.publish_end_dttm,
+               (r.internal_notice_read_id IS NOT NULL) AS is_read
+        FROM internal_notice n
+        LEFT JOIN team t ON t.team_id = n.team_id
+        LEFT JOIN internal_notice_read r
+          ON r.internal_notice_id = n.internal_notice_id
+         AND r.member_id = #{memberId}
+        WHERE <include refid="readableCondition"/>
+        <if test="keyword != null">
+          AND (n.title LIKE CONCAT('%', #{keyword}, '%')
+               OR n.body LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        ORDER BY n.is_important DESC, n.publish_start_dttm DESC,
+                 n.internal_notice_id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="lookupReadableContent" resultMap="readableContentResultMap">
+        SELECT n.internal_notice_id, n.target_scope_code, n.team_id,
+               t.name AS team_name, n.title, n.body, n.is_important,
+               n.publish_start_dttm, n.publish_end_dttm,
+               publisher.name AS published_by_name, n.updated_dttm
+        FROM internal_notice n
+        LEFT JOIN team t ON t.team_id = n.team_id
+        JOIN member publisher ON publisher.member_id = n.published_by_member_id
+        WHERE n.internal_notice_id = #{internalNoticeId}
+          AND <include refid="readableCondition"/>
+    </select>
+
+    <select id="existsReadableAttachment" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM internal_notice n
+            JOIN internal_notice_attachment a
+              ON a.internal_notice_id = n.internal_notice_id
+            WHERE n.internal_notice_id = #{internalNoticeId}
+              AND a.stored_file_id = #{storedFileId}
+              AND <include refid="readableCondition"/>
+        )
+    </select>
+
+    <select id="searchReadStatuses" resultMap="readStatusResultMap">
+        SELECT m.member_id, m.student_no, m.name AS member_name,
+               m.team_id, t.name AS team_name,
+               r.first_read_dttm, r.last_read_dttm
+        FROM member m
+        JOIN team t ON t.team_id = m.team_id
+        LEFT JOIN internal_notice_read r
+          ON r.internal_notice_id = #{internalNoticeId}
+         AND r.member_id = m.member_id
+        WHERE m.member_status_code = 'ACTIVE'
+          AND (#{targetScope} = 'ALL' OR m.team_id = #{teamId})
+        ORDER BY m.name, m.member_id
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="internalNoticeId">
+        INSERT INTO internal_notice (
+            target_scope_code, team_id, title, body, status_code, is_important,
+            publish_start_dttm, publish_end_dttm, created_by_member_id,
+            updated_by_member_id, published_by_member_id
+        ) VALUES (
+            #{targetScope}, #{teamId}, #{title}, #{body}, #{status}, #{important},
+            #{publishStartDttm}, #{publishEndDttm}, #{createdByMemberId},
+            #{updatedByMemberId}, #{publishedByMemberId}
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE internal_notice
+        SET target_scope_code = #{targetScope},
+            team_id = #{teamId},
+            title = #{title},
+            body = #{body},
+            status_code = #{status},
+            is_important = #{important},
+            publish_start_dttm = #{publishStartDttm},
+            publish_end_dttm = #{publishEndDttm},
+            updated_by_member_id = #{updatedByMemberId},
+            published_by_member_id = #{publishedByMemberId}
+        WHERE internal_notice_id = #{internalNoticeId}
+          AND deleted_dttm IS NULL
+    </update>
+
+    <insert id="upsertRead">
+        INSERT INTO internal_notice_read (
+            internal_notice_id, member_id, first_read_dttm, last_read_dttm
+        ) VALUES (
+            #{internalNoticeId}, #{memberId}, #{readDttm}, #{readDttm}
+        )
+        ON DUPLICATE KEY UPDATE
+            last_read_dttm = VALUES(last_read_dttm)
+    </insert>
+
+    <insert id="insertAttachment" useGeneratedKeys="true"
+            keyProperty="internalNoticeAttachmentId">
+        INSERT INTO internal_notice_attachment (
+            internal_notice_id, stored_file_id, display_order
+        ) VALUES (
+            #{internalNoticeId}, #{storedFileId}, #{displayOrder}
+        )
+    </insert>
+
+    <delete id="removeAttachments">
+        DELETE FROM internal_notice_attachment
+        WHERE internal_notice_id = #{internalNoticeId}
+    </delete>
+
+    <select id="searchAttachmentFileIds" resultType="long">
+        SELECT stored_file_id
+        FROM internal_notice_attachment
+        WHERE internal_notice_id = #{internalNoticeId}
+        ORDER BY display_order, internal_notice_attachment_id
+    </select>
+</mapper>
