@@ -4,6 +4,7 @@ import kr.ac.tukorea.bandi.domain.policy.dto.response.PolicyDocumentResponse;
 import kr.ac.tukorea.bandi.domain.policy.dto.response.PolicyVersionResponse;
 import kr.ac.tukorea.bandi.domain.policy.model.PolicyDocument;
 import kr.ac.tukorea.bandi.domain.policy.model.PolicyDocumentVersion;
+import kr.ac.tukorea.bandi.domain.policy.model.PolicyType;
 import org.apache.ibatis.annotations.Param;
 
 import java.time.LocalDateTime;
@@ -21,6 +22,11 @@ public interface PolicyMapper {
 
     boolean existsEffectiveVersion(
             @Param("policyDocumentVersionId") Long policyDocumentVersionId,
+            @Param("currentDttm") LocalDateTime currentDttm);
+
+    boolean existsEffectiveVersionOfType(
+            @Param("policyDocumentVersionId") Long policyDocumentVersionId,
+            @Param("policyType") PolicyType policyType,
             @Param("currentDttm") LocalDateTime currentDttm);
 
     List<PolicyDocumentResponse> searchDocuments();

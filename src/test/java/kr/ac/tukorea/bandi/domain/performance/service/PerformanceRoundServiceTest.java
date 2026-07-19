@@ -206,6 +206,60 @@ class PerformanceRoundServiceTest {
         verify(roundMapper).lookupRoundForUpdate(ROUND_ID);
     }
 
+    @Test
+    void 운영진만_공연_운영용_회차를_검증할_수_있다() {
+        given(memberService.lookupAccessContext(ACTOR_ID))
+                .willReturn(memberContext());
+
+        assertThatThrownBy(() -> service.validateManage(
+                ACTOR_ID, ROUND_ID, PROJECT_ID))
+                .isInstanceOf(PerformanceAccessDeniedException.class);
+
+        verify(roundMapper, never()).lookupRoundForUpdate(ROUND_ID);
+    }
+
+    @Test
+    void 공개_회차가_신청_오픈_상태와_기간인지_검증한다() {
+        given(publicPageService.lookupPublic("hamlet-2026"))
+                .willReturn(publicPage());
+        given(roundMapper.searchRounds(PROJECT_ID)).willReturn(List.of(
+                roundResponse(PerformanceRoundStatus.RESERVATION_OPEN)));
+        given(roundMapper.lookupRoundById(ROUND_ID))
+                .willReturn(Optional.of(round(
+                        PerformanceRoundStatus.RESERVATION_OPEN)));
+
+        boolean result = service.isPublicReservationOpen(
+                "hamlet-2026", ROUND_ID, RESERVATION_OPEN);
+
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    void 입장_운영용_회차_조회는_운영진만_허용한다() {
+        given(memberService.lookupAccessContext(ACTOR_ID))
+                .willReturn(memberContext());
+
+        assertThatThrownBy(() -> service.isEntryOpen(
+                ACTOR_ID, ROUND_ID))
+                .isInstanceOf(PerformanceAccessDeniedException.class);
+
+        verify(roundMapper, never()).lookupRoundById(ROUND_ID);
+    }
+
+    @Test
+    void 입장과_관람객_취소_가능_상태를_회차에서_판단한다() {
+        given(memberService.lookupAccessContext(ACTOR_ID))
+                .willReturn(adminContext());
+        given(roundMapper.lookupRoundById(ROUND_ID))
+                .willReturn(Optional.of(round(
+                        PerformanceRoundStatus.ENTRY_OPEN)),
+                        Optional.of(round(
+                                PerformanceRoundStatus.RESERVATION_CLOSED)));
+
+        assertThat(service.isEntryOpen(ACTOR_ID, ROUND_ID)).isTrue();
+        assertThat(service.isViewerCancellationOpen(ROUND_ID)).isTrue();
+    }
+
     private PerformanceRoundWriteParam roundParam(Long id) {
         return new PerformanceRoundWriteParam(id, PROJECT_ID, 1,
                 START, ENTRY_START, RESERVATION_OPEN, RESERVATION_CLOSE);

@@ -105,6 +105,20 @@ class PolicyMapperTest {
     }
 
     @Test
+    void 정책_유형까지_일치해야_해당_기능의_동의에_사용한다() {
+        PolicyDocument document = insertDocument();
+        PolicyDocumentVersion version = insertVersion(
+                document, 1, NOW, NOW);
+
+        assertThat(policyMapper.existsEffectiveVersionOfType(
+                version.getPolicyDocumentVersionId(),
+                PolicyType.PRIVACY, NOW)).isTrue();
+        assertThat(policyMapper.existsEffectiveVersionOfType(
+                version.getPolicyDocumentVersionId(),
+                PolicyType.RESERVATION_PRIVACY, NOW)).isFalse();
+    }
+
+    @Test
     void 같은_문서의_버전_번호는_중복할_수_없다() {
         PolicyDocument document = insertDocument();
         insertVersion(document, 1, NOW, NOW);

@@ -13,6 +13,9 @@ public interface PerformanceRoundMapper {
     Optional<PerformanceRound> lookupRoundForUpdate(
             Long performanceRoundId);
 
+    Optional<PerformanceRound> lookupRoundById(
+            Long performanceRoundId);
+
     Optional<PerformanceRoundAccessibility> lookupAccessibilityForUpdate(
             Long performanceRoundAccessibilityId);
 

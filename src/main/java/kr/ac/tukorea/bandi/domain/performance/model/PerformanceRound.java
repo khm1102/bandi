@@ -79,6 +79,23 @@ public class PerformanceRound {
         }
     }
 
+    public boolean isReservationOpenAt(LocalDateTime currentDttm) {
+        return currentDttm != null
+                && status == PerformanceRoundStatus.RESERVATION_OPEN
+                && !currentDttm.isBefore(reservationOpenDttm)
+                && currentDttm.isBefore(reservationCloseDttm);
+    }
+
+    public boolean isViewerCancellationOpen() {
+        return status != PerformanceRoundStatus.ENTRY_OPEN
+                && status != PerformanceRoundStatus.ENDED
+                && status != PerformanceRoundStatus.CANCELLED;
+    }
+
+    public boolean isEntryOpen() {
+        return status == PerformanceRoundStatus.ENTRY_OPEN;
+    }
+
     private PerformanceRound copy(
             int roundNo, LocalDateTime startDttm,
             LocalDateTime entryStartDttm,

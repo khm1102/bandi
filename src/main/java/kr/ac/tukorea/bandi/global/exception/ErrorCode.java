@@ -7,7 +7,7 @@ import org.springframework.http.HttpStatus;
 /**
  * 에러의 단일 출처 (컨벤션 9.4).
  * 코드 접두사는 feature별 고정 — C 공통, M member, CA calendar, FI file, EV event,
- * F fee, PO policy, P performance.
+ * F fee, PO policy, P performance, R reservation.
  * message는 사용자에게 그대로 보여줄 문장으로 작성하고 내부 사정을 노출하지 않는다.
  */
 @Getter
@@ -77,7 +77,18 @@ public enum ErrorCode {
     PERFORMANCE_CONTENT_NOT_FOUND(HttpStatus.NOT_FOUND, "P012", "존재하지 않는 공연 콘텐츠입니다."),
     DUPLICATE_PERFORMANCE_CONTENT(HttpStatus.CONFLICT, "P013", "이미 등록된 공연 콘텐츠입니다."),
     CHECKLIST_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "P014", "존재하지 않는 체크리스트 항목입니다."),
-    INVALID_CHECKLIST_ITEM_STATE(HttpStatus.CONFLICT, "P015", "현재 상태에서는 체크리스트를 변경할 수 없습니다.");
+    INVALID_CHECKLIST_ITEM_STATE(HttpStatus.CONFLICT, "P015", "현재 상태에서는 체크리스트를 변경할 수 없습니다."),
+
+    // reservation (R)
+    RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "존재하지 않는 관람 신청입니다."),
+    ROUND_SEAT_NOT_FOUND(HttpStatus.NOT_FOUND, "R002", "존재하지 않는 좌석입니다."),
+    SEAT_UNAVAILABLE(HttpStatus.CONFLICT, "R003", "현재 신청할 수 없는 좌석입니다."),
+    INVALID_RESERVATION_STATE(HttpStatus.CONFLICT, "R004", "현재 상태에서는 관람 신청을 변경할 수 없습니다."),
+    INVALID_RESERVATION_TOKEN(HttpStatus.NOT_FOUND, "R005", "관람 신청을 확인할 수 없습니다."),
+    DUPLICATE_ROUND_SEAT(HttpStatus.CONFLICT, "R006", "이미 등록된 회차 좌석입니다."),
+    RESERVATION_SECURITY_FAILURE(HttpStatus.INTERNAL_SERVER_ERROR, "R007", "관람 신청 정보를 처리할 수 없습니다."),
+    INVALID_RESERVATION(HttpStatus.BAD_REQUEST, "R008", "관람 신청 정보가 올바르지 않습니다."),
+    RESERVATION_SEAT_NOT_FOUND(HttpStatus.NOT_FOUND, "R009", "존재하지 않는 신청 좌석입니다.");
 
     private final HttpStatus status;
     private final String code;

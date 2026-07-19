@@ -42,3 +42,9 @@ bandi:
     public-bucket: ${MINIO_PUBLIC_BUCKET}
     max-upload-bytes: ${MINIO_MAX_UPLOAD_BYTES:524288000}
     private-url-lifetime: ${MINIO_PRIVATE_URL_LIFETIME:300s}
+  reservation-security:
+    active-key-version: ${RESERVATION_ACTIVE_KEY_VERSION:1}
+    encryption-keys:
+      1: ${RESERVATION_ENCRYPTION_KEY_V1_BASE64}
+    hmac-key-base64: ${RESERVATION_HMAC_KEY_BASE64}
+    personal-data-retention: ${RESERVATION_PERSONAL_DATA_RETENTION:90d}
