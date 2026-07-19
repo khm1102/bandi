@@ -37,9 +37,11 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET,
                         "/api/public-notices/**",
                         "/api/public-performances/**").permitAll()
+                .requestMatchers("/api/public-reservations/**").permitAll()
                 .requestMatchers("/members/**", "/reservations/**",
                         "/showops/**", "/api/members/**",
-                        "/api/reservations/**", "/api/showops/**")
+                        "/api/reservations/**", "/api/showops/**",
+                        "/api/reservation-management/**")
                 .hasRole("ADMIN")
                 .anyRequest().authenticated());
         http.exceptionHandling(exception -> exception

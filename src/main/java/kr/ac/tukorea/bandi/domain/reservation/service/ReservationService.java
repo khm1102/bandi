@@ -135,6 +135,19 @@ public class ReservationService {
         cancelReservation(current, seats, reason, actorMemberId);
     }
 
+    public List<ReservationDetailResponse> search(
+            Long actorMemberId, Long performanceProjectId,
+            Long performanceRoundId, ReservationStatus status,
+            int offset, int limit) {
+        validatePage(offset, limit);
+        roundService.validateManage(actorMemberId,
+                performanceRoundId, performanceProjectId);
+        return reservationMapper.searchReservations(performanceRoundId,
+                        status, offset, limit).stream()
+                .map(this::managementDetail)
+                .toList();
+    }
+
     @Transactional
     public int eraseExpiredPersonalData(int limit) {
         if (limit < 1 || limit > MAX_ERASE_BATCH_SIZE) {
@@ -266,6 +279,31 @@ public class ReservationService {
                 reservation.getAgreedDttm(),
                 reservation.getCancelledDttm(),
                 reservation.getCancelReason(), cancelable, seats);
+    }
+
+    private ReservationDetailResponse managementDetail(
+            Reservation reservation) {
+        List<ReservationSeatResponse> seats = reservationMapper
+                .searchReservationSeatResponses(
+                        reservation.getReservationId());
+        if (reservation.getPersonalDataErasedDttm() != null) {
+            return new ReservationDetailResponse(
+                    reservation.getReservationId(),
+                    reservation.getPerformanceRoundId(),
+                    reservation.getReservationNo(), null, null,
+                    reservation.getStatus(),
+                    reservation.getPrivacyPolicyVersionId(),
+                    reservation.getAgreedDttm(),
+                    reservation.getCancelledDttm(),
+                    reservation.getCancelReason(), false, seats);
+        }
+        return detail(reservation, seats, false);
+    }
+
+    private void validatePage(int offset, int limit) {
+        if (offset < 0 || limit < 1 || limit > 50) {
+            throw new InvalidReservationException("page");
+        }
     }
 
     private LocalDateTime now() {
