@@ -2,6 +2,7 @@ package kr.ac.tukorea.bandi.domain.activity.controller;
 
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityFileAddRequest;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityFileReplaceRequest;
+import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityManageFilter;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityManageSearchParam;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordCreateRequest;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordUpdateRequest;
@@ -11,7 +12,6 @@ import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordCreatedRes
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordManageDetailResponse;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordSummaryResponse;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivitySubmissionResponse;
-import kr.ac.tukorea.bandi.domain.activity.model.ActivityRecordStatus;
 import kr.ac.tukorea.bandi.domain.activity.service.ActivityRecordService;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import kr.ac.tukorea.bandi.global.swagger.ActivityManagementApiDocs;
@@ -31,10 +31,10 @@ public class ActivityManagementApiController implements ActivityManagementApiDoc
     @Override
     public ResponseEntity<List<ActivityRecordSummaryResponse>> search(
             @LoginMember Long actorMemberId, Long teamId,
-            ActivityRecordStatus status, Long createdByMemberId,
+            ActivityManageFilter filter, Long createdByMemberId,
             int page, int pageSize) {
         return ResponseEntity.ok(activityRecordService.searchManageable(actorMemberId,
-                new ActivityManageSearchParam(teamId, status, createdByMemberId,
+                new ActivityManageSearchParam(teamId, filter.status(), createdByMemberId,
                         page, pageSize)));
     }
 

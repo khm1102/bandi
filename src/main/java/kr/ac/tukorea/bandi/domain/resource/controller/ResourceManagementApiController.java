@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.domain.resource.controller;
 
 import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceCreateRequest;
+import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceManageFilter;
 import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceManageSearchParam;
 import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceRevisionRequest;
 import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceUpdateRequest;
@@ -8,8 +9,6 @@ import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceCreatedResponse;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceManageDetailResponse;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceManageSummaryResponse;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceRevisionCreatedResponse;
-import kr.ac.tukorea.bandi.domain.resource.model.ResourceStatus;
-import kr.ac.tukorea.bandi.domain.resource.model.ResourceTargetScope;
 import kr.ac.tukorea.bandi.domain.resource.service.ResourceService;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import kr.ac.tukorea.bandi.global.swagger.ResourceManagementApiDocs;
@@ -29,11 +28,11 @@ public class ResourceManagementApiController implements ResourceManagementApiDoc
     @Override
     public ResponseEntity<List<ResourceManageSummaryResponse>> search(
             @LoginMember Long actorMemberId, String keyword, String categoryCode,
-            ResourceStatus status, ResourceTargetScope targetScope, Long teamId,
-            int page, int pageSize) {
+            ResourceManageFilter filter, Long teamId, int page, int pageSize) {
         return ResponseEntity.ok(resourceService.searchManageable(actorMemberId,
-                new ResourceManageSearchParam(keyword, categoryCode, status,
-                        targetScope, teamId, page, pageSize)));
+                new ResourceManageSearchParam(keyword, categoryCode,
+                        filter.status(), filter.targetScope(), teamId, page,
+                        pageSize)));
     }
 
     @Override

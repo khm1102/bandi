@@ -6,17 +6,18 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetItemCreateRequest;
+import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetSearchFilter;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetUsageCreateRequest;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetUnitCreateRequest;
 import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetIdentifierResponse;
 import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetItemResponse;
 import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetUnitResponse;
 import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetUsageResponse;
-import kr.ac.tukorea.bandi.domain.asset.model.AssetStatus;
-import kr.ac.tukorea.bandi.domain.asset.model.AssetTrackingType;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -36,8 +37,7 @@ public interface AssetApiDocs {
             @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String categoryCode,
-            @RequestParam(required = false) AssetTrackingType trackingType,
-            @RequestParam(required = false) AssetStatus status);
+            @ParameterObject @ModelAttribute AssetSearchFilter filter);
 
     @Operation(summary = "개별 장비 목록 조회")
     @GetMapping("/{assetItemId}/units")

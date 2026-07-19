@@ -5,13 +5,13 @@ import kr.ac.tukorea.bandi.domain.reservation.dto.request.EntryCheckInRequest;
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.EntrySearchRequest;
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.EntryTokenRequest;
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.ReservationManagementCancelRequest;
+import kr.ac.tukorea.bandi.domain.reservation.dto.request.ReservationManageFilter;
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.RoundSeatRequest;
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.RoundSeatStatusRequest;
 import kr.ac.tukorea.bandi.domain.reservation.dto.response.ReservationDetailResponse;
 import kr.ac.tukorea.bandi.domain.reservation.dto.response.ReservationIdentifierResponse;
 import kr.ac.tukorea.bandi.domain.reservation.dto.response.ReservationMetricsResponse;
 import kr.ac.tukorea.bandi.domain.reservation.dto.response.RoundSeatResponse;
-import kr.ac.tukorea.bandi.domain.reservation.model.ReservationStatus;
 import kr.ac.tukorea.bandi.domain.reservation.service.EntryService;
 import kr.ac.tukorea.bandi.domain.reservation.service.ReservationService;
 import kr.ac.tukorea.bandi.domain.reservation.service.RoundSeatService;
@@ -61,9 +61,9 @@ public class ReservationManagementApiController
     @Override
     public ResponseEntity<List<ReservationDetailResponse>> searchReservations(
             @LoginMember Long actorMemberId, Long roundId, Long projectId,
-            ReservationStatus status, int offset, int limit) {
+            ReservationManageFilter filter, int offset, int limit) {
         return ResponseEntity.ok(reservationService.search(actorMemberId,
-                projectId, roundId, status, offset, limit));
+                projectId, roundId, filter.status(), offset, limit));
     }
 
     @Override

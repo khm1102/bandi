@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.domain.production.controller;
 
 import kr.ac.tukorea.bandi.domain.production.dto.request.ProductionTaskCreateRequest;
+import kr.ac.tukorea.bandi.domain.production.dto.request.ProductionTaskFilter;
 import kr.ac.tukorea.bandi.domain.production.dto.request.ProductionTaskSearchCondition;
 import kr.ac.tukorea.bandi.domain.production.dto.request.ProductionTaskStatusParam;
 import kr.ac.tukorea.bandi.domain.production.dto.request.ProductionTaskStatusRequest;
@@ -9,7 +10,6 @@ import kr.ac.tukorea.bandi.domain.production.dto.response.ProductionProgressResp
 import kr.ac.tukorea.bandi.domain.production.dto.response.ProductionTaskCreatedResponse;
 import kr.ac.tukorea.bandi.domain.production.dto.response.ProductionTaskHistoryResponse;
 import kr.ac.tukorea.bandi.domain.production.dto.response.ProductionTaskResponse;
-import kr.ac.tukorea.bandi.domain.production.model.ProductionTaskStatus;
 import kr.ac.tukorea.bandi.domain.production.service.ProductionTaskService;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import kr.ac.tukorea.bandi.global.swagger.ProductionTaskApiDocs;
@@ -28,11 +28,11 @@ public class ProductionTaskApiController implements ProductionTaskApiDocs {
     @Override
     public ResponseEntity<List<ProductionTaskResponse>> search(
             @LoginMember Long actorMemberId, Long performanceProjectId,
-            Long teamId, ProductionTaskStatus status, boolean overdueOnly,
+            Long teamId, ProductionTaskFilter filter, boolean overdueOnly,
             int offset, int limit) {
         return ResponseEntity.ok(productionTaskService.search(actorMemberId,
                 new ProductionTaskSearchCondition(performanceProjectId, teamId,
-                        status, overdueOnly, offset, limit)));
+                        filter.status(), overdueOnly, offset, limit)));
     }
 
     @Override

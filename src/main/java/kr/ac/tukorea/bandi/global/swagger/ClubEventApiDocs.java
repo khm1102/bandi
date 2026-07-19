@@ -4,12 +4,14 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import kr.ac.tukorea.bandi.domain.event.dto.request.ClubEventSearchFilter;
 import kr.ac.tukorea.bandi.domain.event.dto.response.ClubEventResponse;
 import kr.ac.tukorea.bandi.domain.event.dto.response.MemberAttendanceResponse;
-import kr.ac.tukorea.bandi.domain.event.model.ClubEventStatus;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -25,7 +27,7 @@ public interface ClubEventApiDocs {
     @GetMapping
     ResponseEntity<List<ClubEventResponse>> search(
             @Parameter(hidden = true) @LoginMember Long actorMemberId,
-            @RequestParam(required = false) ClubEventStatus status,
+            @ParameterObject @ModelAttribute ClubEventSearchFilter filter,
             @RequestParam(required = false) LocalDateTime rangeStart,
             @RequestParam(required = false) LocalDateTime rangeEnd,
             @RequestParam(defaultValue = "0") int offset,

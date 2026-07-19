@@ -3,6 +3,7 @@ package kr.ac.tukorea.bandi.domain.performance.controller;
 import kr.ac.tukorea.bandi.domain.performance.dto.request.PublicProfileConsentParam;
 import kr.ac.tukorea.bandi.domain.performance.dto.request.PublicProfileConsentRequest;
 import kr.ac.tukorea.bandi.domain.performance.dto.request.PublicProfileCreateRequest;
+import kr.ac.tukorea.bandi.domain.performance.dto.request.PublicProfileFilter;
 import kr.ac.tukorea.bandi.domain.performance.dto.request.PublicProfileSearchCondition;
 import kr.ac.tukorea.bandi.domain.performance.dto.request.PublicProfileUpdateRequest;
 import kr.ac.tukorea.bandi.domain.performance.dto.request.PublicProfileVisibilityParam;
@@ -10,7 +11,6 @@ import kr.ac.tukorea.bandi.domain.performance.dto.request.PublicProfileVisibilit
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceIdentifierResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PublicProfileConsentResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PublicProfileResponse;
-import kr.ac.tukorea.bandi.domain.performance.model.PublicProfileVisibility;
 import kr.ac.tukorea.bandi.domain.performance.service.PublicProfileService;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import kr.ac.tukorea.bandi.global.swagger.PublicProfileApiDocs;
@@ -29,10 +29,10 @@ public class PublicProfileApiController implements PublicProfileApiDocs {
     @Override
     public ResponseEntity<List<PublicProfileResponse>> search(
             @LoginMember Long actorMemberId, Long memberId,
-            PublicProfileVisibility visibilityStatus, int offset, int limit) {
+            PublicProfileFilter filter, int offset, int limit) {
         return ResponseEntity.ok(publicProfileService.search(actorMemberId,
-                new PublicProfileSearchCondition(memberId, visibilityStatus,
-                        offset, limit)));
+                new PublicProfileSearchCondition(memberId,
+                        filter.visibilityStatus(), offset, limit)));
     }
 
     @Override

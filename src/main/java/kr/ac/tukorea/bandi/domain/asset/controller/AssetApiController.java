@@ -2,14 +2,13 @@ package kr.ac.tukorea.bandi.domain.asset.controller;
 
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetItemCreateRequest;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetSearchCondition;
+import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetSearchFilter;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetUnitCreateRequest;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetUsageCreateRequest;
 import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetIdentifierResponse;
 import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetItemResponse;
 import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetUnitResponse;
 import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetUsageResponse;
-import kr.ac.tukorea.bandi.domain.asset.model.AssetStatus;
-import kr.ac.tukorea.bandi.domain.asset.model.AssetTrackingType;
 import kr.ac.tukorea.bandi.domain.asset.service.AssetService;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import kr.ac.tukorea.bandi.global.swagger.AssetApiDocs;
@@ -29,11 +28,10 @@ public class AssetApiController implements AssetApiDocs {
     @Override
     public ResponseEntity<List<AssetItemResponse>> searchItems(
             @LoginMember Long actorMemberId, String keyword,
-            String categoryCode, AssetTrackingType trackingType,
-            AssetStatus status) {
+            String categoryCode, AssetSearchFilter filter) {
         return ResponseEntity.ok(assetService.searchItems(actorMemberId,
-                new AssetSearchCondition(keyword, categoryCode, trackingType,
-                        status)));
+                new AssetSearchCondition(keyword, categoryCode,
+                        filter.trackingType(), filter.status())));
     }
 
     @Override

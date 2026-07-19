@@ -1,9 +1,9 @@
 package kr.ac.tukorea.bandi.domain.event.controller;
 
 import kr.ac.tukorea.bandi.domain.event.dto.request.ClubEventSearchCondition;
+import kr.ac.tukorea.bandi.domain.event.dto.request.ClubEventSearchFilter;
 import kr.ac.tukorea.bandi.domain.event.dto.response.ClubEventResponse;
 import kr.ac.tukorea.bandi.domain.event.dto.response.MemberAttendanceResponse;
-import kr.ac.tukorea.bandi.domain.event.model.ClubEventStatus;
 import kr.ac.tukorea.bandi.domain.event.service.ClubEventService;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import kr.ac.tukorea.bandi.global.swagger.ClubEventApiDocs;
@@ -22,11 +22,11 @@ public class ClubEventApiController implements ClubEventApiDocs {
 
     @Override
     public ResponseEntity<List<ClubEventResponse>> search(
-            @LoginMember Long actorMemberId, ClubEventStatus status,
+            @LoginMember Long actorMemberId, ClubEventSearchFilter filter,
             LocalDateTime rangeStart, LocalDateTime rangeEnd,
             int offset, int limit) {
         return ResponseEntity.ok(clubEventService.search(actorMemberId,
-                new ClubEventSearchCondition(status, rangeStart, rangeEnd,
+                new ClubEventSearchCondition(filter.status(), rangeStart, rangeEnd,
                         offset, limit)));
     }
 

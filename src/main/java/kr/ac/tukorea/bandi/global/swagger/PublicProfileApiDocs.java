@@ -7,15 +7,17 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import kr.ac.tukorea.bandi.domain.performance.dto.request.PublicProfileConsentRequest;
 import kr.ac.tukorea.bandi.domain.performance.dto.request.PublicProfileCreateRequest;
+import kr.ac.tukorea.bandi.domain.performance.dto.request.PublicProfileFilter;
 import kr.ac.tukorea.bandi.domain.performance.dto.request.PublicProfileUpdateRequest;
 import kr.ac.tukorea.bandi.domain.performance.dto.request.PublicProfileVisibilityRequest;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceIdentifierResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PublicProfileConsentResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PublicProfileResponse;
-import kr.ac.tukorea.bandi.domain.performance.model.PublicProfileVisibility;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -35,7 +37,7 @@ public interface PublicProfileApiDocs {
     ResponseEntity<List<PublicProfileResponse>> search(
             @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @RequestParam(required = false) Long memberId,
-            @RequestParam(required = false) PublicProfileVisibility visibilityStatus,
+            @ParameterObject @ModelAttribute PublicProfileFilter filter,
             @RequestParam(defaultValue = "0") int offset,
             @RequestParam(defaultValue = "20") int limit);
 

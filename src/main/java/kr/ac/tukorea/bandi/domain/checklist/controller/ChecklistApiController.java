@@ -5,10 +5,10 @@ import kr.ac.tukorea.bandi.domain.checklist.dto.request.ChecklistCompletionReque
 import kr.ac.tukorea.bandi.domain.checklist.dto.request.ChecklistItemCreateRequest;
 import kr.ac.tukorea.bandi.domain.checklist.dto.request.ChecklistItemSearchCondition;
 import kr.ac.tukorea.bandi.domain.checklist.dto.request.ChecklistItemUpdateRequest;
+import kr.ac.tukorea.bandi.domain.checklist.dto.request.ChecklistSearchFilter;
 import kr.ac.tukorea.bandi.domain.checklist.dto.response.ChecklistItemCreatedResponse;
 import kr.ac.tukorea.bandi.domain.checklist.dto.response.ChecklistItemHistoryResponse;
 import kr.ac.tukorea.bandi.domain.checklist.dto.response.ChecklistItemResponse;
-import kr.ac.tukorea.bandi.domain.checklist.model.ChecklistScope;
 import kr.ac.tukorea.bandi.domain.checklist.service.ChecklistService;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import kr.ac.tukorea.bandi.global.swagger.ChecklistApiDocs;
@@ -27,10 +27,10 @@ public class ChecklistApiController implements ChecklistApiDocs {
     @Override
     public ResponseEntity<List<ChecklistItemResponse>> search(
             @LoginMember Long actorMemberId, Long performanceProjectId,
-            Long performanceRoundId, Long teamId, ChecklistScope scope) {
+            Long performanceRoundId, Long teamId, ChecklistSearchFilter filter) {
         return ResponseEntity.ok(checklistService.search(actorMemberId,
                 new ChecklistItemSearchCondition(performanceProjectId,
-                        performanceRoundId, teamId, scope)));
+                        performanceRoundId, teamId, filter.scope())));
     }
 
     @Override
