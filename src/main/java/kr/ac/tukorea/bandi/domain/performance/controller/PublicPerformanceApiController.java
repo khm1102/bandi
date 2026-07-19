@@ -1,10 +1,16 @@
 package kr.ac.tukorea.bandi.domain.performance.controller;
 
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformancePublicPageResponse;
+import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceMediaResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceViewingGuideResponse;
+import kr.ac.tukorea.bandi.domain.performance.dto.response.PublicPerformanceCastResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PublicPerformanceRoundResponse;
+import kr.ac.tukorea.bandi.domain.performance.dto.response.PublicPerformanceRoundCastResponse;
+import kr.ac.tukorea.bandi.domain.performance.dto.response.PublicProductionCreditResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PublicProfileViewResponse;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformancePublicPageService;
+import kr.ac.tukorea.bandi.domain.performance.service.PerformanceContentService;
+import kr.ac.tukorea.bandi.domain.performance.service.PerformanceRoundCastService;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceRoundService;
 import kr.ac.tukorea.bandi.domain.performance.service.PublicProfileService;
 import kr.ac.tukorea.bandi.global.swagger.PublicPerformanceApiDocs;
@@ -20,6 +26,8 @@ public class PublicPerformanceApiController implements PublicPerformanceApiDocs 
     private final PerformancePublicPageService publicPageService;
     private final PerformanceRoundService roundService;
     private final PublicProfileService publicProfileService;
+    private final PerformanceContentService contentService;
+    private final PerformanceRoundCastService roundCastService;
 
     @Override
     public ResponseEntity<PerformancePublicPageResponse> lookup(String slug) {
@@ -43,5 +51,28 @@ public class PublicPerformanceApiController implements PublicPerformanceApiDocs 
     @Override
     public ResponseEntity<PublicProfileViewResponse> lookupProfile(Long profileId) {
         return ResponseEntity.ok(publicProfileService.lookupPublic(profileId));
+    }
+
+    @Override
+    public ResponseEntity<List<PublicPerformanceCastResponse>> searchCasts(
+            String slug) {
+        return ResponseEntity.ok(contentService.searchPublicCasts(slug));
+    }
+
+    @Override
+    public ResponseEntity<List<PublicPerformanceRoundCastResponse>>
+            searchRoundCasts(String slug, Long roundId) {
+        return ResponseEntity.ok(roundCastService.searchPublic(slug, roundId));
+    }
+
+    @Override
+    public ResponseEntity<List<PublicProductionCreditResponse>> searchCredits(
+            String slug) {
+        return ResponseEntity.ok(contentService.searchPublicCredits(slug));
+    }
+
+    @Override
+    public ResponseEntity<List<PerformanceMediaResponse>> searchMedia(String slug) {
+        return ResponseEntity.ok(contentService.searchPublicMedia(slug));
     }
 }

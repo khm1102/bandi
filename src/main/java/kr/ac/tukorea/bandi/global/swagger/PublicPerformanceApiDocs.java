@@ -5,7 +5,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformancePublicPageResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceRoundResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceViewingGuideResponse;
+import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceMediaResponse;
+import kr.ac.tukorea.bandi.domain.performance.dto.response.PublicPerformanceCastResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PublicPerformanceRoundResponse;
+import kr.ac.tukorea.bandi.domain.performance.dto.response.PublicPerformanceRoundCastResponse;
+import kr.ac.tukorea.bandi.domain.performance.dto.response.PublicProductionCreditResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PublicProfileViewResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -35,4 +39,24 @@ public interface PublicPerformanceApiDocs {
     @GetMapping("/profiles/{profileId}")
     ResponseEntity<PublicProfileViewResponse> lookupProfile(
             @PathVariable Long profileId);
+
+    @Operation(summary = "공개 작품 캐스팅 보드 조회")
+    @GetMapping("/{slug}/casts")
+    ResponseEntity<List<PublicPerformanceCastResponse>> searchCasts(
+            @PathVariable String slug);
+
+    @Operation(summary = "공개 회차별 캐스팅 조회")
+    @GetMapping("/{slug}/rounds/{roundId}/casts")
+    ResponseEntity<List<PublicPerformanceRoundCastResponse>> searchRoundCasts(
+            @PathVariable String slug, @PathVariable Long roundId);
+
+    @Operation(summary = "공개 제작진 크레딧 조회")
+    @GetMapping("/{slug}/credits")
+    ResponseEntity<List<PublicProductionCreditResponse>> searchCredits(
+            @PathVariable String slug);
+
+    @Operation(summary = "공개 공연 미디어 조회")
+    @GetMapping("/{slug}/media")
+    ResponseEntity<List<PerformanceMediaResponse>> searchMedia(
+            @PathVariable String slug);
 }

@@ -1,6 +1,8 @@
 package kr.ac.tukorea.bandi.domain.performance.controller;
 
 import kr.ac.tukorea.bandi.domain.performance.service.PerformancePublicPageService;
+import kr.ac.tukorea.bandi.domain.performance.service.PerformanceContentService;
+import kr.ac.tukorea.bandi.domain.performance.service.PerformanceRoundCastService;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceRoundService;
 import kr.ac.tukorea.bandi.domain.performance.service.PublicProfileService;
 import kr.ac.tukorea.bandi.global.config.SecurityWebMvcConfig;
@@ -49,6 +51,12 @@ class PublicPerformanceApiControllerTest {
     @MockitoBean
     private PublicProfileService publicProfileService;
 
+    @MockitoBean
+    private PerformanceContentService contentService;
+
+    @MockitoBean
+    private PerformanceRoundCastService roundCastService;
+
     @Autowired
     PublicPerformanceApiControllerTest(MockMvc mockMvc) {
         this.mockMvc = mockMvc;
@@ -91,6 +99,31 @@ class PublicPerformanceApiControllerTest {
                 .andExpect(jsonPath("$.id").value(40));
 
         verify(publicPageService).create(any(), any());
+    }
+
+    @Test
+    void 공개_캐스팅과_제작진과_미디어를_조회한다() throws Exception {
+        given(contentService.searchPublicCasts("hamlet")).willReturn(List.of());
+        given(roundCastService.searchPublic("hamlet", 30L))
+                .willReturn(List.of());
+        given(contentService.searchPublicCredits("hamlet"))
+                .willReturn(List.of());
+        given(contentService.searchPublicMedia("hamlet")).willReturn(List.of());
+
+        mockMvc.perform(get("/api/public-performances/{slug}/casts", "hamlet"))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/public-performances/{slug}/rounds/"
+                        + "{roundId}/casts", "hamlet", 30L))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/public-performances/{slug}/credits", "hamlet"))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/public-performances/{slug}/media", "hamlet"))
+                .andExpect(status().isOk());
+
+        verify(contentService).searchPublicCasts("hamlet");
+        verify(roundCastService).searchPublic("hamlet", 30L);
+        verify(contentService).searchPublicCredits("hamlet");
+        verify(contentService).searchPublicMedia("hamlet");
     }
 
     @Test
