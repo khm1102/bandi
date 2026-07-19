@@ -3,6 +3,7 @@ package kr.ac.tukorea.bandi.domain.member.model;
 import kr.ac.tukorea.bandi.domain.member.exception.InvalidMemberStatusTransitionException;
 import kr.ac.tukorea.bandi.domain.member.exception.NoChangeException;
 import kr.ac.tukorea.bandi.domain.member.exception.SelfRoleDemotionException;
+import kr.ac.tukorea.bandi.domain.member.exception.SchoolIdentityMismatchException;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -15,7 +16,7 @@ public class Member {
     private final String studentNo;
     private final String name;
     private final String department;
-    private final String academicStatusCode;
+    private final AcademicStatus academicStatus;
     private final LocalDateTime academicStatusVerifiedDttm;
     private final Long teamId;
     private final Long cohortId;
@@ -27,7 +28,7 @@ public class Member {
     private final Long registeredByMemberId;
 
     public Member(Long memberId, String studentNo, String name, String department,
-                  String academicStatusCode, LocalDateTime academicStatusVerifiedDttm,
+                  AcademicStatus academicStatus, LocalDateTime academicStatusVerifiedDttm,
                   Long teamId, Long cohortId, ClubRole role, MemberStatus status,
                   SsoLinkStatus ssoLinkStatus, LocalDateTime ssoLinkedDttm,
                   LocalDateTime lastLoginDttm, Long registeredByMemberId) {
@@ -35,7 +36,7 @@ public class Member {
         this.studentNo = studentNo;
         this.name = name;
         this.department = department;
-        this.academicStatusCode = academicStatusCode;
+        this.academicStatus = academicStatus;
         this.academicStatusVerifiedDttm = academicStatusVerifiedDttm;
         this.teamId = teamId;
         this.cohortId = cohortId;
@@ -92,6 +93,30 @@ public class Member {
         }
     }
 
+    public MemberSchoolConnection determineSchoolConnection(SchoolIdentity identity, LocalDateTime verifiedAt) {
+        if (!identity.hasSameStudentNo(studentNo)) {
+            throw new SchoolIdentityMismatchException();
+        }
+        if (!identity.academicStatus().isLoginAllowed()) {
+            return schoolConnection(identity, verifiedAt, status, ssoLinkStatus,
+                    ssoLinkedDttm, lastLoginDttm, SchoolConnectionOutcome.ACADEMIC_STATUS_DENIED);
+        }
+        if (!canLoginByMemberStatus()) {
+            return schoolConnection(identity, verifiedAt, status, ssoLinkStatus,
+                    ssoLinkedDttm, lastLoginDttm, SchoolConnectionOutcome.MEMBER_STATUS_DENIED);
+        }
+        if (!identity.hasSameName(name) || cannotCompleteSchoolConnection()) {
+            return schoolConnection(identity, verifiedAt, status, SsoLinkStatus.REVIEW_REQUIRED,
+                    ssoLinkedDttm, lastLoginDttm, SchoolConnectionOutcome.IDENTITY_REVIEW_REQUIRED);
+        }
+        if (status == MemberStatus.PRE_REGISTERED) {
+            return schoolConnection(identity, verifiedAt, MemberStatus.ACTIVE, SsoLinkStatus.LINKED,
+                    verifiedAt, verifiedAt, SchoolConnectionOutcome.AUTHENTICATED);
+        }
+        return schoolConnection(identity, verifiedAt, status, SsoLinkStatus.LINKED,
+                ssoLinkedDttm, verifiedAt, SchoolConnectionOutcome.AUTHENTICATED);
+    }
+
     public boolean isAdmin() {
         return role == ClubRole.ADMIN;
     }
@@ -99,5 +124,26 @@ public class Member {
     /** 마지막 운영진 보호 규칙이 세는 대상 — 권한과 활동 상태를 모두 만족해야 한다. */
     public boolean isActiveAdmin() {
         return isAdmin() && status == MemberStatus.ACTIVE;
+    }
+
+    private boolean canLoginByMemberStatus() {
+        return status == MemberStatus.PRE_REGISTERED || status == MemberStatus.ACTIVE;
+    }
+
+    private boolean cannotCompleteSchoolConnection() {
+        return status == MemberStatus.ACTIVE && ssoLinkStatus != SsoLinkStatus.LINKED;
+    }
+
+    private MemberSchoolConnection schoolConnection(
+            SchoolIdentity identity,
+            LocalDateTime verifiedAt,
+            MemberStatus newMemberStatus,
+            SsoLinkStatus newSsoLinkStatus,
+            LocalDateTime newSsoLinkedDttm,
+            LocalDateTime newLastLoginDttm,
+            SchoolConnectionOutcome outcome
+    ) {
+        return MemberSchoolConnection.of(this, identity, verifiedAt, newMemberStatus, newSsoLinkStatus,
+                newSsoLinkedDttm, newLastLoginDttm, outcome);
     }
 }

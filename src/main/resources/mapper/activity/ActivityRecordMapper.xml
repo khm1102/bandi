@@ -1,0 +1,374 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.ac.tukorea.bandi.domain.activity.mapper.ActivityRecordMapper">
+
+    <resultMap id="recordMap" type="kr.ac.tukorea.bandi.domain.activity.model.ActivityRecord">
+        <constructor>
+            <idArg column="activity_record_id" javaType="java.lang.Long"/>
+            <arg column="team_id" javaType="java.lang.Long"/>
+            <arg column="activity_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="title" javaType="java.lang.String"/>
+            <arg column="body" javaType="java.lang.String"/>
+            <arg column="participant_count" javaType="_int"/>
+            <arg column="status_code" javaType="kr.ac.tukorea.bandi.domain.activity.model.ActivityRecordStatus"/>
+            <arg column="created_by_member_id" javaType="java.lang.Long"/>
+            <arg column="updated_by_member_id" javaType="java.lang.Long"/>
+            <arg column="submitted_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="reviewed_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="reviewed_by_member_id" javaType="java.lang.Long"/>
+            <arg column="created_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="deleted_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="fileMap" type="kr.ac.tukorea.bandi.domain.activity.model.ActivityRecordFile">
+        <constructor>
+            <idArg column="activity_record_file_id" javaType="java.lang.Long"/>
+            <arg column="activity_record_id" javaType="java.lang.Long"/>
+            <arg column="stored_file_id" javaType="java.lang.Long"/>
+            <arg column="file_role_code" javaType="kr.ac.tukorea.bandi.domain.activity.model.ActivityFileRole"/>
+            <arg column="display_order" javaType="_int"/>
+            <arg column="uploaded_by_member_id" javaType="java.lang.Long"/>
+            <arg column="replaced_by_activity_record_file_id" javaType="java.lang.Long"/>
+            <arg column="replaced_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="replaced_by_member_id" javaType="java.lang.Long"/>
+            <arg column="created_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="summaryMap" type="kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordSummaryResponse">
+        <constructor>
+            <idArg column="activity_record_id" javaType="java.lang.Long"/>
+            <arg column="team_id" javaType="java.lang.Long"/>
+            <arg column="team_name" javaType="java.lang.String"/>
+            <arg column="activity_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="title" javaType="java.lang.String"/>
+            <arg column="participant_count" javaType="_int"/>
+            <arg column="status_code" javaType="kr.ac.tukorea.bandi.domain.activity.model.ActivityRecordStatus"/>
+            <arg column="created_by_name" javaType="java.lang.String"/>
+            <arg column="representative_stored_file_id" javaType="java.lang.Long"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="contentMap" type="kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordContentResponse">
+        <constructor>
+            <idArg column="activity_record_id" javaType="java.lang.Long"/>
+            <arg column="team_id" javaType="java.lang.Long"/>
+            <arg column="team_name" javaType="java.lang.String"/>
+            <arg column="activity_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="title" javaType="java.lang.String"/>
+            <arg column="body" javaType="java.lang.String"/>
+            <arg column="participant_count" javaType="_int"/>
+            <arg column="created_by_name" javaType="java.lang.String"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="manageContentMap" type="kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordManageContentResponse">
+        <constructor>
+            <idArg column="activity_record_id" javaType="java.lang.Long"/>
+            <arg column="team_id" javaType="java.lang.Long"/>
+            <arg column="team_name" javaType="java.lang.String"/>
+            <arg column="activity_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="title" javaType="java.lang.String"/>
+            <arg column="body" javaType="java.lang.String"/>
+            <arg column="participant_count" javaType="_int"/>
+            <arg column="status_code" javaType="kr.ac.tukorea.bandi.domain.activity.model.ActivityRecordStatus"/>
+            <arg column="created_by_member_id" javaType="java.lang.Long"/>
+            <arg column="created_by_name" javaType="java.lang.String"/>
+            <arg column="updated_by_name" javaType="java.lang.String"/>
+            <arg column="submitted_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="reviewed_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="fileLinkMap" type="kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityFileLinkResponse">
+        <constructor>
+            <idArg column="activity_record_file_id" javaType="java.lang.Long"/>
+            <arg column="stored_file_id" javaType="java.lang.Long"/>
+            <arg column="file_role_code" javaType="kr.ac.tukorea.bandi.domain.activity.model.ActivityFileRole"/>
+            <arg column="display_order" javaType="_int"/>
+            <arg column="uploaded_by_member_id" javaType="java.lang.Long"/>
+            <arg column="uploaded_by_name" javaType="java.lang.String"/>
+            <arg column="uploaded_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="columns">
+        activity_record_id, team_id, activity_dttm, title, body, participant_count,
+        status_code, created_by_member_id, updated_by_member_id, submitted_dttm,
+        reviewed_dttm, reviewed_by_member_id, created_dttm, updated_dttm, deleted_dttm
+    </sql>
+
+    <sql id="notDeleted">
+        deleted_dttm IS NULL
+    </sql>
+
+    <sql id="summaryColumns">
+        r.activity_record_id,
+        r.team_id,
+        t.name AS team_name,
+        r.activity_dttm,
+        r.title,
+        r.participant_count,
+        r.status_code,
+        creator.name AS created_by_name,
+        (
+            SELECT f.stored_file_id
+            FROM activity_record_file f
+            WHERE f.activity_record_id = r.activity_record_id
+              AND f.file_role_code = 'EVIDENCE'
+              AND f.replaced_dttm IS NULL
+            ORDER BY f.display_order, f.activity_record_file_id
+            LIMIT 1
+        ) AS representative_stored_file_id,
+        r.updated_dttm
+    </sql>
+
+    <select id="lookupById" resultMap="recordMap">
+        SELECT <include refid="columns"/>
+        FROM activity_record
+        WHERE activity_record_id = #{activityRecordId}
+          AND <include refid="notDeleted"/>
+    </select>
+
+    <select id="lookupByIdForUpdate" resultMap="recordMap">
+        SELECT <include refid="columns"/>
+        FROM activity_record
+        WHERE activity_record_id = #{activityRecordId}
+          AND <include refid="notDeleted"/>
+        FOR UPDATE
+    </select>
+
+    <select id="lookupFileByIdForUpdate" resultMap="fileMap">
+        SELECT activity_record_file_id, activity_record_id, stored_file_id,
+               file_role_code, display_order, uploaded_by_member_id,
+               replaced_by_activity_record_file_id, replaced_dttm,
+               replaced_by_member_id, created_dttm, updated_dttm
+        FROM activity_record_file
+        WHERE activity_record_file_id = #{activityRecordFileId}
+        FOR UPDATE
+    </select>
+
+    <select id="searchApproved" resultMap="summaryMap">
+        SELECT <include refid="summaryColumns"/>
+        FROM activity_record r
+        JOIN team t ON t.team_id = r.team_id
+        JOIN member creator ON creator.member_id = r.created_by_member_id
+        WHERE r.deleted_dttm IS NULL
+          AND r.status_code = 'APPROVED'
+        <if test="teamId != null">
+          AND r.team_id = #{teamId}
+        </if>
+        <if test="rangeStart != null">
+          AND r.activity_dttm &gt;= #{rangeStart}
+        </if>
+        <if test="rangeEnd != null">
+          AND r.activity_dttm &lt; #{rangeEnd}
+        </if>
+        ORDER BY r.activity_dttm DESC, r.activity_record_id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="searchManageable" resultMap="summaryMap">
+        SELECT <include refid="summaryColumns"/>
+        FROM activity_record r
+        JOIN team t ON t.team_id = r.team_id
+        JOIN member creator ON creator.member_id = r.created_by_member_id
+        WHERE r.deleted_dttm IS NULL
+        <if test="teamId != null">
+          AND r.team_id = #{teamId}
+        </if>
+        <if test="status != null">
+          AND r.status_code = #{status}
+        </if>
+        <if test="createdByMemberId != null">
+          AND r.created_by_member_id = #{createdByMemberId}
+        </if>
+        ORDER BY r.updated_dttm DESC, r.activity_record_id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="lookupApprovedContent" resultMap="contentMap">
+        SELECT r.activity_record_id, r.team_id, t.name AS team_name,
+               r.activity_dttm, r.title, r.body, r.participant_count,
+               creator.name AS created_by_name, r.updated_dttm
+        FROM activity_record r
+        JOIN team t ON t.team_id = r.team_id
+        JOIN member creator ON creator.member_id = r.created_by_member_id
+        WHERE r.activity_record_id = #{activityRecordId}
+          AND r.status_code = 'APPROVED'
+          AND r.deleted_dttm IS NULL
+    </select>
+
+    <select id="lookupManageContent" resultMap="manageContentMap">
+        SELECT r.activity_record_id, r.team_id, t.name AS team_name,
+               r.activity_dttm, r.title, r.body, r.participant_count,
+               r.status_code, r.created_by_member_id,
+               creator.name AS created_by_name,
+               updater.name AS updated_by_name,
+               r.submitted_dttm, r.reviewed_dttm, r.updated_dttm
+        FROM activity_record r
+        JOIN team t ON t.team_id = r.team_id
+        JOIN member creator ON creator.member_id = r.created_by_member_id
+        JOIN member updater ON updater.member_id = r.updated_by_member_id
+        WHERE r.activity_record_id = #{activityRecordId}
+          AND r.deleted_dttm IS NULL
+    </select>
+
+    <select id="searchCurrentFileLinks" resultMap="fileLinkMap">
+        SELECT f.activity_record_file_id, f.stored_file_id, f.file_role_code,
+               f.display_order, f.uploaded_by_member_id,
+               uploader.name AS uploaded_by_name,
+               f.created_dttm AS uploaded_dttm
+        FROM activity_record_file f
+        JOIN member uploader ON uploader.member_id = f.uploaded_by_member_id
+        WHERE f.activity_record_id = #{activityRecordId}
+          AND f.replaced_dttm IS NULL
+        ORDER BY f.file_role_code DESC, f.display_order,
+                 f.activity_record_file_id
+    </select>
+
+    <select id="searchRevisions" resultType="kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRevisionResponse">
+        SELECT revision.revision_no, revision.activity_dttm, revision.title,
+               revision.body, revision.participant_count,
+               member.name AS changed_by_name, revision.changed_dttm,
+               revision.change_reason
+        FROM activity_record_revision revision
+        JOIN member ON member.member_id = revision.changed_by_member_id
+        WHERE revision.activity_record_id = #{activityRecordId}
+        ORDER BY revision.revision_no DESC
+    </select>
+
+    <select id="searchReviewHistories" resultType="kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityReviewHistoryResponse">
+        SELECT history.previous_status_code AS previous_status,
+               history.new_status_code AS new_status,
+               history.comment, member.name AS reviewed_by_name,
+               history.reviewed_dttm
+        FROM activity_review_history history
+        JOIN member ON member.member_id = history.reviewed_by_member_id
+        WHERE history.activity_record_id = #{activityRecordId}
+        ORDER BY history.reviewed_dttm DESC,
+                 history.activity_review_history_id DESC
+    </select>
+
+    <select id="existsCurrentStoredFile" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+            FROM activity_record_file
+            WHERE activity_record_id = #{activityRecordId}
+              AND stored_file_id = #{storedFileId}
+              AND replaced_dttm IS NULL
+        )
+    </select>
+
+    <select id="existsApprovedCurrentFile" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+            FROM activity_record record
+            JOIN activity_record_file file
+              ON file.activity_record_id = record.activity_record_id
+            WHERE record.activity_record_id = #{activityRecordId}
+              AND record.status_code = 'APPROVED'
+              AND record.deleted_dttm IS NULL
+              AND file.stored_file_id = #{storedFileId}
+              AND file.replaced_dttm IS NULL
+        )
+    </select>
+
+    <select id="lookupNextDisplayOrder" resultType="int">
+        SELECT COALESCE(MAX(display_order) + 1, 0)
+        FROM activity_record_file
+        WHERE activity_record_id = #{activityRecordId}
+          AND file_role_code = #{fileRole}
+          AND replaced_dttm IS NULL
+    </select>
+
+    <select id="countCurrentFiles" resultType="int">
+        SELECT COUNT(*)
+        FROM activity_record_file
+        WHERE activity_record_id = #{activityRecordId}
+          AND file_role_code = #{fileRole}
+          AND replaced_dttm IS NULL
+    </select>
+
+    <select id="lookupMaxRevisionNo" resultType="int">
+        SELECT revision_no
+        FROM activity_record_revision
+        WHERE activity_record_id = #{activityRecordId}
+        ORDER BY revision_no DESC
+        LIMIT 1
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="activityRecordId">
+        INSERT INTO activity_record (
+            team_id, activity_dttm, title, body, participant_count,
+            status_code, created_by_member_id, updated_by_member_id,
+            submitted_dttm, reviewed_dttm, reviewed_by_member_id
+        ) VALUES (
+            #{teamId}, #{activityDttm}, #{title}, #{body}, #{participantCount},
+            #{status}, #{createdByMemberId}, #{updatedByMemberId},
+            #{submittedDttm}, #{reviewedDttm}, #{reviewedByMemberId}
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE activity_record
+        SET activity_dttm = #{activityDttm},
+            title = #{title},
+            body = #{body},
+            participant_count = #{participantCount},
+            status_code = #{status},
+            updated_by_member_id = #{updatedByMemberId},
+            submitted_dttm = #{submittedDttm},
+            reviewed_dttm = #{reviewedDttm},
+            reviewed_by_member_id = #{reviewedByMemberId}
+        WHERE activity_record_id = #{activityRecordId}
+          AND <include refid="notDeleted"/>
+    </update>
+
+    <insert id="insertFile" useGeneratedKeys="true" keyProperty="activityRecordFileId">
+        INSERT INTO activity_record_file (
+            activity_record_id, stored_file_id, file_role_code,
+            display_order, uploaded_by_member_id
+        ) VALUES (
+            #{activityRecordId}, #{storedFileId}, #{fileRole},
+            #{displayOrder}, #{uploadedByMemberId}
+        )
+    </insert>
+
+    <update id="updateFile">
+        UPDATE activity_record_file
+        SET replaced_by_activity_record_file_id = #{replacedByActivityRecordFileId},
+            replaced_dttm = #{replacedDttm},
+            replaced_by_member_id = #{replacedByMemberId}
+        WHERE activity_record_file_id = #{activityRecordFileId}
+          AND replaced_dttm IS NULL
+    </update>
+
+    <insert id="insertRevision" useGeneratedKeys="true" keyProperty="activityRecordRevisionId">
+        INSERT INTO activity_record_revision (
+            activity_record_id, revision_no, activity_dttm, title, body,
+            participant_count, changed_by_member_id, changed_dttm, change_reason
+        ) VALUES (
+            #{activityRecordId}, #{revisionNo}, #{activityDttm}, #{title}, #{body},
+            #{participantCount}, #{changedByMemberId}, #{changedDttm}, #{changeReason}
+        )
+    </insert>
+
+    <insert id="insertReviewHistory" useGeneratedKeys="true" keyProperty="activityReviewHistoryId">
+        INSERT INTO activity_review_history (
+            activity_record_id, previous_status_code, new_status_code,
+            comment, reviewed_by_member_id, reviewed_dttm
+        ) VALUES (
+            #{activityRecordId}, #{previousStatus}, #{newStatus},
+            #{comment}, #{reviewedByMemberId}, #{reviewedDttm}
+        )
+    </insert>
+</mapper>
