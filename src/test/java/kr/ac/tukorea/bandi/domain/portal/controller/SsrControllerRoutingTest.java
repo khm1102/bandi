@@ -10,6 +10,7 @@ import kr.ac.tukorea.bandi.domain.event.controller.ClubEventController;
 import kr.ac.tukorea.bandi.domain.fee.controller.FeeController;
 import kr.ac.tukorea.bandi.domain.member.controller.MemberController;
 import kr.ac.tukorea.bandi.domain.notice.controller.NoticeController;
+import kr.ac.tukorea.bandi.domain.notice.service.PublicNoticeService;
 import kr.ac.tukorea.bandi.domain.reservation.controller.ReservationController;
 import kr.ac.tukorea.bandi.domain.resource.controller.ResourceController;
 import kr.ac.tukorea.bandi.global.security.LoginPrincipal;
@@ -25,6 +26,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -56,6 +58,9 @@ class SsrControllerRoutingTest {
             Map.entry("members", "members/list"));
 
     private final MockMvc mockMvc;
+
+    @MockitoBean
+    private PublicNoticeService publicNoticeService;
 
     @Autowired
     SsrControllerRoutingTest(MockMvc mockMvc) {
