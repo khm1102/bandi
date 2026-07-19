@@ -4,7 +4,7 @@ import kr.ac.tukorea.bandi.domain.reservation.dto.request.ReservationCancelReque
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.ReservationCreateRequest;
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.ReservationLookupRequest;
 import kr.ac.tukorea.bandi.domain.reservation.dto.response.ReservationCreatedResponse;
-import kr.ac.tukorea.bandi.domain.reservation.dto.response.ReservationDetailResponse;
+import kr.ac.tukorea.bandi.domain.reservation.dto.response.PublicReservationDetailResponse;
 import kr.ac.tukorea.bandi.domain.reservation.dto.response.RoundSeatResponse;
 import kr.ac.tukorea.bandi.domain.reservation.service.ReservationService;
 import kr.ac.tukorea.bandi.domain.reservation.service.RoundSeatService;
@@ -40,7 +40,7 @@ public class PublicReservationApiController implements PublicReservationApiDocs 
     }
 
     @Override
-    public ResponseEntity<ReservationDetailResponse> lookup(
+    public ResponseEntity<PublicReservationDetailResponse> lookup(
             ReservationLookupRequest request) {
         return ResponseEntity.ok(reservationService.lookup(
                 request.lookupToken()));

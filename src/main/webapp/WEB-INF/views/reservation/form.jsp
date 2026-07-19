@@ -1,105 +1,98 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
-<c:set var="seatFree" value="flex size-11 shrink-0 items-center justify-center rounded-md border bg-card text-xs font-extrabold text-muted-foreground transition-colors hover:border-primary hover:bg-accent hover:text-accent-foreground"/>
-<c:set var="seatSel" value="flex size-11 shrink-0 items-center justify-center rounded-md border border-primary bg-primary text-xs font-extrabold text-primary-foreground"/>
-<c:set var="seatTaken" value="flex size-11 shrink-0 cursor-not-allowed items-center justify-center rounded-md border bg-secondary text-xs font-extrabold text-muted-foreground/50"/>
-<c:set var="input" value="h-11 w-full rounded-md border border-input bg-card px-3 text-base transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm"/>
+<c:set var="input" value="h-11 w-full rounded-md border border-input bg-card px-3 text-base transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 disabled:cursor-not-allowed disabled:bg-secondary md:text-sm"/>
 <c:set var="label" value="mb-1.5 block text-xs font-extrabold text-muted-foreground"/>
 <t:layoutPublic title="관람 신청" active="reserve" scriptPath="reservation/form">
-    <div class="grid gap-5 lg:grid-cols-[1.3fr_1fr]">
-        <div class="relative flex min-h-96 flex-col justify-between overflow-hidden rounded-xl bg-sidebar p-6 text-white">
-            <img src="<c:url value='/images/performance/show-house-boy.webp'/>" alt="어두운 무대 위 집 세트의 문 앞에 선 인물" width="960" height="1200" class="absolute inset-0 size-full object-cover" fetchpriority="high">
-            <div class="absolute inset-0 bg-sidebar/35" aria-hidden="true"></div>
-            <span class="relative text-xs font-extrabold tracking-widest text-primary">반디 정기공연</span>
-            <div class="relative">
-                <b class="block text-4xl font-black leading-none tracking-tight">소년 B가<br>사는 집</b>
-                <span class="mt-2 block text-xs text-sidebar-muted">The House Where Boy B Lives</span>
+    <div data-reservation-page aria-busy="true">
+        <section class="border-b pb-6">
+            <a data-performance-link href="#" class="inline-flex min-h-11 items-center text-xs font-black text-accent-foreground underline-offset-4 hover:underline">공연 소개로 돌아가기</a>
+            <p class="mt-4 text-xs font-black uppercase tracking-[0.18em] text-accent-foreground">Reservation</p>
+            <h1 data-performance-title class="mt-2 text-3xl font-black tracking-tight">관람 신청</h1>
+            <p data-performance-description class="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">공연과 신청 정보를 불러오는 중입니다.</p>
+        </section>
+
+        <div data-reservation-content class="mt-6 hidden grid items-start gap-5 lg:grid-cols-[1.35fr_0.85fr]">
+            <div class="flex min-w-0 flex-col gap-5">
+                <section class="rounded-lg border bg-card p-5" aria-labelledby="roundSelectionTitle">
+                    <h2 id="roundSelectionTitle" class="text-base font-black">1. 공연 회차 선택</h2>
+                    <p class="mt-1 text-xs text-muted-foreground">신청 가능한 회차만 선택할 수 있습니다.</p>
+                    <div data-round-list class="mt-4 grid gap-2 sm:grid-cols-2"></div>
+                </section>
+
+                <section id="seatSelection" class="scroll-mt-20 rounded-lg border bg-card p-5" aria-labelledby="seatSelectionTitle">
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div>
+                            <h2 id="seatSelectionTitle" class="text-base font-black">2. 좌석 선택</h2>
+                            <p data-seat-guidance class="mt-1 text-xs text-muted-foreground">회차를 선택해 주세요.</p>
+                        </div>
+                        <span data-seat-remaining class="ml-auto"></span>
+                    </div>
+                    <div class="mt-5 rounded-md bg-sidebar py-2 text-center text-xs font-extrabold tracking-[0.25em] text-sidebar-foreground">STAGE · 무대</div>
+                    <p class="mt-3 text-xs text-muted-foreground">좌석표는 좌우로 이동할 수 있습니다. 표시된 좌석은 현재 신청 가능한 좌석입니다.</p>
+                    <div class="mt-4 overflow-x-auto pb-2">
+                        <div data-seat-map class="grid min-h-36 min-w-max place-content-start gap-2" role="group" aria-label="신청 가능한 좌석"></div>
+                    </div>
+                    <div class="mt-5 border-t pt-4">
+                        <span class="text-xs font-black text-muted-foreground">선택한 좌석</span>
+                        <div data-selected-seats class="mt-2 flex min-h-9 flex-wrap items-center gap-1.5"><span class="text-xs text-muted-foreground">아직 선택한 좌석이 없습니다.</span></div>
+                    </div>
+                </section>
             </div>
+
+            <section class="rounded-lg border bg-card p-5 lg:sticky lg:top-20" aria-labelledby="applicantTitle">
+                <h2 id="applicantTitle" class="text-base font-black">3. 신청자 정보</h2>
+                <p class="mt-1 text-xs text-muted-foreground">입장 확인과 공연 운영 안내에 사용합니다.</p>
+                <form data-reservation-form class="mt-5 flex flex-col gap-4">
+                    <div>
+                        <label class="${label}" for="guestName">이름 *</label>
+                        <input class="${input}" id="guestName" type="text" required maxlength="100" autocomplete="name">
+                    </div>
+                    <div>
+                        <label class="${label}" for="guestPhone">연락처 *</label>
+                        <input class="${input}" id="guestPhone" type="tel" required maxlength="20" pattern="[0-9\- ]{10,20}" inputmode="tel" autocomplete="tel" placeholder="010-0000-0000">
+                    </div>
+                    <details class="rounded-md border bg-secondary p-3">
+                        <summary class="cursor-pointer text-xs font-black">개인정보 수집·이용문 보기</summary>
+                        <p data-policy-body class="mt-3 max-h-48 overflow-y-auto whitespace-pre-line text-xs leading-6 text-muted-foreground">동의문을 불러오는 중입니다.</p>
+                    </details>
+                    <label class="flex min-h-11 cursor-pointer items-start gap-3 rounded-md border p-3 text-sm font-bold">
+                        <input id="privacyConsent" type="checkbox" required class="mt-0.5 size-5 shrink-0 accent-primary">
+                        <span>개인정보 수집·이용 내용을 확인했으며 필수 수집에 동의합니다.</span>
+                    </label>
+                    <div class="rounded-md bg-secondary p-4">
+                        <span class="text-xs font-bold text-muted-foreground">신청 요약</span>
+                        <strong data-reservation-summary class="mt-1 block text-sm">회차와 좌석을 선택해 주세요.</strong>
+                    </div>
+                    <t:button type="submit" cssClass="w-full">관람 신청하기</t:button>
+                    <p data-reservation-feedback class="hidden rounded-md border px-3 py-2.5 text-sm" role="status" aria-live="polite"></p>
+                </form>
+            </section>
         </div>
-        <section class="min-w-0 rounded-xl border bg-card p-6">
-            <div class="flex gap-1.5">
-                <t:badge tone="danger" dot="true">관람 신청 오픈</t:badge>
-                <t:badge tone="neutral">전석 무료</t:badge>
-            </div>
-            <h2 class="mt-2 text-2xl font-black tracking-tight">연극 〈소년 B가 사는 집〉</h2>
-            <p class="text-sm text-muted-foreground">연극 동아리 반디 정기공연 · 러닝타임 90분</p>
-            <dl class="mt-4">
-                <div class="flex gap-3 border-b py-2.5 text-sm"><dt class="w-16 shrink-0 font-bold text-muted-foreground">장소</dt><dd class="font-semibold">한국공학대학교 TIP아트센터</dd></div>
-                <div class="flex gap-3 border-b py-2.5 text-sm"><dt class="w-16 shrink-0 font-bold text-muted-foreground">공연기간</dt><dd class="font-semibold">2025.06.21(토) - 06.22(일)</dd></div>
-                <div class="flex gap-3 border-b py-2.5 text-sm"><dt class="w-16 shrink-0 font-bold text-muted-foreground">공연시간</dt><dd class="font-semibold">하루 1회 · 매일 17:00 (총 2회)</dd></div>
-                <div class="flex gap-3 py-2.5 text-sm"><dt class="w-16 shrink-0 font-bold text-muted-foreground">관람연령</dt><dd class="font-semibold">만 12세 이상</dd></div>
-            </dl>
-            <a href="#seatSelection" class="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-md bg-primary px-4 text-sm font-black text-primary-foreground transition-colors hover:bg-primary-strong hover:text-white">좌석 선택 시작</a>
-        </section>
-    </div>
 
-    <div class="mt-4 rounded-lg border bg-secondary px-5 py-4">
-        <h2 class="text-sm font-extrabold">작품 소개</h2>
-        <p class="mt-2 max-w-3xl text-sm leading-relaxed text-foreground/80">그날, 우리 집에 지독한 불행이 찾아왔습니다. 오랜 시간이 흘렀지만, 누군가는 그날에 머물러 있고 누군가는 그날을 견디며 살아갑니다. 지워지지 않는 기억과 남겨진 상처, 그럼에도 살아가려는 사람들의 이야기입니다.</p>
-    </div>
-
-    <div class="mt-5 grid items-start gap-5 lg:grid-cols-[1.4fr_1fr]">
-        <section id="seatSelection" class="min-w-0 scroll-mt-20 rounded-xl border bg-card p-6">
-            <div class="flex items-center">
-                <h3 class="text-base font-black">좌석 선택</h3>
-                <span class="ml-auto" data-seat-remaining><t:badge tone="success" dot="true">잔여 40석</t:badge></span>
-            </div>
-            <p class="mb-4 mt-1 text-xs text-muted-foreground" data-seat-date-label>6/21 (토) 17:00, 좌석을 눌러 선택하세요</p>
-            <div class="rounded-md bg-sidebar py-2 text-center text-xs font-extrabold tracking-widest text-sidebar-foreground">S T A G E · 무대</div>
-            <p class="mb-2 text-xs text-muted-foreground md:hidden">좌석표는 좌우로 이동해 확인할 수 있습니다.</p>
-            <div class="mt-3 flex flex-col items-start gap-2 overflow-x-auto pb-2 md:mt-5 md:items-center" data-seat-map role="group" aria-label="좌석 선택표">
-                <div class="flex min-w-max items-center gap-1.5"><span class="w-5 text-center text-xs font-extrabold text-muted-foreground">A</span>
-                    <button type="button" class="${seatFree}">1</button><button type="button" class="${seatFree}">2</button><button type="button" disabled class="${seatTaken}">3</button><button type="button" disabled class="${seatTaken}">4</button><button type="button" class="${seatFree}">5</button><button type="button" class="${seatFree}">6</button><button type="button" class="${seatFree}">7</button><button type="button" class="${seatFree}">8</button>
+        <section data-reservation-complete class="mt-6 hidden rounded-xl border border-primary/40 bg-accent/40 p-5 md:p-8" aria-labelledby="reservationCompleteTitle" aria-live="polite">
+            <p class="text-xs font-black uppercase tracking-[0.18em] text-accent-foreground">Reservation complete</p>
+            <h2 id="reservationCompleteTitle" class="mt-2 text-2xl font-black">관람 신청이 완료되었습니다</h2>
+            <p class="mt-2 text-sm leading-6 text-muted-foreground">아래 신청번호와 조회 토큰을 별도로 보관하세요. 조회 토큰은 다시 표시되지 않습니다.</p>
+            <div class="mt-6 grid gap-5 md:grid-cols-[1fr_0.8fr]">
+                <div class="flex flex-col gap-4">
+                    <div class="rounded-lg border bg-card p-4"><span class="text-xs font-bold text-muted-foreground">신청번호</span><strong data-created-reservation-no class="mt-1 block font-mono text-lg font-black"></strong></div>
+                    <div class="rounded-lg border bg-card p-4"><span class="text-xs font-bold text-muted-foreground">신청 조회 토큰</span><code data-created-lookup-token class="mt-2 block break-all rounded bg-secondary p-3 text-xs font-bold"></code><button type="button" data-page-action="copy-lookup-token" class="mt-2 inline-flex min-h-11 items-center text-xs font-black text-accent-foreground underline-offset-4 hover:underline">조회 토큰 복사</button></div>
+                    <a href="<c:url value='/reserve/lookup'/>" class="inline-flex min-h-11 items-center justify-center rounded-md border bg-card px-4 text-sm font-black hover:bg-secondary">신청 조회·취소로 이동</a>
                 </div>
-                <div class="flex min-w-max items-center gap-1.5"><span class="w-5 text-center text-xs font-extrabold text-muted-foreground">B</span>
-                    <button type="button" class="${seatFree}">1</button><button type="button" class="${seatFree}">2</button><button type="button" class="${seatFree}">3</button><button type="button" class="${seatFree}">4</button><button type="button" class="${seatFree}">5</button><button type="button" class="${seatFree}">6</button><button type="button" class="${seatFree}">7</button><button type="button" class="${seatFree}">8</button>
+                <div class="rounded-lg bg-card p-4 text-center">
+                    <span class="text-xs font-bold text-muted-foreground">공연 당일 입장 QR</span>
+                    <img data-entry-qr alt="공연 당일 입장 QR" width="280" height="280" class="mx-auto mt-3 aspect-square w-full max-w-64">
+                    <button type="button" data-page-action="download-entry-qr" class="mt-2 inline-flex min-h-11 items-center text-xs font-black text-accent-foreground underline-offset-4 hover:underline">입장 QR 저장</button>
+                    <p class="mt-2 text-xs leading-5 text-muted-foreground">QR에는 개인정보가 아닌 입장 토큰만 포함됩니다.</p>
                 </div>
-                <div class="flex min-w-max items-center gap-1.5"><span class="w-5 text-center text-xs font-extrabold text-muted-foreground">C</span>
-                    <button type="button" class="${seatFree}">1</button><button type="button" class="${seatFree}">2</button><button type="button" class="${seatFree}">3</button><button type="button" class="${seatFree}">4</button><button type="button" disabled class="${seatTaken}">5</button><button type="button" disabled class="${seatTaken}">6</button><button type="button" class="${seatFree}">7</button><button type="button" class="${seatFree}">8</button>
-                </div>
-                <div class="flex min-w-max items-center gap-1.5"><span class="w-5 text-center text-xs font-extrabold text-muted-foreground">D</span>
-                    <button type="button" disabled class="${seatTaken}">1</button><button type="button" disabled class="${seatTaken}">2</button><button type="button" class="${seatFree}">3</button><button type="button" class="${seatFree}">4</button><button type="button" class="${seatFree}">5</button><button type="button" class="${seatFree}">6</button><button type="button" class="${seatFree}">7</button><button type="button" class="${seatFree}">8</button>
-                </div>
-                <div class="flex min-w-max items-center gap-1.5"><span class="w-5 text-center text-xs font-extrabold text-muted-foreground">E</span>
-                    <button type="button" class="${seatFree}">1</button><button type="button" class="${seatFree}">2</button><button type="button" class="${seatFree}">3</button><button type="button" disabled class="${seatTaken}">4</button><button type="button" disabled class="${seatTaken}">5</button><button type="button" class="${seatFree}">6</button><button type="button" class="${seatFree}">7</button><button type="button" class="${seatFree}">8</button>
-                </div>
-                <div class="flex min-w-max items-center gap-1.5"><span class="w-5 text-center text-xs font-extrabold text-muted-foreground">F</span>
-                    <button type="button" class="${seatFree}">1</button><button type="button" class="${seatFree}">2</button><button type="button" class="${seatFree}">3</button><button type="button" class="${seatFree}">4</button><button type="button" class="${seatFree}">5</button><button type="button" class="${seatFree}">6</button><button type="button" class="${seatFree}">7</button><button type="button" class="${seatFree}">8</button>
-                </div>
-            </div>
-            <div class="mt-5 flex justify-center gap-4 text-xs font-bold text-muted-foreground">
-                <span class="flex items-center gap-1.5"><i class="size-3.5 rounded-sm border bg-card"></i> 선택 가능</span>
-                <span class="flex items-center gap-1.5"><i class="size-3.5 rounded-sm bg-primary"></i> 선택함</span>
-                <span class="flex items-center gap-1.5"><i class="size-3.5 rounded-sm border bg-secondary"></i> 매진</span>
             </div>
         </section>
 
-        <section class="min-w-0 rounded-xl border bg-card p-6">
-            <h3 class="text-base font-black">관람 신청</h3>
-            <p class="text-xs text-muted-foreground">하루 한 회 공연입니다.</p>
-            <form method="post" data-reservation-form>
-                <p class="mb-2 mt-4 text-xs font-extrabold text-muted-foreground">관람일 선택</p>
-                <div class="grid grid-cols-2 gap-2">
-                    <button type="button" data-reservation-date="6/21" aria-pressed="true" class="min-h-14 rounded-lg border-2 border-primary bg-accent p-3 text-center text-base font-black text-accent-foreground">6.21<small class="mt-0.5 block text-xs font-bold text-muted-foreground">토 · 17:00</small></button>
-                    <button type="button" data-reservation-date="6/22" aria-pressed="false" class="min-h-14 rounded-lg border-2 p-3 text-center text-base font-black transition-colors hover:border-primary">6.22<small class="mt-0.5 block text-xs font-bold text-muted-foreground">일 · 17:00</small></button>
-                </div>
-                <p class="mb-2 mt-4 text-xs font-extrabold text-muted-foreground">선택한 좌석</p>
-                <div class="flex min-h-9 flex-wrap items-center gap-1.5" data-selected-seats>
-                    <span class="text-xs text-muted-foreground">아직 선택한 좌석이 없어요</span>
-                </div>
-                <p class="mb-2 mt-4 text-xs font-extrabold text-muted-foreground">신청자 정보</p>
-                <div class="flex flex-col gap-3">
-                    <div><label class="${label}" for="guestName">이름 <span aria-hidden="true">*</span></label><input class="${input}" id="guestName" name="guestName" type="text" autocomplete="name" placeholder="이름을 입력하세요" required maxlength="50" aria-describedby="reservationFeedback"></div>
-                    <div><label class="${label}" for="guestPhone">연락처 <span aria-hidden="true">*</span></label><input class="${input}" id="guestPhone" name="guestPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="010-0000-0000" required maxlength="20" aria-describedby="reservationFeedback"></div>
-                </div>
-                <div class="my-4 flex items-center justify-between rounded-lg bg-secondary px-4 py-3.5 text-xs font-bold text-muted-foreground">
-                    <span data-reservation-summary>6/21 토 17:00<br>TIP아트센터</span>
-                    <b class="text-base font-black text-foreground" data-reservation-count>0석</b>
-                </div>
-                <button type="submit" data-reservation-submit class="h-12 w-full rounded-lg bg-primary text-base font-black text-primary-foreground transition-colors hover:bg-primary-strong hover:text-white">좌석을 선택하세요</button>
-                <p id="reservationFeedback" class="mt-3 hidden rounded-md border px-3 py-2.5 text-sm" data-reservation-feedback role="status" aria-live="polite"></p>
-            </form>
+        <section data-reservation-error class="mt-6 hidden rounded-lg border border-destructive bg-destructive-soft p-5" role="alert">
+            <h2 class="text-base font-black text-destructive">관람 신청 정보를 불러오지 못했습니다</h2>
+            <p data-reservation-error-message class="mt-2 text-sm text-destructive"></p>
+            <a href="<c:url value='/notices'/>" class="mt-3 inline-flex min-h-11 items-center text-sm font-black text-destructive underline-offset-4 hover:underline">공시 확인</a>
         </section>
     </div>
 </t:layoutPublic>

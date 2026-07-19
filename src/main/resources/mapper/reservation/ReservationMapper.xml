@@ -100,6 +100,21 @@
         </constructor>
     </resultMap>
 
+    <resultMap id="publicReservationContextMap"
+               type="kr.ac.tukorea.bandi.domain.reservation.dto.response.PublicReservationContextResponse">
+        <constructor>
+            <idArg column="performance_project_id"
+                   javaType="java.lang.Long"/>
+            <arg column="performance_title" javaType="java.lang.String"/>
+            <arg column="performance_slug" javaType="java.lang.String"/>
+            <arg column="place" javaType="java.lang.String"/>
+            <arg column="round_no" javaType="_int"/>
+            <arg column="start_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="entry_start_dttm"
+                 javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
     <sql id="roundSeatColumns">
         performance_round_seat_id, performance_round_id,
         seat_label, section_code, row_label, column_label,
@@ -184,6 +199,27 @@
         FROM reservation
         WHERE lookup_token_hash = #{lookupTokenHash}
         FOR UPDATE
+    </select>
+
+    <select id="lookupPublicReservationContext"
+            resultMap="publicReservationContextMap">
+        SELECT project.performance_project_id,
+               project.title AS performance_title,
+               public_page.slug AS performance_slug,
+               project.place,
+               round.round_no,
+               round.start_dttm,
+               round.entry_start_dttm
+        FROM reservation reservation
+        JOIN performance_round round
+          ON round.performance_round_id = reservation.performance_round_id
+        JOIN performance_project project
+          ON project.performance_project_id = round.performance_project_id
+         AND project.deleted_dttm IS NULL
+        JOIN performance_public_page public_page
+          ON public_page.performance_project_id =
+             project.performance_project_id
+        WHERE reservation.reservation_id = #{reservationId}
     </select>
 
     <select id="lookupReservationByEntryTokenHashForUpdate"

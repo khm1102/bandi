@@ -91,6 +91,12 @@ class SsrControllerRoutingTest {
                 .andExpect(view().name("notice/list"));
         mockMvc.perform(get("/reserve"))
                 .andExpect(status().isOk())
+                .andExpect(view().name("reservation/lookup"));
+        mockMvc.perform(get("/reserve/lookup"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("reservation/lookup"));
+        mockMvc.perform(get("/reserve/house-boy"))
+                .andExpect(status().isOk())
                 .andExpect(view().name("reservation/form"));
     }
 
