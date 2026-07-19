@@ -204,11 +204,50 @@
             </c:choose>
         </section>
 
-        <section class="rounded-xl bg-sidebar px-5 py-8 text-white md:px-8 md:py-10">
-            <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
-                <div><p class="text-xs font-black uppercase tracking-[0.18em] text-primary">Official notice</p><h2 class="mt-2 text-2xl font-black">변경 사항은 공시에서 확인하세요</h2><p class="mt-2 text-sm text-sidebar-foreground">캐스팅, 공연 시간, 입장 방법과 취소 관련 변경을 공식 공시로 안내합니다.</p></div>
-                <a href="<c:url value='/notices'/>" class="inline-flex min-h-11 shrink-0 items-center justify-center rounded-md border border-sidebar-border px-4 text-sm font-black text-white transition-colors hover:bg-sidebar-accent">공시 확인</a>
-            </div>
-        </section>
+        <c:choose>
+            <c:when test="${not empty notices}">
+                <section aria-labelledby="performanceNoticeTitle">
+                    <div class="flex flex-col gap-4 border-b pb-5 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            <p class="text-xs font-black uppercase tracking-[0.18em] text-accent-foreground">Official notice</p>
+                            <h2 id="performanceNoticeTitle" class="mt-2 text-3xl font-black tracking-tight">공연 관련 공시</h2>
+                            <p class="mt-2 text-sm text-muted-foreground">공연 시간, 입장과 신청 변경 사항을 공식 안내합니다.</p>
+                        </div>
+                        <a href="<c:url value='/notices'/>" class="inline-flex min-h-11 shrink-0 items-center text-sm font-black text-accent-foreground underline-offset-4 hover:underline">전체 공시 보기</a>
+                    </div>
+                    <div class="divide-y border-b">
+                        <c:forEach var="notice" items="${notices}">
+                            <c:url var="noticeUrl" value="/notices/${notice.publicNoticeId}"/>
+                            <article class="grid gap-3 py-5 sm:grid-cols-[8rem_1fr_auto] sm:items-center">
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <t:badge tone="info">
+                                        <c:choose>
+                                            <c:when test="${notice.categoryCode == 'PERFORMANCE'}">공연</c:when>
+                                            <c:when test="${notice.categoryCode == 'RECRUITMENT'}">모집</c:when>
+                                            <c:when test="${notice.categoryCode == 'RESERVATION'}">신청</c:when>
+                                            <c:otherwise><c:out value="${notice.categoryCode}"/></c:otherwise>
+                                        </c:choose>
+                                    </t:badge>
+                                    <c:if test="${notice.pinned}"><t:badge tone="warning">중요</t:badge></c:if>
+                                </div>
+                                <div class="min-w-0">
+                                    <h3 class="text-sm font-black"><a href="<c:out value='${noticeUrl}'/>" class="hover:text-accent-foreground hover:underline"><c:out value="${notice.title}"/></a></h3>
+                                    <p class="mt-1 text-xs text-muted-foreground"><c:out value="${fn:substring(notice.publishStartDttm, 0, 10)}"/> · <c:out value="${notice.createdByName}"/></p>
+                                </div>
+                                <a href="<c:out value='${noticeUrl}'/>" class="inline-flex min-h-11 items-center text-xs font-black text-accent-foreground sm:justify-end">자세히 보기</a>
+                            </article>
+                        </c:forEach>
+                    </div>
+                </section>
+            </c:when>
+            <c:otherwise>
+                <section class="rounded-xl bg-sidebar px-5 py-8 text-white md:px-8 md:py-10">
+                    <div class="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                        <div><p class="text-xs font-black uppercase tracking-[0.18em] text-primary">Official notice</p><h2 class="mt-2 text-2xl font-black">변경 사항은 공시에서 확인하세요</h2><p class="mt-2 text-sm text-sidebar-foreground">캐스팅, 공연 시간, 입장 방법과 취소 관련 변경을 공식 공시로 안내합니다.</p></div>
+                        <a href="<c:url value='/notices'/>" class="inline-flex min-h-11 shrink-0 items-center justify-center rounded-md border border-sidebar-border px-4 text-sm font-black text-white transition-colors hover:bg-sidebar-accent">공시 확인</a>
+                    </div>
+                </section>
+            </c:otherwise>
+        </c:choose>
     </div>
 </t:layoutPublic>

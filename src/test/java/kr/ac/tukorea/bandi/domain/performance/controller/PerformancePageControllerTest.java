@@ -1,8 +1,10 @@
 package kr.ac.tukorea.bandi.domain.performance.controller;
 
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformancePublicPageResponse;
+import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformancePublicNoticeResponse;
 import kr.ac.tukorea.bandi.domain.performance.model.PublicPageStatus;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceContentService;
+import kr.ac.tukorea.bandi.domain.performance.service.PerformancePublicNoticeService;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformancePublicPageService;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceRoundService;
 import org.junit.jupiter.api.Test;
@@ -14,6 +16,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,6 +42,9 @@ class PerformancePageControllerTest {
     @MockitoBean
     private PerformanceContentService contentService;
 
+    @MockitoBean
+    private PerformancePublicNoticeService publicNoticeService;
+
     @Autowired
     PerformancePageControllerTest(MockMvc mockMvc) {
         this.mockMvc = mockMvc;
@@ -46,6 +52,36 @@ class PerformancePageControllerTest {
 
     @Test
     void 공개_공연_마이크로사이트가_SSR로_렌더링된다() throws Exception {
+        PerformancePublicPageResponse page = stubPublicPage();
+        PerformancePublicNoticeResponse notice =
+                new PerformancePublicNoticeResponse(3L, "PERFORMANCE",
+                        "공연 시간 변경 안내", "변경 내용", true,
+                        LocalDateTime.of(2026, 11, 1, 9, 0), null,
+                        "운영진", LocalDateTime.of(2026, 11, 1, 9, 0));
+        when(publicNoticeService.searchPublic("house-boy"))
+                .thenReturn(List.of(notice));
+
+        mockMvc.perform(get("/performances/house-boy"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("performance/public-detail"))
+                .andExpect(model().attribute("page", page))
+                .andExpect(model().attribute("rounds", List.of()))
+                .andExpect(model().attribute("notices", List.of(notice)))
+                .andExpect(model().attribute("reservationAvailable", false));
+    }
+
+    @Test
+    void 연결된_공시가_없어도_빈_목록으로_렌더링된다() throws Exception {
+        stubPublicPage();
+        when(publicNoticeService.searchPublic("house-boy"))
+                .thenReturn(List.of());
+
+        mockMvc.perform(get("/performances/house-boy"))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("notices", List.of()));
+    }
+
+    private PerformancePublicPageResponse stubPublicPage() {
         PerformancePublicPageResponse page = new PerformancePublicPageResponse(
                 1L, 2L, "소년 B가 사는 집",
                 LocalDate.of(2026, 11, 1),
@@ -66,12 +102,6 @@ class PerformancePageControllerTest {
                 .thenReturn(List.of());
         when(contentService.searchPublicMedia("house-boy"))
                 .thenReturn(List.of());
-
-        mockMvc.perform(get("/performances/house-boy"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("performance/public-detail"))
-                .andExpect(model().attribute("page", page))
-                .andExpect(model().attribute("rounds", List.of()))
-                .andExpect(model().attribute("reservationAvailable", false));
+        return page;
     }
 }
