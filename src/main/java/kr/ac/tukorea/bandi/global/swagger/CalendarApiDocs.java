@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.global.swagger;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -30,7 +31,7 @@ public interface CalendarApiDocs {
     @Operation(summary = "기간별 일정 조회")
     @GetMapping
     ResponseEntity<List<CalendarEventResponse>> search(
-            @LoginMember Long actorMemberId,
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @RequestParam LocalDateTime rangeStart,
             @RequestParam LocalDateTime rangeEnd,
             @RequestParam(required = false) Long teamId);
@@ -38,19 +39,19 @@ public interface CalendarApiDocs {
     @Operation(summary = "일정 등록")
     @PostMapping
     ResponseEntity<CalendarEventCreatedResponse> create(
-            @LoginMember Long actorMemberId,
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @Valid @RequestBody CalendarEventCreateRequest request);
 
     @Operation(summary = "일정 수정")
     @PutMapping("/{calendarEventId}")
     ResponseEntity<Void> update(
-            @LoginMember Long actorMemberId,
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @PathVariable Long calendarEventId,
             @Valid @RequestBody CalendarEventUpdateRequest request);
 
     @Operation(summary = "일정 삭제")
     @DeleteMapping("/{calendarEventId}")
     ResponseEntity<Void> delete(
-            @LoginMember Long actorMemberId,
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @PathVariable Long calendarEventId);
 }

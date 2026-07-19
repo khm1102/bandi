@@ -2,6 +2,7 @@ package kr.ac.tukorea.bandi.global.swagger;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -58,34 +59,34 @@ public interface MemberApiDocs {
     @Operation(summary = "멤버 사전 등록")
     @PostMapping
     ResponseEntity<MemberCreatedResponse> preRegister(
-            @LoginMember Long actorMemberId,
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @Valid @RequestBody MemberPreRegisterRequest request);
 
     @Operation(summary = "멤버 팀 변경")
     @PatchMapping("/{memberId}/team")
     ResponseEntity<Void> changeTeam(
-            @LoginMember Long actorMemberId,
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @PathVariable Long memberId,
             @Valid @RequestBody TeamChangeRequest request);
 
     @Operation(summary = "멤버 기수 변경")
     @PatchMapping("/{memberId}/cohort")
     ResponseEntity<Void> changeCohort(
-            @LoginMember Long actorMemberId,
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @PathVariable Long memberId,
             @Valid @RequestBody CohortChangeRequest request);
 
     @Operation(summary = "멤버 권한 변경")
     @PatchMapping("/{memberId}/role")
     ResponseEntity<Void> changeRole(
-            @LoginMember Long actorMemberId,
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @PathVariable Long memberId,
             @Valid @RequestBody RoleChangeRequest request);
 
     @Operation(summary = "멤버 상태 변경")
     @PatchMapping("/{memberId}/status")
     ResponseEntity<Void> changeStatus(
-            @LoginMember Long actorMemberId,
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @PathVariable Long memberId,
             @Valid @RequestBody StatusChangeRequest request);
 

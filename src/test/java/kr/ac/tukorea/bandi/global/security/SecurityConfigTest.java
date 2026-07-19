@@ -79,6 +79,20 @@ class SecurityConfigTest {
     }
 
     @Test
+    void 공개_공시_조회_API는_로그인하지_않아도_접근할_수_있다()
+            throws Exception {
+        mockMvc.perform(get("/api/public-notices/test"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void 공개_공시_상태_변경_API는_로그인을_요구한다() throws Exception {
+        mockMvc.perform(post("/api/public-notices/test").with(csrf()))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("C003"));
+    }
+
+    @Test
     void API_상태_변경은_로그인해도_CSRF가_필요하다() throws Exception {
         mockMvc.perform(post("/api/test")
                         .with(user("member").roles("MEMBER")))
@@ -130,13 +144,18 @@ class SecurityTestController {
     @GetMapping({"/dashboard", "/members/test", "/reservations/test",
             "/showops/test", "/notices/test", "/performances/show",
             "/reserve/test", "/swagger-ui/test", "/api/test",
-            "/api/members/test"})
+            "/api/members/test", "/api/public-notices/test"})
     ResponseEntity<Void> page() {
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/api/test")
     ResponseEntity<Void> change() {
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/api/public-notices/test")
+    ResponseEntity<Void> changePublicNotice() {
         return ResponseEntity.ok().build();
     }
 }
