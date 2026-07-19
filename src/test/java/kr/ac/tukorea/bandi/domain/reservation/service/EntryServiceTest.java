@@ -195,6 +195,34 @@ class EntryServiceTest {
     }
 
     @Test
+    void 신청번호와_이름으로_선택_좌석을_입장_처리한다() {
+        givenManualReservation("홍길동");
+        given(reservationMapper.searchReservationSeatsForUpdate(
+                RESERVATION_ID)).willReturn(List.of(
+                        reservationSeat(FIRST_RESERVATION_SEAT_ID, false)));
+
+        service.checkInByNumberAndName(ACTOR_ID, ROUND_ID,
+                "R20261121ABC", "홍길동",
+                List.of(FIRST_RESERVATION_SEAT_ID));
+
+        verify(reservationMapper).updateReservationSeat(any());
+        verify(reservationMapper).insertSeatEntryHistory(any());
+    }
+
+    @Test
+    void 보조_입장에서도_다른_신청의_좌석을_처리할_수_없다() {
+        givenManualReservation("홍길동");
+        given(reservationMapper.searchReservationSeatsForUpdate(
+                RESERVATION_ID)).willReturn(List.of(
+                        reservationSeat(FIRST_RESERVATION_SEAT_ID, false)));
+
+        assertThatThrownBy(() -> service.checkInByNumberAndName(
+                ACTOR_ID, ROUND_ID, "R20261121ABC", "홍길동",
+                List.of(SECOND_RESERVATION_SEAT_ID)))
+                .isInstanceOf(InvalidReservationTokenException.class);
+    }
+
+    @Test
     void 회차별_신청과_입장_지표를_조회한다() {
         ReservationMetricsResponse metrics =
                 new ReservationMetricsResponse(3, 6, 4, 2, 1,
@@ -225,6 +253,16 @@ class EntryServiceTest {
                 .willReturn("홍길동");
         given(dataProtector.decryptPhone(any(byte[].class), any(Short.class)))
                 .willReturn("01012345678");
+    }
+
+    private void givenManualReservation(String applicantName) {
+        given(roundService.isEntryOpen(ACTOR_ID, ROUND_ID))
+                .willReturn(true);
+        given(reservationMapper.lookupReservationByNo("R20261121ABC"))
+                .willReturn(Optional.of(reservation(
+                        ReservationStatus.CONFIRMED)));
+        given(dataProtector.decryptName(any(byte[].class), any(Short.class)))
+                .willReturn(applicantName);
     }
 
     private Reservation reservation(ReservationStatus status) {

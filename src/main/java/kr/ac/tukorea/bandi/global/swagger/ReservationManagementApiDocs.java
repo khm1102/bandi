@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.EntryCancelRequest;
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.EntryCheckInRequest;
+import kr.ac.tukorea.bandi.domain.reservation.dto.request.EntryManualCheckInRequest;
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.EntrySearchRequest;
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.EntryTokenRequest;
 import kr.ac.tukorea.bandi.domain.reservation.dto.request.ReservationManagementCancelRequest;
@@ -87,6 +88,13 @@ public interface ReservationManagementApiDocs {
             @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @PathVariable Long roundId,
             @Valid @RequestBody EntryCheckInRequest request);
+
+    @Operation(summary = "신청번호와 이름으로 선택 좌석 입장 처리")
+    @PostMapping("/rounds/{roundId}/entry/manual-check-ins")
+    ResponseEntity<Void> manualCheckIn(
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
+            @PathVariable Long roundId,
+            @Valid @RequestBody EntryManualCheckInRequest request);
 
     @Operation(summary = "신청번호와 이름으로 입장 신청 보조 조회")
     @PostMapping("/rounds/{roundId}/entry/search")

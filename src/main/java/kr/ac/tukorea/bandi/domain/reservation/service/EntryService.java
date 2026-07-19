@@ -54,6 +54,26 @@ public class EntryService {
         validateEntryOpen(actorMemberId, performanceRoundId);
         Reservation reservation = lockByEntryToken(entryToken);
         validateEntryReservation(reservation, performanceRoundId);
+        checkInReservation(actorMemberId, reservation,
+                reservationSeatIds);
+    }
+
+    @Transactional
+    public void checkInByNumberAndName(
+            Long actorMemberId, Long performanceRoundId,
+            String reservationNo, String applicantName,
+            List<Long> reservationSeatIds) {
+        validateEntryOpen(actorMemberId, performanceRoundId);
+        Reservation reservation = lookupByNumberAndName(
+                reservationNo, applicantName);
+        validateEntryReservation(reservation, performanceRoundId);
+        checkInReservation(actorMemberId, reservation,
+                reservationSeatIds);
+    }
+
+    private void checkInReservation(Long actorMemberId,
+                                    Reservation reservation,
+                                    List<Long> reservationSeatIds) {
         List<Long> selectedIds = validateSeatIds(reservationSeatIds);
         Map<Long, ReservationSeat> byId = reservationMapper
                 .searchReservationSeatsForUpdate(
@@ -108,6 +128,21 @@ public class EntryService {
                 .lookupReservationByNo(reservationNo)
                 .orElseThrow(InvalidReservationTokenException::new);
         validateEntryReservation(reservation, performanceRoundId);
+        validateApplicantName(reservation, applicantName);
+        return detail(reservation);
+    }
+
+    private Reservation lookupByNumberAndName(String reservationNo,
+                                               String applicantName) {
+        Reservation reservation = reservationMapper
+                .lookupReservationByNo(reservationNo)
+                .orElseThrow(InvalidReservationTokenException::new);
+        validateApplicantName(reservation, applicantName);
+        return reservation;
+    }
+
+    private void validateApplicantName(Reservation reservation,
+                                       String applicantName) {
         String storedName = dataProtector.decryptName(
                 reservation.getApplicantNameCiphertext(),
                 reservation.getEncryptionKeyVersion());
@@ -115,7 +150,6 @@ public class EntryService {
                 || !storedName.equals(applicantName.trim())) {
             throw new InvalidReservationTokenException();
         }
-        return detail(reservation);
     }
 
     public ReservationMetricsResponse lookupMetrics(
