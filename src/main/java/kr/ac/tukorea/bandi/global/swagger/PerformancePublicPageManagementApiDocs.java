@@ -6,13 +6,16 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import kr.ac.tukorea.bandi.domain.performance.dto.request.PerformancePublicPageRequest;
+import kr.ac.tukorea.bandi.domain.performance.dto.request.PerformancePublicNoticeRequest;
 import kr.ac.tukorea.bandi.domain.performance.dto.request.PerformanceViewingGuideRequest;
 import kr.ac.tukorea.bandi.domain.performance.dto.request.PublicPageStatusRequest;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceIdentifierResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformancePublicPageResponse;
+import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformancePublicNoticeResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -56,4 +59,24 @@ public interface PerformancePublicPageManagementApiDocs {
     ResponseEntity<Void> saveViewingGuide(
             @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @Valid @RequestBody PerformanceViewingGuideRequest request);
+
+    @Operation(summary = "공연 관련 공시 연결 목록 조회")
+    @GetMapping("/projects/{projectId}/notices")
+    ResponseEntity<List<PerformancePublicNoticeResponse>> searchNotices(
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
+            @PathVariable Long projectId);
+
+    @Operation(summary = "공연 관련 공시 연결")
+    @PostMapping("/projects/{projectId}/notices")
+    ResponseEntity<Void> linkNotice(
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
+            @PathVariable Long projectId,
+            @Valid @RequestBody PerformancePublicNoticeRequest request);
+
+    @Operation(summary = "공연 관련 공시 연결 해제")
+    @DeleteMapping("/projects/{projectId}/notices/{publicNoticeId}")
+    ResponseEntity<Void> unlinkNotice(
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
+            @PathVariable Long projectId,
+            @PathVariable Long publicNoticeId);
 }

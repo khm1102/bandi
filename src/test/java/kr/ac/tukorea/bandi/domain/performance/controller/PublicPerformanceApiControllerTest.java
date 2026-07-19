@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.domain.performance.controller;
 
 import kr.ac.tukorea.bandi.domain.performance.service.PerformancePublicPageService;
+import kr.ac.tukorea.bandi.domain.performance.service.PerformancePublicNoticeService;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceContentService;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceRoundCastService;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformanceRoundService;
@@ -29,6 +30,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
@@ -61,6 +63,9 @@ class PublicPerformanceApiControllerTest {
 
     @MockitoBean
     private PublicPerformanceFileService publicPerformanceFileService;
+
+    @MockitoBean
+    private PerformancePublicNoticeService publicNoticeService;
 
     @Autowired
     PublicPerformanceApiControllerTest(MockMvc mockMvc) {
@@ -129,6 +134,33 @@ class PublicPerformanceApiControllerTest {
         verify(roundCastService).searchPublic("hamlet", 30L);
         verify(contentService).searchPublicCredits("hamlet");
         verify(contentService).searchPublicMedia("hamlet");
+    }
+
+    @Test
+    void 공개_공연의_연결_공시를_조회한다() throws Exception {
+        given(publicNoticeService.searchPublic("hamlet"))
+                .willReturn(List.of());
+
+        mockMvc.perform(get("/api/public-performances/{slug}/notices",
+                        "hamlet"))
+                .andExpect(status().isOk());
+
+        verify(publicNoticeService).searchPublic("hamlet");
+    }
+
+    @Test
+    void 운영진은_공연_공시를_연결하고_해제한다() throws Exception {
+        mockMvc.perform(post("/api/performance-page-management/projects/"
+                        + "{projectId}/notices", 20L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"publicNoticeId\":30}"))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(delete("/api/performance-page-management/projects/"
+                        + "{projectId}/notices/{publicNoticeId}", 20L, 30L))
+                .andExpect(status().isNoContent());
+
+        verify(publicNoticeService).link(ACTOR_ID, 20L, 30L);
+        verify(publicNoticeService).unlink(ACTOR_ID, 20L, 30L);
     }
 
     @Test

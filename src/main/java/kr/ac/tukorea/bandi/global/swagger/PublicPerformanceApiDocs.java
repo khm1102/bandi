@@ -3,6 +3,7 @@ package kr.ac.tukorea.bandi.global.swagger;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformancePublicPageResponse;
+import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformancePublicNoticeResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceRoundResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceViewingGuideResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceMediaResponse;
@@ -58,6 +59,11 @@ public interface PublicPerformanceApiDocs {
     @Operation(summary = "공개 공연 미디어 조회")
     @GetMapping("/{slug}/media")
     ResponseEntity<List<PerformanceMediaResponse>> searchMedia(
+            @PathVariable String slug);
+
+    @Operation(summary = "공개 공연 관련 공시 조회")
+    @GetMapping("/{slug}/notices")
+    ResponseEntity<List<PerformancePublicNoticeResponse>> searchNotices(
             @PathVariable String slug);
 
     @Operation(summary = "공개 공연 이미지·미디어 파일 조회")

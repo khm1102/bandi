@@ -1,12 +1,15 @@
 package kr.ac.tukorea.bandi.domain.performance.controller;
 
 import kr.ac.tukorea.bandi.domain.performance.dto.request.PerformancePublicPageRequest;
+import kr.ac.tukorea.bandi.domain.performance.dto.request.PerformancePublicNoticeRequest;
 import kr.ac.tukorea.bandi.domain.performance.dto.request.PerformancePublicPageStatusParam;
 import kr.ac.tukorea.bandi.domain.performance.dto.request.PerformanceViewingGuideRequest;
 import kr.ac.tukorea.bandi.domain.performance.dto.request.PublicPageStatusRequest;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformanceIdentifierResponse;
 import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformancePublicPageResponse;
+import kr.ac.tukorea.bandi.domain.performance.dto.response.PerformancePublicNoticeResponse;
 import kr.ac.tukorea.bandi.domain.performance.service.PerformancePublicPageService;
+import kr.ac.tukorea.bandi.domain.performance.service.PerformancePublicNoticeService;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import kr.ac.tukorea.bandi.global.swagger.PerformancePublicPageManagementApiDocs;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +24,7 @@ import java.util.List;
 public class PerformancePublicPageManagementApiController
         implements PerformancePublicPageManagementApiDocs {
     private final PerformancePublicPageService publicPageService;
+    private final PerformancePublicNoticeService publicNoticeService;
 
     @Override
     public ResponseEntity<List<PerformancePublicPageResponse>> search(
@@ -60,6 +64,30 @@ public class PerformancePublicPageManagementApiController
             @LoginMember Long actorMemberId,
             PerformanceViewingGuideRequest request) {
         publicPageService.saveViewingGuide(actorMemberId, request.toParam());
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public ResponseEntity<List<PerformancePublicNoticeResponse>> searchNotices(
+            @LoginMember Long actorMemberId, Long projectId) {
+        return ResponseEntity.ok(publicNoticeService.searchManaged(
+                actorMemberId, projectId));
+    }
+
+    @Override
+    public ResponseEntity<Void> linkNotice(
+            @LoginMember Long actorMemberId, Long projectId,
+            PerformancePublicNoticeRequest request) {
+        publicNoticeService.link(actorMemberId, projectId,
+                request.publicNoticeId());
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public ResponseEntity<Void> unlinkNotice(
+            @LoginMember Long actorMemberId, Long projectId,
+            Long publicNoticeId) {
+        publicNoticeService.unlink(actorMemberId, projectId, publicNoticeId);
         return ResponseEntity.noContent().build();
     }
 }
