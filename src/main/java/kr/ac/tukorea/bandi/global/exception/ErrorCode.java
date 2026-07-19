@@ -32,6 +32,16 @@ public enum ErrorCode {
     CHANGE_REASON_REQUIRED(HttpStatus.BAD_REQUEST, "M011", "변경 사유를 입력해 주세요."),
     INACTIVE_COHORT(HttpStatus.BAD_REQUEST, "M012", "비활성화된 기수에는 멤버를 배정할 수 없습니다."),
     INVALID_MEMBER_STATUS_TRANSITION(HttpStatus.CONFLICT, "M013", "현재 상태에서는 요청한 상태로 변경할 수 없습니다."),
+    SCHOOL_IDENTITY_MISMATCH(HttpStatus.CONFLICT, "M014", "학교 인증 정보와 등록 정보가 일치하지 않습니다."),
+
+    // auth (A)
+    SCHOOL_MEMBER_NOT_REGISTERED(HttpStatus.FORBIDDEN, "A001", "등록된 동아리 멤버가 아닙니다."),
+    SCHOOL_ACADEMIC_STATUS_DENIED(HttpStatus.FORBIDDEN, "A002", "재학생만 로그인할 수 있습니다."),
+    SCHOOL_IDENTITY_REVIEW_REQUIRED(HttpStatus.FORBIDDEN, "A003", "등록 정보 확인이 필요합니다. 운영진에게 문의해 주세요."),
+    MEMBER_LOGIN_DENIED(HttpStatus.FORBIDDEN, "A004", "현재 동아리 활동 상태로는 로그인할 수 없습니다."),
+    SCHOOL_CREDENTIALS_INVALID(HttpStatus.UNAUTHORIZED, "A005", "학교 계정 정보를 확인해 주세요."),
+    SCHOOL_SSO_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "A006", "학교 인증 시스템에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요."),
+    SCHOOL_SSO_RESPONSE_CHANGED(HttpStatus.BAD_GATEWAY, "A007", "학교 인증 응답을 확인할 수 없습니다. 운영진에게 문의해 주세요."),
 
     // file (FI)
     INVALID_FILE(HttpStatus.BAD_REQUEST, "FI001", "업로드할 수 없는 파일입니다."),
