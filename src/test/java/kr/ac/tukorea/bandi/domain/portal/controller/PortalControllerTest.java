@@ -1,14 +1,9 @@
 package kr.ac.tukorea.bandi.domain.portal.controller;
 
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
-
-import java.util.Map;
-import java.util.Set;
+import kr.ac.tukorea.bandi.global.security.ApiSecurityFailureHandler;
+import kr.ac.tukorea.bandi.global.security.SchoolAuthenticationProvider;
+import kr.ac.tukorea.bandi.global.security.SchoolLoginFailureHandler;
+import kr.ac.tukorea.bandi.global.security.SecurityConfig;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
@@ -19,12 +14,19 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import kr.ac.tukorea.bandi.global.security.SchoolAuthenticationProvider;
-import kr.ac.tukorea.bandi.global.security.SchoolLoginFailureHandler;
-import kr.ac.tukorea.bandi.global.security.SecurityConfig;
+
+import java.util.Map;
+import java.util.Set;
+
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 @WebMvcTest(PortalController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, ApiSecurityFailureHandler.class})
 @ActiveProfiles("dev")
 class PortalControllerTest {
 

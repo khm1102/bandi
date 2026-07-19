@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.domain.member.controller;
 
 import kr.ac.tukorea.bandi.domain.member.dto.request.SchoolLoginForm;
+import kr.ac.tukorea.bandi.global.security.ApiSecurityFailureHandler;
 import kr.ac.tukorea.bandi.global.security.LoginPrincipal;
 import kr.ac.tukorea.bandi.global.security.SchoolAuthenticationProvider;
 import kr.ac.tukorea.bandi.global.security.SchoolLoginFailureHandler;
@@ -29,7 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 @WebMvcTest(AuthenticationController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, ApiSecurityFailureHandler.class})
 class AuthenticationControllerTest {
 
     private final MockMvc mockMvc;
