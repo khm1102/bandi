@@ -2,7 +2,6 @@ package kr.ac.tukorea.bandi.domain.asset.controller;
 
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetItemCreateParam;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetSearchCondition;
-import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetUsageCreateParam;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetItemUpdateParam;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetUnitUpdateParam;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetOwnerType;
@@ -26,7 +25,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -116,35 +114,6 @@ class AssetApiControllerTest {
                         .content("{}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("C001"));
-    }
-
-    @Test
-    void 사용을_예약하고_반납한다() throws Exception {
-        given(assetService.reserve(any(), any())).willReturn(30L);
-
-        mockMvc.perform(post("/api/assets/usages")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "assetItemId": 20,
-                                  "performanceProjectId": 5,
-                                  "teamId": 2,
-                                  "quantity": 3,
-                                  "startDttm": "2027-01-01T10:00:00",
-                                  "expectedReturnDttm": "2027-01-02T10:00:00"
-                                }
-                                """))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(30));
-        mockMvc.perform(post("/api/assets/usages/{assetUsageId}/return",
-                        30L))
-                .andExpect(status().isNoContent());
-
-        verify(assetService).reserve(ACTOR_ID, new AssetUsageCreateParam(20L,
-                null, 5L, 2L, 3,
-                LocalDateTime.of(2027, 1, 1, 10, 0),
-                LocalDateTime.of(2027, 1, 2, 10, 0), null));
-        verify(assetService).returnUsage(ACTOR_ID, 30L);
     }
 
     @Test

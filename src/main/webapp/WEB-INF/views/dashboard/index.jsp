@@ -16,13 +16,11 @@
         </div>
     </div>
 
-    <div class="mb-4 grid grid-cols-1 gap-2.5 md:grid-cols-2 md:gap-4 lg:grid-cols-4">
+    <div class="mb-4 grid grid-cols-1 gap-2.5 md:grid-cols-3 md:gap-4">
         <t:statCard label="오늘 일정" value="—" unit="건" delta="일정을 확인하고 있습니다" icon="calendar" featured="true"
                     valueHook="dashboard-schedule-count" deltaHook="dashboard-schedule-summary"/>
         <t:statCard label="미확인 공지" value="—" unit="건" delta="공지를 확인하고 있습니다" icon="ticket"
                     valueHook="dashboard-unread-count" deltaHook="dashboard-notice-summary"/>
-        <t:statCard label="내 미납 회비" value="—" unit="원" delta="납부 현황을 확인하고 있습니다" tone="danger" icon="wallet" iconTone="danger"
-                    valueHook="dashboard-unpaid-amount" deltaHook="dashboard-fee-summary"/>
         <t:statCard label="주의 자산" value="—" unit="건" delta="수리·분실 상태를 확인하고 있습니다" icon="box" iconTone="warning"
                     valueHook="dashboard-asset-count" deltaHook="dashboard-asset-summary"/>
     </div>
@@ -52,14 +50,6 @@
                 </div>
             </t:card>
 
-            <t:card title="팀별 제작 진행" icon="activity" moreLabel="현재 공연 기준">
-                <p class="mb-4 hidden text-xs font-bold text-muted-foreground" data-dashboard-project-title></p>
-                <div class="flex flex-col gap-3.5" data-dashboard-progress></div>
-                <div class="py-4 text-center" data-dashboard-progress-state>
-                    <b class="block text-sm">제작 진행 현황을 불러오는 중입니다</b>
-                    <p class="mt-1 text-xs text-muted-foreground">잠시만 기다려 주세요.</p>
-                </div>
-            </t:card>
         </div>
 
         <div class="flex flex-col gap-4">
@@ -76,11 +66,6 @@
                     <a href="<c:url value='/calendar'/>" class="flex min-h-11 items-center gap-3 rounded-md px-2 transition-colors hover:bg-secondary">
                         <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-accent text-sm font-black text-accent-foreground" data-quick-schedule-count>—</span>
                         <span class="min-w-0 flex-1"><b class="block text-sm">오늘 일정 확인</b><span class="text-xs text-muted-foreground">전체·팀 일정을 한곳에서 확인</span></span>
-                        <span class="text-xs font-bold text-accent-foreground">보기</span>
-                    </a>
-                    <a href="<c:url value='/dues'/>" class="flex min-h-11 items-center gap-3 rounded-md px-2 transition-colors hover:bg-secondary">
-                        <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-destructive-soft text-sm font-black text-destructive" data-quick-fee-count>—</span>
-                        <span class="min-w-0 flex-1"><b class="block text-sm">내 회비 확인</b><span class="text-xs text-muted-foreground">미납 금액과 납부 내역 확인</span></span>
                         <span class="text-xs font-bold text-accent-foreground">보기</span>
                     </a>
                     <a href="<c:url value='/props'/>" class="flex min-h-11 items-center gap-3 rounded-md px-2 transition-colors hover:bg-secondary">
@@ -121,16 +106,4 @@
         </a>
     </template>
 
-    <template data-dashboard-progress-template>
-        <div>
-            <div class="mb-1.5 flex items-center gap-2">
-                <span class="max-w-32 truncate rounded-full bg-secondary px-2 py-1 text-xs font-bold text-muted-foreground" data-progress-team></span>
-                <span class="flex-1 truncate text-xs text-muted-foreground" data-progress-meta></span>
-                <b class="text-xs tabular-nums" data-progress-rate></b>
-            </div>
-            <div class="h-2 overflow-hidden rounded-full bg-secondary" role="progressbar" aria-valuemin="0" aria-valuemax="100">
-                <span class="block h-full rounded-full bg-primary transition-[width]" data-progress-bar></span>
-            </div>
-        </div>
-    </template>
 </t:layout>

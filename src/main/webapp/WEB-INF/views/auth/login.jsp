@@ -47,8 +47,7 @@
         <p class="mt-2 rounded-md bg-accent/60 px-3 py-2 text-accent-foreground">인증이 끝나면 비밀번호는 즉시 폐기하고, 세션에는 멤버 식별자와 역할만 유지합니다.</p>
     </div>
 
-    <div class="mt-4 flex flex-col gap-2 border-t pt-4 md:flex-row">
+    <div class="mt-4 border-t pt-4">
         <a href="<c:url value='/notices'/>" class="inline-flex min-h-11 flex-1 items-center justify-center rounded-md border bg-card px-3 text-xs font-bold transition-colors hover:bg-secondary">로그인 장애·운영 공시</a>
-        <a href="<c:url value='/reserve'/>" class="inline-flex min-h-11 flex-1 items-center justify-center rounded-md border bg-card px-3 text-xs font-bold transition-colors hover:bg-secondary">관람객 공연 신청</a>
     </div>
 </t:layoutAuth>

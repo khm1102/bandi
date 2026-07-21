@@ -1,21 +1,13 @@
 package kr.ac.tukorea.bandi.domain.portal.controller;
 
-import java.util.Map;
 import kr.ac.tukorea.bandi.domain.activity.controller.ActivityController;
 import kr.ac.tukorea.bandi.domain.asset.controller.AssetController;
 import kr.ac.tukorea.bandi.domain.calendar.controller.CalendarController;
-import kr.ac.tukorea.bandi.domain.checklist.controller.ChecklistController;
 import kr.ac.tukorea.bandi.domain.dashboard.controller.DashboardController;
-import kr.ac.tukorea.bandi.domain.event.controller.ClubEventController;
-import kr.ac.tukorea.bandi.domain.fee.controller.FeeController;
 import kr.ac.tukorea.bandi.domain.member.controller.MemberController;
 import kr.ac.tukorea.bandi.domain.notice.controller.NoticeController;
 import kr.ac.tukorea.bandi.domain.notice.controller.PublicNoticeManagementController;
 import kr.ac.tukorea.bandi.domain.notice.service.PublicNoticeService;
-import kr.ac.tukorea.bandi.domain.performance.controller.PerformanceContentManagementController;
-import kr.ac.tukorea.bandi.domain.performance.controller.PerformanceManagementController;
-import kr.ac.tukorea.bandi.domain.production.controller.ProductionTaskController;
-import kr.ac.tukorea.bandi.domain.reservation.controller.ReservationController;
 import kr.ac.tukorea.bandi.domain.resource.controller.ResourceController;
 import kr.ac.tukorea.bandi.global.security.LoginPrincipal;
 import kr.ac.tukorea.bandi.global.security.LoginViewModelAdvice;
@@ -33,6 +25,8 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.util.Map;
+
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
@@ -40,36 +34,22 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
 @WebMvcTest({DashboardController.class, CalendarController.class,
-        ResourceController.class, ActivityController.class,
-        AssetController.class, ReservationController.class,
-        ChecklistController.class, ProductionTaskController.class,
-        ClubEventController.class,
-        FeeController.class, MemberController.class, NoticeController.class,
-        PublicNoticeManagementController.class,
-        PerformanceManagementController.class,
-        PerformanceContentManagementController.class})
+        ResourceController.class, ActivityController.class, AssetController.class,
+        MemberController.class, NoticeController.class,
+        PublicNoticeManagementController.class})
 @AutoConfigureMockMvc(addFilters = false)
 @Import(LoginViewModelAdvice.class)
 @ActiveProfiles("test")
 class SsrControllerRoutingTest {
 
-    private static final Map<String, String> PAGE_VIEWS = Map.ofEntries(
-            Map.entry("dashboard", "dashboard/index"),
-            Map.entry("calendar", "schedule/calendar"),
-            Map.entry("resources", "resources/list"),
-            Map.entry("activity", "activity/list"),
-            Map.entry("props", "props/list"),
-            Map.entry("reservations", "reservation/management"),
-            Map.entry("showops", "showops/operations"),
-            Map.entry("production", "production/index"),
-            Map.entry("checklist", "checklist/index"),
-            Map.entry("attendance", "attendance/index"),
-            Map.entry("dues", "dues/list"),
-            Map.entry("members", "members/list"),
-            Map.entry("notice-management", "notice/management-list"),
-            Map.entry("performance-management", "performance/management"),
-            Map.entry("performance-content-management",
-                    "performance/content-management"));
+    private static final Map<String, String> PAGE_VIEWS = Map.of(
+            "dashboard", "dashboard/index",
+            "calendar", "schedule/calendar",
+            "resources", "resources/list",
+            "activity", "activity/list",
+            "props", "props/list",
+            "members", "members/list",
+            "notice-management", "notice/management-list");
 
     private final MockMvc mockMvc;
 
@@ -87,13 +67,9 @@ class SsrControllerRoutingTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"dashboard", "calendar", "resources",
-            "activity", "props", "reservations", "showops", "checklist",
-            "production", "attendance", "dues", "members",
-            "notice-management", "performance-management",
-            "performance-content-management"})
-    void 운영_프로파일에서_내부_화면이_렌더링된다(String page)
-            throws Exception {
+    @ValueSource(strings = {"dashboard", "calendar", "resources", "activity",
+            "props", "members", "notice-management"})
+    void 유지되는_내부_화면이_렌더링된다(String page) throws Exception {
         LoginPrincipal principal = new LoginPrincipal(1L, "ADMIN");
         SecurityContextHolder.getContext().setAuthentication(
                 UsernamePasswordAuthenticationToken.authenticated(principal,
@@ -106,40 +82,26 @@ class SsrControllerRoutingTest {
     }
 
     @Test
-    void 공개_공시와_관람_신청_화면이_렌더링된다() throws Exception {
+    void 공개_공시와_작성_화면이_렌더링된다() throws Exception {
         mockMvc.perform(get("/notices"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("notice/list"));
-        mockMvc.perform(get("/reserve"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("reservation/lookup"));
-        mockMvc.perform(get("/reserve/lookup"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("reservation/lookup"));
-        mockMvc.perform(get("/reserve/house-boy"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("reservation/form"));
-    }
 
-    @Test
-    void 공시_작성과_수정_화면이_렌더링된다() throws Exception {
         LoginPrincipal principal = new LoginPrincipal(1L, "ADMIN");
         SecurityContextHolder.getContext().setAuthentication(
                 UsernamePasswordAuthenticationToken.authenticated(principal,
                         null, principal.authorities()));
-
         mockMvc.perform(get("/notice-management/write"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("notice/management-editor"))
                 .andExpect(model().attribute("publicNoticeId", nullValue()));
-        mockMvc.perform(get("/notice-management/3/edit"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("notice/management-editor"))
-                .andExpect(model().attribute("publicNoticeId", 3L));
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"schedule", "community"})
+    @ValueSource(strings = {"schedule", "community", "dues", "attendance",
+            "production", "checklist", "performance-management",
+            "performance-content-management", "reservations", "showops",
+            "reserve", "reserve/lookup", "performances/house-boy"})
     void 폐기된_화면은_라우팅하지_않는다(String page) throws Exception {
         mockMvc.perform(get("/" + page))
                 .andExpect(status().isNotFound());

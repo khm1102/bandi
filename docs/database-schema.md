@@ -1,5 +1,11 @@
 # bandi 데이터베이스 스키마 — 1차 구현 기준
 
+> **폐기 범위 공지 (2026-07-21)**: 행사·출석, 회비, 공연 제작·관람,
+> 체크리스트, 공연 전용 정책·공개 프로필, asset_usage는 새 Flyway
+> migration으로 제거한다. 아래 해당 장은 migration 적용 전 설계의 역사적
+> 기록이며 구현 근거로 사용할 수 없다. 폐기 순서는
+> [retired-services.md](retired-services.md)를 따른다.
+
 > 문서 상태: 1차 구현 승인 기준선
 > 작성 기준일: 2026-07-18
 > 기준 문서: `feature-spec.md`, `performance-operations-plan.md`, `mockup-operations-review.md`

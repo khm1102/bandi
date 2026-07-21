@@ -8,8 +8,7 @@ import org.springframework.http.HttpStatus;
  * 에러의 단일 출처 (컨벤션 9.4).
  * 코드 접두사는 feature별 고정 — C 공통, A auth, M member, CA calendar, FI file,
  * PN public notice, NI internal notice, RS resource, AR activity record,
- * EV event, F fee, PO policy, P performance, AS asset, R reservation,
- * AU audit.
+ * AS asset, AU audit.
  * message는 사용자에게 그대로 보여줄 문장으로 작성하고 내부 사정을 노출하지 않는다.
  */
 @Getter
@@ -79,58 +78,11 @@ public enum ErrorCode {
     INVALID_ACTIVITY_RECORD_STATE(HttpStatus.CONFLICT, "AR002", "현재 상태에서는 요청한 활동 기록 작업을 처리할 수 없습니다."),
     ACTIVITY_RECORD_FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "AR003", "존재하지 않는 활동 기록 파일입니다."),
 
-    // event (EV)
-    CLUB_EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "EV001", "존재하지 않는 행사입니다."),
-    EVENT_ATTENDANCE_NOT_FOUND(HttpStatus.NOT_FOUND, "EV002", "존재하지 않는 출석 대상입니다."),
-    INVALID_CLUB_EVENT_STATE(HttpStatus.CONFLICT, "EV003", "현재 상태에서는 행사를 변경할 수 없습니다."),
-
-    // fee (F)
-    FEE_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "F001", "존재하지 않는 회비 항목입니다."),
-    FEE_CHARGE_NOT_FOUND(HttpStatus.NOT_FOUND, "F002", "존재하지 않는 회비 부과 내역입니다."),
-    INVALID_FEE_STATE(HttpStatus.CONFLICT, "F003", "현재 상태에서는 회비를 변경할 수 없습니다."),
-
-    // policy (PO)
-    POLICY_DOCUMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PO001", "존재하지 않는 정책 문서입니다."),
-    POLICY_VERSION_NOT_FOUND(HttpStatus.NOT_FOUND, "PO002", "존재하지 않는 정책 버전입니다."),
-    DUPLICATE_POLICY_VERSION(HttpStatus.CONFLICT, "PO003", "이미 등록된 정책 버전입니다."),
-    INVALID_POLICY_VERSION(HttpStatus.CONFLICT, "PO004", "동의에 사용할 수 없는 정책 버전입니다."),
-
-    // performance (P)
-    PERFORMANCE_PROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "P001", "존재하지 않는 공연 프로젝트입니다."),
-    DUPLICATE_PERFORMANCE_TERM(HttpStatus.CONFLICT, "P002", "해당 학기에 이미 공연 프로젝트가 있습니다."),
-    INVALID_PERFORMANCE_PROJECT_STATE(HttpStatus.CONFLICT, "P003", "현재 상태에서는 공연 프로젝트를 변경할 수 없습니다."),
-    PRODUCTION_TASK_NOT_FOUND(HttpStatus.NOT_FOUND, "P004", "존재하지 않는 제작 업무입니다."),
-    INVALID_PRODUCTION_TASK_STATE(HttpStatus.CONFLICT, "P005", "현재 상태에서는 제작 업무를 변경할 수 없습니다."),
-    PUBLIC_PROFILE_NOT_FOUND(HttpStatus.NOT_FOUND, "P006", "존재하지 않는 공개 프로필입니다."),
-    DUPLICATE_PUBLIC_PROFILE(HttpStatus.CONFLICT, "P007", "이미 공개 프로필이 등록된 멤버입니다."),
-    PUBLIC_PROFILE_CONSENT_NOT_FOUND(HttpStatus.NOT_FOUND, "P008", "존재하지 않는 공개 동의입니다."),
-    INVALID_PUBLIC_PROFILE_STATE(HttpStatus.CONFLICT, "P009", "현재 상태에서는 공개 프로필을 변경할 수 없습니다."),
-    PERFORMANCE_PUBLIC_PAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "P010", "존재하지 않는 공연 공개 페이지입니다."),
-    DUPLICATE_PERFORMANCE_PUBLIC_PAGE(HttpStatus.CONFLICT, "P011", "공연 공개 페이지나 슬러그가 이미 등록되어 있습니다."),
-    PERFORMANCE_CONTENT_NOT_FOUND(HttpStatus.NOT_FOUND, "P012", "존재하지 않는 공연 콘텐츠입니다."),
-    DUPLICATE_PERFORMANCE_CONTENT(HttpStatus.CONFLICT, "P013", "이미 등록된 공연 콘텐츠입니다."),
-    CHECKLIST_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "P014", "존재하지 않는 체크리스트 항목입니다."),
-    INVALID_CHECKLIST_ITEM_STATE(HttpStatus.CONFLICT, "P015", "현재 상태에서는 체크리스트를 변경할 수 없습니다."),
-
     // asset (AS)
     ASSET_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "AS001", "존재하지 않는 소품·장비 품목입니다."),
     ASSET_UNIT_NOT_FOUND(HttpStatus.NOT_FOUND, "AS002", "존재하지 않는 개별 장비입니다."),
     INVALID_ASSET(HttpStatus.BAD_REQUEST, "AS003", "소품·장비 정보가 올바르지 않습니다."),
-    ASSET_STOCK_UNAVAILABLE(HttpStatus.CONFLICT, "AS004", "사용 가능한 소품·장비 수량이 부족합니다."),
-    ASSET_USAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "AS005", "존재하지 않는 소품·장비 사용 기록입니다."),
-    INVALID_ASSET_USAGE_STATE(HttpStatus.CONFLICT, "AS006", "현재 상태에서는 소품·장비 사용 상태를 변경할 수 없습니다."),
-    ASSET_ACCESS_DENIED(HttpStatus.FORBIDDEN, "AS007", "소품·장비를 관리할 권한이 없습니다."),
-
-    // reservation (R)
-    RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "R001", "존재하지 않는 관람 신청입니다."),
-    ROUND_SEAT_NOT_FOUND(HttpStatus.NOT_FOUND, "R002", "존재하지 않는 좌석입니다."),
-    SEAT_UNAVAILABLE(HttpStatus.CONFLICT, "R003", "현재 신청할 수 없는 좌석입니다."),
-    INVALID_RESERVATION_STATE(HttpStatus.CONFLICT, "R004", "현재 상태에서는 관람 신청을 변경할 수 없습니다."),
-    INVALID_RESERVATION_TOKEN(HttpStatus.NOT_FOUND, "R005", "관람 신청을 확인할 수 없습니다."),
-    DUPLICATE_ROUND_SEAT(HttpStatus.CONFLICT, "R006", "이미 등록된 회차 좌석입니다."),
-    RESERVATION_SECURITY_FAILURE(HttpStatus.INTERNAL_SERVER_ERROR, "R007", "관람 신청 정보를 처리할 수 없습니다."),
-    INVALID_RESERVATION(HttpStatus.BAD_REQUEST, "R008", "관람 신청 정보가 올바르지 않습니다."),
-    RESERVATION_SEAT_NOT_FOUND(HttpStatus.NOT_FOUND, "R009", "존재하지 않는 신청 좌석입니다.");
+    ASSET_ACCESS_DENIED(HttpStatus.FORBIDDEN, "AS007", "소품·장비를 관리할 권한이 없습니다.");
 
     private final HttpStatus status;
     private final String code;

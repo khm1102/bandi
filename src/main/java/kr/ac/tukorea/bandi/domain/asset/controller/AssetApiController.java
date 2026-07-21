@@ -4,14 +4,12 @@ import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetItemCreateRequest;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetSearchCondition;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetSearchFilter;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetUnitCreateRequest;
-import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetUsageCreateRequest;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetItemUpdateRequest;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetStatusChangeRequest;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetUnitUpdateRequest;
 import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetIdentifierResponse;
 import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetItemResponse;
 import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetUnitResponse;
-import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetUsageResponse;
 import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetHistoryResponse;
 import kr.ac.tukorea.bandi.domain.asset.service.AssetService;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
@@ -43,13 +41,6 @@ public class AssetApiController implements AssetApiDocs {
     public ResponseEntity<List<AssetUnitResponse>> searchUnits(
             @LoginMember Long actorMemberId, Long assetItemId) {
         return ResponseEntity.ok(assetService.searchUnits(actorMemberId,
-                assetItemId));
-    }
-
-    @Override
-    public ResponseEntity<List<AssetUsageResponse>> searchUsages(
-            @LoginMember Long actorMemberId, Long assetItemId) {
-        return ResponseEntity.ok(assetService.searchUsages(actorMemberId,
                 assetItemId));
     }
 
@@ -117,19 +108,4 @@ public class AssetApiController implements AssetApiDocs {
         return ResponseEntity.noContent().build();
     }
 
-    @Override
-    public ResponseEntity<AssetIdentifierResponse> reserve(
-            @LoginMember Long actorMemberId,
-            AssetUsageCreateRequest request) {
-        Long id = assetService.reserve(actorMemberId, request.toParam());
-        return ResponseEntity.created(URI.create("/api/assets/usages/" + id))
-                .body(new AssetIdentifierResponse(id));
-    }
-
-    @Override
-    public ResponseEntity<Void> returnUsage(
-            @LoginMember Long actorMemberId, Long assetUsageId) {
-        assetService.returnUsage(actorMemberId, assetUsageId);
-        return ResponseEntity.noContent().build();
-    }
 }

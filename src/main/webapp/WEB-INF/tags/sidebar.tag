@@ -29,34 +29,8 @@
         <a href="<c:url value='/activity'/>" class="${navBase} ${active == 'activity' ? navOn : navOff}" aria-current="${active == 'activity' ? 'page' : 'false'}">
             <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>활동 기록
         </a>
-        <a href="<c:url value='/production'/>" class="${navBase} ${active == 'production' ? navOn : navOff}" aria-current="${active == 'production' ? 'page' : 'false'}">
-            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V5M4 19h16M8 15l3-3 3 2 5-6"/></svg>팀별 제작 진행
-        </a>
         <a href="<c:url value='/props'/>" class="${navBase} ${active == 'props' ? navOn : navOff}" aria-current="${active == 'props' ? 'page' : 'false'}">
             <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8"/></svg>소품·장비
-        </a>
-        <c:if test="${role == 'admin'}">
-            <a href="<c:url value='/performance-management'/>" class="${navBase} ${active == 'performance-management' ? navOn : navOff}" aria-current="${active == 'performance-management' ? 'page' : 'false'}">
-                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v13H4zM8 21h8M12 17v4M9 8l4 2.5L9 13z"/></svg>공연 운영 설정
-            </a>
-            <a href="<c:url value='/performance-content-management'/>" class="${navBase} ${active == 'performance-content-management' ? navOn : navOff}" aria-current="${active == 'performance-content-management' ? 'page' : 'false'}">
-                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="7" r="4"/><path d="M2 21a7 7 0 0 1 14 0M16 11l2 2 4-4"/></svg>공연 콘텐츠
-            </a>
-            <a href="<c:url value='/reservations'/>" class="${navBase} ${active == 'reservations' ? navOn : navOff}" aria-current="${active == 'reservations' ? 'page' : 'false'}">
-                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3a2 2 0 0 0 0 4v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3a2 2 0 0 0 0-4z"/></svg>관람 신청 관리
-            </a>
-            <a href="<c:url value='/showops'/>" class="${navBase} ${active == 'showops' ? navOn : navOff}" aria-current="${active == 'showops' ? 'page' : 'false'}">
-                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v13H4zM8 21h8M12 17v4M9 8l4 2.5L9 13z"/></svg>공연 당일 입장
-            </a>
-        </c:if>
-        <a href="<c:url value='/checklist'/>" class="${navBase} ${active == 'checklist' ? navOn : navOff}" aria-current="${active == 'checklist' ? 'page' : 'false'}">
-            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>체크리스트
-        </a>
-        <a href="<c:url value='/attendance'/>" class="${navBase} ${active == 'attendance' ? navOn : navOff}" aria-current="${active == 'attendance' ? 'page' : 'false'}">
-            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M16 11l2 2 4-4"/></svg>행사·출석
-        </a>
-        <a href="<c:url value='/dues'/>" class="${navBase} ${active == 'dues' ? navOn : navOff}" aria-current="${active == 'dues' ? 'page' : 'false'}">
-            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h16a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 7V6a2 2 0 0 1 2-2h11M17 13h.01"/></svg>회비
         </a>
         <c:if test="${role == 'admin'}">
             <a href="<c:url value='/notice-management'/>" class="${navBase} ${active == 'notice-management' ? navOn : navOff}" aria-current="${active == 'notice-management' ? 'page' : 'false'}">

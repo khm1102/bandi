@@ -9,13 +9,11 @@ import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetItemCreateRequest;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetItemUpdateRequest;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetStatusChangeRequest;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetSearchFilter;
-import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetUsageCreateRequest;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetUnitCreateRequest;
 import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetUnitUpdateRequest;
 import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetIdentifierResponse;
 import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetItemResponse;
 import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetUnitResponse;
-import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetUsageResponse;
 import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetHistoryResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import org.springdoc.core.annotations.ParameterObject;
@@ -33,7 +31,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import java.util.List;
 
 @RequestMapping("/api/assets")
-@Tag(name = ApiTag.ASSET, description = "소품·장비 품목과 공연 사용 관리 API")
+@Tag(name = ApiTag.ASSET, description = "소품·장비 재고 관리 API")
 @SecurityRequirement(name = OpenApiConfig.SESSION_COOKIE_SCHEME)
 public interface AssetApiDocs {
 
@@ -48,12 +46,6 @@ public interface AssetApiDocs {
     @Operation(summary = "개별 장비 목록 조회")
     @GetMapping("/{assetItemId}/units")
     ResponseEntity<List<AssetUnitResponse>> searchUnits(
-            @Parameter(hidden = true) @LoginMember Long actorMemberId,
-            @PathVariable Long assetItemId);
-
-    @Operation(summary = "품목 사용 이력 조회")
-    @GetMapping("/{assetItemId}/usages")
-    ResponseEntity<List<AssetUsageResponse>> searchUsages(
             @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @PathVariable Long assetItemId);
 
@@ -103,15 +95,4 @@ public interface AssetApiDocs {
             @PathVariable Long assetUnitId,
             @Valid @RequestBody AssetUnitUpdateRequest request);
 
-    @Operation(summary = "소품·장비 사용 예약")
-    @PostMapping("/usages")
-    ResponseEntity<AssetIdentifierResponse> reserve(
-            @Parameter(hidden = true) @LoginMember Long actorMemberId,
-            @Valid @RequestBody AssetUsageCreateRequest request);
-
-    @Operation(summary = "소품·장비 반납")
-    @PostMapping("/usages/{assetUsageId}/return")
-    ResponseEntity<Void> returnUsage(
-            @Parameter(hidden = true) @LoginMember Long actorMemberId,
-            @PathVariable Long assetUsageId);
 }

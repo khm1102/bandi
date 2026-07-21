@@ -14,21 +14,4 @@ public record AssetHistory(
         Long changedByMemberId,
         LocalDateTime changedDttm
 ) {
-
-    public static AssetHistory reserved(AssetUsage usage,
-                                        LocalDateTime changedDttm) {
-        return new AssetHistory(null, usage.getAssetItemId(),
-                usage.getAssetUnitId(), AssetAction.LOAN, usage.getQuantity(),
-                AssetStatus.AVAILABLE, AssetStatus.IN_USE, usage.getNote(),
-                usage.getCreatedByMemberId(), changedDttm);
-    }
-
-    public static AssetHistory returned(AssetUsage usage,
-                                        LocalDateTime changedDttm) {
-        return new AssetHistory(null, usage.getAssetItemId(),
-                usage.getAssetUnitId(), AssetAction.RETURN,
-                usage.getQuantity(), AssetStatus.IN_USE,
-                AssetStatus.AVAILABLE, usage.getNote(),
-                usage.getProcessedByMemberId(), changedDttm);
-    }
 }

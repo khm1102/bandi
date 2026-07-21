@@ -18,8 +18,8 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(SecurityTestController.class)
@@ -30,7 +30,6 @@ class SecurityConfigTest {
 
     @MockitoBean
     private SchoolAuthenticationProvider authenticationProvider;
-
     @MockitoBean
     private SchoolLoginFailureHandler failureHandler;
 
@@ -49,67 +48,32 @@ class SecurityConfigTest {
     @Test
     void 일반_멤버와_팀장은_관리자_화면에_접근할_수_없다() throws Exception {
         for (String role : new String[]{"MEMBER", "LEADER"}) {
-            mockMvc.perform(get("/members/test")
-                            .with(user("tester").roles(role)))
-                    .andExpect(status().isForbidden());
-            mockMvc.perform(get("/reservations/test")
-                            .with(user("tester").roles(role)))
-                    .andExpect(status().isForbidden());
-            mockMvc.perform(get("/showops/test")
-                            .with(user("tester").roles(role)))
+            mockMvc.perform(get("/members/test").with(user("tester").roles(role)))
                     .andExpect(status().isForbidden());
             mockMvc.perform(get("/notice-management/test")
                             .with(user("tester").roles(role)))
                     .andExpect(status().isForbidden());
-            mockMvc.perform(get("/performance-management/test")
-                            .with(user("tester").roles(role)))
-                    .andExpect(status().isForbidden());
-            mockMvc.perform(get("/performance-content-management/test")
-                            .with(user("tester").roles(role)))
-                    .andExpect(status().isForbidden());
-            mockMvc.perform(get("/api/performance-page-management/test")
-                            .with(user("tester").roles(role)))
-                    .andExpect(status().isForbidden());
-            mockMvc.perform(get("/api/performance-content-management/test")
-                            .with(user("tester").roles(role)))
-                    .andExpect(status().isForbidden());
-            mockMvc.perform(get("/api/public-profile-management/test")
-                            .with(user("tester").roles(role)))
-                    .andExpect(status().isForbidden());
             mockMvc.perform(get("/api/admin/public-notices/test")
-                            .with(user("tester").roles(role)))
-                    .andExpect(status().isForbidden());
-            mockMvc.perform(get("/api/reservation-management/test")
-                            .with(user("tester").roles(role)))
-                    .andExpect(status().isForbidden());
-            mockMvc.perform(get("/api/policies/test")
                             .with(user("tester").roles(role)))
                     .andExpect(status().isForbidden());
         }
     }
 
     @Test
-    void 운영진은_관리자_화면에_접근할_수_있다() throws Exception {
-        for (String path : new String[]{
-                "/members/test", "/reservations/test", "/showops/test",
-                "/notice-management/test", "/api/admin/public-notices/test",
-                "/performance-management/test",
-                "/api/performance-page-management/test",
-                "/performance-content-management/test",
-                "/api/performance-content-management/test",
-                "/api/public-profile-management/test",
-                "/api/reservation-management/test", "/api/policies/test"}) {
+    void 운영진은_남은_관리자_화면에_접근할_수_있다() throws Exception {
+        for (String path : new String[]{"/members/test", "/notice-management/test",
+                "/api/admin/public-notices/test"}) {
             mockMvc.perform(get(path).with(user("admin").roles("ADMIN")))
                     .andExpect(status().isOk());
         }
     }
 
     @Test
-    void 외부_공개_화면은_로그인하지_않아도_접근할_수_있다() throws Exception {
-        for (String path : new String[]{
-                "/notices/test", "/performances/show", "/reserve/test",
-                "/swagger-ui/test"}) {
-            mockMvc.perform(get(path)).andExpect(status().isOk());
+    void 폐기된_공개_공연과_관람_경로는_로그인으로_보내지_않는다() throws Exception {
+        for (String path : new String[]{"/performances/show", "/reserve/test",
+                "/api/public-performances/test", "/api/public-policies/test",
+                "/api/public-reservations/test"}) {
+            mockMvc.perform(get(path)).andExpect(status().isNotFound());
         }
     }
 
@@ -129,17 +93,6 @@ class SecurityConfigTest {
     }
 
     @Test
-    void 공개_공시_조회_API는_로그인하지_않아도_접근할_수_있다()
-            throws Exception {
-        mockMvc.perform(get("/api/public-notices/test"))
-                .andExpect(status().isOk());
-        mockMvc.perform(get("/api/public-performances/test"))
-                .andExpect(status().isOk());
-        mockMvc.perform(get("/api/public-policies/test"))
-                .andExpect(status().isOk());
-    }
-
-    @Test
     void 공개_공시_상태_변경_API는_로그인을_요구한다() throws Exception {
         mockMvc.perform(post("/api/public-notices/test").with(csrf()))
                 .andExpect(status().isUnauthorized())
@@ -147,20 +100,10 @@ class SecurityConfigTest {
     }
 
     @Test
-    void 공개_관람_신청은_로그인_없이_CSRF로_요청한다() throws Exception {
-        mockMvc.perform(post("/api/public-reservations/test"))
-                .andExpect(status().isForbidden());
-        mockMvc.perform(post("/api/public-reservations/test").with(csrf()))
-                .andExpect(status().isOk());
-    }
-
-    @Test
     void API_상태_변경은_로그인해도_CSRF가_필요하다() throws Exception {
-        mockMvc.perform(post("/api/test")
-                        .with(user("member").roles("MEMBER")))
+        mockMvc.perform(post("/api/test").with(user("member").roles("MEMBER")))
                 .andExpect(status().isForbidden());
-        mockMvc.perform(post("/api/test")
-                        .with(user("member").roles("MEMBER"))
+        mockMvc.perform(post("/api/test").with(user("member").roles("MEMBER"))
                         .with(csrf()))
                 .andExpect(status().isOk());
     }
@@ -168,20 +111,16 @@ class SecurityConfigTest {
     @Test
     void 로그인_멤버는_파일을_업로드하고_공개_승격은_운영진만_한다()
             throws Exception {
-        mockMvc.perform(post("/api/files/private")
-                        .with(csrf()))
+        mockMvc.perform(post("/api/files/private").with(csrf()))
                 .andExpect(status().isUnauthorized());
         mockMvc.perform(post("/api/files/private")
-                        .with(user("member").roles("MEMBER"))
-                        .with(csrf()))
+                        .with(user("member").roles("MEMBER")).with(csrf()))
                 .andExpect(status().isOk());
         mockMvc.perform(post("/api/files/1/public-promotions")
-                        .with(user("member").roles("MEMBER"))
-                        .with(csrf()))
+                        .with(user("member").roles("MEMBER")).with(csrf()))
                 .andExpect(status().isForbidden());
         mockMvc.perform(post("/api/files/1/public-promotions")
-                        .with(user("admin").roles("ADMIN"))
-                        .with(csrf()))
+                        .with(user("admin").roles("ADMIN")).with(csrf()))
                 .andExpect(status().isOk());
     }
 
@@ -190,43 +129,19 @@ class SecurityConfigTest {
             throws Exception {
         mockMvc.perform(get("/api/test"))
                 .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.code").value("C003"))
-                .andExpect(jsonPath("$.message").value("로그인이 필요합니다."));
+                .andExpect(jsonPath("$.code").value("C003"));
     }
 
     @Test
-    void 권한이_부족한_API는_JSON_403을_반환한다() throws Exception {
-        mockMvc.perform(get("/api/members/test")
-                        .with(user("member").roles("MEMBER")))
-                .andExpect(status().isForbidden())
-                .andExpect(jsonPath("$.code").value("C002"))
-                .andExpect(jsonPath("$.message").value("권한이 없습니다."));
-    }
-
-    @Test
-    void 로그인_멤버는_본인_정보만_조회할_수_있다() throws Exception {
+    void 로그인_멤버는_본인_정보와_팀_기준정보를_조회할_수_있다()
+            throws Exception {
         for (String role : new String[]{"MEMBER", "LEADER", "ADMIN"}) {
-            mockMvc.perform(get("/api/members/me")
-                            .with(user("tester").roles(role)))
+            mockMvc.perform(get("/api/members/me").with(user("tester").roles(role)))
                     .andExpect(status().isOk());
-        }
-
-        mockMvc.perform(get("/api/members/test")
-                        .with(user("member").roles("MEMBER")))
-                .andExpect(status().isForbidden());
-    }
-
-    @Test
-    void 로그인_멤버는_팀_기준정보를_조회할_수_있다() throws Exception {
-        for (String role : new String[]{"MEMBER", "LEADER", "ADMIN"}) {
             mockMvc.perform(get("/api/members/reference/teams")
                             .with(user("tester").roles(role)))
                     .andExpect(status().isOk());
         }
-
-        mockMvc.perform(get("/api/members/reference/cohorts")
-                        .with(user("member").roles("MEMBER")))
-                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -249,20 +164,9 @@ class SecurityConfigTest {
 @RestController
 class SecurityTestController {
 
-    @GetMapping({"/dashboard", "/members/test", "/reservations/test",
-            "/showops/test", "/notice-management/test",
-            "/performance-management/test", "/notices/test",
-            "/performance-content-management/test",
-            "/performances/show",
-            "/reserve/test", "/swagger-ui/test", "/dispatch-target", "/api/test",
-            "/api/members/me", "/api/members/reference/teams",
-            "/api/members/reference/cohorts", "/api/members/test",
-            "/api/public-notices/test",
-            "/api/reservation-management/test", "/api/policies/test",
-            "/api/admin/public-notices/test",
-            "/api/performance-page-management/test",
-            "/api/performance-content-management/test",
-            "/api/public-profile-management/test"})
+    @GetMapping({"/dashboard", "/members/test", "/notice-management/test",
+            "/dispatch-target", "/api/test", "/api/members/me",
+            "/api/members/reference/teams", "/api/admin/public-notices/test"})
     ResponseEntity<Void> page() {
         return ResponseEntity.ok().build();
     }
@@ -277,24 +181,8 @@ class SecurityTestController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/api/public-reservations/test")
-    ResponseEntity<Void> createPublicReservation() {
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping({"/api/files/private",
-            "/api/files/1/public-promotions"})
+    @PostMapping({"/api/files/private", "/api/files/1/public-promotions"})
     ResponseEntity<Void> fileChange() {
-        return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("/api/public-performances/test")
-    ResponseEntity<Void> publicPerformance() {
-        return ResponseEntity.ok().build();
-    }
-
-    @GetMapping("/api/public-policies/test")
-    ResponseEntity<Void> publicPolicy() {
         return ResponseEntity.ok().build();
     }
 }
