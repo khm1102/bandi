@@ -1,6 +1,5 @@
 package kr.ac.tukorea.bandi.domain.asset.model;
 
-import kr.ac.tukorea.bandi.domain.asset.exception.AssetStockUnavailableException;
 import kr.ac.tukorea.bandi.domain.asset.exception.InvalidAssetException;
 import lombok.Getter;
 
@@ -77,22 +76,6 @@ public class AssetItem {
         return new AssetItem(assetItemId, name, categoryCode, trackingType,
                 ownerType, ownerMemberId, externalOwnerName, totalQuantity,
                 storageLocation, newStatus, photoFileId, note);
-    }
-
-    public void validateReservation(Long assetUnitId, int quantity,
-                                    int activeQuantity) {
-        if (status != AssetStatus.AVAILABLE || quantity < 1) {
-            throw new InvalidAssetException();
-        }
-        if (trackingType == AssetTrackingType.QUANTITY) {
-            if (assetUnitId != null || activeQuantity + quantity > totalQuantity) {
-                throw new AssetStockUnavailableException();
-            }
-            return;
-        }
-        if (assetUnitId == null || quantity != 1) {
-            throw new InvalidAssetException();
-        }
     }
 
     private static void validate(String name, String categoryCode,

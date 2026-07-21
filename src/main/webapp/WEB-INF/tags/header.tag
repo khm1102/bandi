@@ -8,7 +8,6 @@
             <span class="hidden md:inline">반디</span>
         </a>
         <a href="<c:url value='/notices'/>" class="ml-auto inline-flex min-h-11 items-center rounded-md px-2.5 text-xs font-bold transition-colors hover:bg-sidebar-accent hover:text-white md:px-3 md:text-sm" aria-current="${active == 'notices' ? 'page' : 'false'}">공시</a>
-        <a href="<c:url value='/reserve'/>" class="inline-flex min-h-11 items-center rounded-md bg-sidebar-accent px-2.5 text-xs font-bold text-white md:px-3 md:text-sm" aria-current="${active == 'reserve' ? 'page' : 'false'}">신청 조회</a>
         <a href="<c:url value='/login'/>" class="inline-flex min-h-11 items-center rounded-md border border-sidebar-border px-2.5 text-xs font-bold text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-white md:px-3">멤버 로그인</a>
     </nav>
 </header>

@@ -1,10 +1,7 @@
 package kr.ac.tukorea.bandi.domain.asset.model;
 
-import kr.ac.tukorea.bandi.domain.asset.exception.AssetStockUnavailableException;
 import kr.ac.tukorea.bandi.domain.asset.exception.InvalidAssetException;
 import lombok.Getter;
-
-import java.util.Objects;
 
 @Getter
 public class AssetUnit {
@@ -33,14 +30,6 @@ public class AssetUnit {
         }
         return new AssetUnit(null, assetItemId, managementNo.strip(),
                 AssetStatus.AVAILABLE, storageLocation.strip());
-    }
-
-    public void validateReservation(Long expectedItemId,
-                                    boolean alreadyInUse) {
-        if (!Objects.equals(assetItemId, expectedItemId)
-                || status != AssetStatus.AVAILABLE || alreadyInUse) {
-            throw new AssetStockUnavailableException();
-        }
     }
 
     public AssetUnit changeStatus(AssetStatus newStatus) {

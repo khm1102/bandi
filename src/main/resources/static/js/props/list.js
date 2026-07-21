@@ -9,9 +9,6 @@ const ACTIONS = Object.freeze({
     DETAIL: 'asset-detail',
     EDIT: 'asset-edit',
     SAVE: 'asset-save',
-    RESERVE: 'asset-reserve',
-    RESERVE_SAVE: 'asset-reserve-save',
-    RETURN: 'asset-return',
     STATUS_SAVE: 'asset-status-save',
     PHOTO: 'asset-photo',
     UNIT_OPEN: 'asset-unit-open',
@@ -49,17 +46,11 @@ const ACTION_LABELS = Object.freeze({
     DISPOSE: '폐기',
 });
 
-const ACTIVE_USAGE_STATUSES = new Set(['RESERVED', 'IN_USE']);
 const canAdmin = currentUserRole === 'admin';
-const canReserve = canAdmin || currentUserRole === 'leader';
 let items = [];
 let members = [];
-let teams = [];
-let projects = [];
-let loginMember = null;
 let editingItem = null;
 let selectedItemId = null;
-const usagesByItem = new Map();
 
 function statusTone(status) {
     if (status === 'AVAILABLE') {
@@ -84,11 +75,6 @@ function memberName(memberId) {
             || `부원 #${memberId}`;
 }
 
-function teamName(teamId) {
-    return teams.find((team) => team.teamId === teamId)?.name
-            || `팀 #${teamId}`;
-}
-
 function formatDateTime(value) {
     if (!value) {
         return '-';
@@ -105,21 +91,6 @@ function formatDateTime(value) {
         minute: '2-digit',
         hour12: false,
     }).format(date);
-}
-
-function localDateTime(date) {
-    const offset = date.getTimezoneOffset() * 60_000;
-    return new Date(date.getTime() - offset).toISOString().slice(0, 19);
-}
-
-function activeUsages(assetItemId) {
-    return (usagesByItem.get(assetItemId) || [])
-            .filter((usage) => ACTIVE_USAGE_STATUSES.has(usage.status));
-}
-
-function usedQuantity(assetItemId) {
-    return activeUsages(assetItemId)
-            .reduce((total, usage) => total + usage.quantity, 0);
 }
 
 function actionButton(label, action, variant = 'outline') {
@@ -159,8 +130,7 @@ function buildItemRow(item) {
 
     const categoryCell = appendCell(row, '');
     categoryCell.appendChild(badge(categoryLabel(item.categoryCode)));
-    const used = usedQuantity(item.assetItemId);
-    appendCell(row, `${used} / ${item.totalQuantity} 사용`, used > 0 ? 'font-bold text-warning tabular-nums' : 'tabular-nums');
+    appendCell(row, `${item.totalQuantity}개`, 'tabular-nums');
     appendCell(row, item.storageLocation);
     const statusCell = appendCell(row, '');
     statusCell.appendChild(badge(statusLabel(item.status), statusTone(item.status)));
@@ -192,11 +162,9 @@ function renderItems() {
 
 function updateSummary() {
     const totalQuantity = items.reduce((total, item) => total + item.totalQuantity, 0);
-    const used = items.reduce((total, item) => total + usedQuantity(item.assetItemId), 0);
     const attention = items.filter((item) => ['REPAIR', 'LOST', 'DISPOSED'].includes(item.status)).length;
     lookup('[data-stat-value="asset-total"]').textContent = String(items.length);
     lookup('[data-stat-value="asset-quantity"]').textContent = String(totalQuantity);
-    lookup('[data-stat-value="asset-used"]').textContent = String(used);
     lookup('[data-stat-value="asset-attention"]').textContent = String(attention);
 }
 
@@ -210,39 +178,16 @@ function populateSelect(select, values, valueKey, labelBuilder) {
 }
 
 async function loadReferences() {
-    const requests = [
-        get('/api/members/me'),
-        canAdmin ? get('/api/members')
-                : Promise.resolve([]),
-        get('/api/members/reference/teams'),
-        get('/api/performance-management/projects', {limit: 100}),
-    ];
-    [loginMember, members, teams, projects] = await Promise.all(requests);
-    projects = projects.filter((project) => project.status !== 'CANCELLED');
+    members = canAdmin ? await get('/api/members') : [];
     const ownerSelect = document.getElementById('assetOwnerMember');
     if (ownerSelect) {
         populateSelect(ownerSelect, members, 'memberId', (member) => member.name);
-    }
-    const projectSelect = document.getElementById('reserveProject');
-    if (projectSelect) {
-        populateSelect(projectSelect, projects, 'performanceProjectId',
-                (project) => `${project.academicYear} ${project.termCode} · ${project.title}`);
-    }
-    const teamSelect = document.getElementById('reserveTeam');
-    if (teamSelect) {
-        populateSelect(teamSelect, teams, 'teamId', (team) => team.name);
     }
 }
 
 async function loadItems() {
     lookup('[data-asset-region]').setAttribute('aria-busy', 'true');
     items = await get('/api/assets');
-    const usageEntries = await Promise.all(items.map(async (item) => {
-        const usages = await get(`/api/assets/${item.assetItemId}/usages`);
-        return [item.assetItemId, usages];
-    }));
-    usagesByItem.clear();
-    usageEntries.forEach(([itemId, usages]) => usagesByItem.set(itemId, usages));
     updateSummary();
     renderItems();
 }
@@ -367,35 +312,6 @@ function sectionHeading(title) {
     return element('h3', 'text-sm font-extrabold', title);
 }
 
-function buildUsageList(item, usages) {
-    const section = element('section', 'flex flex-col gap-3');
-    section.appendChild(sectionHeading('사용·반납 기록'));
-    if (usages.length === 0) {
-        section.appendChild(element('p', 'rounded-lg bg-secondary px-4 py-3 text-sm text-muted-foreground', '아직 사용 기록이 없습니다.'));
-        return section;
-    }
-    const list = element('ul', 'divide-y rounded-lg border');
-    usages.forEach((usage) => {
-        const row = element('li', 'flex flex-wrap items-center gap-3 px-4 py-3');
-        const body = element('div', 'min-w-0 flex-1');
-        body.appendChild(element('strong', 'block text-sm', `${teamName(usage.teamId)} · ${usage.quantity}개`));
-        body.appendChild(element('span', 'mt-1 block text-xs text-muted-foreground', `${formatDateTime(usage.startDttm)} ~ ${formatDateTime(usage.expectedReturnDttm)}`));
-        row.appendChild(body);
-        row.appendChild(badge(ACTIVE_USAGE_STATUSES.has(usage.status) ? '사용 중' : '반납 완료', ACTIVE_USAGE_STATUSES.has(usage.status) ? 'warning' : 'success'));
-        const mayReturn = canAdmin || (currentUserRole === 'leader'
-                && loginMember?.teamId === usage.teamId);
-        if (ACTIVE_USAGE_STATUSES.has(usage.status) && mayReturn) {
-            const button = actionButton('반납 처리', ACTIONS.RETURN, 'primary');
-            button.dataset.usageId = String(usage.assetUsageId);
-            button.dataset.itemId = String(item.assetItemId);
-            row.appendChild(button);
-        }
-        list.appendChild(row);
-    });
-    section.appendChild(list);
-    return section;
-}
-
 function buildHistoryList(histories) {
     const section = element('section', 'flex flex-col gap-3');
     section.appendChild(sectionHeading('변경 이력'));
@@ -502,7 +418,7 @@ async function renderDetail(itemId) {
     const fields = element('dl', 'grid grid-cols-2 gap-4 rounded-lg bg-secondary p-4');
     fields.append(
         detailField('총수량', `${item.totalQuantity}개`),
-        detailField('사용 중', `${usedQuantity(itemId)}개`),
+        detailField('관리 방식', item.trackingType === 'INDIVIDUAL' ? '개별 관리' : '수량 관리'),
         detailField('보관 위치', item.storageLocation),
         detailField('소유 구분', item.ownerType === 'CLUB' ? '동아리' : item.ownerType === 'MEMBER' ? memberName(item.ownerMemberId) : item.externalOwnerName),
     );
@@ -516,7 +432,6 @@ async function renderDetail(itemId) {
     if (item.trackingType === 'INDIVIDUAL') {
         detail.appendChild(buildUnitList(item, units));
     }
-    detail.appendChild(buildUsageList(item, usagesByItem.get(itemId) || []));
     detail.appendChild(buildHistoryList(histories));
 }
 
@@ -546,67 +461,6 @@ async function changeStatus(trigger) {
         await loadItems();
         await renderDetail(Number(trigger.dataset.itemId));
         showToast('품목 상태를 변경했습니다.');
-    });
-}
-
-async function openReserve(trigger) {
-    const itemId = Number(trigger.closest('[data-asset-row]').dataset.itemId);
-    const item = items.find((candidate) => candidate.assetItemId === itemId);
-    document.getElementById('reserveItemId').value = String(itemId);
-    lookup('[data-reserve-item-name]').textContent = item.name;
-    document.getElementById('reserveQuantity').value = '1';
-    document.getElementById('reserveQuantity').disabled = item.trackingType === 'INDIVIDUAL';
-    document.getElementById('reserveReturn').value = localDateTime(new Date(Date.now() + 86_400_000)).slice(0, 16);
-    document.getElementById('reserveNote').value = '';
-    const unitField = lookup('[data-reserve-unit-field]');
-    unitField.hidden = item.trackingType !== 'INDIVIDUAL';
-    if (item.trackingType === 'INDIVIDUAL') {
-        const units = await get(`/api/assets/${itemId}/units`);
-        const availableUnits = units.filter((unit) => unit.status === 'AVAILABLE');
-        if (availableUnits.length === 0) {
-            showToast('사용 가능한 개별 장비가 없습니다.');
-            return;
-        }
-        populateSelect(document.getElementById('reserveUnit'), availableUnits,
-                'assetUnitId', (unit) => `${unit.managementNo} · ${unit.storageLocation}`);
-        document.getElementById('reserveUnit').required = true;
-    } else {
-        document.getElementById('reserveUnit').required = false;
-    }
-    openModal('assetReserveModal');
-}
-
-async function saveReservation(trigger) {
-    const form = lookup('[data-reserve-form]');
-    if (!form.reportValidity()) {
-        return;
-    }
-    const itemId = Number(readValue('reserveItemId'));
-    const item = items.find((candidate) => candidate.assetItemId === itemId);
-    await withBusy(trigger, async () => {
-        await post('/api/assets/usages', {
-            assetItemId: itemId,
-            assetUnitId: item.trackingType === 'INDIVIDUAL'
-                    ? Number(readValue('reserveUnit')) : null,
-            performanceProjectId: Number(readValue('reserveProject')),
-            teamId: canAdmin ? Number(readValue('reserveTeam')) : loginMember.teamId,
-            quantity: Number(readValue('reserveQuantity')),
-            startDttm: localDateTime(new Date(Date.now() + 60_000)),
-            expectedReturnDttm: `${readValue('reserveReturn')}:00`,
-            note: readValue('reserveNote') || null,
-        });
-        closeActionModal(trigger);
-        await loadItems();
-        showToast('사용 기록을 등록했습니다.');
-    });
-}
-
-async function returnUsage(trigger) {
-    await withBusy(trigger, async () => {
-        await post(`/api/assets/usages/${trigger.dataset.usageId}/return`);
-        await loadItems();
-        await renderDetail(Number(trigger.dataset.itemId));
-        showToast('반납 처리했습니다.');
     });
 }
 
@@ -679,9 +533,6 @@ bindPageActions({
     [ACTIONS.DETAIL]: openDetail,
     [ACTIONS.EDIT]: openEdit,
     [ACTIONS.SAVE]: saveItem,
-    [ACTIONS.RESERVE]: (trigger) => withBusy(trigger, () => openReserve(trigger)),
-    [ACTIONS.RESERVE_SAVE]: saveReservation,
-    [ACTIONS.RETURN]: returnUsage,
     [ACTIONS.STATUS_SAVE]: changeStatus,
     [ACTIONS.PHOTO]: openPhoto,
     [ACTIONS.UNIT_OPEN]: (trigger) => openUnit(trigger, false),

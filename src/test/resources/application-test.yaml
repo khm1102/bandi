@@ -15,9 +15,3 @@ bandi:
     public-bucket: bandi-public
     max-upload-bytes: 524288000
     private-url-lifetime: 300s
-  reservation-security:
-    active-key-version: 1
-    encryption-keys:
-      1: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=
-    hmac-key-base64: YWJjZGVmZ2hpamtsbW5vcHFyc3R1dnd4eXoxMjM0NTY=
-    personal-data-retention: 90d

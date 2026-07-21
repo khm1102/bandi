@@ -9,7 +9,6 @@ import kr.ac.tukorea.bandi.domain.asset.model.AssetStatus;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetTrackingType;
 import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
-import kr.ac.tukorea.bandi.domain.performance.service.PerformanceProjectService;
 import kr.ac.tukorea.bandi.domain.file.service.FileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -32,16 +31,14 @@ class AssetQueryServiceTest {
     @Mock
     private MemberService memberService;
     @Mock
-    private PerformanceProjectService performanceProjectService;
-    @Mock
     private FileService fileService;
 
     private AssetService assetService;
 
     @BeforeEach
     void setUp() {
-        assetService = new AssetService(assetMapper, memberService,
-                performanceProjectService, fileService, Clock.systemUTC());
+        assetService = new AssetService(assetMapper, memberService, fileService,
+                Clock.systemUTC());
         given(memberService.lookupAccessContext(1L)).willReturn(
                 new MemberAccessContext(1L, 2L, false, false, true));
     }

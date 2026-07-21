@@ -38,28 +38,18 @@ public class SecurityConfig {
                         "/api-docs/**", "/swagger-ui/**",
                         "/style-guide/**").permitAll()
                 .requestMatchers(HttpMethod.GET,
-                        "/api/public-notices/**",
-                        "/api/public-performances/**",
-                        "/api/public-policies/**").permitAll()
-                .requestMatchers("/api/public-reservations/**").permitAll()
+                        "/api/public-notices/**").permitAll()
+                .requestMatchers("/api/public-performances/**",
+                        "/api/public-policies/**",
+                        "/api/public-reservations/**").permitAll()
                 .requestMatchers(HttpMethod.POST,
                         "/api/files/*/public-promotions")
                 .hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/members/me",
                         "/api/members/reference/teams")
                 .authenticated()
-                .requestMatchers("/members/**", "/reservations/**",
-                        "/notice-management/**",
-                        "/performance-management/**",
-                        "/performance-content-management/**",
-                        "/showops/**", "/api/members/**",
-                        "/api/reservations/**", "/api/showops/**",
-                        "/api/reservation-management/**",
-                        "/api/policies/**",
-                        "/api/admin/public-notices/**",
-                        "/api/performance-page-management/**",
-                        "/api/performance-content-management/**",
-                        "/api/public-profile-management/**")
+                .requestMatchers("/members/**", "/notice-management/**",
+                        "/api/members/**", "/api/admin/public-notices/**")
                 .hasRole("ADMIN")
                 .anyRequest().authenticated());
         http.exceptionHandling(exception -> exception

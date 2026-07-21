@@ -4,9 +4,8 @@
 <c:set var="input" value="h-11 w-full rounded-md border border-input bg-card px-3 text-base transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm"/>
 <c:set var="label" value="mb-1.5 block text-xs font-extrabold text-muted-foreground"/>
 <c:set var="canAdmin" value="${role eq 'admin'}"/>
-<c:set var="canReserve" value="${role eq 'admin' or role eq 'leader'}"/>
 <t:layout title="소품·장비" active="props" role="${role}" scriptPath="props/list">
-    <t:pageHead title="소품·장비" description="재고와 보관 위치, 사용·반납 이력을 한곳에서 관리합니다">
+    <t:pageHead title="소품·장비" description="재고와 보관 위치, 변경 이력을 한곳에서 관리합니다">
         <c:if test="${canAdmin}">
             <t:button openModal="assetModal">품목 등록</t:button>
         </c:if>
@@ -18,10 +17,9 @@
                type="search" placeholder="품목명, 위치, 분류 검색" autocomplete="off">
     </section>
 
-    <section class="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-4" aria-label="소품·장비 현황">
+    <section class="mb-4 grid grid-cols-2 gap-4 lg:grid-cols-3" aria-label="소품·장비 현황">
         <t:statCard label="전체 품목" value="0" unit="종" valueHook="asset-total"/>
         <t:statCard label="총 재고" value="0" unit="개" valueHook="asset-quantity"/>
-        <t:statCard label="사용 중" value="0" unit="개" tone="danger" valueHook="asset-used"/>
         <t:statCard label="점검 필요" value="0" unit="종" tone="danger" valueHook="asset-attention"/>
     </section>
 
@@ -54,9 +52,6 @@
     <template data-asset-actions-template>
         <div class="flex justify-end gap-2">
             <t:button variant="outline" size="compact" pageAction="asset-detail">상세</t:button>
-            <c:if test="${canReserve}">
-                <t:button variant="outline" size="compact" pageAction="asset-reserve">사용 등록</t:button>
-            </c:if>
             <c:if test="${canAdmin}">
                 <t:button size="compact" pageAction="asset-edit">수정</t:button>
             </c:if>
@@ -138,57 +133,11 @@
         </t:modal>
     </c:if>
 
-    <t:modal id="assetDetailModal" title="품목 상세" description="현재 재고와 변경·사용 이력을 확인합니다.">
+    <t:modal id="assetDetailModal" title="품목 상세" description="현재 재고와 변경 이력을 확인합니다.">
         <jsp:body>
             <div data-asset-detail class="flex flex-col gap-5" aria-live="polite"></div>
         </jsp:body>
     </t:modal>
-
-    <c:if test="${canReserve}">
-        <t:modal id="assetReserveModal" title="사용 등록" description="공연 제작을 위해 사용할 수량과 반납 예정 시각을 기록합니다.">
-            <jsp:attribute name="footer">
-                <t:button variant="outline" action="close-modal">취소</t:button>
-                <t:button pageAction="asset-reserve-save">사용 등록</t:button>
-            </jsp:attribute>
-            <jsp:body>
-                <form data-reserve-form class="flex flex-col gap-4">
-                    <input id="reserveItemId" type="hidden">
-                    <div>
-                        <span class="${label}">선택 품목</span>
-                        <strong data-reserve-item-name class="block text-sm"></strong>
-                    </div>
-                    <div>
-                        <label class="${label}" for="reserveProject">공연 프로젝트 *</label>
-                        <select class="${input}" id="reserveProject" required></select>
-                    </div>
-                    <c:if test="${canAdmin}">
-                        <div>
-                            <label class="${label}" for="reserveTeam">사용 팀 *</label>
-                            <select class="${input}" id="reserveTeam" required></select>
-                        </div>
-                    </c:if>
-                    <div data-reserve-unit-field hidden>
-                        <label class="${label}" for="reserveUnit">개별 장비 *</label>
-                        <select class="${input}" id="reserveUnit"></select>
-                    </div>
-                    <div class="grid gap-3 md:grid-cols-2">
-                        <div>
-                            <label class="${label}" for="reserveQuantity">수량 *</label>
-                            <input class="${input}" id="reserveQuantity" type="number" min="1" step="1" value="1" required>
-                        </div>
-                        <div>
-                            <label class="${label}" for="reserveReturn">반납 예정 *</label>
-                            <input class="${input}" id="reserveReturn" type="datetime-local" required>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="${label}" for="reserveNote">사용 목적</label>
-                        <textarea class="${input} min-h-20 py-3" id="reserveNote" maxlength="1000"></textarea>
-                    </div>
-                </form>
-            </jsp:body>
-        </t:modal>
-    </c:if>
 
     <c:if test="${canAdmin}">
         <t:modal id="assetUnitModal" title="개별 장비 등록" description="개별 관리 품목에 관리번호를 부여합니다.">
