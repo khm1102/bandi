@@ -200,6 +200,13 @@ class FileServiceTest {
     }
 
     @Test
+    void 서비스_폐기_절차는_검증된_저장_범위와_키로_객체만_제거한다() {
+        fileService.removeObjectForRetirement(StorageScope.PRIVATE, PRIVATE_KEY);
+
+        verify(objectStorage).remove(StorageScope.PRIVATE, PRIVATE_KEY);
+    }
+
+    @Test
     void 비공개_파일은_외부_콘텐츠에_연결할_수_없다() {
         StoredFile source = readyPrivate(PRIVATE_KEY);
         assignId(source, PRIVATE_FILE_ID);

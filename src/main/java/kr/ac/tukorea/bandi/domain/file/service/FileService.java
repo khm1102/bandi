@@ -116,6 +116,14 @@ public class FileService {
         }
     }
 
+    /**
+     * 서비스 폐기 절차에서 이미 참조 안전성이 검증된 객체만 제거한다.
+     * 메타데이터 삭제는 호출자가 별도 마이그레이션에서 처리한다.
+     */
+    public void removeObjectForRetirement(StorageScope scope, String storageKey) {
+        objectStorage.remove(scope, storageKey);
+    }
+
     private void compensateFailure(Long storedFileId, StorageScope scope, String storageKey) {
         try {
             objectStorage.remove(scope, storageKey);

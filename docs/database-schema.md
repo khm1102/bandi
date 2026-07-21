@@ -490,6 +490,19 @@ erDiagram
 - 비공개 다운로드는 요청 멤버의 기능별 접근 권한을 먼저 검증하고 URL 만료시간을 서버 설정으로 제한한다.
 - 파일 저장 Service 테스트는 정상 저장, MIME·크기 거부, MinIO 실패 보상, 비인가 다운로드, `PENDING` 파일 차단과 공개 승격을 포함한다.
 
+### 7.5 `performance_file_retirement_manifest` (한시적 폐기 안전 장치)
+
+공연·관람 서비스를 물리 폐기하기 전에 관련 MinIO 객체를 먼저 검증·삭제하기 위한 한시적 manifest다.
+`stored_file_id`에는 FK를 두지 않는다. 2단계 마이그레이션에서 삭제가 확인된 `stored_file` 행을
+하드 삭제한 뒤 이 manifest 자체도 함께 제거해야 하기 때문이다.
+
+- 후보: 공연 공개 페이지 이미지, 공개 프로필 사진, 공연 미디어와 `performance/` 접두사 객체
+- 상태: `PENDING`, `DELETED`, `SKIPPED`, `FAILED`
+- `SKIPPED`: 자료·활동 기록·공지·공시·소품 사진처럼 유지 서비스가 같은 파일을 참조함
+- `FAILED`: MinIO 객체 삭제가 실패함. 이 상태 또는 `PENDING`이 남아 있으면 2단계 DB 폐기를 적용하지 않는다.
+- 실행은 기본 비활성화다. 활성화했지만 mode를 생략하면 후보만 기록하는 `REPORT`로 동작하며,
+  `APPLY`를 명시할 때만 객체를 삭제한다.
+
 ## 8. 캘린더
 
 ### 8.1 `calendar_event`

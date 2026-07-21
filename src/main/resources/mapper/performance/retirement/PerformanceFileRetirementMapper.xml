@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.ac.tukorea.bandi.domain.performance.retirement.mapper.PerformanceFileRetirementMapper">
+
+    <resultMap id="retirementFileResultMap"
+               type="kr.ac.tukorea.bandi.domain.performance.retirement.PerformanceRetirementFile">
+        <constructor>
+            <idArg column="stored_file_id" javaType="java.lang.Long"/>
+            <arg column="storage_scope_code"
+                 javaType="kr.ac.tukorea.bandi.domain.file.model.StorageScope"/>
+            <arg column="storage_key" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+
+    <select id="searchCandidates" resultMap="retirementFileResultMap">
+        SELECT sf.stored_file_id, sf.storage_scope_code, sf.storage_key
+        FROM stored_file sf
+        WHERE sf.storage_key LIKE 'performance/%'
+           OR EXISTS (
+               SELECT 1
+               FROM performance_public_page ppp
+               WHERE sf.stored_file_id IN (
+                   ppp.hero_file_id, ppp.poster_file_id, ppp.og_image_file_id
+               )
+           )
+           OR EXISTS (
+               SELECT 1
+               FROM public_profile pp
+               WHERE pp.profile_file_id = sf.stored_file_id
+           )
+           OR EXISTS (
+               SELECT 1
+               FROM performance_media pm
+               WHERE pm.stored_file_id = sf.stored_file_id
+           )
+    </select>
+
+    <select id="searchPendingCandidates" resultMap="retirementFileResultMap">
+        SELECT stored_file_id, storage_scope_code, storage_key
+        FROM performance_file_retirement_manifest
+        WHERE status_code = 'PENDING'
+        ORDER BY performance_file_retirement_manifest_id
+    </select>
+
+    <select id="lookupRetainedReferenceType" resultType="java.lang.String">
+        SELECT reference_type
+        FROM (
+            SELECT 'asset_item' AS reference_type
+            FROM asset_item
+            WHERE photo_file_id = #{storedFileId}
+            UNION ALL
+            SELECT 'resource_file' AS reference_type
+            FROM resource_file
+            WHERE stored_file_id = #{storedFileId}
+            UNION ALL
+            SELECT 'activity_record_file' AS reference_type
+            FROM activity_record_file
+            WHERE stored_file_id = #{storedFileId}
+            UNION ALL
+            SELECT 'internal_notice_attachment' AS reference_type
+            FROM internal_notice_attachment
+            WHERE stored_file_id = #{storedFileId}
+            UNION ALL
+            SELECT 'public_notice_attachment' AS reference_type
+            FROM public_notice_attachment
+            WHERE stored_file_id = #{storedFileId}
+        ) retained_reference
+        LIMIT 1
+    </select>
+
+    <insert id="upsertPending">
+        INSERT INTO performance_file_retirement_manifest (
+            stored_file_id, storage_scope_code, storage_key, status_code,
+            failure_reason, object_deleted_dttm
+        ) VALUES (
+            #{storedFileId}, #{storageScope}, #{storageKey}, 'PENDING', NULL, NULL
+        ) ON DUPLICATE KEY UPDATE
+            storage_scope_code = VALUES(storage_scope_code),
+            storage_key = VALUES(storage_key),
+            status_code = CASE
+                WHEN status_code = 'DELETED' THEN 'DELETED'
+                ELSE 'PENDING'
+            END,
+            failure_reason = CASE
+                WHEN status_code = 'DELETED' THEN failure_reason
+                ELSE NULL
+            END,
+            object_deleted_dttm = CASE
+                WHEN status_code = 'DELETED' THEN object_deleted_dttm
+                ELSE NULL
+            END
+    </insert>
+
+    <insert id="upsertSkipped">
+        INSERT INTO performance_file_retirement_manifest (
+            stored_file_id, storage_scope_code, storage_key, status_code,
+            failure_reason, object_deleted_dttm
+        ) VALUES (
+            #{retirementFile.storedFileId}, #{retirementFile.storageScope},
+            #{retirementFile.storageKey}, 'SKIPPED', #{retainedReferenceType}, NULL
+        ) ON DUPLICATE KEY UPDATE
+            storage_scope_code = VALUES(storage_scope_code),
+            storage_key = VALUES(storage_key),
+            status_code = CASE
+                WHEN status_code = 'DELETED' THEN 'DELETED'
+                ELSE 'SKIPPED'
+            END,
+            failure_reason = CASE
+                WHEN status_code = 'DELETED' THEN failure_reason
+                ELSE VALUES(failure_reason)
+            END
+    </insert>
+
+    <update id="updateDeleted">
+        UPDATE performance_file_retirement_manifest
+        SET status_code = 'DELETED',
+            failure_reason = NULL,
+            object_deleted_dttm = CURRENT_TIMESTAMP(6)
+        WHERE stored_file_id = #{storedFileId}
+          AND status_code = 'PENDING'
+    </update>
+
+    <update id="updateFailed">
+        UPDATE performance_file_retirement_manifest
+        SET status_code = 'FAILED',
+            failure_reason = #{failureReason}
+        WHERE stored_file_id = #{storedFileId}
+          AND status_code = 'PENDING'
+    </update>
+</mapper>
