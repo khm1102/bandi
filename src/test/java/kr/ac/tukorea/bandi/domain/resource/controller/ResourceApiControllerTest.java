@@ -85,9 +85,10 @@ class ResourceApiControllerTest {
     @Test
     void 자료_파일은_애플리케이션이_직접_전송한다() throws Exception {
         given(resourceService.openDownload(ACTOR_ID, RESOURCE_ID, FILE_ID))
-                .willReturn(new kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload(
+                .willReturn(new kr.ac.tukorea.bandi.global.response.FileDownloadResponse(
                         "script.pdf", "application/pdf", 4,
-                        () -> new java.io.ByteArrayInputStream(new byte[]{1, 2, 3, 4})));
+                        new org.springframework.core.io.InputStreamResource(
+                                new java.io.ByteArrayInputStream(new byte[]{1, 2, 3, 4}))));
 
         mockMvc.perform(get("/api/resources/{resourceId}/files/{fileId}/download",
                         RESOURCE_ID, FILE_ID))

@@ -4,10 +4,9 @@ import kr.ac.tukorea.bandi.domain.notice.dto.request.PublicNoticeSearchParam;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.PublicNoticeDetailResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.PublicNoticeSummaryResponse;
 import kr.ac.tukorea.bandi.domain.notice.service.PublicNoticeService;
-import kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload;
+import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
 import kr.ac.tukorea.bandi.global.swagger.PublicNoticeApiDocs;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -41,12 +40,12 @@ public class PublicNoticeApiController implements PublicNoticeApiDocs {
         return attachment(publicNoticeService.openAttachmentDownload(publicNoticeId, storedFileId));
     }
 
-    private ResponseEntity<Resource> attachment(FileDownload file) {
+    private ResponseEntity<Resource> attachment(FileDownloadResponse file) {
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(file.contentType()))
                 .contentLength(file.sizeBytes())
                 .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
                         .filename(file.originalName(), StandardCharsets.UTF_8).build().toString())
-                .body(new InputStreamResource(file.openStream()));
+                .body(file.resource());
     }
 }

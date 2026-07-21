@@ -11,6 +11,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Locale;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -96,6 +97,23 @@ class LocalFileObjectStorageTest {
         storage.remove(StorageScope.PRIVATE, "resource/file");
 
         assertThat(storageRoot.resolve("private/resource/file")).doesNotExist();
+    }
+
+    @Test
+    void 기본_로케일과_관계없이_scope_디렉터리는_영문_소문자를_사용한다() throws Exception {
+        Locale previous = Locale.getDefault();
+        Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+        try {
+            byte[] content = "bandi".getBytes(StandardCharsets.UTF_8);
+
+            storage().upload(StorageScope.PRIVATE, "resource/file", "text/plain",
+                    content.length, () -> new ByteArrayInputStream(content));
+
+            assertThat(storageRoot.resolve("private/resource/file")).exists();
+            assertThat(storageRoot.resolve("prıvate/resource/file")).doesNotExist();
+        } finally {
+            Locale.setDefault(previous);
+        }
     }
 
     private LocalFileObjectStorage storage() {

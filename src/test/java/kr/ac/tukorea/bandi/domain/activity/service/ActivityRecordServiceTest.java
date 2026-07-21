@@ -398,7 +398,7 @@ class ActivityRecordServiceTest {
                 .willReturn(download());
         assertThat(activityRecordService.openApprovedDownload(
                 ACTOR_ID, RECORD_ID, FILE_ID))
-                .extracting(kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload::originalName)
+                .extracting(kr.ac.tukorea.bandi.global.response.FileDownloadResponse::originalName)
                 .isEqualTo("proof.png");
     }
 
@@ -525,10 +525,11 @@ class ActivityRecordServiceTest {
                 ActivityFileRole.EVIDENCE, 0, ACTOR_ID, "작성자", NOW);
     }
 
-    private kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload download() {
-        return new kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload(
+    private kr.ac.tukorea.bandi.global.response.FileDownloadResponse download() {
+        return new kr.ac.tukorea.bandi.global.response.FileDownloadResponse(
                 "proof.png", "image/png", 4,
-                () -> new java.io.ByteArrayInputStream(new byte[]{1, 2, 3, 4}));
+                new org.springframework.core.io.InputStreamResource(
+                        new java.io.ByteArrayInputStream(new byte[]{1, 2, 3, 4})));
     }
 
     private void assignRecordId(ActivityRecord record, Long activityRecordId) {

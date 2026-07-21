@@ -18,6 +18,7 @@ import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HexFormat;
+import java.util.Locale;
 
 @Component
 @RequiredArgsConstructor
@@ -100,7 +101,7 @@ public class LocalFileObjectStorage implements FileObjectStorage {
         if (relative.isAbsolute() || relative.getNameCount() == 0 || relative.startsWith("..")) {
             throw new FileStorageUnavailableException("invalid-storage-key");
         }
-        Path scopeRoot = properties.root().resolve(scope.name().toLowerCase()).normalize();
+        Path scopeRoot = properties.root().resolve(scope.name().toLowerCase(Locale.ROOT)).normalize();
         Path resolved = scopeRoot.resolve(relative).normalize();
         if (!resolved.startsWith(scopeRoot)) {
             throw new FileStorageUnavailableException("invalid-storage-key");

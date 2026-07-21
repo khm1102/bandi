@@ -245,9 +245,10 @@ class InternalNoticeReadServiceTest {
                 NOW.minusMinutes(5));
     }
 
-    private kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload download() {
-        return new kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload(
+    private kr.ac.tukorea.bandi.global.response.FileDownloadResponse download() {
+        return new kr.ac.tukorea.bandi.global.response.FileDownloadResponse(
                 "proof.png", "image/png", 4,
-                () -> new java.io.ByteArrayInputStream(new byte[]{1, 2, 3, 4}));
+                new org.springframework.core.io.InputStreamResource(
+                        new java.io.ByteArrayInputStream(new byte[]{1, 2, 3, 4})));
     }
 }

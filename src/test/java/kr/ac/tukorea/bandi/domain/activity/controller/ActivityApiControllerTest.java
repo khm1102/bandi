@@ -98,9 +98,10 @@ class ActivityApiControllerTest {
     void 승인된_증빙은_애플리케이션이_직접_전송한다() throws Exception {
         given(activityRecordService.openApprovedDownload(ACTOR_ID,
                 RECORD_ID, FILE_ID)).willReturn(
-                new kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload(
+                new kr.ac.tukorea.bandi.global.response.FileDownloadResponse(
                         "evidence.png", "image/png", 4,
-                        () -> new java.io.ByteArrayInputStream(new byte[]{1, 2, 3, 4})));
+                        new org.springframework.core.io.InputStreamResource(
+                                new java.io.ByteArrayInputStream(new byte[]{1, 2, 3, 4}))));
 
         mockMvc.perform(get("/api/activity-records/{recordId}/files/"
                         + "{fileId}/download", RECORD_ID, FILE_ID))
@@ -111,9 +112,10 @@ class ActivityApiControllerTest {
     void 관리_가능한_현재_증빙은_애플리케이션이_직접_전송한다() throws Exception {
         given(activityRecordService.openManageableDownload(ACTOR_ID,
                 RECORD_ID, FILE_ID)).willReturn(
-                new kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload(
+                new kr.ac.tukorea.bandi.global.response.FileDownloadResponse(
                         "evidence.png", "image/png", 4,
-                        () -> new java.io.ByteArrayInputStream(new byte[]{1, 2, 3, 4})));
+                        new org.springframework.core.io.InputStreamResource(
+                                new java.io.ByteArrayInputStream(new byte[]{1, 2, 3, 4}))));
 
         mockMvc.perform(get("/api/activity-management/{recordId}/files/"
                         + "{fileId}/download", RECORD_ID, FILE_ID))

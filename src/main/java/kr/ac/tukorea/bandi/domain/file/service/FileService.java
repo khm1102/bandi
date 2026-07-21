@@ -1,14 +1,17 @@
 package kr.ac.tukorea.bandi.domain.file.service;
 
-import kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload;
 import kr.ac.tukorea.bandi.domain.file.dto.response.FileReferenceResponse;
 import kr.ac.tukorea.bandi.domain.file.exception.FileAccessDeniedException;
 import kr.ac.tukorea.bandi.domain.file.exception.InvalidFileException;
 import kr.ac.tukorea.bandi.domain.file.model.StorageScope;
 import kr.ac.tukorea.bandi.domain.file.model.StoredFile;
+import kr.ac.tukorea.bandi.domain.file.exception.FileStorageUnavailableException;
+import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 
 @Slf4j
 @Service
@@ -48,7 +51,7 @@ public class FileService {
         }
     }
 
-    public FileDownload openPrivateDownload(Long storedFileId, FileAccessDecision accessDecision) {
+    public FileDownloadResponse openPrivateDownload(Long storedFileId, FileAccessDecision accessDecision) {
         if (accessDecision != FileAccessDecision.GRANTED) {
             throw new FileAccessDeniedException();
         }
@@ -57,7 +60,7 @@ public class FileService {
         return download(file, StorageScope.PRIVATE);
     }
 
-    public FileDownload openPublicDownload(Long storedFileId) {
+    public FileDownloadResponse openPublicDownload(Long storedFileId) {
         StoredFile file = metadataService.lookup(storedFileId);
         file.validatePublicUse();
         return download(file, StorageScope.PUBLIC);
@@ -124,8 +127,13 @@ public class FileService {
         }
     }
 
-    private FileDownload download(StoredFile file, StorageScope scope) {
-        return new FileDownload(file.getOriginalName(), file.getContentType(),
-                file.getSizeBytes(), objectStorage.open(scope, file.getStorageKey()));
+    private FileDownloadResponse download(StoredFile file, StorageScope scope) {
+        try {
+            return new FileDownloadResponse(file.getOriginalName(), file.getContentType(),
+                    file.getSizeBytes(), new InputStreamResource(
+                    objectStorage.open(scope, file.getStorageKey()).openStream()));
+        } catch (IOException exception) {
+            throw new FileStorageUnavailableException("stream-open-failed");
+        }
     }
 }

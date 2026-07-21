@@ -158,9 +158,10 @@ class AssetApiControllerTest {
     @Test
     void 품목_사진은_애플리케이션이_직접_전송한다() throws Exception {
         given(assetService.openPhotoDownload(ACTOR_ID, 20L))
-                .willReturn(new kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload(
+                .willReturn(new kr.ac.tukorea.bandi.global.response.FileDownloadResponse(
                         "photo.png", "image/png", 4,
-                        () -> new java.io.ByteArrayInputStream(new byte[]{1, 2, 3, 4})));
+                        new org.springframework.core.io.InputStreamResource(
+                                new java.io.ByteArrayInputStream(new byte[]{1, 2, 3, 4}))));
 
         mockMvc.perform(get("/api/assets/{assetItemId}/photo/download", 20L))
                 .andExpect(status().isOk());

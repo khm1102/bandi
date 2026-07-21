@@ -29,7 +29,7 @@ import kr.ac.tukorea.bandi.domain.activity.model.ActivityReviewHistory;
 import kr.ac.tukorea.bandi.domain.file.dto.response.FileReferenceResponse;
 import kr.ac.tukorea.bandi.domain.file.service.FileAccessDecision;
 import kr.ac.tukorea.bandi.domain.file.service.FileService;
-import kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload;
+import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
 import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
@@ -178,7 +178,7 @@ public class ActivityRecordService {
                 toFiles(activityRecordMapper.searchCurrentFileLinks(activityRecordId)));
     }
 
-    public FileDownload openApprovedDownload(Long memberId, Long activityRecordId,
+    public FileDownloadResponse openApprovedDownload(Long memberId, Long activityRecordId,
                                              Long storedFileId) {
         readableAccess(memberId);
         if (!activityRecordMapper.existsApprovedCurrentFile(
@@ -216,7 +216,7 @@ public class ActivityRecordService {
                 activityRecordMapper.searchReviewHistories(activityRecordId));
     }
 
-    public FileDownload openManageableDownload(Long actorMemberId,
+    public FileDownloadResponse openManageableDownload(Long actorMemberId,
                                                Long activityRecordId,
                                                Long storedFileId) {
         MemberAccessContext access = readableAccess(actorMemberId);

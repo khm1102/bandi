@@ -23,7 +23,7 @@ import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
 import kr.ac.tukorea.bandi.domain.file.service.FileService;
 import kr.ac.tukorea.bandi.domain.file.service.FileAccessDecision;
-import kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload;
+import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -105,7 +105,7 @@ public class AssetService {
                 .toList();
     }
 
-    public FileDownload openPhotoDownload(Long actorMemberId,
+    public FileDownloadResponse openPhotoDownload(Long actorMemberId,
                                           Long assetItemId) {
         validateInternal(actorMemberId);
         AssetItem item = findItem(assetItemId);

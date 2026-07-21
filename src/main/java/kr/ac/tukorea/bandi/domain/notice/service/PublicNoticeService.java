@@ -1,7 +1,7 @@
 package kr.ac.tukorea.bandi.domain.notice.service;
 
 import kr.ac.tukorea.bandi.domain.file.dto.response.FileReferenceResponse;
-import kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload;
+import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
 import kr.ac.tukorea.bandi.domain.file.service.FileService;
 import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
@@ -121,7 +121,7 @@ public class PublicNoticeService {
         publicNoticeMapper.update(changed);
     }
 
-    public FileDownload openAttachmentDownload(Long publicNoticeId, Long storedFileId) {
+    public FileDownloadResponse openAttachmentDownload(Long publicNoticeId, Long storedFileId) {
         LocalDateTime currentDttm = LocalDateTime.now(clock);
         if (!publicNoticeMapper.existsPublicAttachment(
                 publicNoticeId, storedFileId, currentDttm)) {

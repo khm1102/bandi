@@ -1,7 +1,6 @@
 package kr.ac.tukorea.bandi.domain.file.service;
 
 import kr.ac.tukorea.bandi.domain.file.dto.response.FileReferenceResponse;
-import kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload;
 import kr.ac.tukorea.bandi.domain.file.exception.FileAccessDeniedException;
 import kr.ac.tukorea.bandi.domain.file.exception.FileStorageUnavailableException;
 import kr.ac.tukorea.bandi.domain.file.exception.InvalidFileScopeException;
@@ -9,6 +8,7 @@ import kr.ac.tukorea.bandi.domain.file.exception.InvalidFileStateException;
 import kr.ac.tukorea.bandi.domain.file.exception.InvalidFileException;
 import kr.ac.tukorea.bandi.domain.file.model.StorageScope;
 import kr.ac.tukorea.bandi.domain.file.model.StoredFile;
+import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -132,7 +132,7 @@ class FileServiceTest {
         given(objectStorage.open(StorageScope.PRIVATE, PRIVATE_KEY))
                 .willReturn(() -> new ByteArrayInputStream(CONTENT));
 
-        FileDownload download = fileService.openPrivateDownload(PRIVATE_FILE_ID,
+        FileDownloadResponse download = fileService.openPrivateDownload(PRIVATE_FILE_ID,
                 FileAccessDecision.GRANTED);
 
         assertThat(download.originalName()).isEqualTo("proof.png");
@@ -148,7 +148,7 @@ class FileServiceTest {
         given(objectStorage.open(StorageScope.PUBLIC, PUBLIC_KEY))
                 .willReturn(() -> new ByteArrayInputStream(CONTENT));
 
-        FileDownload download = fileService.openPublicDownload(PUBLIC_FILE_ID);
+        FileDownloadResponse download = fileService.openPublicDownload(PUBLIC_FILE_ID);
 
         assertThat(download.originalName()).isEqualTo("proof.png");
         assertThat(download.contentType()).isEqualTo("image/png");

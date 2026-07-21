@@ -13,11 +13,10 @@ import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordManageDeta
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordSummaryResponse;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivitySubmissionResponse;
 import kr.ac.tukorea.bandi.domain.activity.service.ActivityRecordService;
-import kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload;
+import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import kr.ac.tukorea.bandi.global.swagger.ActivityManagementApiDocs;
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -127,12 +126,12 @@ public class ActivityManagementApiController implements ActivityManagementApiDoc
         return ResponseEntity.noContent().build();
     }
 
-    private ResponseEntity<Resource> inline(FileDownload file) {
+    private ResponseEntity<Resource> inline(FileDownloadResponse file) {
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(file.contentType()))
                 .contentLength(file.sizeBytes())
                 .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.inline()
                         .filename(file.originalName(), StandardCharsets.UTF_8).build().toString())
-                .body(new InputStreamResource(file.openStream()));
+                .body(file.resource());
     }
 }

@@ -52,7 +52,7 @@ class FileServiceIntegrationTest {
                     .isEqualTo(UploadStatus.READY);
 
             try (var input = fileService.openPrivateDownload(
-                    stored.getStoredFileId(), FileAccessDecision.GRANTED).openStream()) {
+                    stored.getStoredFileId(), FileAccessDecision.GRANTED).resource().getInputStream()) {
                 assertThat(input.readAllBytes()).isEqualTo(PNG);
             }
         } finally {
