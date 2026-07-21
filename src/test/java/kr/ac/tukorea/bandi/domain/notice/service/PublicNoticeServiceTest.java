@@ -294,16 +294,16 @@ class PublicNoticeServiceTest {
     }
 
     @Test
-    void 공개_공시에_연결된_첨부만_다운로드_URL을_발급한다() {
+    void 공개_공시에_연결된_첨부만_직접_전송한다() {
         given(publicNoticeMapper.existsPublicAttachment(NOTICE_ID, FIRST_FILE_ID, NOW))
                 .willReturn(true);
-        given(fileService.createPublicDownloadUrl(FIRST_FILE_ID))
-                .willReturn("https://storage/signed");
+        given(fileService.openPublicDownload(FIRST_FILE_ID))
+                .willReturn(download());
 
-        String result = publicNoticeService.createAttachmentDownloadUrl(
+        var result = publicNoticeService.openAttachmentDownload(
                 NOTICE_ID, FIRST_FILE_ID);
 
-        assertThat(result).isEqualTo("https://storage/signed");
+        assertThat(result.originalName()).isEqualTo("proof.png");
     }
 
     @Test
@@ -311,10 +311,10 @@ class PublicNoticeServiceTest {
         given(publicNoticeMapper.existsPublicAttachment(NOTICE_ID, FIRST_FILE_ID, NOW))
                 .willReturn(false);
 
-        assertThatThrownBy(() -> publicNoticeService.createAttachmentDownloadUrl(
+        assertThatThrownBy(() -> publicNoticeService.openAttachmentDownload(
                 NOTICE_ID, FIRST_FILE_ID))
                 .isInstanceOf(PublicNoticeAccessDeniedException.class);
-        verify(fileService, never()).createPublicDownloadUrl(any());
+        verify(fileService, never()).openPublicDownload(any());
     }
 
     @Test
@@ -372,6 +372,12 @@ class PublicNoticeServiceTest {
     private FileReferenceResponse secondFile() {
         return new FileReferenceResponse(SECOND_FILE_ID, "schedule.pdf",
                 "application/pdf", 2048L);
+    }
+
+    private kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload download() {
+        return new kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload(
+                "proof.png", "image/png", 4,
+                () -> new java.io.ByteArrayInputStream(new byte[]{1, 2, 3, 4}));
     }
 
     private void assignNoticeId(PublicNotice notice, Long publicNoticeId) {

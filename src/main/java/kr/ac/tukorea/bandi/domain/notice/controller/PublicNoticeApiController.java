@@ -4,13 +4,18 @@ import kr.ac.tukorea.bandi.domain.notice.dto.request.PublicNoticeSearchParam;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.PublicNoticeDetailResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.PublicNoticeSummaryResponse;
 import kr.ac.tukorea.bandi.domain.notice.service.PublicNoticeService;
+import kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload;
 import kr.ac.tukorea.bandi.global.swagger.PublicNoticeApiDocs;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 @RestController
@@ -32,11 +37,16 @@ public class PublicNoticeApiController implements PublicNoticeApiDocs {
     }
 
     @Override
-    public ResponseEntity<Void> download(Long publicNoticeId, Long storedFileId) {
-        String url = publicNoticeService.createAttachmentDownloadUrl(
-                publicNoticeId, storedFileId);
-        return ResponseEntity.status(HttpStatus.FOUND)
-                .location(URI.create(url))
-                .build();
+    public ResponseEntity<Resource> download(Long publicNoticeId, Long storedFileId) {
+        return attachment(publicNoticeService.openAttachmentDownload(publicNoticeId, storedFileId));
+    }
+
+    private ResponseEntity<Resource> attachment(FileDownload file) {
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(file.contentType()))
+                .contentLength(file.sizeBytes())
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
+                        .filename(file.originalName(), StandardCharsets.UTF_8).build().toString())
+                .body(new InputStreamResource(file.openStream()));
     }
 }

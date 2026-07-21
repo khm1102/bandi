@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.domain.file.service;
 
 import kr.ac.tukorea.bandi.domain.file.dto.response.FileReferenceResponse;
+import kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload;
 import kr.ac.tukorea.bandi.domain.file.exception.FileAccessDeniedException;
 import kr.ac.tukorea.bandi.domain.file.exception.FileStorageUnavailableException;
 import kr.ac.tukorea.bandi.domain.file.exception.InvalidFileScopeException;
@@ -8,7 +9,6 @@ import kr.ac.tukorea.bandi.domain.file.exception.InvalidFileStateException;
 import kr.ac.tukorea.bandi.domain.file.exception.InvalidFileException;
 import kr.ac.tukorea.bandi.domain.file.model.StorageScope;
 import kr.ac.tukorea.bandi.domain.file.model.StoredFile;
-import kr.ac.tukorea.bandi.global.config.FileStorageProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,7 +17,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.io.ByteArrayInputStream;
-import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -50,9 +49,7 @@ class FileServiceTest {
 
     @BeforeEach
     void setUp() {
-        fileService = new FileService(inspector, keyGenerator, metadataService,
-                objectStorage, new FileStorageProperties("http://localhost:9000", "access", "secret",
-                "private", "public", 1024, Duration.ofMinutes(5)));
+        fileService = new FileService(inspector, keyGenerator, metadataService, objectStorage);
     }
 
     @Test
@@ -119,38 +116,42 @@ class FileServiceTest {
     }
 
     @Test
-    void 권한이_거부된_비공개_파일은_URL을_발급하지_않는다() {
-        assertThatThrownBy(() -> fileService.createPrivateDownloadUrl(
+    void 권한이_거부된_비공개_파일은_열지_않는다() {
+        assertThatThrownBy(() -> fileService.openPrivateDownload(
                 PRIVATE_FILE_ID, FileAccessDecision.DENIED))
                 .isInstanceOf(FileAccessDeniedException.class);
         verify(metadataService, never()).lookup(any());
-        verify(objectStorage, never()).createPresignedGetUrl(any(), any(), any());
+        verify(objectStorage, never()).open(any(), any());
     }
 
     @Test
-    void 권한이_승인된_READY_비공개_파일은_짧은_수명의_URL을_발급한다() {
+    void 권한이_승인된_READY_비공개_파일은_직접_전송할_정보를_반환한다() {
         StoredFile source = readyPrivate(PRIVATE_KEY);
         assignId(source, PRIVATE_FILE_ID);
         given(metadataService.lookup(PRIVATE_FILE_ID)).willReturn(source);
-        given(objectStorage.createPresignedGetUrl(StorageScope.PRIVATE, PRIVATE_KEY,
-                Duration.ofMinutes(5))).willReturn("https://storage/private-signed");
+        given(objectStorage.open(StorageScope.PRIVATE, PRIVATE_KEY))
+                .willReturn(() -> new ByteArrayInputStream(CONTENT));
 
-        String url = fileService.createPrivateDownloadUrl(PRIVATE_FILE_ID, FileAccessDecision.GRANTED);
+        FileDownload download = fileService.openPrivateDownload(PRIVATE_FILE_ID,
+                FileAccessDecision.GRANTED);
 
-        assertThat(url).isEqualTo("https://storage/private-signed");
+        assertThat(download.originalName()).isEqualTo("proof.png");
+        assertThat(download.contentType()).isEqualTo("image/png");
+        assertThat(download.sizeBytes()).isEqualTo(CONTENT.length);
     }
 
     @Test
-    void READY_공개_파일은_공개_다운로드_URL을_발급한다() {
+    void READY_공개_파일은_직접_전송할_정보를_반환한다() {
         StoredFile source = readyPublic(PUBLIC_KEY);
         assignId(source, PUBLIC_FILE_ID);
         given(metadataService.lookup(PUBLIC_FILE_ID)).willReturn(source);
-        given(objectStorage.createPresignedGetUrl(StorageScope.PUBLIC, PUBLIC_KEY,
-                Duration.ofMinutes(5))).willReturn("https://storage/public-signed");
+        given(objectStorage.open(StorageScope.PUBLIC, PUBLIC_KEY))
+                .willReturn(() -> new ByteArrayInputStream(CONTENT));
 
-        String url = fileService.createPublicDownloadUrl(PUBLIC_FILE_ID);
+        FileDownload download = fileService.openPublicDownload(PUBLIC_FILE_ID);
 
-        assertThat(url).isEqualTo("https://storage/public-signed");
+        assertThat(download.originalName()).isEqualTo("proof.png");
+        assertThat(download.contentType()).isEqualTo("image/png");
     }
 
     @Test

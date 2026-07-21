@@ -4,14 +4,19 @@ import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordSearchParam
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordDetailResponse;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordSummaryResponse;
 import kr.ac.tukorea.bandi.domain.activity.service.ActivityRecordService;
+import kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import kr.ac.tukorea.bandi.global.swagger.ActivityRecordApiDocs;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -38,13 +43,19 @@ public class ActivityRecordApiController implements ActivityRecordApiDocs {
     }
 
     @Override
-    public ResponseEntity<Void> download(@LoginMember Long memberId,
-                                         Long activityRecordId,
-                                         Long storedFileId) {
-        String url = activityRecordService.createApprovedDownloadUrl(memberId,
-                activityRecordId, storedFileId);
-        return ResponseEntity.status(HttpStatus.FOUND)
-                .location(URI.create(url))
-                .build();
+    public ResponseEntity<Resource> download(@LoginMember Long memberId,
+                                             Long activityRecordId,
+                                             Long storedFileId) {
+        return inline(activityRecordService.openApprovedDownload(memberId,
+                activityRecordId, storedFileId));
+    }
+
+    private ResponseEntity<Resource> inline(FileDownload file) {
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(file.contentType()))
+                .contentLength(file.sizeBytes())
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.inline()
+                        .filename(file.originalName(), StandardCharsets.UTF_8).build().toString())
+                .body(new InputStreamResource(file.openStream()));
     }
 }

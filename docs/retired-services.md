@@ -32,10 +32,9 @@
 
 ## 데이터
 
-서비스 폐기 migration은 하위 관계와 이력부터 삭제하고 stored_file은 다음
-파일 저장 전환 migration까지 유지한다. 이어지는 파일 저장 전환에서 기존
-MinIO 객체와 파일이 연결된 공시·내부 공지·자료·활동 기록을 파기하며,
-asset_item.photo_file_id만 NULL로 갱신해 소품 품목은 유지한다.
+서비스 폐기 migration은 하위 관계와 이력부터 삭제했다. 파일 저장 전환
+migration은 기존 MinIO 객체와 파일이 연결된 공시·내부 공지·자료·활동 기록을
+파기하고, asset_item.photo_file_id만 NULL로 갱신해 소품 품목은 유지한다.
 
 ## 정본 문서 사용 규칙
 

@@ -16,6 +16,7 @@ import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetItemResponse;
 import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetUnitResponse;
 import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetHistoryResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
+import org.springframework.core.io.Resource;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -57,7 +58,7 @@ public interface AssetApiDocs {
 
     @Operation(summary = "품목 사진 조회")
     @GetMapping("/{assetItemId}/photo/download")
-    ResponseEntity<Void> downloadPhoto(
+    ResponseEntity<Resource> downloadPhoto(
             @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @PathVariable Long assetItemId);
 

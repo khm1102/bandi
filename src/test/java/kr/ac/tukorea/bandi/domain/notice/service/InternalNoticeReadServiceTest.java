@@ -140,13 +140,13 @@ class InternalNoticeReadServiceTest {
         given(memberService.lookupAccessContext(MEMBER_ID)).willReturn(memberContext());
         given(internalNoticeMapper.existsReadableAttachment(
                 NOTICE_ID, FILE_ID, NOW, STAGE_TEAM_ID, false)).willReturn(true);
-        given(fileService.createPrivateDownloadUrl(FILE_ID, FileAccessDecision.GRANTED))
-                .willReturn("http://localhost:9000/download");
+        given(fileService.openPrivateDownload(FILE_ID, FileAccessDecision.GRANTED))
+                .willReturn(download());
 
-        String result = internalNoticeService.createAttachmentDownloadUrl(
+        var result = internalNoticeService.openAttachmentDownload(
                 MEMBER_ID, NOTICE_ID, FILE_ID);
 
-        assertThat(result).isEqualTo("http://localhost:9000/download");
+        assertThat(result.originalName()).isEqualTo("proof.png");
     }
 
     @Test
@@ -155,11 +155,11 @@ class InternalNoticeReadServiceTest {
         given(internalNoticeMapper.existsReadableAttachment(
                 NOTICE_ID, FILE_ID, NOW, STAGE_TEAM_ID, false)).willReturn(false);
 
-        assertThatThrownBy(() -> internalNoticeService.createAttachmentDownloadUrl(
+        assertThatThrownBy(() -> internalNoticeService.openAttachmentDownload(
                 MEMBER_ID, NOTICE_ID, FILE_ID))
                 .isInstanceOf(InternalNoticeNotFoundException.class);
 
-        verify(fileService, never()).createPrivateDownloadUrl(any(), any());
+        verify(fileService, never()).openPrivateDownload(any(), any());
     }
 
     @Test
@@ -243,5 +243,11 @@ class InternalNoticeReadServiceTest {
         return new InternalNoticeReadStatusResponse(MEMBER_ID, "202012345",
                 "이서준", STAGE_TEAM_ID, "무대팀", NOW.minusMinutes(30),
                 NOW.minusMinutes(5));
+    }
+
+    private kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload download() {
+        return new kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload(
+                "proof.png", "image/png", 4,
+                () -> new java.io.ByteArrayInputStream(new byte[]{1, 2, 3, 4}));
     }
 }

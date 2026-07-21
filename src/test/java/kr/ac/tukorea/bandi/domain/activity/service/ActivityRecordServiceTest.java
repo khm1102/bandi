@@ -394,11 +394,12 @@ class ActivityRecordServiceTest {
         assertThat(detail.files()).hasSize(1);
         given(activityRecordMapper.existsApprovedCurrentFile(RECORD_ID, FILE_ID))
                 .willReturn(true);
-        given(fileService.createPrivateDownloadUrl(FILE_ID, FileAccessDecision.GRANTED))
-                .willReturn("http://localhost:9000/evidence");
-        assertThat(activityRecordService.createApprovedDownloadUrl(
+        given(fileService.openPrivateDownload(FILE_ID, FileAccessDecision.GRANTED))
+                .willReturn(download());
+        assertThat(activityRecordService.openApprovedDownload(
                 ACTOR_ID, RECORD_ID, FILE_ID))
-                .isEqualTo("http://localhost:9000/evidence");
+                .extracting(kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload::originalName)
+                .isEqualTo("proof.png");
     }
 
     @Test
@@ -408,14 +409,14 @@ class ActivityRecordServiceTest {
                 .willReturn(Optional.of(manageContent(ACTOR_ID)));
         given(activityRecordMapper.existsCurrentStoredFile(RECORD_ID, FILE_ID))
                 .willReturn(true);
-        given(fileService.createPrivateDownloadUrl(
+        given(fileService.openPrivateDownload(
                 FILE_ID, FileAccessDecision.GRANTED))
-                .willReturn("http://localhost:9000/manage-evidence");
+                .willReturn(download());
 
-        String result = activityRecordService.createManageableDownloadUrl(
+        var result = activityRecordService.openManageableDownload(
                 ACTOR_ID, RECORD_ID, FILE_ID);
 
-        assertThat(result).isEqualTo("http://localhost:9000/manage-evidence");
+        assertThat(result.originalName()).isEqualTo("proof.png");
     }
 
     @Test
@@ -427,11 +428,11 @@ class ActivityRecordServiceTest {
                 .willReturn(Optional.of(manageContent(ACTOR_ID)));
 
         assertThatThrownBy(() -> activityRecordService
-                .createManageableDownloadUrl(
+                .openManageableDownload(
                         OTHER_MEMBER_ID, RECORD_ID, FILE_ID))
                 .isInstanceOf(ActivityRecordAccessDeniedException.class);
 
-        verify(fileService, never()).createPrivateDownloadUrl(any(), any());
+        verify(fileService, never()).openPrivateDownload(any(), any());
     }
 
     @Test
@@ -443,10 +444,10 @@ class ActivityRecordServiceTest {
                 .willReturn(false);
 
         assertThatThrownBy(() -> activityRecordService
-                .createManageableDownloadUrl(ACTOR_ID, RECORD_ID, FILE_ID))
+                .openManageableDownload(ACTOR_ID, RECORD_ID, FILE_ID))
                 .isInstanceOf(ActivityRecordFileNotFoundException.class);
 
-        verify(fileService, never()).createPrivateDownloadUrl(any(), any());
+        verify(fileService, never()).openPrivateDownload(any(), any());
     }
 
     private ActivityRecordWriteParam writeParam(Long teamId) {
@@ -522,6 +523,12 @@ class ActivityRecordServiceTest {
     private ActivityFileLinkResponse fileLink() {
         return new ActivityFileLinkResponse(RECORD_FILE_ID, FILE_ID,
                 ActivityFileRole.EVIDENCE, 0, ACTOR_ID, "작성자", NOW);
+    }
+
+    private kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload download() {
+        return new kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload(
+                "proof.png", "image/png", 4,
+                () -> new java.io.ByteArrayInputStream(new byte[]{1, 2, 3, 4}));
     }
 
     private void assignRecordId(ActivityRecord record, Long activityRecordId) {

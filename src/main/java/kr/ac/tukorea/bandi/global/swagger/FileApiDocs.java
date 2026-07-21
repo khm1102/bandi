@@ -19,12 +19,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.multipart.MultipartFile;
 
 @RequestMapping("/api/files")
-@Tag(name = ApiTag.FILE, description = "MinIO 파일 업로드·공개 승격 API")
+@Tag(name = ApiTag.FILE, description = "로컬 파일 업로드·공개 승격 API")
 @SecurityRequirement(name = OpenApiConfig.SESSION_COOKIE_SCHEME)
 public interface FileApiDocs {
 
     @Operation(summary = "비공개 파일 업로드",
-            description = "파일을 검증해 비공개 버킷에 저장하고 storedFileId를 반환합니다.")
+            description = "파일을 검증해 비공개 저장소에 저장하고 storedFileId를 반환합니다.")
     @PostMapping(value = "/private",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     ResponseEntity<FileIdentifierResponse> uploadPrivate(
@@ -34,7 +34,7 @@ public interface FileApiDocs {
             @RequestPart("file") MultipartFile file);
 
     @Operation(summary = "비공개 파일을 공개 버킷으로 승격",
-            description = "원본 비공개 객체는 유지하고 별도의 공개 객체와 storedFileId를 만듭니다.")
+            description = "원본 비공개 파일은 유지하고 별도의 공개 파일과 storedFileId를 만듭니다.")
     @PostMapping("/{storedFileId}/public-promotions")
     ResponseEntity<FileIdentifierResponse> promoteToPublic(
             @Parameter(hidden = true) @LoginMember Long actorMemberId,

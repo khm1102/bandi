@@ -8,10 +8,5 @@ spring:
 
 bandi:
   storage:
-    endpoint: http://localhost:9000
-    access-key: bandi
-    secret-key: bandi-minio-dev
-    private-bucket: bandi-private
-    public-bucket: bandi-public
+    root: ${java.io.tmpdir}
     max-upload-bytes: 524288000
-    private-url-lifetime: 300s

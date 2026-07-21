@@ -3,6 +3,7 @@ package kr.ac.tukorea.bandi.domain.resource.service;
 import kr.ac.tukorea.bandi.domain.file.dto.response.FileReferenceResponse;
 import kr.ac.tukorea.bandi.domain.file.service.FileAccessDecision;
 import kr.ac.tukorea.bandi.domain.file.service.FileService;
+import kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload;
 import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
 import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceManageSearchCondition;
@@ -157,14 +158,14 @@ public class ResourceService {
                 toFiles(resourceMapper.searchCurrentFileLinks(resourceId)));
     }
 
-    public String createDownloadUrl(Long memberId, Long resourceId, Long storedFileId) {
+    public FileDownload openDownload(Long memberId, Long resourceId, Long storedFileId) {
         MemberAccessContext access = readableAccess(memberId);
         boolean readable = resourceMapper.existsReadableCurrentFile(resourceId,
                 storedFileId, access.teamId(), access.canManageGlobal());
         if (!readable) {
             throw new ResourceNotFoundException(resourceId);
         }
-        return fileService.createPrivateDownloadUrl(
+        return fileService.openPrivateDownload(
                 storedFileId, FileAccessDecision.GRANTED);
     }
 

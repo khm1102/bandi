@@ -11,10 +11,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.io.ByteArrayInputStream;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -40,7 +36,7 @@ class FileServiceIntegrationTest {
     }
 
     @Test
-    void 검증_DB_상태전이_MinIO_저장_presigned_GET이_하나의_흐름으로_동작한다() throws Exception {
+    void 검증_DB_상태전이_로컬_저장_직접_스트리밍이_하나의_흐름으로_동작한다() throws Exception {
         StoredFile stored = null;
         try {
             Long storedFileId = fileService.uploadPrivate(new FileUploadParam("activity", "proof.png",
@@ -55,14 +51,10 @@ class FileServiceIntegrationTest {
                     .extracting(StoredFile::getUploadStatus)
                     .isEqualTo(UploadStatus.READY);
 
-            String signedUrl = fileService.createPrivateDownloadUrl(
-                    stored.getStoredFileId(), FileAccessDecision.GRANTED);
-            HttpResponse<byte[]> response = HttpClient.newHttpClient().send(
-                    HttpRequest.newBuilder(URI.create(signedUrl)).GET().build(),
-                    HttpResponse.BodyHandlers.ofByteArray());
-
-            assertThat(response.statusCode()).isEqualTo(200);
-            assertThat(response.body()).isEqualTo(PNG);
+            try (var input = fileService.openPrivateDownload(
+                    stored.getStoredFileId(), FileAccessDecision.GRANTED).openStream()) {
+                assertThat(input.readAllBytes()).isEqualTo(PNG);
+            }
         } finally {
             if (stored != null) {
                 objectStorage.remove(StorageScope.PRIVATE, stored.getStorageKey());

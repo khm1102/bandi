@@ -83,15 +83,17 @@ class ResourceApiControllerTest {
     }
 
     @Test
-    void 자료_파일은_MinIO_주소로_리다이렉트한다() throws Exception {
-        given(resourceService.createDownloadUrl(ACTOR_ID, RESOURCE_ID, FILE_ID))
-                .willReturn("http://localhost:9000/bandi-private/file");
+    void 자료_파일은_애플리케이션이_직접_전송한다() throws Exception {
+        given(resourceService.openDownload(ACTOR_ID, RESOURCE_ID, FILE_ID))
+                .willReturn(new kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload(
+                        "script.pdf", "application/pdf", 4,
+                        () -> new java.io.ByteArrayInputStream(new byte[]{1, 2, 3, 4})));
 
         mockMvc.perform(get("/api/resources/{resourceId}/files/{fileId}/download",
                         RESOURCE_ID, FILE_ID))
-                .andExpect(status().isFound())
-                .andExpect(header().string("Location",
-                        "http://localhost:9000/bandi-private/file"));
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition",
+                        org.hamcrest.Matchers.containsString("attachment")));
     }
 
     @Test

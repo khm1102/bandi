@@ -1,15 +1,14 @@
 package kr.ac.tukorea.bandi.domain.file.service;
 
+import kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload;
 import kr.ac.tukorea.bandi.domain.file.dto.response.FileReferenceResponse;
 import kr.ac.tukorea.bandi.domain.file.exception.FileAccessDeniedException;
 import kr.ac.tukorea.bandi.domain.file.exception.InvalidFileException;
 import kr.ac.tukorea.bandi.domain.file.model.StorageScope;
 import kr.ac.tukorea.bandi.domain.file.model.StoredFile;
-import kr.ac.tukorea.bandi.global.config.FileStorageProperties;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.time.Duration;
 
 @Slf4j
 @Service
@@ -19,18 +18,14 @@ public class FileService {
     private final StorageKeyGenerator keyGenerator;
     private final FileMetadataService metadataService;
     private final FileObjectStorage objectStorage;
-    private final Duration privateUrlLifetime;
-
     public FileService(FileContentInspector inspector,
                        StorageKeyGenerator keyGenerator,
                        FileMetadataService metadataService,
-                       FileObjectStorage objectStorage,
-                       FileStorageProperties properties) {
+                       FileObjectStorage objectStorage) {
         this.inspector = inspector;
         this.keyGenerator = keyGenerator;
         this.metadataService = metadataService;
         this.objectStorage = objectStorage;
-        this.privateUrlLifetime = properties.privateUrlLifetime();
     }
 
     public Long uploadPrivate(FileUploadParam param) {
@@ -53,21 +48,19 @@ public class FileService {
         }
     }
 
-    public String createPrivateDownloadUrl(Long storedFileId, FileAccessDecision accessDecision) {
+    public FileDownload openPrivateDownload(Long storedFileId, FileAccessDecision accessDecision) {
         if (accessDecision != FileAccessDecision.GRANTED) {
             throw new FileAccessDeniedException();
         }
         StoredFile file = metadataService.lookup(storedFileId);
         file.validatePrivateDownload();
-        return objectStorage.createPresignedGetUrl(StorageScope.PRIVATE,
-                file.getStorageKey(), privateUrlLifetime);
+        return download(file, StorageScope.PRIVATE);
     }
 
-    public String createPublicDownloadUrl(Long storedFileId) {
+    public FileDownload openPublicDownload(Long storedFileId) {
         StoredFile file = metadataService.lookup(storedFileId);
         file.validatePublicUse();
-        return objectStorage.createPresignedGetUrl(StorageScope.PUBLIC,
-                file.getStorageKey(), privateUrlLifetime);
+        return download(file, StorageScope.PUBLIC);
     }
 
     public void validatePrivateReady(Long storedFileId) {
@@ -129,5 +122,10 @@ public class FileService {
             log.warn("파일 메타데이터 실패 전환 보상 실패 - storedFileId={}",
                     storedFileId, exception);
         }
+    }
+
+    private FileDownload download(StoredFile file, StorageScope scope) {
+        return new FileDownload(file.getOriginalName(), file.getContentType(),
+                file.getSizeBytes(), objectStorage.open(scope, file.getStorageKey()));
     }
 }

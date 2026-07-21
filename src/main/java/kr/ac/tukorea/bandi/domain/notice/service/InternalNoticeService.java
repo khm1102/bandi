@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.domain.notice.service;
 
 import kr.ac.tukorea.bandi.domain.file.dto.response.FileReferenceResponse;
+import kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload;
 import kr.ac.tukorea.bandi.domain.file.service.FileAccessDecision;
 import kr.ac.tukorea.bandi.domain.file.service.FileService;
 import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
@@ -149,8 +150,8 @@ public class InternalNoticeService {
         return InternalNoticeDetailResponse.of(content, lookupAttachments(internalNoticeId));
     }
 
-    public String createAttachmentDownloadUrl(Long memberId, Long internalNoticeId,
-                                              Long storedFileId) {
+    public FileDownload openAttachmentDownload(Long memberId, Long internalNoticeId,
+                                               Long storedFileId) {
         MemberAccessContext access = readableAccess(memberId);
         boolean readable = internalNoticeMapper.existsReadableAttachment(
                 internalNoticeId, storedFileId, LocalDateTime.now(clock),
@@ -158,7 +159,7 @@ public class InternalNoticeService {
         if (!readable) {
             throw new InternalNoticeNotFoundException(internalNoticeId);
         }
-        return fileService.createPrivateDownloadUrl(
+        return fileService.openPrivateDownload(
                 storedFileId, FileAccessDecision.GRANTED);
     }
 

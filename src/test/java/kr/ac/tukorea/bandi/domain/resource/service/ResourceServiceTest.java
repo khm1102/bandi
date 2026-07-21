@@ -279,12 +279,12 @@ class ResourceServiceTest {
         given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(memberContext());
         given(resourceMapper.existsReadableCurrentFile(
                 RESOURCE_ID, FILE_ID, STAGE_TEAM_ID, false)).willReturn(true);
-        given(fileService.createPrivateDownloadUrl(FILE_ID, FileAccessDecision.GRANTED))
-                .willReturn("http://localhost:9000/download");
+        given(fileService.openPrivateDownload(FILE_ID, FileAccessDecision.GRANTED))
+                .willReturn(download());
 
-        String result = resourceService.createDownloadUrl(ACTOR_ID, RESOURCE_ID, FILE_ID);
+        var result = resourceService.openDownload(ACTOR_ID, RESOURCE_ID, FILE_ID);
 
-        assertThat(result).isEqualTo("http://localhost:9000/download");
+        assertThat(result.originalName()).isEqualTo("proof.png");
     }
 
     @Test
@@ -378,6 +378,12 @@ class ResourceServiceTest {
     private ResourceFileLinkResponse fileLink(int revisionNo) {
         return new ResourceFileLinkResponse(FILE_ID, revisionNo, 0,
                 ACTOR_ID, "관리자", NOW);
+    }
+
+    private kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload download() {
+        return new kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload(
+                "proof.png", "image/png", 4,
+                () -> new java.io.ByteArrayInputStream(new byte[]{1, 2, 3, 4}));
     }
 
     private void assignResourceId(Resource resource, Long resourceId) {

@@ -95,29 +95,29 @@ class ActivityApiControllerTest {
     }
 
     @Test
-    void 승인된_증빙은_MinIO_주소로_리다이렉트한다() throws Exception {
-        given(activityRecordService.createApprovedDownloadUrl(ACTOR_ID,
+    void 승인된_증빙은_애플리케이션이_직접_전송한다() throws Exception {
+        given(activityRecordService.openApprovedDownload(ACTOR_ID,
                 RECORD_ID, FILE_ID)).willReturn(
-                "http://localhost:9000/bandi-private/evidence");
+                new kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload(
+                        "evidence.png", "image/png", 4,
+                        () -> new java.io.ByteArrayInputStream(new byte[]{1, 2, 3, 4})));
 
         mockMvc.perform(get("/api/activity-records/{recordId}/files/"
                         + "{fileId}/download", RECORD_ID, FILE_ID))
-                .andExpect(status().isFound())
-                .andExpect(header().string("Location",
-                        "http://localhost:9000/bandi-private/evidence"));
+                .andExpect(status().isOk());
     }
 
     @Test
-    void 관리_가능한_현재_증빙은_MinIO_주소로_리다이렉트한다() throws Exception {
-        given(activityRecordService.createManageableDownloadUrl(ACTOR_ID,
+    void 관리_가능한_현재_증빙은_애플리케이션이_직접_전송한다() throws Exception {
+        given(activityRecordService.openManageableDownload(ACTOR_ID,
                 RECORD_ID, FILE_ID)).willReturn(
-                "http://localhost:9000/bandi-private/manage-evidence");
+                new kr.ac.tukorea.bandi.domain.file.dto.response.FileDownload(
+                        "evidence.png", "image/png", 4,
+                        () -> new java.io.ByteArrayInputStream(new byte[]{1, 2, 3, 4})));
 
         mockMvc.perform(get("/api/activity-management/{recordId}/files/"
                         + "{fileId}/download", RECORD_ID, FILE_ID))
-                .andExpect(status().isFound())
-                .andExpect(header().string("Location",
-                        "http://localhost:9000/bandi-private/manage-evidence"));
+                .andExpect(status().isOk());
     }
 
     @Test

@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.time.Duration;
+import java.nio.file.Path;
 import java.util.HexFormat;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -24,8 +24,7 @@ class FileContentInspectorTest {
     private static final long MAX_BYTES = 1024;
 
     private final FileContentInspector inspector = new FileContentInspector(new FileStorageProperties(
-            "http://localhost:9000", "access", "secret", "private", "public",
-            MAX_BYTES, Duration.ofMinutes(5)));
+            Path.of(System.getProperty("java.io.tmpdir")), MAX_BYTES));
 
     @Test
     void PNG_시그니처를_확인하고_서버가_판별한_MIME과_해시를_반환한다() {

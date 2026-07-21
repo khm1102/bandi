@@ -31,7 +31,6 @@ dependencies {
     implementation("org.springframework.security:spring-security-taglibs")
     implementation("jakarta.servlet.jsp.jstl:jakarta.servlet.jsp.jstl-api")
     implementation("org.glassfish.web:jakarta.servlet.jsp.jstl")
-    implementation("io.minio:minio:8.6.0")
     providedRuntime("org.springframework.boot:spring-boot-starter-tomcat")
     providedRuntime("org.apache.tomcat.embed:tomcat-embed-jasper")
     compileOnly("org.projectlombok:lombok")
