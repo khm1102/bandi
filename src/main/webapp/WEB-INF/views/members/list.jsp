@@ -1,114 +1,94 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
-<c:set var="segOff" value="rounded-md px-2.5 py-1 text-xs font-bold text-muted-foreground transition-colors"/>
-<c:set var="segOn" value="rounded-md border bg-card px-2.5 py-1 text-xs font-bold text-foreground"/>
+<c:set var="segOff" value="min-h-11 rounded-md px-2.5 text-xs font-bold text-muted-foreground transition-colors md:min-h-9"/>
 <c:set var="input" value="h-11 w-full rounded-md border border-input bg-card px-3 text-base transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm"/>
 <c:set var="label" value="mb-1.5 block text-xs font-extrabold text-muted-foreground"/>
 <t:layout title="멤버·권한" active="members" role="${role}" scriptPath="members/list">
-    <t:pageHead title="멤버 · 권한 설정" description="부원을 기수와 팀별로 관리하고 가입용 초대코드를 발급합니다">
-        <t:button variant="outline" openModal="inviteModal">+ 초대코드 생성</t:button>
-        <t:button openModal="memberModal">+ 부원 추가</t:button>
+    <t:pageHead title="멤버 · 권한 설정" description="운영진이 학번과 이름을 사전 등록하고 학교 SSO 연결, 단일 소속 팀과 역할을 관리합니다">
+        <t:button openModal="memberModal">+ 멤버 사전 등록</t:button>
     </t:pageHead>
 
-    <div class="mb-4 grid grid-cols-3 gap-4">
-        <t:statCard label="전체 부원" value="6" unit="명"/>
-        <t:statCard label="운영 중인 기수" value="2" unit="개" delta="26-1기 · 26-2기"/>
-        <t:statCard label="활성 초대코드" value="2" unit="개"/>
+    <div class="mb-4 grid grid-cols-1 gap-2.5 md:grid-cols-3 md:gap-4">
+        <t:statCard label="활성 멤버" value="—" unit="명" valueHook="active-members"/>
+        <t:statCard label="운영 중인 기수" value="—" unit="개" delta="불러오는 중" valueHook="active-cohorts" deltaHook="active-cohort-names"/>
+        <t:statCard label="SSO 연결 대기" value="—" unit="명" tone="danger" valueHook="waiting-sso"/>
     </div>
 
-    <t:card title="기수별 초대코드">
-        <div class="flex flex-col gap-2.5" data-invite-list>
-            <div data-invite-card class="flex items-center gap-3 rounded-lg border px-4 py-3">
-                <div class="min-w-0 flex-1">
-                    <div class="flex items-center gap-2"><t:badge tone="accent">26-2기</t:badge><span data-invite-code class="font-mono text-sm font-black tracking-widest text-accent-foreground">BANDI-262-M9Q4</span></div>
-                    <p data-invite-meta class="mt-1 text-xs text-muted-foreground">07/08 생성 · 가입 2명 · 사용 가능</p>
-                </div>
-                <t:button variant="outline" size="compact" pageAction="invite-copy">복사</t:button>
-                <t:button variant="outline" size="compact" pageAction="invite-toggle">중지</t:button>
-            </div>
-            <div data-invite-card class="flex items-center gap-3 rounded-lg border px-4 py-3">
-                <div class="min-w-0 flex-1">
-                    <div class="flex items-center gap-2"><t:badge tone="accent">26-1기</t:badge><span data-invite-code class="font-mono text-sm font-black tracking-widest text-accent-foreground">BANDI-261-A7K2</span></div>
-                    <p data-invite-meta class="mt-1 text-xs text-muted-foreground">07/01 생성 · 가입 4명 · 사용 가능</p>
-                </div>
-                <t:button variant="outline" size="compact" pageAction="invite-copy">복사</t:button>
-                <t:button variant="outline" size="compact" pageAction="invite-toggle">중지</t:button>
-            </div>
-        </div>
-    </t:card>
+    <div class="mb-4 flex items-start gap-3 rounded-lg border bg-accent/50 px-4 py-3.5">
+        <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-sm font-black text-primary-foreground">SSO</span>
+        <div class="min-w-0"><b class="block text-sm">멤버 등록은 운영진 사전 등록으로만 진행합니다</b><p class="mt-1 text-xs leading-5 text-muted-foreground">운영진이 멤버를 먼저 등록하면, 멤버가 학교 계정으로 처음 로그인할 때 학번을 기준으로 계정이 연결됩니다.</p></div>
+    </div>
 
-    <div class="mt-4 rounded-lg border bg-card">
+    <div class="rounded-lg border bg-card">
         <t:dataTable caption="멤버와 권한 목록">
-            <thead><tr><th>이름</th><th>기수</th><th>소속팀</th><th>역할</th><th class="text-right">권한 변경</th></tr></thead>
+            <thead><tr><th>이름</th><th>학번</th><th>기수</th><th>소속 팀</th><th>활동 상태</th><th>SSO 연결</th><th>역할</th><th class="text-right">권한 변경</th><th class="text-right">관리</th></tr></thead>
             <tbody data-member-list>
-            <tr><td><span class="flex items-center gap-2"><span class="flex size-7 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-foreground">LS</span><b>이서준</b></span></td><td><t:badge tone="info">26-1기</t:badge></td><td>운영진</td><td><t:badge tone="accent">운영진</t:badge></td><td class="text-right"><span class="inline-flex rounded-lg border bg-secondary p-0.5"><button type="button" class="${segOff}">일반 부원</button><button type="button" class="${segOff}">팀장</button><button type="button" class="${segOn}">운영진</button></span></td></tr>
-            <tr><td><span class="flex items-center gap-2"><span class="flex size-7 items-center justify-center rounded-full bg-info text-xs font-black text-white">JD</span><b>정도윤</b></span></td><td><t:badge tone="info">26-1기</t:badge></td><td>무대</td><td><t:badge tone="info">팀장</t:badge></td><td class="text-right"><span class="inline-flex rounded-lg border bg-secondary p-0.5"><button type="button" class="${segOff}">일반 부원</button><button type="button" class="${segOn}">팀장</button><button type="button" class="${segOff}">운영진</button></span></td></tr>
-            <tr><td><span class="flex items-center gap-2"><span class="flex size-7 items-center justify-center rounded-full bg-sidebar-accent text-xs font-black text-white">KH</span><b>김하늘</b></span></td><td><t:badge tone="info">26-2기</t:badge></td><td>배우연출</td><td><t:badge tone="neutral">일반 부원</t:badge></td><td class="text-right"><span class="inline-flex rounded-lg border bg-secondary p-0.5"><button type="button" class="${segOn}">일반 부원</button><button type="button" class="${segOff}">팀장</button><button type="button" class="${segOff}">운영진</button></span></td></tr>
-            <tr><td><span class="flex items-center gap-2"><span class="flex size-7 items-center justify-center rounded-full bg-accent-foreground text-xs font-black text-white">PS</span><b>박서연</b></span></td><td><t:badge tone="info">26-2기</t:badge></td><td>오퍼</td><td><t:badge tone="neutral">일반 부원</t:badge></td><td class="text-right"><span class="inline-flex rounded-lg border bg-secondary p-0.5"><button type="button" class="${segOn}">일반 부원</button><button type="button" class="${segOff}">팀장</button><button type="button" class="${segOff}">운영진</button></span></td></tr>
-            <tr><td><span class="flex items-center gap-2"><span class="flex size-7 items-center justify-center rounded-full bg-success text-xs font-black text-white">HJ</span><b>한지우</b></span></td><td><t:badge tone="info">26-2기</t:badge></td><td>디자인</td><td><t:badge tone="neutral">일반 부원</t:badge></td><td class="text-right"><span class="inline-flex rounded-lg border bg-secondary p-0.5"><button type="button" class="${segOn}">일반 부원</button><button type="button" class="${segOff}">팀장</button><button type="button" class="${segOff}">운영진</button></span></td></tr>
-            <tr><td><span class="flex items-center gap-2"><span class="flex size-7 items-center justify-center rounded-full bg-warning text-xs font-black text-white">CM</span><b>최민준</b></span></td><td><t:badge tone="info">26-1기</t:badge></td><td>영상</td><td><t:badge tone="neutral">일반 부원</t:badge></td><td class="text-right"><span class="inline-flex rounded-lg border bg-secondary p-0.5"><button type="button" class="${segOn}">일반 부원</button><button type="button" class="${segOff}">팀장</button><button type="button" class="${segOff}">운영진</button></span></td></tr>
+            <tr data-member-state>
+                <td colspan="9" class="px-5 py-11 text-center">
+                    <b class="block text-sm font-extrabold" data-member-state-title>멤버 목록을 불러오는 중입니다</b>
+                    <p class="mt-1 text-xs text-muted-foreground" data-member-state-message>잠시만 기다려 주세요.</p>
+                    <button type="button" class="mx-auto mt-4 hidden min-h-11 rounded-md border bg-card px-4 text-xs font-bold" data-member-retry>다시 시도</button>
+                </td>
+            </tr>
             </tbody>
         </t:dataTable>
     </div>
 
-    <template data-invite-card-template>
-        <div data-invite-card class="flex items-center gap-3 rounded-lg border px-4 py-3">
-            <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-2"><span data-invite-cohort></span><span data-invite-code class="font-mono text-sm font-black tracking-widest text-accent-foreground"></span></div>
-                <p data-invite-meta class="mt-1 text-xs text-muted-foreground"></p>
-            </div>
-            <t:button variant="outline" size="compact" pageAction="invite-copy">복사</t:button>
-            <t:button variant="outline" size="compact" pageAction="invite-toggle">중지</t:button>
-        </div>
-    </template>
-
     <template data-member-row-template>
         <tr>
             <td><span class="flex items-center gap-2"><span data-member-avatar class="flex size-7 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-foreground"></span><b data-member-name></b></span></td>
+            <td data-member-student-no></td>
             <td data-member-cohort></td>
             <td data-member-team></td>
+            <td data-member-status></td>
+            <td data-member-sso></td>
             <td data-member-role-cell></td>
-            <td class="text-right">
-                <span class="inline-flex rounded-lg border bg-secondary p-0.5">
-                    <button type="button" class="${segOff}">일반 부원</button>
-                    <button type="button" class="${segOff}">팀장</button>
-                    <button type="button" class="${segOff}">운영진</button>
-                </span>
-            </td>
+            <td class="text-right"><span class="inline-flex rounded-lg border bg-secondary p-0.5"><button type="button" data-member-role="MEMBER" class="${segOff}">일반 부원</button><button type="button" data-member-role="LEADER" class="${segOff}">팀장</button><button type="button" data-member-role="ADMIN" class="${segOff}">운영진</button></span></td>
+            <td class="text-right"><span class="inline-flex gap-1"><button type="button" data-page-action="member-manage-open" class="min-h-11 rounded-md border bg-card px-3 text-xs font-bold hover:bg-secondary">변경</button><button type="button" data-page-action="member-history-open" class="min-h-11 rounded-md border bg-card px-3 text-xs font-bold hover:bg-secondary">이력</button></span></td>
         </tr>
     </template>
 
-    <t:modal id="inviteModal" title="초대코드 생성" description="이 코드로 가입한 회원은 선택한 기수에 자동 소속됩니다.">
-        <jsp:attribute name="footer">
-            <t:button variant="outline" action="close-modal">취소</t:button>
-            <t:button pageAction="invite-add">코드 생성</t:button>
-        </jsp:attribute>
+    <t:modal id="memberModal" title="멤버 사전 등록" description="학교 SSO 첫 로그인 전에 학번과 이름, 단일 소속 팀을 등록합니다.">
+        <jsp:attribute name="footer"><t:button variant="outline" action="close-modal">취소</t:button><t:button pageAction="member-add">등록</t:button></jsp:attribute>
         <jsp:body>
             <div class="flex flex-col gap-3">
-                <div><label class="${label}" for="ivCohort">가입 기수 <span class="text-accent-foreground">*</span></label><input class="${input}" id="ivCohort" type="text" value="26-2기" placeholder="예) 26-2기"></div>
-                <p class="text-xs text-muted-foreground">생성된 코드는 멤버 관리 화면에서 복사하거나 사용 중지할 수 있습니다.</p>
+                <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    <div><label class="${label}" for="mbStudentNo">학번 <span class="text-accent-foreground">*</span></label><input class="${input}" id="mbStudentNo" type="text" inputmode="numeric" maxlength="20" placeholder="학교 학번"></div>
+                    <div><label class="${label}" for="mbName">이름 <span class="text-accent-foreground">*</span></label><input class="${input}" id="mbName" type="text" maxlength="50" placeholder="학교 등록 이름"></div>
+                </div>
+                <div><label class="${label}" for="mbTeam">소속 팀 <span class="text-accent-foreground">*</span></label><select class="${input}" id="mbTeam"><option value="">팀을 선택해 주세요</option></select><p class="mt-1.5 text-xs text-muted-foreground">한 멤버는 동시에 하나의 활성 팀에만 소속됩니다.</p></div>
+                <div><label class="${label}" for="mbCohort">기수 <span class="text-accent-foreground">*</span></label><select class="${input}" id="mbCohort"><option value="">기수를 선택해 주세요</option></select></div>
+                <p class="hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-xs text-destructive" data-member-form-error role="alert"></p>
             </div>
         </jsp:body>
     </t:modal>
 
-    <t:modal id="memberModal" title="부원 추가" description="부원이 이름과 소속팀을 직접 적을 수 있어, 팀을 일일이 나눌 필요가 없어요.">
-        <jsp:attribute name="footer">
-            <t:button variant="outline" action="close-modal">취소</t:button>
-            <t:button pageAction="member-add">추가</t:button>
-        </jsp:attribute>
+    <t:modal id="memberRoleModal" title="멤버 권한 변경" description="권한 변경 이력에 남길 사유를 입력합니다.">
+        <jsp:attribute name="footer"><t:button variant="outline" action="close-modal">취소</t:button><t:button pageAction="member-role-save">변경</t:button></jsp:attribute>
         <jsp:body>
-            <div class="flex flex-col gap-3">
-                <div><label class="${label}" for="mbName">이름 <span class="text-accent-foreground">*</span></label><input class="${input}" id="mbName" type="text" placeholder="이름"></div>
-                <div>
-                    <label class="${label}" for="mbTeam">소속팀 <span class="text-accent-foreground">*</span></label>
-                    <input class="${input}" id="mbTeam" type="text" list="teamList" placeholder="팀 이름을 자유롭게 입력 (예: 배우연출, 소품)">
-                    <datalist id="teamList"><option value="운영진"><option value="무대"><option value="배우연출"><option value="오퍼"><option value="디자인"><option value="영상"></datalist>
-                    <p class="mt-1.5 text-xs text-muted-foreground">기존 팀을 고르거나 새 팀 이름을 그대로 입력하면 됩니다.</p>
-                </div>
-                <div><label class="${label}" for="mbCohort">기수</label><input class="${input}" id="mbCohort" type="text" value="26-2기" placeholder="예) 26-2기"></div>
-                <div><label class="${label}" for="mbRole">역할</label><select class="${input}" id="mbRole"><option>일반 부원</option><option>팀장</option><option>운영진</option></select></div>
-            </div>
+            <p class="rounded-md bg-secondary px-3 py-2.5 text-sm font-bold" data-member-role-summary></p>
+            <label class="${label} mt-4" for="memberRoleReason">변경 사유 <span class="text-accent-foreground">*</span></label>
+            <textarea class="min-h-28 w-full resize-y rounded-md border border-input bg-card px-3 py-2.5 text-sm transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20" id="memberRoleReason" maxlength="500" placeholder="예) 2026-1학기 팀장 지정"></textarea>
+            <p class="mt-2 hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-xs text-destructive" data-member-role-error role="alert"></p>
         </jsp:body>
+    </t:modal>
+
+    <t:modal id="memberManageModal" title="멤버 정보 변경" description="팀, 기수 또는 활동 상태 중 한 항목씩 변경합니다.">
+        <jsp:attribute name="footer"><t:button variant="outline" action="close-modal">취소</t:button><t:button pageAction="member-change-save">변경</t:button></jsp:attribute>
+        <jsp:body>
+            <p class="rounded-md bg-secondary px-3 py-2.5 text-sm font-bold" data-member-change-summary></p>
+            <div class="mt-4 grid gap-3 md:grid-cols-2">
+                <div><label class="${label}" for="memberChangeType">변경 항목 *</label><select class="${input}" id="memberChangeType"><option value="team">소속 팀</option><option value="cohort">기수</option><option value="status">활동 상태</option></select></div>
+                <div><label class="${label}" for="memberChangeValue">변경 값 *</label><select class="${input}" id="memberChangeValue"></select></div>
+            </div>
+            <label class="${label} mt-4" for="memberChangeReason">변경 사유 *</label>
+            <textarea class="min-h-28 w-full resize-y rounded-md border border-input bg-card px-3 py-2.5 text-sm transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20" id="memberChangeReason" maxlength="500" placeholder="예) 2026-1학기 팀 배정 변경"></textarea>
+            <p class="mt-2 hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-xs text-destructive" data-member-change-error role="alert"></p>
+        </jsp:body>
+    </t:modal>
+
+    <t:modal id="memberHistoryModal" title="멤버 변경 이력" description="팀·기수·권한·활동 상태 변경 기록을 확인합니다.">
+        <jsp:body><div data-member-history class="flex flex-col gap-2" aria-live="polite"></div></jsp:body>
     </t:modal>
 </t:layout>

@@ -1,4 +1,4 @@
-<%@ tag description="공개 셸 — 네이비 상단 내비 + 푸터. 예매 등 비로그인 화면용" pageEncoding="UTF-8" trimDirectiveWhitespaces="true" %>
+<%@ tag description="공개 셸 — 네이비 상단 내비와 푸터를 사용하는 비로그인 화면용" pageEncoding="UTF-8" trimDirectiveWhitespaces="true" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
 <%@ attribute name="title" required="true" %>

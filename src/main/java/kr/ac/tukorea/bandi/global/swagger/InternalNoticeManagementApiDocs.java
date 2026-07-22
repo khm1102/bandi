@@ -1,0 +1,87 @@
+package kr.ac.tukorea.bandi.global.swagger;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import kr.ac.tukorea.bandi.domain.notice.dto.request.InternalNoticeManageFilter;
+import kr.ac.tukorea.bandi.domain.notice.dto.request.InternalNoticeWriteRequest;
+import kr.ac.tukorea.bandi.domain.notice.dto.request.NoticePublishRequest;
+import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeCreatedResponse;
+import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeManageDetailResponse;
+import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeManageSummaryResponse;
+import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeReadStatusResponse;
+import kr.ac.tukorea.bandi.global.security.LoginMember;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import java.util.List;
+
+@RequestMapping("/api/internal-notice-management")
+@Tag(name = ApiTag.INTERNAL_NOTICE, description = "전체·팀 공지 관리 API")
+@SecurityRequirement(name = OpenApiConfig.SESSION_COOKIE_SCHEME)
+public interface InternalNoticeManagementApiDocs {
+
+    @Operation(summary = "관리 가능한 공지 목록 조회")
+    @GetMapping
+    ResponseEntity<List<InternalNoticeManageSummaryResponse>> search(
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
+            @RequestParam(required = false) String keyword,
+            @ParameterObject @ModelAttribute InternalNoticeManageFilter filter,
+            @RequestParam(required = false) Long teamId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int pageSize);
+
+    @Operation(summary = "관리용 공지 상세 조회")
+    @GetMapping("/{internalNoticeId}")
+    ResponseEntity<InternalNoticeManageDetailResponse> lookup(
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
+            @PathVariable Long internalNoticeId);
+
+    @Operation(summary = "공지 초안 등록")
+    @PostMapping
+    ResponseEntity<InternalNoticeCreatedResponse> create(
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
+            @Valid @RequestBody InternalNoticeWriteRequest request);
+
+    @Operation(summary = "공지 수정")
+    @PutMapping("/{internalNoticeId}")
+    ResponseEntity<Void> update(
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
+            @PathVariable Long internalNoticeId,
+            @Valid @RequestBody InternalNoticeWriteRequest request);
+
+    @Operation(summary = "공지 게시 또는 예약 게시")
+    @PostMapping("/{internalNoticeId}/publish")
+    ResponseEntity<Void> publish(
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
+            @PathVariable Long internalNoticeId,
+            @RequestBody NoticePublishRequest request);
+
+    @Operation(summary = "공지 게시 종료")
+    @PostMapping("/{internalNoticeId}/close")
+    ResponseEntity<Void> close(
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
+            @PathVariable Long internalNoticeId);
+
+    @Operation(summary = "공지 보관")
+    @PostMapping("/{internalNoticeId}/archive")
+    ResponseEntity<Void> archive(
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
+            @PathVariable Long internalNoticeId);
+
+    @Operation(summary = "공지 대상별 읽음 현황 조회")
+    @GetMapping("/{internalNoticeId}/read-statuses")
+    ResponseEntity<List<InternalNoticeReadStatusResponse>> searchReadStatuses(
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
+            @PathVariable Long internalNoticeId);
+}

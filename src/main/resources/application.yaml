@@ -13,6 +13,10 @@ spring:
     jdbc:
       initialize-schema: never
     timeout: 30m
+  servlet:
+    multipart:
+      max-file-size: ${FILE_STORAGE_MAX_UPLOAD_SIZE:500MB}
+      max-request-size: ${FILE_STORAGE_MAX_REQUEST_SIZE:501MB}
 
 mybatis:
   mapper-locations: classpath:mapper/**/*.xml
@@ -28,3 +32,14 @@ springdoc:
     path: /docs
   api-docs:
     path: /api-docs
+
+bandi:
+  storage:
+    root: ${FILE_STORAGE_ROOT:/data/bandi}
+    max-upload-bytes: ${FILE_STORAGE_MAX_UPLOAD_BYTES:524288000}
+  school-sso:
+    login-page-url: "https://ksc.tukorea.ac.kr/sso/login_stand.jsp"
+    login-process-url: "https://ksc.tukorea.ac.kr/sso/login_proc.jsp?returnurl=null"
+    connect-timeout: 5s
+    request-timeout: 15s
+    user-agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"

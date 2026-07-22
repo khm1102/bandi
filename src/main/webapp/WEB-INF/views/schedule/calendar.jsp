@@ -1,90 +1,52 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
-<c:set var="rq" value="?role=${role}"/>
-<c:set var="cell" value="min-h-20 rounded-md border bg-card p-1.5"/>
-<c:set var="dn" value="text-xs font-extrabold"/>
-<c:set var="ev" value="mt-1 block truncate rounded-sm bg-secondary px-1 py-0.5 text-xs font-bold text-muted-foreground"/>
-<c:set var="evHot" value="mt-1 block truncate rounded-sm bg-accent px-1 py-0.5 text-xs font-bold text-accent-foreground"/>
 <c:set var="input" value="h-11 w-full rounded-md border border-input bg-card px-3 text-base transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm"/>
 <c:set var="label" value="mb-1.5 block text-xs font-extrabold text-muted-foreground"/>
 <t:layout title="통합 캘린더" active="calendar" role="${role}" scriptPath="schedule/calendar">
-    <t:pageHead title="통합 캘린더" description="팀별로 필터해서 어떤 일정이 있는지 한눈에 봅니다">
+    <t:pageHead title="통합 캘린더" description="전체 일정과 팀별 일정을 월 단위로 확인하고 관리합니다">
         <c:if test="${role != 'member'}">
-            <t:button openModal="calEventModal">+ 일정 등록</t:button>
+            <t:button pageAction="calendar-create">+ 일정 등록</t:button>
         </c:if>
     </t:pageHead>
 
-    <div class="mb-4 flex flex-wrap gap-2">
-        <t:filterChip group="calendar" value="전체" label="전체" count="10" active="true"/>
-        <t:filterChip group="calendar" value="배우연출" label="배우연출" count="3"/>
-        <t:filterChip group="calendar" value="무대" label="무대" count="2"/>
-        <t:filterChip group="calendar" value="오퍼" label="오퍼" count="2"/>
-        <t:filterChip group="calendar" value="디자인" label="디자인" count="2"/>
-        <t:filterChip group="calendar" value="영상" label="영상" count="1"/>
+    <div class="mb-4 flex flex-wrap gap-2" data-calendar-filters>
+        <t:filterChip group="calendar" value="ALL" label="전체" active="true"/>
     </div>
 
     <t:card>
-        <div class="mb-4 flex items-center gap-3">
-            <button type="button" data-page-action="calendar-prev" class="inline-flex h-8 items-center justify-center rounded-md border bg-card px-3 text-xs font-bold transition-colors hover:bg-secondary">‹</button>
-            <b class="text-base font-black" data-calendar-month>2025년 6월</b>
-            <button type="button" data-page-action="calendar-next" class="inline-flex h-8 items-center justify-center rounded-md border bg-card px-3 text-xs font-bold transition-colors hover:bg-secondary">›</button>
-            <span class="ml-auto text-xs text-muted-foreground" data-calendar-filter-label>전체 팀 일정 표시 중</span>
+        <div class="mb-4 flex flex-wrap items-center gap-3">
+            <button type="button" data-page-action="calendar-prev" class="inline-flex size-11 items-center justify-center rounded-md border bg-card text-lg font-bold transition-colors hover:bg-secondary" aria-label="이전 달">‹</button>
+            <b class="text-base font-black" data-calendar-month></b>
+            <button type="button" data-page-action="calendar-next" class="inline-flex size-11 items-center justify-center rounded-md border bg-card text-lg font-bold transition-colors hover:bg-secondary" aria-label="다음 달">›</button>
+            <span class="w-full text-xs text-muted-foreground md:ml-auto md:w-auto" data-calendar-filter-label>전체 팀 일정 표시 중</span>
         </div>
-        <div class="grid grid-cols-7 gap-1.5" data-calendar-grid>
-            <div class="py-1 text-center text-xs font-extrabold text-muted-foreground">일</div>
-            <div class="py-1 text-center text-xs font-extrabold text-muted-foreground">월</div>
-            <div class="py-1 text-center text-xs font-extrabold text-muted-foreground">화</div>
-            <div class="py-1 text-center text-xs font-extrabold text-muted-foreground">수</div>
-            <div class="py-1 text-center text-xs font-extrabold text-muted-foreground">목</div>
-            <div class="py-1 text-center text-xs font-extrabold text-muted-foreground">금</div>
-            <div class="py-1 text-center text-xs font-extrabold text-muted-foreground">토</div>
-            <div class="${cell}"><span class="${dn}">1</span></div>
-            <div class="${cell}"><span class="${dn}">2</span></div>
-            <div class="${cell}"><span class="${dn}">3</span></div>
-            <div class="${cell}"><span class="${dn}">4</span></div>
-            <div class="${cell}"><span class="${dn}">5</span></div>
-            <div class="${cell}"><span class="${dn}">6</span></div>
-            <div class="${cell}"><span class="${dn}">7</span></div>
-            <div class="${cell}"><span class="${dn}">8</span></div>
-            <div class="${cell}"><span class="${dn}">9</span></div>
-            <div class="${cell}"><span class="${dn}">10</span></div>
-            <div class="${cell}"><span class="${dn}">11</span></div>
-            <div class="${cell}"><span class="${dn}">12</span></div>
-            <div class="${cell}"><span class="${dn}">13</span></div>
-            <div class="${cell}"><span class="${dn}">14</span></div>
-            <div class="${cell}"><span class="${dn}">15</span></div>
-            <div class="${cell}" data-calendar-day="16"><span class="${dn}">16</span><span class="${ev}" data-calendar-event data-team="오퍼" title="TIP아트센터">조명 세팅</span></div>
-            <div class="${cell}" data-calendar-day="17"><span class="${dn}">17</span><span class="${ev}" data-calendar-event data-team="배우연출" title="동아리방">대본 리딩</span></div>
-            <div class="${cell}" data-calendar-day="18"><span class="${dn}">18</span><span class="${ev}" data-calendar-event data-team="무대" title="동아리방">주간 운영회의</span></div>
-            <div class="${cell}" data-calendar-day="19"><span class="${dn}">19</span><span class="${ev}" data-calendar-event data-team="디자인" title="의상실">의상 피팅</span></div>
-            <div class="min-h-20 rounded-md border border-primary bg-card p-1.5 ring-2 ring-ring/20" data-calendar-day="20"><span class="${dn} text-accent-foreground">20</span><span class="${ev}" data-calendar-event data-team="무대" title="TIP아트센터">최종 리허설</span></div>
-            <div class="${cell}" data-calendar-day="21"><span class="${dn}">21</span><span class="${evHot}" data-calendar-event data-team="배우연출" title="TIP아트센터">정기공연 1일차</span></div>
-            <div class="${cell}" data-calendar-day="22"><span class="${dn}">22</span><span class="${evHot}" data-calendar-event data-team="배우연출" title="TIP아트센터">정기공연 2일차</span></div>
-            <div class="${cell}" data-calendar-day="23"><span class="${dn}">23</span><span class="${ev}" data-calendar-event data-team="영상" title="TIP아트센터">기록 촬영</span></div>
-            <div class="${cell}" data-calendar-day="24"><span class="${dn}">24</span><span class="${ev}" data-calendar-event data-team="오퍼" title="소극장">정기연습</span></div>
-            <div class="${cell}" data-calendar-day="25"><span class="${dn}">25</span></div>
-            <div class="${cell}" data-calendar-day="26"><span class="${dn}">26</span><span class="${ev}" data-calendar-event data-team="디자인" title="가평">MT</span></div>
-            <div class="${cell}"><span class="${dn}">27</span></div>
-            <div class="${cell}"><span class="${dn}">28</span></div>
-            <div class="${cell}"><span class="${dn}">29</span></div>
-            <div class="${cell}"><span class="${dn}">30</span></div>
+        <div class="grid grid-cols-7 gap-1.5" data-calendar-grid aria-live="polite"></div>
+        <div class="mt-4 hidden rounded-md border bg-secondary/60 px-4 py-3 text-center" data-calendar-state role="status">
+            <b class="block text-sm" data-calendar-state-title></b>
+            <p class="mt-1 text-xs text-muted-foreground" data-calendar-state-message></p>
+            <button type="button" class="mx-auto mt-3 hidden min-h-11 rounded-md border bg-card px-4 text-xs font-bold" data-calendar-retry>다시 시도</button>
         </div>
     </t:card>
 
-    <t:modal id="calEventModal" title="일정 등록" description="캘린더에 새 일정을 추가합니다. 팀과 장소를 지정하면 팀별 필터로 볼 수 있어요.">
+    <t:modal id="calendarEventModal" title="일정 등록" description="전체 또는 팀 일정을 등록하고 기간과 장소를 관리합니다.">
         <jsp:attribute name="footer">
+            <t:button variant="danger" pageAction="calendar-delete" cssClass="mr-auto hidden" confirm="이 일정을 삭제할까요?" confirmAction="일정 삭제">삭제</t:button>
             <t:button variant="outline" action="close-modal">취소</t:button>
-            <t:button pageAction="calendar-add">등록</t:button>
+            <t:button pageAction="calendar-save">저장</t:button>
         </jsp:attribute>
         <jsp:body>
             <div class="flex flex-col gap-3">
-                <div><label class="${label}" for="ceTitle">일정명 <span class="text-accent-foreground">*</span></label><input class="${input}" id="ceTitle" type="text" placeholder="예) 전체 연습"></div>
-                <div class="grid grid-cols-2 gap-2.5">
-                    <div><label class="${label}" for="ceDay">날짜 (일)</label><input class="${input}" id="ceDay" type="number" value="25" min="1" max="30" step="1"></div>
-                    <div><label class="${label}" for="ceTeam">담당팀</label><select class="${input}" id="ceTeam"><option>배우연출</option><option>무대</option><option>오퍼</option><option>디자인</option><option>영상</option></select></div>
+                <div><label class="${label}" for="ceTitle">일정명 <span class="text-accent-foreground">*</span></label><input class="${input}" id="ceTitle" type="text" maxlength="200" placeholder="예) 전체 연습"></div>
+                <div><label class="${label}" for="ceTeam">담당 범위</label><select class="${input}" id="ceTeam"></select></div>
+                <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
+                    <div><label class="${label}" for="ceStart">시작 <span class="text-accent-foreground">*</span></label><input class="${input}" id="ceStart" type="datetime-local"></div>
+                    <div><label class="${label}" for="ceEnd">종료 <span class="text-accent-foreground">*</span></label><input class="${input}" id="ceEnd" type="datetime-local"></div>
                 </div>
-                <div><label class="${label}" for="ceLoc">장소</label><input class="${input}" id="ceLoc" type="text" placeholder="예) TIP아트센터"></div>
+                <label class="flex min-h-11 items-center gap-2 text-sm font-bold"><input id="ceAllDay" type="checkbox" class="size-4 rounded border-input"> 종일 일정</label>
+                <div><label class="${label}" for="ceLoc">장소</label><input class="${input}" id="ceLoc" type="text" maxlength="200" placeholder="예) TIP아트센터"></div>
+                <div><label class="${label}" for="ceDescription">설명</label><textarea class="min-h-24 w-full resize-y rounded-md border border-input bg-card px-3 py-2.5 text-sm" id="ceDescription" placeholder="준비물과 진행 내용을 입력하세요"></textarea></div>
+                <p class="hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-xs text-destructive" data-calendar-form-error role="alert"></p>
             </div>
         </jsp:body>
     </t:modal>

@@ -1,158 +1,369 @@
-import {showToast} from '../common/toast.js';
+import {ApiError, del, get, post, put} from '../common/api.js';
 import {all, bindPageActions, element, lookup, readValue} from '../common/dom.js';
+import {openModal} from '../common/modal.js';
+import {currentUserRole} from '../common/session.js';
+import {showToast} from '../common/toast.js';
 import {activateFilterChip, closeActionModal} from '../common/view.js';
 
 const ACTIONS = Object.freeze({
     PREVIOUS: 'calendar-prev',
     NEXT: 'calendar-next',
-    ADD: 'calendar-add'
+    CREATE: 'calendar-create',
+    SAVE: 'calendar-save',
+    DELETE: 'calendar-delete',
 });
+const TEAM_TONES = [
+    'bg-secondary text-muted-foreground',
+    'bg-info-soft text-info',
+    'bg-accent text-accent-foreground',
+    'bg-warning-soft text-warning',
+];
 
 const calendarState = {
-    month: 5,
-    filter: '전체',
-    events: []
+    month: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+    filterTeamId: 'ALL',
+    events: [],
+    teams: [],
+    loginMember: null,
+    editingEventId: null,
 };
 
-function visibleEvents(day) {
-    return calendarState.events.filter((eventData) => eventData.month === calendarState.month
-        && eventData.day === day
-        && (calendarState.filter === '전체' || eventData.team === calendarState.filter));
+function errorMessage(error) {
+    if (error instanceof ApiError && error.fieldErrors.length > 0) {
+        return error.fieldErrors[0].reason;
+    }
+    return error.message || '요청을 처리하지 못했습니다.';
+}
+
+function pad(value) {
+    return String(value).padStart(2, '0');
+}
+
+function localDateTime(date) {
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}:00`;
+}
+
+function monthRange() {
+    const start = new Date(calendarState.month);
+    const end = new Date(start.getFullYear(), start.getMonth() + 1, 1);
+    return {rangeStart: localDateTime(start), rangeEnd: localDateTime(end)};
+}
+
+function teamById(teamId) {
+    return calendarState.teams.find((team) => team.teamId === teamId);
+}
+
+function teamLabel(teamId) {
+    return teamId ? teamById(teamId)?.name || `팀 ${teamId}` : '전체';
+}
+
+function selectedEvents(day) {
+    return calendarState.events.filter((eventData) => {
+        const start = new Date(eventData.startDttm);
+        const teamMatched = calendarState.filterTeamId === 'ALL'
+                || String(eventData.teamId) === calendarState.filterTeamId;
+        return start.getDate() === day && teamMatched;
+    });
 }
 
 function calendarEventNode(eventData) {
-    const hot = eventData.title.includes('공연');
-    const teamClasses = {
-        배우연출: 'bg-secondary text-muted-foreground',
-        무대: 'bg-info-soft text-info',
-        오퍼: 'bg-accent text-accent-foreground',
-        디자인: 'bg-warning-soft text-warning',
-        영상: 'bg-secondary text-muted-foreground'
-    };
-    const classes = hot
-        ? 'mt-1 block truncate rounded-sm bg-accent px-1 py-0.5 text-xs font-bold text-accent-foreground'
-        : `mt-1 block truncate rounded-sm px-1 py-0.5 text-xs font-bold ${teamClasses[eventData.team]}`;
-    const node = element('button', `${classes} w-full text-left`, eventData.title);
+    const teamIndex = Math.max(0, calendarState.teams.findIndex(
+            (team) => team.teamId === eventData.teamId));
+    const tone = eventData.teamId ? TEAM_TONES[teamIndex % TEAM_TONES.length]
+        : 'bg-sidebar text-white';
+    const node = element('button',
+            `mt-1 block w-full truncate rounded-sm px-1 py-0.5 text-left text-xs font-bold ${tone}`,
+            eventData.title);
     node.type = 'button';
-    node.title = eventData.place;
-    node.dataset.calendarEventButton = '';
-    node.dataset.eventTeam = eventData.team;
+    node.title = `${teamLabel(eventData.teamId)} · ${eventData.place || '장소 미정'}`;
+    node.dataset.calendarEventId = eventData.calendarEventId;
     return node;
 }
 
 function renderCalendar() {
     const grid = lookup('[data-calendar-grid]');
-    if (!grid) {
-        return;
-    }
     grid.replaceChildren();
     ['일', '월', '화', '수', '목', '금', '토'].forEach((dayName) => {
-        const classes = 'py-1 text-center text-xs font-extrabold text-muted-foreground';
-        grid.appendChild(element('div', classes, dayName));
+        grid.appendChild(element('div',
+                'py-1 text-center text-xs font-extrabold text-muted-foreground',
+                dayName));
     });
-    const firstDay = new Date(2025, calendarState.month, 1).getDay();
-    const dayCount = new Date(2025, calendarState.month + 1, 0).getDate();
-    const dayInput = document.getElementById('ceDay');
-    if (dayInput) {
-        dayInput.max = String(dayCount);
-    }
+    const year = calendarState.month.getFullYear();
+    const month = calendarState.month.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const dayCount = new Date(year, month + 1, 0).getDate();
     for (let index = 0; index < firstDay; index += 1) {
-        grid.appendChild(element('div', 'min-h-20 rounded-md bg-secondary/50 opacity-50'));
+        grid.appendChild(element('div',
+                'min-h-20 rounded-md bg-secondary/50 opacity-50'));
     }
+    const today = new Date();
     for (let day = 1; day <= dayCount; day += 1) {
-        const isToday = calendarState.month === 5 && day === 20;
+        const isToday = today.getFullYear() === year
+                && today.getMonth() === month && today.getDate() === day;
         const classes = isToday
-            ? 'min-h-20 cursor-pointer rounded-md border border-primary bg-card p-1.5 ring-2 ring-ring/20'
-            : 'min-h-20 cursor-pointer rounded-md border bg-card p-1.5 transition-colors hover:border-primary';
+            ? 'min-h-20 rounded-md border border-primary bg-card p-1.5 ring-2 ring-ring/20'
+            : 'min-h-20 rounded-md border bg-card p-1.5';
         const cell = element('div', classes);
         cell.dataset.calendarDay = String(day);
-        const dayClasses = `text-xs font-extrabold ${isToday ? 'text-accent-foreground' : ''}`;
-        cell.appendChild(element('span', dayClasses, String(day)));
-        visibleEvents(day).forEach((eventData) => cell.appendChild(calendarEventNode(eventData)));
+        cell.appendChild(element('span',
+                `text-xs font-extrabold ${isToday ? 'text-accent-foreground' : ''}`,
+                String(day)));
+        selectedEvents(day).forEach((eventData) => {
+            cell.appendChild(calendarEventNode(eventData));
+        });
         grid.appendChild(cell);
     }
-    lookup('[data-calendar-month]').textContent = `2025년 ${calendarState.month + 1}월`;
-    const filterName = calendarState.filter === '전체' ? '전체 팀' : `${calendarState.filter}팀`;
-    lookup('[data-calendar-filter-label]').textContent = `${filterName} 일정 표시 중`;
+    lookup('[data-calendar-month]').textContent = `${year}년 ${month + 1}월`;
+    lookup('[data-calendar-filter-label]').textContent =
+            `${calendarState.filterTeamId === 'ALL' ? '전체 팀' : teamLabel(Number(calendarState.filterTeamId))} 일정 표시 중`;
 }
 
-function addCalendarEvent(trigger) {
-    const title = readValue('ceTitle');
-    if (!title) {
-        showToast('일정명을 입력해 주세요');
+function setState(title, message, retry = false) {
+    const state = lookup('[data-calendar-state]');
+    state.classList.remove('hidden');
+    lookup('[data-calendar-state-title]', state).textContent = title;
+    lookup('[data-calendar-state-message]', state).textContent = message;
+    lookup('[data-calendar-retry]', state).classList.toggle('hidden', !retry);
+}
+
+function hideState() {
+    lookup('[data-calendar-state]').classList.add('hidden');
+}
+
+function createTeamFilter(team) {
+    const button = element('button',
+            'inline-flex h-11 items-center gap-1.5 rounded-md border bg-card px-3 text-xs font-bold text-muted-foreground transition-colors hover:border-sidebar-muted md:h-8',
+            team.name);
+    button.type = 'button';
+    button.dataset.filterGroup = 'calendar';
+    button.dataset.filterValue = team.teamId;
+    button.setAttribute('aria-pressed', 'false');
+    return button;
+}
+
+function renderTeamControls() {
+    const filters = lookup('[data-calendar-filters]');
+    all('[data-filter-value]:not([data-filter-value="ALL"])', filters)
+            .forEach((button) => button.remove());
+    calendarState.teams.forEach((team) => filters.appendChild(
+            createTeamFilter(team)));
+
+    const select = document.getElementById('ceTeam');
+    select.replaceChildren();
+    if (currentUserRole === 'admin') {
+        const allOption = element('option', '', '전체 일정');
+        allOption.value = '';
+        select.appendChild(allOption);
+        calendarState.teams.forEach((team) => {
+            const option = element('option', '', team.name);
+            option.value = team.teamId;
+            select.appendChild(option);
+        });
         return;
     }
-    const dayInput = document.getElementById('ceDay');
-    const day = Number(readValue('ceDay'));
-    const lastDay = new Date(2025, calendarState.month + 1, 0).getDate();
-    if (!Number.isInteger(day) || day < 1 || day > lastDay) {
-        dayInput.setCustomValidity(`${calendarState.month + 1}월은 1일부터 ${lastDay}일까지 입력할 수 있습니다.`);
-        dayInput.reportValidity();
-        dayInput.focus();
-        showToast(`날짜는 1일부터 ${lastDay}일까지 입력해 주세요`);
-        return;
-    }
-    dayInput.setCustomValidity('');
-    calendarState.events.push({
-        month: calendarState.month,
-        day,
-        title,
-        team: readValue('ceTeam'),
-        place: readValue('ceLoc') || '미정'
+    const allOption = element('option', '', '전체 일정');
+    allOption.value = '';
+    allOption.disabled = true;
+    select.appendChild(allOption);
+    calendarState.teams.forEach((team) => {
+        const option = element('option', '', team.name);
+        option.value = team.teamId;
+        option.disabled = team.teamId !== calendarState.loginMember.teamId;
+        select.appendChild(option);
     });
-    calendarState.filter = '전체';
-    const allFilter = lookup('[data-filter-group="calendar"][data-filter-value="전체"]');
-    if (allFilter) {
-        activateFilterChip(allFilter);
-    }
-    closeActionModal(trigger);
-    renderCalendar();
-    showToast('일정을 등록했어요');
+    select.value = calendarState.loginMember.teamId || '';
 }
 
-calendarState.events = all('[data-calendar-event]').map((eventNode) => ({
-    month: 5,
-    day: Number(eventNode.closest('[data-calendar-day]').dataset.calendarDay),
-    title: eventNode.textContent.trim(),
-    team: eventNode.dataset.team,
-    place: eventNode.title
-}));
+async function loadCalendar() {
+    setState('일정을 불러오는 중입니다', '잠시만 기다려 주세요.');
+    try {
+        if (calendarState.teams.length === 0) {
+            const [teams, member] = await Promise.all([
+                get('/api/members/reference/teams'),
+                get('/api/members/me'),
+            ]);
+            calendarState.teams = teams;
+            calendarState.loginMember = member;
+            renderTeamControls();
+        }
+        calendarState.events = await get('/api/calendar-events', monthRange());
+        hideState();
+        renderCalendar();
+    } catch (error) {
+        setState('일정을 불러오지 못했습니다', errorMessage(error), true);
+        renderCalendar();
+    }
+}
+
+function setInlineError(message) {
+    const error = lookup('[data-calendar-form-error]');
+    error.textContent = message || '';
+    error.classList.toggle('hidden', !message);
+}
+
+function eventFormControls() {
+    return ['ceTitle', 'ceTeam', 'ceStart', 'ceEnd', 'ceAllDay', 'ceLoc',
+        'ceDescription'].map((id) => document.getElementById(id));
+}
+
+function canEditEvent(eventData) {
+    return currentUserRole === 'admin' || currentUserRole === 'leader'
+            && eventData.teamId === calendarState.loginMember.teamId;
+}
+
+function configureFormAccess(editable, existing) {
+    eventFormControls().forEach((control) => {
+        control.disabled = !editable;
+    });
+    const saveButton = lookup('[data-page-action="calendar-save"]');
+    const deleteButton = lookup('[data-page-action="calendar-delete"]');
+    saveButton.classList.toggle('hidden', !editable);
+    deleteButton.classList.toggle('hidden', !editable || !existing);
+}
+
+function defaultStart() {
+    const now = new Date();
+    const sameMonth = now.getFullYear() === calendarState.month.getFullYear()
+            && now.getMonth() === calendarState.month.getMonth();
+    return sameMonth ? now : new Date(calendarState.month.getFullYear(),
+            calendarState.month.getMonth(), 1, 18, 0);
+}
+
+function toInputValue(value) {
+    return value ? value.slice(0, 16) : '';
+}
+
+function fillForm(eventData) {
+    document.getElementById('ceTitle').value = eventData?.title || '';
+    document.getElementById('ceTeam').value = eventData?.teamId
+            || (currentUserRole === 'leader'
+                ? calendarState.loginMember.teamId || '' : '');
+    const start = eventData ? null : defaultStart();
+    const end = start ? new Date(start.getTime() + 60 * 60 * 1000) : null;
+    document.getElementById('ceStart').value = eventData
+        ? toInputValue(eventData.startDttm) : toInputValue(localDateTime(start));
+    document.getElementById('ceEnd').value = eventData
+        ? toInputValue(eventData.endDttm) : toInputValue(localDateTime(end));
+    document.getElementById('ceAllDay').checked = eventData?.allDay || false;
+    document.getElementById('ceLoc').value = eventData?.place || '';
+    document.getElementById('ceDescription').value = eventData?.description || '';
+    setInlineError('');
+}
+
+function openCreateModal(trigger) {
+    calendarState.editingEventId = null;
+    fillForm(null);
+    configureFormAccess(true, false);
+    document.getElementById('calendarEventModalTitle').textContent = '일정 등록';
+    openModal('calendarEventModal', trigger);
+}
+
+function openEventModal(eventId, trigger) {
+    const eventData = calendarState.events.find((item) =>
+        item.calendarEventId === Number(eventId));
+    if (!eventData) {
+        return;
+    }
+    calendarState.editingEventId = eventData.calendarEventId;
+    fillForm(eventData);
+    configureFormAccess(canEditEvent(eventData), true);
+    document.getElementById('calendarEventModalTitle').textContent =
+            canEditEvent(eventData) ? '일정 수정' : '일정 상세';
+    openModal('calendarEventModal', trigger);
+}
+
+function formRequest() {
+    return {
+        teamId: Number(readValue('ceTeam')) || null,
+        title: readValue('ceTitle'),
+        description: readValue('ceDescription'),
+        startDttm: readValue('ceStart'),
+        endDttm: readValue('ceEnd'),
+        allDay: document.getElementById('ceAllDay').checked,
+        place: readValue('ceLoc'),
+    };
+}
+
+async function saveEvent(trigger) {
+    const request = formRequest();
+    if (!request.startDttm || !request.endDttm
+            || new Date(request.startDttm) >= new Date(request.endDttm)) {
+        setInlineError('종료 일시는 시작 일시보다 뒤여야 합니다.');
+        return;
+    }
+    trigger.disabled = true;
+    setInlineError('');
+    try {
+        if (calendarState.editingEventId) {
+            await put(`/api/calendar-events/${calendarState.editingEventId}`,
+                    request);
+        } else {
+            await post('/api/calendar-events', request);
+        }
+        closeActionModal(trigger);
+        showToast(calendarState.editingEventId ? '일정을 수정했습니다.'
+            : '일정을 등록했습니다.');
+        await loadCalendar();
+    } catch (error) {
+        setInlineError(errorMessage(error));
+    } finally {
+        trigger.disabled = false;
+    }
+}
+
+async function deleteEvent(trigger) {
+    if (!calendarState.editingEventId) {
+        return;
+    }
+    trigger.disabled = true;
+    try {
+        await del(`/api/calendar-events/${calendarState.editingEventId}`);
+        closeActionModal(trigger);
+        showToast('일정을 삭제했습니다.');
+        await loadCalendar();
+    } catch (error) {
+        setInlineError(errorMessage(error));
+    } finally {
+        trigger.disabled = false;
+    }
+}
 
 document.addEventListener('click', (event) => {
     const filter = event.target.closest('[data-filter-group="calendar"]');
     if (filter) {
-        calendarState.filter = filter.dataset.filterValue;
+        calendarState.filterTeamId = filter.dataset.filterValue;
         activateFilterChip(filter);
         renderCalendar();
         return;
     }
-    const eventButton = event.target.closest('[data-calendar-event-button]');
+    const eventButton = event.target.closest('[data-calendar-event-id]');
     if (eventButton) {
-        showToast(`${eventButton.textContent} · ${eventButton.dataset.eventTeam}팀 · ${eventButton.title}`);
+        openEventModal(eventButton.dataset.calendarEventId, eventButton);
         return;
     }
     const dayCell = event.target.closest('[data-calendar-day]');
-    if (!dayCell) {
-        return;
+    if (dayCell) {
+        const day = Number(dayCell.dataset.calendarDay);
+        showToast(`${calendarState.month.getMonth() + 1}월 ${day}일 · ${selectedEvents(day).length}개 일정`);
     }
-    const day = Number(dayCell.dataset.calendarDay);
-    const events = visibleEvents(day);
-    const summary = events.length > 0
-        ? events.map((item) => `${item.title} (${item.team}팀·${item.place})`).join(' / ')
-        : '일정 없음';
-    showToast(`${calendarState.month + 1}월 ${day}일 · ${summary}`);
 });
 
+lookup('[data-calendar-retry]').addEventListener('click', loadCalendar);
 bindPageActions({
-    [ACTIONS.PREVIOUS]: () => {
-        calendarState.month = Math.max(0, calendarState.month - 1);
-        renderCalendar();
+    [ACTIONS.PREVIOUS]: async () => {
+        calendarState.month = new Date(calendarState.month.getFullYear(),
+                calendarState.month.getMonth() - 1, 1);
+        await loadCalendar();
     },
-    [ACTIONS.NEXT]: () => {
-        calendarState.month = Math.min(11, calendarState.month + 1);
-        renderCalendar();
+    [ACTIONS.NEXT]: async () => {
+        calendarState.month = new Date(calendarState.month.getFullYear(),
+                calendarState.month.getMonth() + 1, 1);
+        await loadCalendar();
     },
-    [ACTIONS.ADD]: addCalendarEvent
+    [ACTIONS.CREATE]: openCreateModal,
+    [ACTIONS.SAVE]: saveEvent,
+    [ACTIONS.DELETE]: deleteEvent,
 });
 
 renderCalendar();
+loadCalendar();

@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.ac.tukorea.bandi.domain.asset.mapper.AssetMapper">
+
+    <resultMap id="itemMap" type="kr.ac.tukorea.bandi.domain.asset.model.AssetItem">
+        <constructor>
+            <idArg column="asset_item_id" javaType="java.lang.Long"/>
+            <arg column="name" javaType="java.lang.String"/>
+            <arg column="category_code" javaType="java.lang.String"/>
+            <arg column="tracking_type_code" javaType="kr.ac.tukorea.bandi.domain.asset.model.AssetTrackingType"/>
+            <arg column="owner_type_code" javaType="kr.ac.tukorea.bandi.domain.asset.model.AssetOwnerType"/>
+            <arg column="owner_member_id" javaType="java.lang.Long"/>
+            <arg column="external_owner_name" javaType="java.lang.String"/>
+            <arg column="total_quantity" javaType="_int"/>
+            <arg column="storage_location" javaType="java.lang.String"/>
+            <arg column="status_code" javaType="kr.ac.tukorea.bandi.domain.asset.model.AssetStatus"/>
+            <arg column="photo_file_id" javaType="java.lang.Long"/>
+            <arg column="note" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="unitMap" type="kr.ac.tukorea.bandi.domain.asset.model.AssetUnit">
+        <constructor>
+            <idArg column="asset_unit_id" javaType="java.lang.Long"/>
+            <arg column="asset_item_id" javaType="java.lang.Long"/>
+            <arg column="management_no" javaType="java.lang.String"/>
+            <arg column="status_code" javaType="kr.ac.tukorea.bandi.domain.asset.model.AssetStatus"/>
+            <arg column="storage_location" javaType="java.lang.String"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="historyMap" type="kr.ac.tukorea.bandi.domain.asset.model.AssetHistory">
+        <constructor>
+            <idArg column="asset_history_id" javaType="java.lang.Long"/>
+            <arg column="asset_item_id" javaType="java.lang.Long"/>
+            <arg column="asset_unit_id" javaType="java.lang.Long"/>
+            <arg column="action_code" javaType="kr.ac.tukorea.bandi.domain.asset.model.AssetAction"/>
+            <arg column="quantity" javaType="_int"/>
+            <arg column="previous_status_code" javaType="kr.ac.tukorea.bandi.domain.asset.model.AssetStatus"/>
+            <arg column="new_status_code" javaType="kr.ac.tukorea.bandi.domain.asset.model.AssetStatus"/>
+            <arg column="note" javaType="java.lang.String"/>
+            <arg column="changed_by_member_id" javaType="java.lang.Long"/>
+            <arg column="changed_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="itemColumns">
+        asset_item_id, name, category_code, tracking_type_code,
+        owner_type_code, owner_member_id, external_owner_name,
+        total_quantity, storage_location, status_code, photo_file_id, note
+    </sql>
+
+    <select id="searchItems" resultMap="itemMap">
+        SELECT <include refid="itemColumns"/>
+        FROM asset_item
+        <where>
+            deleted_dttm IS NULL
+            <if test="keyword != null">
+                AND (name LIKE CONCAT('%', #{keyword}, '%')
+                    OR storage_location LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="categoryCode != null">
+                AND category_code = #{categoryCode}
+            </if>
+            <if test="trackingType != null">
+                AND tracking_type_code = #{trackingType}
+            </if>
+            <if test="status != null">
+                AND status_code = #{status}
+            </if>
+        </where>
+        ORDER BY name, asset_item_id
+    </select>
+
+    <select id="searchUnitsByItemId" resultMap="unitMap">
+        SELECT asset_unit_id, asset_item_id, management_no, status_code,
+               storage_location
+        FROM asset_unit
+        WHERE asset_item_id = #{assetItemId}
+        ORDER BY management_no, asset_unit_id
+    </select>
+
+    <select id="searchHistoriesByItemId" resultMap="historyMap">
+        SELECT asset_history_id, asset_item_id, asset_unit_id, action_code,
+               quantity, previous_status_code, new_status_code, note,
+               changed_by_member_id, changed_dttm
+        FROM asset_history
+        WHERE asset_item_id = #{assetItemId}
+        ORDER BY changed_dttm DESC, asset_history_id DESC
+    </select>
+
+    <select id="lookupItemByIdForUpdate" resultMap="itemMap">
+        SELECT <include refid="itemColumns"/>
+        FROM asset_item
+        WHERE asset_item_id = #{assetItemId}
+          AND deleted_dttm IS NULL
+        FOR UPDATE
+    </select>
+
+    <select id="lookupItemById" resultMap="itemMap">
+        SELECT <include refid="itemColumns"/>
+        FROM asset_item
+        WHERE asset_item_id = #{assetItemId}
+          AND deleted_dttm IS NULL
+    </select>
+
+    <select id="lookupUnitByIdForUpdate" resultMap="unitMap">
+        SELECT asset_unit_id, asset_item_id, management_no, status_code,
+               storage_location
+        FROM asset_unit
+        WHERE asset_unit_id = #{assetUnitId}
+        FOR UPDATE
+    </select>
+
+    <insert id="insertItem" useGeneratedKeys="true" keyProperty="assetItemId">
+        INSERT INTO asset_item (
+            name, category_code, tracking_type_code, owner_type_code,
+            owner_member_id, external_owner_name, total_quantity,
+            storage_location, status_code, photo_file_id, note
+        ) VALUES (
+            #{name}, #{categoryCode}, #{trackingType}, #{ownerType},
+            #{ownerMemberId}, #{externalOwnerName}, #{totalQuantity},
+            #{storageLocation}, #{status}, #{photoFileId}, #{note}
+        )
+    </insert>
+
+    <insert id="insertUnit" useGeneratedKeys="true" keyProperty="assetUnitId">
+        INSERT INTO asset_unit (
+            asset_item_id, management_no, status_code, storage_location
+        ) VALUES (
+            #{assetItemId}, #{managementNo}, #{status}, #{storageLocation}
+        )
+    </insert>
+
+    <insert id="insertHistory">
+        INSERT INTO asset_history (
+            asset_item_id, asset_unit_id, action_code, quantity,
+            previous_status_code, new_status_code, note,
+            changed_by_member_id, changed_dttm
+        ) VALUES (
+            #{assetItemId}, #{assetUnitId}, #{action}, #{quantity},
+            #{previousStatus}, #{newStatus}, #{note},
+            #{changedByMemberId}, #{changedDttm}
+        )
+    </insert>
+
+    <update id="updateItem">
+        UPDATE asset_item
+        SET name = #{name}, category_code = #{categoryCode},
+            owner_type_code = #{ownerType}, owner_member_id = #{ownerMemberId},
+            external_owner_name = #{externalOwnerName},
+            total_quantity = #{totalQuantity},
+            storage_location = #{storageLocation}, status_code = #{status},
+            photo_file_id = #{photoFileId}, note = #{note}
+        WHERE asset_item_id = #{assetItemId}
+          AND deleted_dttm IS NULL
+    </update>
+
+    <update id="updateUnit">
+        UPDATE asset_unit
+        SET status_code = #{status}, storage_location = #{storageLocation}
+        WHERE asset_unit_id = #{assetUnitId}
+    </update>
+
+</mapper>

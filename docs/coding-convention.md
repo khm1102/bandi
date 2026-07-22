@@ -215,9 +215,9 @@ Java 17이므로 전통 콜론 스타일 switch문 대신 switch 표현식을 �
 
 ```java
 String label = switch (role) {
-    case PRESIDENT -> "회장";
-    case STAFF -> "운영진";
-    case MEMBER -> "단원";
+    case ADMIN -> "운영진";
+    case LEADER -> "팀장";
+    case MEMBER -> "일반 부원";
 };
 ```
 
@@ -268,7 +268,7 @@ return doSomething();
 ```
 
 ### 6.3 원시값과 문자열 포장 **(DOMAIN)**
-도메인 개념을 가진 값(예: 이메일, 공연 회차, 회비 금액)은 record로 포장한다. Controller 파라미터, DTO 필드, MyBatis 매핑 필드는 원시값을 허용한다.
+도메인 개념을 가진 값(예: 이메일, 일정 기간, 자료 파일 크기)은 record로 포장한다. Controller 파라미터, DTO 필드, MyBatis 매핑 필드는 원시값을 허용한다.
 
 ```java
 public record Email(String value) {
@@ -281,7 +281,7 @@ public record Email(String value) {
 ```
 
 ### 6.4 일급 컬렉션 적용 **(DOMAIN)**
-도메인 로직이 컬렉션을 다룰 때(예: 출연진 목록, 회비 납부 내역) 일급 컬렉션으로 포장한다. 단순 조회 결과 전달(`List<MemberResponse>`)에는 강제하지 않는다.
+도메인 로직이 컬렉션을 다룰 때(예: 팀 멤버 목록, 자료 파일 목록) 일급 컬렉션으로 포장한다. 단순 조회 결과 전달(`List<MemberResponse>`)에는 강제하지 않는다.
 
 ### 6.5 인스턴스 변수 개수 최소화 **(DOMAIN, SHOULD)**
 도메인 객체는 인스턴스 변수를 줄이도록 노력한다. 3개를 넘으면 응집도 있는 값들을 묶어 별도 객체로 추출할 수 있는지 검토한다. DTO, 설정 클래스, 테이블 매핑 객체는 예외.
@@ -305,9 +305,9 @@ public record Email(String value) {
 String name = member.getName();
 
 // 나쁜 예 — 꺼낸 값으로 외부에서 판단
-if (member.getRole() == ClubRole.PRESIDENT) { ... }
+if (member.getRole() == ClubRole.ADMIN) { ... }
 // 좋은 예 — 객체에 묻기
-if (member.isPresident()) { ... }
+if (member.isAdmin()) { ... }
 ```
 
 Lombok 규칙:
@@ -400,12 +400,10 @@ kr.ac.tukorea.bandi
 ├── BandiApplication.java
 │
 ├── domain
-│   └── member                             # ── feature 단위 (club, performance, fee ...) ──
+│   └── member                             # ── feature 단위 (calendar, notice, resource ...) ──
 │       ├── controller
-│       │   ├── docs
-│       │   │   └── MemberApiDocs.java         # springdoc 애노테이션 전용 인터페이스
 │       │   ├── MemberController.java          # SSR (JSP)
-│       │   └── MemberApiController.java       # /api — MemberApiDocs 구현
+│       │   └── MemberApiController.java       # /api — global.swagger.MemberApiDocs 구현
 │       ├── service
 │       │   └── MemberService.java
 │       ├── mapper
@@ -426,6 +424,7 @@ kr.ac.tukorea.bandi
 └── global
     ├── config                             # WebConfig, MyBatisConfig ...
     ├── security                           # SecurityConfig, @LoginMember, ArgumentResolver
+    ├── swagger                            # OpenApiConfig, ApiTag, 기능별 ~ApiDocs 인터페이스
     ├── exception                          # ErrorCode, BusinessException, ErrorResponse, ApiExceptionHandler, SsrExceptionHandler
     └── response                           # /api 공통 응답 객체 (현재 미사용 — 도입 여부는 16.3)
 ```
@@ -498,6 +497,7 @@ Mapper ──→ model
 - feature 패키지 간 직접 참조는 **service → 다른 feature의 service**까지만 허용한다. 다른 feature의 mapper/model을 직접 사용하지 않는다.
 - 순환 참조가 생기면 공통 개념을 별도 feature로 추출한다.
 - `global`에 특정 feature 전용 로직을 넣지 않는다. 인증 관련 클래스는 `config`가 아닌 `security`에 응집시킨다.
+- **Swagger 문서 예외**: `global.swagger`는 API 문서의 단일 관리 지점이다. `~ApiDocs`가 HTTP 계약을 표현하기 위해 feature의 request/response DTO를 참조하는 것만 허용하며, feature의 Service·Mapper·model 참조와 비즈니스 로직은 금지한다.
 
 ## 9. 레이어 규칙
 
@@ -505,7 +505,7 @@ Mapper ──→ model
 - 요청 바인딩, 검증 트리거(`@Valid`), 뷰/리다이렉트 결정만 담당한다. 비즈니스 로직 금지.
 - 반환 타입은 뷰 이름 `String` 또는 `ResponseEntity`(API 한정)로 통일한다.
 - **PRG 패턴 필수**: 폼 POST 성공 시 `redirect:`로 응답한다. 사용자 피드백은 `RedirectAttributes.addFlashAttribute`를 사용한다.
-- URL은 소문자 케밥 케이스, 복수형 리소스: `/members`, `/members/{memberId}/fee-records`
+- URL은 소문자 케밥 케이스, 복수형 리소스: `/members`, `/members/{memberId}/team-history`
 - 화면용 컨트롤러와 API 컨트롤러(`@RestController`)를 분리한다. API는 `/api` prefix.
 
 ### 9.2 Service
@@ -516,7 +516,7 @@ Mapper ──→ model
 
 ### 9.3 Model (도메인 객체)
 - 데이터 흐름: `Request(dto) → [Service에서 변환] → Model → Mapper 저장/조회 → [Service에서 변환] → Response(dto) → View`
-- model은 비즈니스 로직과 판단 메소드를 가진다 (`isPresident()`, `canEditPerformance()`). 6장의 DOMAIN 등급 규칙(getter 지양, 원시값 포장, 일급 컬렉션)이 적용되는 계층이다.
+- model은 비즈니스 로직과 판단 메소드를 가진다 (`isAdmin()`, `canEditPerformance()`). 6장의 DOMAIN 등급 규칙(getter 지양, 원시값 포장, 일급 컬렉션)이 적용되는 계층이다.
 - model은 MyBatis 조회 결과가 매핑되는 대상이기도 하다. 매핑을 위한 기본 생성자/접근이 필요한 경우 최소한으로 허용한다.
 - **예외**: 로직이 전혀 없는 단순 코드성 테이블(코드-이름 매핑 등)은 model을 생략하고 dto만 사용할 수 있다. 단, 이후 판단 로직이 생기면 즉시 model로 승격한다.
 - **비대화 경고**: 현재 구조에서 model은 DB 매핑 대상과 비즈니스 객체 역할을 겸한다. 이 규모에선 단순함이 이득이지만, **매핑 요구사항(기본 생성자, 매핑 전용 필드, resultMap 편의를 위한 setter)이 도메인 설계를 침식하기 시작하면** 해당 feature에 한해 Persistence 객체(매핑 전용)와 Domain 객체(로직 전용)로 분리한다. 전 feature 일괄 분리가 아니라 비대해진 곳만 분리하며, 분리 시 아래 목록에 해당 feature를 기록한다.
@@ -545,7 +545,7 @@ public enum ErrorCode {
 }
 ```
 
-- 코드 접두사는 feature별 고정: `C` 공통, `M` member, `F` fee, `P` performance... 새 feature 추가 시 이 문서에 접두사를 등록한다.
+- 코드 접두사는 feature별 고정: `C` 공통, `A` auth, `M` member, `CA` calendar, `FI` file, `PN` public notice, `NI` internal notice, `RS` resource, `AR` activity record, `AS` asset... 새 feature 추가 시 이 문서에 접두사를 등록한다.
 - `message`는 **사용자에게 그대로 보여줄 문장**으로 작성한다. 내부 사정("DB 커넥션 실패")을 노출하지 않는다.
 
 ```java
@@ -699,7 +699,7 @@ mybatis:
 ### 11.1 테이블/컬럼 네이밍 — 소문자 snake_case
 > IRM 컨벤션(테이블 대문자 카멜)은 채택하지 않는다. MySQL은 `lower_case_table_names` 설정과 OS에 따라 테이블명 대소문자 동작이 달라져(macOS 개발 → Linux 배포 시 사고 위험) 소문자 snake_case로 통일한다.
 
-- 테이블: 소문자 snake_case 단수형 — `member`, `club`, `fee_record`, `performance_cast`
+- 테이블: 소문자 snake_case 단수형 — `member`, `calendar_event`, `stored_file`
 - 컬럼: 소문자 snake_case — `member_id`, `created_dttm`
 - 연결 테이블: 두 테이블명 조합 — `club_member`
 - **예외**: 프레임워크가 스키마를 제공·강제하는 테이블(spring-session의 `SPRING_SESSION`/`SPRING_SESSION_ATTRIBUTES` — 18.4)은 공식 스키마 원문을 그대로 사용하며, 11.1~11.3 네이밍 규칙의 예외다.
@@ -723,10 +723,17 @@ deleted_dttm    DATETIME(6) NULL     -- 소프트 삭제 대상 테이블만
 | PK | `pk_{table}` | `pk_member` |
 | FK | `fk_{table}_{ref_table}` | `fk_club_member_member` |
 | UNIQUE | `uk_{table}_{columns}` | `uk_member_email` |
-| INDEX | `idx_{table}_{columns}` | `idx_fee_record_member_id` |
+| INDEX | `idx_{table}_{columns}` | `idx_calendar_event_team_start` |
+| CHECK | `ck_{table}_{meaning}` | `ck_member_role_code` |
+
+- 코드 컬럼의 허용값은 Java enum과 `CHECK` 제약을 함께 사용한다. enum·제약·관련 문서는 같은 커밋에서 변경한다.
+- generated column은 MySQL 8의 결정적 표현식으로 계산할 수 있고 UNIQUE·조회 인덱스 등 DB 정합성에 필요한 경우에만 사용한다.
+- generated column 이름과 계산식, `VIRTUAL`/`STORED` 선택 이유를 스키마 정본에 기록한다. 애플리케이션에서 직접 값을 INSERT·UPDATE하지 않는다.
+- NULL을 예약값으로 치환하는 generated key를 사용하면 예약값이 실제 PK·코드로 생성될 수 없다는 제약을 함께 명시한다.
+- 서비스에서만 판단 가능한 권한·상태 전이·외부 시스템 결과를 generated column이나 복잡한 `CHECK`로 대신하지 않는다.
 
 ### 11.4 Flyway
-- 파일명: `V{yyyyMMddHHmm}__{설명_스네이크}.sql` — `V202607071930__create_fee_record.sql` (언더스코어 2개 주의)
+- 파일명: `V{yyyyMMddHHmm}__{설명_스네이크}.sql` — `V202607071930__create_calendar_event.sql` (언더스코어 2개 주의)
 - **날짜 기반 버전을 쓰는 이유**: 순차 정수(`V3`)는 여러 브랜치/여러 AI 에이전트가 병렬로 마이그레이션을 추가할 때 번호가 충돌한다. 날짜 버전은 충돌 확률이 사실상 없다.
 - merge 후 내 마이그레이션 버전이 이미 적용된 버전보다 과거가 되면(out-of-order), `spring.flyway.out-of-order`를 켜지 말고 **파일명을 현재 시각으로 리네임 후 리베이스**한다. (아직 dev/prod에 미적용인 경우에만)
 - 위치: `src/main/resources/db/migration`
@@ -842,7 +849,7 @@ src/main/resources/static
 - `@theme inline` 매핑(토큰→유틸리티)과 `@layer base`는 `WEB-INF/tags/head.tag`의 `<style type="text/tailwindcss">` 블록에만 둔다. 새 토큰은 tokens.css의 `:root`와 이 매핑에 **함께** 추가한다
 - 폰트는 **Noto Sans KR**(Google Fonts, head.tag에서 로드) — 폰트 변경도 head.tag에서만
 - tokens.css와 head.tag의 Tailwind 블록은 공유 자원이다(22.5) — 수정 전 보고
-- 팔레트 값·용도·컴포넌트 레시피의 정본은 `docs/design-guide.md` (+ dev의 `/style-guide` 데모 페이지)
+- 팔레트 값·용도·컴포넌트 레시피의 정본은 `docs/design-guide.md`다. 폐기된 화면 데모는 `docs/archive/style-guide.html`에만 보관한다
 
 **색상 (MUST)**
 - 색상은 **shadcn 시맨틱 토큰 유틸리티만** 사용한다: `bg-background`, `text-foreground`, `text-muted-foreground`, `bg-primary`/`text-primary-foreground`/`bg-primary-strong`(hover), `bg-secondary`, `bg-accent`/`text-accent-foreground`, `text-destructive`, `border-border`(기본 `border`), `bg-card`, `ring-ring`, 상태색 `success`/`warning`/`destructive`/`info`(+`*-soft` 배경), 네이비 셸 `sidebar` 계열 — 값과 용도는 `docs/design-guide.md` 2장
@@ -1075,6 +1082,7 @@ docker compose up -d      # MySQL 8.x (포트/계정/DB명 팀 고정)
 - **호스트 포트는 3307 고정** (3306은 로컬의 다른 MySQL과 충돌 방지). 계정 `bandi`/`bandi1234`, 스키마 `bandi`(개발)·`bandi_test`(테스트)
 - MySQL 컨테이너에 `--character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci` 고정
 - 테스트도 동일 컨테이너의 별도 스키마(`bandi_test`)를 사용하고 `application-test.yaml`(포트 3307)로 연결한다. H2 호환 모드는 MySQL 전용 SQL(Flyway)과 어긋나므로 쓰지 않는다.
+- 파일 저장 루트는 `FILE_STORAGE_ROOT`로 주입한다. 운영 기본값은 `/data/bandi`이며, 배포 전에 영구 볼륨을 마운트하고 실행 계정에 읽기·쓰기 권한을 부여한다. 애플리케이션은 루트가 디렉터리가 아니거나 쓸 수 없으면 기동하지 않아야 한다.
 
 ### 17.4 시간대
 - DB 연결: `serverTimezone=Asia/Seoul`, JVM 기본 시간대 `Asia/Seoul` 통일 (국내 단일 서비스이므로 KST 단순화 우선)
@@ -1089,13 +1097,16 @@ docker compose up -d      # MySQL 8.x (포트/계정/DB명 팀 고정)
 ## 18. Spring Security / 세션
 
 ### 18.1 기본 방침
-- **세션 기반 인증** (JWT 아님 — 결정 사항). formLogin + 커스텀 로그인 페이지(`/login`)
+- **세션 기반 인증** (JWT 아님 — 결정 사항). 커스텀 학교 SSO 로그인 페이지(`/login`)와 인증 어댑터를 사용하며 로컬 아이디·비밀번호 계정을 만들지 않는다
 - 인증/인가 실패 흐름: 미인증 → `/login` 리다이렉트, 권한 부족 → 403 에러 페이지
 - `SecurityConfig`, 인증 필터, `@LoginMember` + `ArgumentResolver`는 전부 `global.security`에 응집
+- 학교 비밀번호와 학교 세션은 인증 요청 처리 중에만 사용하고 DB·세션 저장소·캐시·로그에 남기지 않는다
 
 ### 18.2 비밀번호 / 권한
-- `PasswordEncoder`는 `PasswordEncoderFactories.createDelegatingPasswordEncoder()` (기본 bcrypt). 평문 비교·자체 해시 구현 금지
-- 권한 문자열은 `ROLE_` 접두사 + `ClubRole` enum 이름: `ROLE_PRESIDENT`, `ROLE_STAFF`, `ROLE_MEMBER`
+- 1차 서비스는 로컬 비밀번호를 저장하지 않는다. 향후 로컬 자격증명이 승인되더라도 평문 비교·자체 해시 구현은 금지하고 `PasswordEncoderFactories.createDelegatingPasswordEncoder()`를 사용한다
+- `ClubRole` enum은 `ADMIN`, `LEADER`, `MEMBER` 세 값만 사용한다
+- Spring Security 권한 문자열은 `ROLE_` 접두사 + enum 이름인 `ROLE_ADMIN`, `ROLE_LEADER`, `ROLE_MEMBER`로 통일한다
+- `ADMIN`은 전체 운영, `LEADER`는 소속 팀 관리, `MEMBER`는 일반 부원 권한이다. 팀 범위 인가는 역할 문자열만으로 끝내지 않고 대상 `teamId`와 로그인 멤버의 현재 팀을 Service에서 함께 검증한다
 - URL 단위 인가는 `SecurityConfig`에서 중앙 관리하고, 메소드 단위 세밀 인가가 필요할 때만 `@PreAuthorize`를 병행한다. 뷰의 `sec:authorize`는 표시 제어일 뿐 보안이 아니다 — 서버 인가와 항상 이중으로 건다
 
 ### 18.3 CSRF
@@ -1118,16 +1129,19 @@ docker compose up -d      # MySQL 8.x (포트/계정/DB명 팀 고정)
 ## 19. API 문서화 (springdoc / Swagger)
 
 ### 19.1 ApiDocs 인터페이스 패턴
-springdoc 애노테이션(`@Tag`, `@Operation`, `@Parameter`)이 컨트롤러를 오염시키지 않도록, **문서 애노테이션과 HTTP 매핑을 인터페이스에 두고 컨트롤러가 구현**한다.
+springdoc 애노테이션(`@Tag`, `@Operation`, `@Parameter`)이 컨트롤러를 오염시키지 않도록, **문서 애노테이션과 HTTP 매핑을 `global.swagger` 인터페이스에 두고 컨트롤러가 구현**한다.
 
-- 위치: `domain.{feature}.controller.docs.{도메인}ApiDocs`
+- 위치: `global.swagger.{도메인}ApiDocs` — Swagger 관련 설정과 문서 계약은 이 패키지를 단일 정본으로 사용한다
 - `@RequestMapping`/`@GetMapping` 등 매핑 애노테이션과 `@Valid`, 검증 애노테이션까지 인터페이스에 선언
 - 구현 컨트롤러(`~ApiController`)에는 `@RestController` + `@RequiredArgsConstructor` + 로직만. 메소드에 `@Override` 필수
+- `~ApiDocs`는 feature의 request/response DTO만 참조할 수 있고 Service·Mapper·model은 참조하지 않는다
+- 공통 태그명은 `ApiTag`, 세션 인증 스키마명은 `OpenApiConfig.SESSION_COOKIE_SCHEME`을 사용한다
 
 ```java
-// domain/member/controller/docs/MemberApiDocs.java
+// global/swagger/MemberApiDocs.java
 @RequestMapping("/api/members")
-@Tag(name = "Member API", description = "단원 관리 API")
+@Tag(name = ApiTag.MEMBER, description = "단원 관리 API")
+@SecurityRequirement(name = OpenApiConfig.SESSION_COOKIE_SCHEME)
 public interface MemberApiDocs {
 
     @Operation(summary = "단원 검색", description = "조건에 맞는 단원 목록을 조회합니다.")
@@ -1269,7 +1283,7 @@ spring:
 ### 20.4 디버그 로깅 규칙
 - **개발 진단용 정보는 전부 `debug`로 남긴다.** prod에서는 앱 로거가 INFO라 debug는 출력되지 않으므로, "개발 끝났으니 로그 지우기"를 하지 않는다 — 지우지 말고 debug로 남겨두는 것이 규칙이다.
 - debug로 남길 것: 분기 판단 근거(어떤 조건으로 이 흐름을 탔는지), 외부 연동 요청/응답 요약, 배치성 처리의 중간 카운트
-- `info`는 비즈니스 이벤트(가입, 공연 등록, 회비 납부)만. 디버깅 정보를 info로 올리지 않는다 — prod 로그가 오염된다.
+- `info`는 비즈니스 이벤트(멤버 등록, 공시 게시, 자료 등록)만. 디버깅 정보를 info로 올리지 않는다 — prod 로그가 오염된다.
 - 로그 인자에 비싼 연산(대형 객체 직렬화, 컬렉션 정렬 등)이 들어가면 supplier 또는 `log.isDebugEnabled()` 가드를 쓴다. 단순 값 전달은 플레이스홀더면 충분하므로 가드 불필요.
 - 임시 확인용 `log.info("여기 옴")`, `System.out` 류는 커밋 금지. 리뷰에서 발견 시 반려.
 
@@ -1337,8 +1351,8 @@ bandi/
 ├── CLAUDE.local.md            # 개인 로컬 설정 (gitignore)
 └── docs/
     ├── coding-convention.md   # 이 문서 — 조항 번호의 출처
-    ├── erd.md                 # (작성 예정)
-    └── feature-spec.md        # (작성 예정)
+    ├── database-schema.md     # 스키마·ERD·마이그레이션 분할 정본
+    └── feature-spec.md        # 1차 기능 범위 정본
 ```
 
 - 이 문서를 CLAUDE.md/AGENTS.md에 `@import`하거나 통째로 넣지 않는다 — 1300줄 이상이 매 세션 주입되면 요약 설계가 무너진다. AGENTS.md에 요약과 장 번호 색인을 두고, 에이전트는 작업에 해당하는 장만 골라 읽는다
@@ -1364,7 +1378,7 @@ bandi/
 - 새 화면을 만들었다면 해당 URL의 렌더링 확인(최소한 컨트롤러 테스트)까지가 작업 완료 기준
 
 ### 22.5 서브에이전트 병렬 작업 규칙
-- 분할 기준은 **feature 패키지 단위** (member 에이전트, fee 에이전트...). 8.3의 참조 규칙 덕에 병렬 충돌이 최소화된다
+- 분할 기준은 **feature 패키지 단위** (member 에이전트, resource 에이전트...). 8.3의 참조 규칙 덕에 병렬 충돌이 최소화된다
 - **공유 자원 수정은 병렬 금지**: `global.**`, `common.css`/`layout.css`, `WEB-INF/tags/` 태그 파일, `messages.properties`. 이 파일들을 건드리는 작업은 단일 에이전트(또는 사람)가 직렬로 처리한다
 - Flyway 버전은 날짜 기반(11.4)이라 충돌하지 않지만, **같은 테이블을 두 에이전트가 동시에 변경하는 작업은 배정하지 않는다**
 - 에이전트 간 인터페이스(다른 feature의 service 시그니처)가 필요하면, 먼저 시그니처만 정의·커밋한 후 병렬 작업을 시작한다

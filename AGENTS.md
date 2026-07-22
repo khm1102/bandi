@@ -5,9 +5,10 @@
 
 ## 프로젝트
 
-- bandi (SSR 웹) — 서비스 기획/기능 정의는 별도 문서에서 관리한다 (작성 예정)
+- bandi (SSR 웹) — 1차 기능 정본은 `docs/feature-spec.md`, 스키마 정본은 `docs/database-schema.md`다
 - 스택: Spring Boot 3.5.x / Java 17 / MyBatis / MySQL 8 / JSP(JSTL) / Flyway / spring-session-jdbc — **war 패키징** (JSP는 실행형 jar 미지원)
 - 인증: **세션 기반** (JWT 아님 — 확정 사항)
+- 파일 저장: **로컬 영구 볼륨만 사용**. `FILE_STORAGE_ROOT`(운영 기본값 `/data/bandi`) 아래 `private/`, `public/`에 바이너리를 저장하고 DB에는 메타데이터만 둔다. MinIO·S3 호환 오브젝트 스토리지·presigned URL은 사용하거나 테스트·검증 목적으로 기동하지 않는다. 파일 전송은 Spring Boot가 권한 확인 후 직접 수행하며, `domain.file`이 저장소를 소유하고 다른 feature는 `FileService`만 호출한다
 - 베이스 패키지: `kr.ac.tukorea.bandi`, package-by-feature (`domain.{feature}`)
 - 로컬 MySQL: Docker, **호스트 포트 3307** (3306 아님 — 타 프로젝트 점유). 계정 `bandi`/`bandi1234`, 스키마 `bandi`(개발)·`bandi_test`(테스트)
 - Swagger UI: `http://localhost:8080/docs`, OpenAPI JSON: `/api-docs` (prod 비활성)
@@ -60,6 +61,8 @@ feature 간 참조는 Service → 다른 feature의 Service 만 허용
 ```
 
 금지 방향: Controller→Mapper, Controller→model, Mapper→Service, model→상위 계층, feature의 mapper/model→다른 feature
+
+Swagger 문서 계약은 `global.swagger`가 단일 관리한다. 이 패키지의 `~ApiDocs`만 HTTP 계약 표현을 위해 feature request/response DTO를 참조할 수 있으며 Service·Mapper·model 참조는 금지한다.
 
 ## MUST 핵심 규칙 (위반 시 PR 반려)
 
@@ -135,4 +138,7 @@ PR 검증 시 아래 순서로 점검하고, 위반은 **컨벤션 조항 번호
 
 - `docs/coding-convention.md` — 전체 컨벤션 (조항 번호의 출처 — 위 색인으로 필요한 장만 읽는다)
 - `docs/design-guide.md` — 디자인 시스템 정본 (색상 토큰 값·타이포·셸 3종·컴포넌트 태그 명세·유틸리티 레시피). 화면 작업 전 필독, 데모는 dev `/style-guide`
-- 스키마/기능 정의 문서 — **작성 예정.** 문서가 생기기 전까지는 배정된 이슈 내용만을 근거로 구현하고, 이슈에 없는 테이블·기능을 임의로 만들지 않는다. 근거가 부족하면 질문하고 대기한다
+- `docs/feature-spec.md` — 1차 기능 범위와 구현 순서의 정본. **온보딩은 후속 범위**이므로 관련 화면·API·테이블을 1차 구현에 포함하지 않는다
+- `docs/database-schema.md` — 1차 테이블·제약·마이그레이션 분할 순서의 정본. 실제 Flyway는 적용 이력을 확인하고 기능 코드·테스트와 같은 PR에서 추가한다
+- `docs/member-onboarding-plan.md` — 후속 온보딩 설계 기록. 별도 승인 전에는 구현 근거로 사용하지 않는다
+- 이슈 내용이 정본 문서와 충돌하거나 근거가 부족하면 임의로 구현하지 말고 질문하고 대기한다

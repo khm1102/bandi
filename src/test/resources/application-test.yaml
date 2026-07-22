@@ -5,3 +5,8 @@ spring:
     url: jdbc:mysql://localhost:3307/bandi_test?serverTimezone=Asia/Seoul
     username: bandi
     password: bandi1234
+
+bandi:
+  storage:
+    root: ${java.io.tmpdir}
+    max-upload-bytes: 524288000

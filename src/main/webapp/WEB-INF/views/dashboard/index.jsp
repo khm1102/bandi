@@ -1,152 +1,109 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="sec" uri="http://www.springframework.org/security/tags" %>
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
-<c:set var="rq" value="?role=${role}"/>
-<c:choose>
-    <c:when test="${role == 'member'}"><c:set var="userName" value="김하늘"/></c:when>
-    <c:when test="${role == 'leader'}"><c:set var="userName" value="정도윤"/></c:when>
-    <c:otherwise><c:set var="userName" value="이서준"/></c:otherwise>
-</c:choose>
-<t:layout title="홈" active="dashboard" role="${role}">
-    <t:pageHead title="안녕하세요, ${userName}님" description="2025년 6월 20일 금요일 · 정기공연 D-1">
-        <t:button href="/community${rq}" variant="outline">공지 보기</t:button>
-        <c:if test="${role != 'member'}">
-            <t:button href="/calendar${rq}">+ 일정 등록</t:button>
-        </c:if>
-    </t:pageHead>
-
-    <div class="mb-4 grid grid-cols-2 gap-2.5 md:gap-4 lg:grid-cols-4">
-        <t:statCard label="오늘 일정" value="4" unit="건" delta="연습 2 · 회의 1 · 홍보 1" icon="calendar" featured="true"/>
-        <c:choose>
-            <c:when test="${role == 'admin'}">
-                <t:statCard label="회비 미납자" value="5" unit="명" delta="미수납 170,000원" tone="danger" icon="wallet" iconTone="danger"/>
-            </c:when>
-            <c:when test="${role == 'leader'}">
-                <t:statCard label="내 회비" value="2/3" delta="납부 항목" tone="danger" icon="wallet"/>
-            </c:when>
-            <c:otherwise>
-                <t:statCard label="내 회비" value="1/3" delta="납부 항목" tone="danger" icon="wallet"/>
-            </c:otherwise>
-        </c:choose>
-        <t:statCard label="대여 반납대기" value="3" unit="건" delta="부원 물품" icon="box" iconTone="warning"/>
-        <t:statCard label="관람 신청" value="9" unit="석" delta="2회차 합산" tone="success" icon="ticket" iconTone="info"/>
+<t:layout title="홈" active="dashboard" role="${role}" scriptPath="dashboard/index">
+    <div class="mb-5 flex min-w-0 flex-wrap items-end gap-3.5">
+        <div class="min-w-0">
+            <h1 class="text-2xl font-black tracking-tight" data-dashboard-greeting>운영 현황을 불러오는 중입니다</h1>
+            <p class="mt-1 text-sm text-muted-foreground" data-dashboard-date>오늘의 동아리 운영 정보를 정리하고 있습니다.</p>
+        </div>
+        <div class="grid w-full grid-cols-1 gap-2 md:ml-auto md:flex md:w-auto md:flex-wrap md:items-center">
+            <t:button href="/resources" variant="outline">미확인 공지 보기</t:button>
+            <sec:authorize access="hasAnyRole('ADMIN', 'LEADER')">
+                <t:button href="/calendar">일정 관리</t:button>
+            </sec:authorize>
+        </div>
     </div>
 
-    <div class="mb-4 flex items-start gap-3 rounded-lg border bg-accent/50 px-4 py-3.5">
+    <div class="mb-4 grid grid-cols-1 gap-2.5 md:grid-cols-3 md:gap-4">
+        <t:statCard label="오늘 일정" value="—" unit="건" delta="일정을 확인하고 있습니다" icon="calendar" featured="true"
+                    valueHook="dashboard-schedule-count" deltaHook="dashboard-schedule-summary"/>
+        <t:statCard label="미확인 공지" value="—" unit="건" delta="공지를 확인하고 있습니다" icon="ticket"
+                    valueHook="dashboard-unread-count" deltaHook="dashboard-notice-summary"/>
+        <t:statCard label="주의 자산" value="—" unit="건" delta="수리·분실 상태를 확인하고 있습니다" icon="box" iconTone="warning"
+                    valueHook="dashboard-asset-count" deltaHook="dashboard-asset-summary"/>
+    </div>
+
+    <div class="mb-4 hidden flex-col items-start gap-3 rounded-lg border border-primary/30 bg-accent/50 px-4 py-3.5 md:flex-row"
+         data-dashboard-highlight>
         <span class="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
             <svg class="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>
         </span>
         <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2">
-                <t:badge tone="accent">공지</t:badge>
-                <b class="text-sm">정기공연 최종 리허설 안내</b>
+                <t:badge tone="accent">중요</t:badge>
+                <b class="truncate text-sm" data-dashboard-highlight-title></b>
             </div>
-            <p class="mt-0.5 text-xs text-muted-foreground">6/20(금) 18시 전원 소집. 의상·소품 지참 바랍니다. · 이서준</p>
+            <p class="mt-0.5 text-xs text-muted-foreground" data-dashboard-highlight-meta></p>
         </div>
-        <a href="<c:url value='/community'/>${rq}" class="inline-flex min-h-11 shrink-0 items-center rounded-md bg-primary px-3 text-xs font-bold text-primary-foreground transition-colors hover:bg-primary-strong hover:text-white">공지 보기</a>
+        <a href="<c:url value='/resources'/>" class="inline-flex min-h-11 w-full shrink-0 items-center justify-center rounded-md bg-primary px-3 text-xs font-bold text-primary-foreground transition-colors hover:bg-primary-strong hover:text-white md:w-auto">공지 보기</a>
     </div>
 
     <div class="grid items-start gap-4 lg:grid-cols-[1.7fr_1fr]">
         <div class="flex flex-col gap-4">
-            <t:card title="오늘의 일정" icon="clock" moreUrl="/calendar${rq}" moreLabel="캘린더 →" flush="true">
-                <div class="flex items-center gap-3 border-b px-5 py-3">
-                    <span class="min-w-11 text-sm font-extrabold text-accent-foreground">14:00</span>
-                    <div class="min-w-0 flex-1"><p class="text-sm font-bold">2막 전체 런스루</p><p class="mt-0.5 text-xs text-muted-foreground">소극장 무대 · 배우연출팀</p></div>
-                    <t:badge tone="neutral" dot="true">배우연출</t:badge>
-                </div>
-                <div class="flex items-center gap-3 border-b px-5 py-3">
-                    <span class="min-w-11 text-sm font-extrabold text-accent-foreground">16:30</span>
-                    <div class="min-w-0 flex-1"><p class="text-sm font-bold">조명·음향 큐 점검</p><p class="mt-0.5 text-xs text-muted-foreground">조정실 · 오퍼팀</p></div>
-                    <t:badge tone="accent" dot="true">오퍼</t:badge>
-                </div>
-                <div class="flex items-center gap-3 border-b px-5 py-3">
-                    <span class="min-w-11 text-sm font-extrabold text-accent-foreground">18:00</span>
-                    <div class="min-w-0 flex-1"><p class="text-sm font-bold">주간 운영 회의</p><p class="mt-0.5 text-xs text-muted-foreground">동아리방 · 운영진</p></div>
-                    <t:badge tone="info" dot="true">무대</t:badge>
-                </div>
-                <div class="flex items-center gap-3 px-5 py-3">
-                    <span class="min-w-11 text-sm font-extrabold text-accent-foreground">20:00</span>
-                    <div class="min-w-0 flex-1"><p class="text-sm font-bold">SNS 홍보 촬영</p><p class="mt-0.5 text-xs text-muted-foreground">로비 · 영상팀</p></div>
-                    <t:badge tone="neutral" dot="true">영상</t:badge>
+            <t:card title="오늘의 일정" icon="clock" moreUrl="/calendar" moreLabel="캘린더 →" flush="true">
+                <div data-dashboard-schedules></div>
+                <div class="px-5 py-8 text-center" data-dashboard-schedule-state>
+                    <b class="block text-sm">일정을 불러오는 중입니다</b>
+                    <p class="mt-1 text-xs text-muted-foreground">잠시만 기다려 주세요.</p>
                 </div>
             </t:card>
 
-            <t:card title="팀별 진행 현황" icon="activity" moreUrl="/activity${rq}" moreLabel="활동 기록 →">
-                <div class="flex flex-col gap-3.5">
-                    <div>
-                        <div class="mb-1.5 flex items-center gap-2"><t:badge tone="neutral" dot="true">배우연출</t:badge><span class="flex-1 truncate text-xs text-muted-foreground">런스루 진행 중</span><b class="text-xs">82%</b></div>
-                        <div class="h-2 overflow-hidden rounded-full bg-secondary"><span class="block h-full w-4/5 rounded-full bg-primary"></span></div>
-                    </div>
-                    <div>
-                        <div class="mb-1.5 flex items-center gap-2"><t:badge tone="info" dot="true">무대</t:badge><span class="flex-1 truncate text-xs text-muted-foreground">전환 리허설 예정</span><b class="text-xs">76%</b></div>
-                        <div class="h-2 overflow-hidden rounded-full bg-secondary"><span class="block h-full w-3/4 rounded-full bg-primary"></span></div>
-                    </div>
-                    <div>
-                        <div class="mb-1.5 flex items-center gap-2"><t:badge tone="accent" dot="true">오퍼</t:badge><span class="flex-1 truncate text-xs text-muted-foreground">큐 작성 중</span><b class="text-xs">54%</b></div>
-                        <div class="h-2 overflow-hidden rounded-full bg-secondary"><span class="block h-full w-1/2 rounded-full bg-primary"></span></div>
-                    </div>
-                    <div>
-                        <div class="mb-1.5 flex items-center gap-2"><t:badge tone="warning" dot="true">디자인</t:badge><span class="flex-1 truncate text-xs text-muted-foreground">팸플릿 인쇄 대기</span><b class="text-xs">88%</b></div>
-                        <div class="h-2 overflow-hidden rounded-full bg-secondary"><span class="block h-full w-11/12 rounded-full bg-primary"></span></div>
-                    </div>
-                    <div>
-                        <div class="mb-1.5 flex items-center gap-2"><t:badge tone="neutral" dot="true">영상</t:badge><span class="flex-1 truncate text-xs text-muted-foreground">예고편 편집 중</span><b class="text-xs">40%</b></div>
-                        <div class="h-2 overflow-hidden rounded-full bg-secondary"><span class="block h-full w-2/5 rounded-full bg-primary"></span></div>
-                    </div>
-                </div>
-            </t:card>
         </div>
 
         <div class="flex flex-col gap-4">
-            <t:card title="최근 게시판" icon="bell" moreUrl="/community${rq}" moreLabel="전체 →" flush="true">
-                <div class="flex items-center gap-3 border-b px-5 py-3">
-                    <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-accent text-xs font-black text-accent-foreground">공지</span>
-                    <div class="min-w-0 flex-1"><p class="truncate text-sm font-bold">정기공연 최종 리허설 안내</p><p class="mt-0.5 text-xs text-muted-foreground">이서준 · 2시간 전</p></div>
-                </div>
-                <div class="flex items-center gap-3 border-b px-5 py-3">
-                    <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-black text-muted-foreground">자유</span>
-                    <div class="min-w-0 flex-1"><p class="truncate text-sm font-bold">2막 전환 타이밍 관련 아이디어</p><p class="mt-0.5 text-xs text-muted-foreground">박서연 · 5시간 전</p></div>
-                </div>
-                <div class="flex items-center gap-3 border-b px-5 py-3">
-                    <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-black text-muted-foreground">질문</span>
-                    <div class="min-w-0 flex-1"><p class="truncate text-sm font-bold">MT 회비 언제까지 내면 되나요?</p><p class="mt-0.5 text-xs text-muted-foreground">김하늘 · 어제</p></div>
-                </div>
-                <div class="flex items-center gap-3 px-5 py-3">
-                    <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-black text-muted-foreground">자유</span>
-                    <div class="min-w-0 flex-1"><p class="truncate text-sm font-bold">포스터 시안 투표해주세요</p><p class="mt-0.5 text-xs text-muted-foreground">한지우 · 2일 전</p></div>
+            <t:card title="중요·미확인 공지" icon="bell" moreUrl="/resources" moreLabel="전체 →" flush="true">
+                <div data-dashboard-notices></div>
+                <div class="px-5 py-8 text-center" data-dashboard-notice-state>
+                    <b class="block text-sm">공지를 불러오는 중입니다</b>
+                    <p class="mt-1 text-xs text-muted-foreground">잠시만 기다려 주세요.</p>
                 </div>
             </t:card>
 
-            <t:card title="지금 확인할 일">
-                <div class="flex flex-col gap-3">
-                    <a href="<c:url value='/checklist'/>${rq}" class="flex min-h-11 items-center gap-3 rounded-md px-2 transition-colors hover:bg-secondary">
-                        <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-warning-soft text-sm font-black text-warning">3</span>
-                        <span class="min-w-0 flex-1"><b class="block text-sm">공연 전 체크리스트</b><span class="text-xs text-muted-foreground">오늘 완료할 항목</span></span>
+            <t:card title="빠른 이동">
+                <div class="flex flex-col gap-1">
+                    <a href="<c:url value='/calendar'/>" class="flex min-h-11 items-center gap-3 rounded-md px-2 transition-colors hover:bg-secondary">
+                        <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-accent text-sm font-black text-accent-foreground" data-quick-schedule-count>—</span>
+                        <span class="min-w-0 flex-1"><b class="block text-sm">오늘 일정 확인</b><span class="text-xs text-muted-foreground">전체·팀 일정을 한곳에서 확인</span></span>
                         <span class="text-xs font-bold text-accent-foreground">보기</span>
                     </a>
-                    <a href="<c:url value='/props'/>${rq}" class="flex min-h-11 items-center gap-3 rounded-md px-2 transition-colors hover:bg-secondary">
-                        <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-info-soft text-sm font-black text-info">3</span>
-                        <span class="min-w-0 flex-1"><b class="block text-sm">반납 대기 물품</b><span class="text-xs text-muted-foreground">공연 후 반납 예정</span></span>
+                    <a href="<c:url value='/props'/>" class="flex min-h-11 items-center gap-3 rounded-md px-2 transition-colors hover:bg-secondary">
+                        <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-warning-soft text-sm font-black text-warning" data-quick-asset-count>—</span>
+                        <span class="min-w-0 flex-1"><b class="block text-sm">주의 자산 확인</b><span class="text-xs text-muted-foreground">수리·분실 상태의 소품과 장비</span></span>
                         <span class="text-xs font-bold text-accent-foreground">보기</span>
                     </a>
-                    <c:choose>
-                        <c:when test="${role == 'admin'}">
-                            <a href="<c:url value='/dues'/>${rq}" class="flex min-h-11 items-center gap-3 rounded-md px-2 transition-colors hover:bg-secondary">
-                                <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-destructive-soft text-sm font-black text-destructive">5</span>
-                                <span class="min-w-0 flex-1"><b class="block text-sm">회비 미납 확인</b><span class="text-xs text-muted-foreground">미수납 170,000원</span></span>
-                                <span class="text-xs font-bold text-accent-foreground">보기</span>
-                            </a>
-                        </c:when>
-                        <c:otherwise>
-                            <a href="<c:url value='/dues'/>${rq}" class="flex min-h-11 items-center gap-3 rounded-md px-2 transition-colors hover:bg-secondary">
-                                <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-destructive-soft text-sm font-black text-destructive">${role == 'leader' ? '1' : '2'}</span>
-                                <span class="min-w-0 flex-1"><b class="block text-sm">내 회비 납부 확인</b><span class="text-xs text-muted-foreground">아직 납부하지 않은 항목</span></span>
-                                <span class="text-xs font-bold text-accent-foreground">보기</span>
-                            </a>
-                        </c:otherwise>
-                    </c:choose>
+                    <sec:authorize access="hasRole('ADMIN')">
+                        <a href="<c:url value='/members'/>" class="flex min-h-11 items-center gap-3 rounded-md px-2 transition-colors hover:bg-secondary">
+                            <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-info-soft text-sm font-black text-info">권한</span>
+                            <span class="min-w-0 flex-1"><b class="block text-sm">멤버·권한 관리</b><span class="text-xs text-muted-foreground">등록 상태와 역할 변경</span></span>
+                            <span class="text-xs font-bold text-accent-foreground">보기</span>
+                        </a>
+                    </sec:authorize>
                 </div>
             </t:card>
         </div>
     </div>
+
+    <template data-dashboard-schedule-template>
+        <div class="flex items-center gap-3 border-b px-5 py-3 last:border-b-0">
+            <span class="min-w-11 text-sm font-extrabold text-accent-foreground" data-schedule-time></span>
+            <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-bold" data-schedule-title></p>
+                <p class="mt-0.5 truncate text-xs text-muted-foreground" data-schedule-meta></p>
+            </div>
+            <span class="shrink-0 rounded-full bg-secondary px-2 py-1 text-xs font-bold text-muted-foreground" data-schedule-scope></span>
+        </div>
+    </template>
+
+    <template data-dashboard-notice-template>
+        <a href="<c:url value='/resources'/>" class="flex min-h-16 items-center gap-3 border-b px-5 py-3 transition-colors last:border-b-0 hover:bg-secondary/70">
+            <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-black text-muted-foreground" data-notice-mark></span>
+            <div class="min-w-0 flex-1">
+                <p class="truncate text-sm font-bold" data-notice-title></p>
+                <p class="mt-0.5 truncate text-xs text-muted-foreground" data-notice-meta></p>
+            </div>
+        </a>
+    </template>
+
 </t:layout>

@@ -9,10 +9,6 @@
 <%@ attribute name="css" fragment="true" %>
 <%@ attribute name="script" fragment="true" %>
 <c:set var="navRole" value="${empty role ? 'admin' : role}"/>
-<c:choose>
-    <c:when test="${empty role}"><c:set var="roleQuery" value=""/></c:when>
-    <c:otherwise><c:set var="roleQuery" value="?role=${role}"/></c:otherwise>
-</c:choose>
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -23,7 +19,7 @@
 <a href="#mainContent" class="fixed left-4 top-4 z-50 -translate-y-24 rounded-md bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-transform focus:translate-y-0">본문으로 바로가기</a>
 <div class="min-h-screen lg:flex">
     <header class="sticky top-0 z-30 flex h-14 items-center border-b bg-card px-4 lg:hidden">
-        <a href="<c:url value='/dashboard'/>${roleQuery}" class="flex min-h-11 items-center gap-2.5 font-black">
+        <a href="<c:url value='/dashboard'/>" class="flex min-h-11 items-center gap-2.5 font-black">
             <span class="flex size-8 items-center justify-center rounded-md bg-primary text-sm font-black text-primary-foreground">B</span>
             <span>반디</span>
         </a>
@@ -33,12 +29,11 @@
         </button>
     </header>
     <button type="button" class="fixed inset-0 z-30 hidden bg-sidebar/60 lg:hidden" data-navigation-backdrop aria-label="메뉴 닫기"></button>
-    <t:sidebar active="${active}" role="${navRole}" roleQuery="${roleQuery}"/>
+    <t:sidebar active="${active}" role="${navRole}"/>
 
     <div class="min-w-0 flex-1">
-        <header class="sticky top-14 z-20 flex min-h-12 items-center gap-3 border-b bg-card/95 px-4 py-2.5 backdrop-blur md:px-6 lg:top-0 lg:px-7">
+        <header class="sticky top-14 z-20 hidden min-h-12 items-center gap-3 border-b bg-card/95 px-4 py-2.5 backdrop-blur md:flex md:px-6 lg:top-0 lg:px-7">
             <p class="hidden text-xs font-semibold text-muted-foreground md:block">반디 / <b class="font-extrabold text-foreground"><c:out value="${empty crumb ? title : crumb}"/></b></p>
-            <t:devRoleSwitcher active="${active}" role="${role}" allowedRoles="${allowedRoles}"/>
         </header>
         <main id="mainContent" class="mx-auto max-w-6xl p-4 md:p-6 lg:p-7" tabindex="-1">
             <jsp:doBody/>
@@ -66,6 +61,7 @@
 <script type="module" src="<c:url value='/js/common/confirm.js'/>"></script>
 <script type="module" src="<c:url value='/js/common/form-guard.js'/>"></script>
 <script type="module" src="<c:url value='/js/common/navigation.js'/>"></script>
+<script type="module" src="<c:url value='/js/common/shell.js'/>"></script>
 <c:if test="${not empty scriptPath}">
     <script type="module" src="<c:url value='/js/${scriptPath}.js'/>"></script>
 </c:if>
