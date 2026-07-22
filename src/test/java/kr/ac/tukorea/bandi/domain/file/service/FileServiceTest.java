@@ -8,6 +8,7 @@ import kr.ac.tukorea.bandi.domain.file.exception.InvalidFileStateException;
 import kr.ac.tukorea.bandi.domain.file.exception.InvalidFileException;
 import kr.ac.tukorea.bandi.domain.file.model.StorageScope;
 import kr.ac.tukorea.bandi.domain.file.model.StoredFile;
+import kr.ac.tukorea.bandi.domain.file.model.FilePurpose;
 import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -94,6 +95,32 @@ class FileServiceTest {
                 .isInstanceOf(FileStorageUnavailableException.class);
         verify(metadataService).markFailed(PRIVATE_FILE_ID);
         verify(metadataService, never()).markReady(any(), any());
+    }
+
+    @Test
+    void 프로필_사진은_전용_목적과_경로로_저장한다() {
+        FileUploadParam param = new FileUploadParam("ignored", "me.png", CONTENT.length,
+                () -> new ByteArrayInputStream(CONTENT), MEMBER_ID);
+        StoredFile pending = StoredFile.pendingProfileImage("me.png", PRIVATE_KEY,
+                "image/png", CONTENT.length, "abc123", MEMBER_ID);
+        assignId(pending, PRIVATE_FILE_ID);
+        StoredFile ready = StoredFile.pendingProfileImage("me.png", PRIVATE_KEY,
+                "image/png", CONTENT.length, "abc123", MEMBER_ID);
+        ready.markReady("etag-1");
+        assignId(ready, PRIVATE_FILE_ID);
+        given(inspector.inspectProfileImage(param.originalName(), param.sizeBytes(),
+                param.contentSource())).willReturn(new FileInspection("image/png", CONTENT.length, "abc123"));
+        given(keyGenerator.generate("member-profile")).willReturn(PRIVATE_KEY);
+        given(metadataService.createPending(any())).willReturn(pending);
+        given(objectStorage.upload(StorageScope.PRIVATE, PRIVATE_KEY, "image/png",
+                CONTENT.length, param.contentSource())).willReturn("etag-1");
+        given(metadataService.markReady(PRIVATE_FILE_ID, "etag-1")).willReturn(ready);
+
+        fileService.uploadProfileImage(param);
+
+        ArgumentCaptor<StoredFile> captor = ArgumentCaptor.forClass(StoredFile.class);
+        verify(metadataService).createPending(captor.capture());
+        assertThat(captor.getValue().getPurpose()).isEqualTo(FilePurpose.PROFILE_IMAGE);
     }
 
     @Test

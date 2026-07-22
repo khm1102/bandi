@@ -44,4 +44,7 @@ public interface MemberMapper {
     int updateStatus(@Param("memberId") Long memberId, @Param("status") MemberStatus status);
 
     int updateSchoolConnection(MemberSchoolConnection connection);
+
+    int updateProfilePhoto(@Param("memberId") Long memberId,
+                           @Param("profilePhotoFileId") Long profilePhotoFileId);
 }

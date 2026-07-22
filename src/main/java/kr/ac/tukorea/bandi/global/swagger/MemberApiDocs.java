@@ -14,21 +14,28 @@ import kr.ac.tukorea.bandi.domain.member.dto.request.TeamChangeRequest;
 import kr.ac.tukorea.bandi.domain.member.dto.response.CohortResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberCreatedResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberHistoryResponse;
+import kr.ac.tukorea.bandi.domain.member.dto.response.MemberProfileResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberResponse;
+import kr.ac.tukorea.bandi.domain.member.dto.response.TeamMemberResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.TeamResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.Resource;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
 
 @RequestMapping("/api/members")
 @Tag(name = ApiTag.MEMBER, description = "멤버 등록·조회·조직·권한 관리 API")
@@ -38,6 +45,33 @@ public interface MemberApiDocs {
     @Operation(summary = "로그인 멤버 조회")
     @GetMapping("/me")
     ResponseEntity<MemberResponse> lookupLoginMember(
+            @Parameter(hidden = true) @LoginMember Long memberId);
+
+    @Operation(summary = "내 프로필 조회")
+    @GetMapping("/me/profile")
+    ResponseEntity<MemberProfileResponse> lookupLoginMemberProfile(
+            @Parameter(hidden = true) @LoginMember Long memberId);
+
+    @Operation(summary = "내 프로필 사진 업로드 또는 교체")
+    @PutMapping(value = "/me/profile-photo", consumes = "multipart/form-data")
+    ResponseEntity<MemberProfileResponse> uploadLoginMemberProfilePhoto(
+            @Parameter(hidden = true) @LoginMember Long memberId,
+            @RequestPart("file") MultipartFile file);
+
+    @Operation(summary = "내 프로필 사진 삭제")
+    @DeleteMapping("/me/profile-photo")
+    ResponseEntity<Void> deleteLoginMemberProfilePhoto(
+            @Parameter(hidden = true) @LoginMember Long memberId);
+
+    @Operation(summary = "내부 프로필 사진 조회")
+    @GetMapping("/{memberId}/profile-photo")
+    ResponseEntity<Resource> openProfilePhoto(
+            @Parameter(hidden = true) @LoginMember Long requesterMemberId,
+            @PathVariable Long memberId);
+
+    @Operation(summary = "팀 멤버 목록 조회")
+    @GetMapping("/team-members")
+    ResponseEntity<List<TeamMemberResponse>> searchTeamMembers(
             @Parameter(hidden = true) @LoginMember Long memberId);
 
     @Operation(summary = "멤버 목록 조회")

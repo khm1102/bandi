@@ -45,8 +45,15 @@ public class SecurityConfig {
                         "/api/files/*/public-promotions")
                 .hasRole("ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/members/me",
+                        "/api/members/*/profile-photo",
                         "/api/members/reference/teams")
                 .authenticated()
+                .requestMatchers("/api/members/me/**")
+                .authenticated()
+                .requestMatchers("/profile")
+                .authenticated()
+                .requestMatchers("/team-members", "/api/members/team-members")
+                .hasAnyRole("LEADER", "ADMIN")
                 .requestMatchers("/members/**", "/notice-management/**",
                         "/api/members/**", "/api/admin/public-notices/**")
                 .hasRole("ADMIN")

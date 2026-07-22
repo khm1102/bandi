@@ -109,6 +109,24 @@ class FileContentInspectorTest {
                 .isInstanceOf(InvalidFileException.class);
     }
 
+    @Test
+    void 프로필_사진은_이미지_확장자만_허용한다() {
+        byte[] content = "%PDF-1.7".getBytes(StandardCharsets.UTF_8);
+
+        assertThatThrownBy(() -> inspector.inspectProfileImage("me.pdf", content.length,
+                source(content))).isInstanceOf(InvalidFileException.class);
+    }
+
+    @Test
+    void 프로필_사진은_5MiB를_초과하면_읽기_전에_거부한다() {
+        FileContentInspector profileInspector = new FileContentInspector(new FileStorageProperties(
+                Path.of(System.getProperty("java.io.tmpdir")), 6L * 1024 * 1024));
+
+        assertThatThrownBy(() -> profileInspector.inspectProfileImage("me.png",
+                5L * 1024 * 1024 + 1, source(new byte[]{1})))
+                .isInstanceOf(FileTooLargeException.class);
+    }
+
     private FileContentSource source(byte[] content) {
         return () -> new ByteArrayInputStream(content);
     }

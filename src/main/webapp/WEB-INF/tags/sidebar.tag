@@ -40,15 +40,23 @@
                 <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>멤버·권한
             </a>
         </c:if>
+        <c:if test="${role == 'admin' || role == 'leader'}">
+            <a href="<c:url value='/team-members'/>" class="${navBase} ${active == 'team-members' ? navOn : navOff}" aria-current="${active == 'team-members' ? 'page' : 'false'}">
+                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>팀 멤버 관리
+            </a>
+        </c:if>
     </nav>
     <div class="mt-auto flex flex-col gap-3 border-t border-sidebar-border px-2 pt-3">
-        <div class="flex min-w-0 items-center gap-2.5" data-session-profile aria-busy="true">
-            <span class="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-foreground" data-session-initial>·</span>
+        <a href="<c:url value='/profile'/>" class="flex min-w-0 items-center gap-2.5 rounded-md p-1.5 transition-colors hover:bg-sidebar-accent" data-session-profile aria-busy="true">
+            <span class="relative flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary text-xs font-black text-primary-foreground">
+                <img class="hidden size-full object-cover" data-session-photo alt="">
+                <span data-session-initial>·</span>
+            </span>
             <span class="min-w-0 flex-1">
                 <b class="block truncate text-sm text-white" data-session-name>사용자 정보 불러오는 중</b>
                 <span class="block truncate text-xs leading-4 text-sidebar-muted" data-session-meta>잠시만 기다려 주세요</span>
             </span>
-        </div>
+        </a>
         <a href="<c:url value='/notices'/>" class="inline-flex min-h-11 items-center justify-center rounded-md px-3 text-xs font-bold text-sidebar-muted transition-colors hover:bg-sidebar-accent hover:text-white">공시·운영 안내</a>
         <p class="text-center text-xs text-sidebar-muted">개인정보 안내 · 운영 문의</p>
         <form action="<c:url value='/logout'/>" method="post">

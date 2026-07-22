@@ -24,6 +24,23 @@ function renderMember(member) {
     lookupProfilePart('initial').textContent = firstCharacter(member.name);
     lookupProfilePart('name').textContent = member.name;
     lookupProfilePart('meta').textContent = memberMeta(member);
+    const photo = lookupProfilePart('photo');
+    const initial = lookupProfilePart('initial');
+    photo.classList.add('hidden');
+    initial.classList.remove('hidden');
+    photo.removeAttribute('src');
+    if (member.hasProfilePhoto) {
+        photo.src = `/api/members/${member.memberId}/profile-photo`;
+        photo.onload = () => {
+            photo.classList.remove('hidden');
+            initial.classList.add('hidden');
+        };
+        photo.onerror = () => {
+            photo.removeAttribute('src');
+            photo.classList.add('hidden');
+            initial.classList.remove('hidden');
+        };
+    }
 }
 
 function renderError() {
@@ -38,7 +55,7 @@ async function loadLoginMember() {
         return;
     }
     try {
-        renderMember(await get('/api/members/me'));
+        renderMember(await get('/api/members/me/profile'));
     } catch (error) {
         if (error instanceof ApiError && error.status === 401) {
             window.location.replace('/login');

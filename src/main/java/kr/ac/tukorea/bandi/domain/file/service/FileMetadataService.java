@@ -41,6 +41,12 @@ public class FileMetadataService {
         storedFileMapper.updateFailed(storedFileId);
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void remove(Long storedFileId) {
+        lock(storedFileId);
+        storedFileMapper.remove(storedFileId);
+    }
+
     private StoredFile lock(Long storedFileId) {
         return storedFileMapper.lookupByIdForUpdate(storedFileId)
                 .orElseThrow(() -> new StoredFileNotFoundException(storedFileId));

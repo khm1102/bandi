@@ -175,11 +175,11 @@ class MemberServiceTest {
         @Test
         void 동시_등록으로_DB_UNIQUE가_충돌해도_학번_중복_예외로_변환한다() {
             // given
-            givenActiveAdmin();
             given(memberMapper.existsByStudentNo("2021184000")).willReturn(false);
             given(teamMapper.lookupById(ACTOR_TEAM_ID)).willReturn(Optional.of(activeTeam(ACTOR_TEAM_ID)));
             given(cohortMapper.lookupById(COHORT_ID)).willReturn(Optional.of(cohort()));
             given(memberMapper.insert(any())).willThrow(new DuplicateKeyException("uk_member_student_no"));
+            givenActiveAdmin();
 
             // when & then
             assertThatThrownBy(() -> memberService.preRegister(ADMIN_ID, param()))
@@ -246,7 +246,8 @@ class MemberServiceTest {
         void 활성_ADMIN이_아니면_멤버를_등록할_수_없다() {
             // given
             given(memberMapper.lookupById(ADMIN_ID))
-                    .willReturn(Optional.of(member(ADMIN_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
+                    .willReturn(Optional.of(member(ADMIN_ID, ACTOR_TEAM_ID,
+                            ClubRole.MEMBER, MemberStatus.ACTIVE)));
 
             // when & then
             assertThatThrownBy(() -> memberService.preRegister(ADMIN_ID, param()))
@@ -264,8 +265,9 @@ class MemberServiceTest {
             // given
             given(memberMapper.lookupByIdForUpdate(TARGET_ID))
                     .willReturn(Optional.of(member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
+            given(memberMapper.lookupByIdForUpdate(ADMIN_ID))
+                    .willReturn(Optional.of(member(ADMIN_ID, ACTOR_TEAM_ID, ClubRole.ADMIN, MemberStatus.ACTIVE)));
             given(teamMapper.lookupById(STAGE_TEAM_ID)).willReturn(Optional.of(activeTeam(STAGE_TEAM_ID)));
-            givenActiveAdmin();
 
             // when
             memberService.changeTeam(ADMIN_ID, new TeamChangeParam(TARGET_ID, STAGE_TEAM_ID, REASON));
@@ -290,7 +292,8 @@ class MemberServiceTest {
             // given
             given(memberMapper.lookupByIdForUpdate(TARGET_ID))
                     .willReturn(Optional.of(member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
-            givenActiveAdmin();
+            given(memberMapper.lookupByIdForUpdate(ADMIN_ID))
+                    .willReturn(Optional.of(member(ADMIN_ID, ACTOR_TEAM_ID, ClubRole.ADMIN, MemberStatus.ACTIVE)));
 
             // when & then
             assertThatThrownBy(() -> memberService.changeTeam(ADMIN_ID,
@@ -312,12 +315,67 @@ class MemberServiceTest {
         void 존재하지_않는_멤버의_팀은_변경할_수_없다() {
             // given
             given(memberMapper.lookupByIdForUpdate(TARGET_ID)).willReturn(Optional.empty());
-            givenActiveAdmin();
+            given(memberMapper.lookupByIdForUpdate(ADMIN_ID))
+                    .willReturn(Optional.of(member(ADMIN_ID, ACTOR_TEAM_ID, ClubRole.ADMIN, MemberStatus.ACTIVE)));
 
             // when & then
             assertThatThrownBy(() -> memberService.changeTeam(ADMIN_ID,
                     new TeamChangeParam(TARGET_ID, STAGE_TEAM_ID, REASON)))
                     .isInstanceOf(MemberNotFoundException.class);
+        }
+
+        @Test
+        void 활성_멤버는_본인_팀을_변경할_수_있다() {
+            Member self = member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER,
+                    MemberStatus.ACTIVE);
+            given(memberMapper.lookupByIdForUpdate(TARGET_ID)).willReturn(Optional.of(self));
+            given(teamMapper.lookupById(STAGE_TEAM_ID)).willReturn(Optional.of(activeTeam(STAGE_TEAM_ID)));
+
+            memberService.changeTeam(TARGET_ID,
+                    new TeamChangeParam(TARGET_ID, STAGE_TEAM_ID, REASON));
+
+            verify(memberMapper).updateTeam(TARGET_ID, STAGE_TEAM_ID);
+        }
+
+        @Test
+        void 활성_팀장은_현재_팀의_멤버만_변경할_수_있다() {
+            Member leader = member(ADMIN_ID, ACTOR_TEAM_ID, ClubRole.LEADER,
+                    MemberStatus.ACTIVE);
+            given(memberMapper.lookupByIdForUpdate(ADMIN_ID)).willReturn(Optional.of(leader));
+            given(memberMapper.lookupByIdForUpdate(TARGET_ID)).willReturn(Optional.of(
+                    member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
+            given(teamMapper.lookupById(STAGE_TEAM_ID)).willReturn(Optional.of(activeTeam(STAGE_TEAM_ID)));
+
+            memberService.changeTeam(ADMIN_ID,
+                    new TeamChangeParam(TARGET_ID, STAGE_TEAM_ID, REASON));
+
+            verify(memberMapper).updateTeam(TARGET_ID, STAGE_TEAM_ID);
+        }
+
+        @Test
+        void 다른_팀_팀장은_멤버_팀을_변경할_수_없다() {
+            Member leader = member(ADMIN_ID, STAGE_TEAM_ID, ClubRole.LEADER,
+                    MemberStatus.ACTIVE);
+            given(memberMapper.lookupByIdForUpdate(ADMIN_ID)).willReturn(Optional.of(leader));
+            given(memberMapper.lookupByIdForUpdate(TARGET_ID)).willReturn(Optional.of(
+                    member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
+
+            assertThatThrownBy(() -> memberService.changeTeam(ADMIN_ID,
+                    new TeamChangeParam(TARGET_ID, STAGE_TEAM_ID, REASON)))
+                    .isInstanceOf(MemberManagementForbiddenException.class);
+            verify(memberMapper, never()).updateTeam(any(), any());
+        }
+
+        @Test
+        void 일반_멤버는_다른_멤버의_팀을_변경할_수_없다() {
+            given(memberMapper.lookupByIdForUpdate(ADMIN_ID)).willReturn(Optional.of(
+                    member(ADMIN_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
+            given(memberMapper.lookupByIdForUpdate(TARGET_ID)).willReturn(Optional.of(
+                    member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
+
+            assertThatThrownBy(() -> memberService.changeTeam(ADMIN_ID,
+                    new TeamChangeParam(TARGET_ID, STAGE_TEAM_ID, REASON)))
+                    .isInstanceOf(MemberManagementForbiddenException.class);
         }
     }
 
@@ -505,7 +563,10 @@ class MemberServiceTest {
         @Test
         void 활성_ADMIN이_아니면_팀을_변경할_수_없다() {
             // given
-            givenNonAdminActor();
+            given(memberMapper.lookupByIdForUpdate(ADMIN_ID)).willReturn(Optional.of(
+                    member(ADMIN_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
+            given(memberMapper.lookupByIdForUpdate(TARGET_ID)).willReturn(Optional.of(
+                    member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
 
             // when & then
             assertThatThrownBy(() -> memberService.changeTeam(ADMIN_ID,

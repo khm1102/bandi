@@ -49,6 +49,8 @@ class SsrControllerRoutingTest {
             "activity", "activity/list",
             "props", "props/list",
             "members", "members/list",
+            "profile", "members/profile",
+            "team-members", "members/team-members",
             "notice-management", "notice/management-list");
 
     private final MockMvc mockMvc;
@@ -68,7 +70,7 @@ class SsrControllerRoutingTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"dashboard", "calendar", "resources", "activity",
-            "props", "members", "notice-management"})
+            "props", "members", "profile", "team-members", "notice-management"})
     void 유지되는_내부_화면이_렌더링된다(String page) throws Exception {
         LoginPrincipal principal = new LoginPrincipal(1L, "ADMIN");
         SecurityContextHolder.getContext().setAuthentication(

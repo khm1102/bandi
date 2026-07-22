@@ -21,6 +21,7 @@ public class FileContentInspector {
     private static final int BUFFER_SIZE = 8192;
     private static final int SIGNATURE_SIZE = 16;
     private static final int MAX_OFFICE_ENTRY_COUNT = 4096;
+    private static final long PROFILE_IMAGE_MAX_BYTES = 5L * 1024 * 1024;
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
             "jpg", "jpeg", "png", "webp", "pdf", "docx", "xlsx", "mp4");
 
@@ -44,6 +45,23 @@ public class FileContentInspector {
 
         String detectedType = detectContentType(extension, buffer.signature(), source);
         return new FileInspection(detectedType, buffer.sizeBytes(), buffer.sha256Hash());
+    }
+
+    public FileInspection inspectProfileImage(String originalName, long declaredSize,
+                                              FileContentSource source) {
+        String extension = validateNameAndExtractExtension(originalName);
+        if (!Set.of("jpg", "jpeg", "png", "webp").contains(extension)) {
+            throw new InvalidFileException("unsupported-profile-image-extension");
+        }
+        if (declaredSize > PROFILE_IMAGE_MAX_BYTES) {
+            throw new FileTooLargeException();
+        }
+        FileInspection inspection = inspect(originalName, declaredSize, source);
+        if (inspection.sizeBytes() > PROFILE_IMAGE_MAX_BYTES
+                || !inspection.contentType().startsWith("image/")) {
+            throw new InvalidFileException("invalid-profile-image");
+        }
+        return inspection;
     }
 
     private String validateNameAndExtractExtension(String originalName) {

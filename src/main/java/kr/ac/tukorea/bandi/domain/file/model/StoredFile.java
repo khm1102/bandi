@@ -19,6 +19,7 @@ public class StoredFile {
     private String objectEtag;
     private final Long uploadedByMemberId;
     private UploadStatus uploadStatus;
+    private final FilePurpose purpose;
     private final LocalDateTime createdDttm;
     private final LocalDateTime updatedDttm;
     private final LocalDateTime deletedDttm;
@@ -26,6 +27,7 @@ public class StoredFile {
     public StoredFile(Long storedFileId, String originalName, StorageScope storageScope,
                       String storageKey, String contentType, Long sizeBytes, String sha256Hash,
                       String objectEtag, Long uploadedByMemberId, UploadStatus uploadStatus,
+                      FilePurpose purpose,
                       LocalDateTime createdDttm, LocalDateTime updatedDttm,
                       LocalDateTime deletedDttm) {
         this.storedFileId = storedFileId;
@@ -38,6 +40,7 @@ public class StoredFile {
         this.objectEtag = objectEtag;
         this.uploadedByMemberId = uploadedByMemberId;
         this.uploadStatus = uploadStatus;
+        this.purpose = purpose;
         this.createdDttm = createdDttm;
         this.updatedDttm = updatedDttm;
         this.deletedDttm = deletedDttm;
@@ -48,7 +51,16 @@ public class StoredFile {
                                      String sha256Hash, Long uploadedByMemberId) {
         return new StoredFile(null, originalName, storageScope, storageKey, contentType,
                 sizeBytes, sha256Hash, null, uploadedByMemberId, UploadStatus.PENDING,
+                FilePurpose.GENERAL,
                 null, null, null);
+    }
+
+    public static StoredFile pendingProfileImage(String originalName, String storageKey,
+                                                 String contentType, long sizeBytes,
+                                                 String sha256Hash, Long uploadedByMemberId) {
+        return new StoredFile(null, originalName, StorageScope.PRIVATE, storageKey,
+                contentType, sizeBytes, sha256Hash, null, uploadedByMemberId,
+                UploadStatus.PENDING, FilePurpose.PROFILE_IMAGE, null, null, null);
     }
 
     public void markReady(String objectEtag) {
@@ -78,6 +90,20 @@ public class StoredFile {
         }
     }
 
+    public void validateGeneralPurpose() {
+        if (purpose != FilePurpose.GENERAL) {
+            throw new InvalidFileStateException();
+        }
+    }
+
+    public void validateProfileImage() {
+        validatePrivateDownload();
+        if (purpose != FilePurpose.PROFILE_IMAGE
+                || contentType == null || !contentType.startsWith("image/")) {
+            throw new InvalidFileStateException();
+        }
+    }
+
     public void validatePublicUse() {
         validateReady();
         if (storageScope != StorageScope.PUBLIC) {
@@ -94,6 +120,7 @@ public class StoredFile {
         if (storageScope != StorageScope.PRIVATE) {
             throw new InvalidFileScopeException();
         }
+        validateGeneralPurpose();
         return pending(originalName, StorageScope.PUBLIC, publicStorageKey, contentType,
                 sizeBytes, sha256Hash, uploadedByMemberId);
     }

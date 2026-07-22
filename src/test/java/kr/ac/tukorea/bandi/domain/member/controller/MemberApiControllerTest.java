@@ -7,12 +7,15 @@ import kr.ac.tukorea.bandi.domain.member.dto.request.RoleChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.StatusChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.TeamChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberHistoryResponse;
+import kr.ac.tukorea.bandi.domain.member.dto.response.MemberProfileResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberResponse;
+import kr.ac.tukorea.bandi.domain.member.dto.response.TeamMemberResponse;
 import kr.ac.tukorea.bandi.domain.member.model.AcademicStatus;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.MemberStatus;
 import kr.ac.tukorea.bandi.domain.member.model.SsoLinkStatus;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
+import kr.ac.tukorea.bandi.domain.member.service.MemberProfileService;
 import kr.ac.tukorea.bandi.global.config.SecurityWebMvcConfig;
 import kr.ac.tukorea.bandi.global.exception.ApiExceptionHandler;
 import kr.ac.tukorea.bandi.global.security.LoginMemberArgumentResolver;
@@ -29,8 +32,10 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.mock.web.MockMultipartFile;
 
 import java.util.List;
+import java.time.LocalDateTime;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -38,6 +43,8 @@ import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -55,6 +62,8 @@ class MemberApiControllerTest {
 
     @MockitoBean
     private MemberService memberService;
+    @MockitoBean
+    private MemberProfileService memberProfileService;
 
     @Autowired
     MemberApiControllerTest(MockMvc mockMvc) {
@@ -103,6 +112,45 @@ class MemberApiControllerTest {
                 .andExpect(jsonPath("$.name").value("이서준"));
 
         verify(memberService).lookupMember(ACTOR_ID);
+    }
+
+    @Test
+    void 로그인_멤버가_프로필과_팀_멤버를_조회한다() throws Exception {
+        given(memberProfileService.lookupProfile(ACTOR_ID)).willReturn(profile());
+        given(memberProfileService.searchTeamMembers(ACTOR_ID)).willReturn(List.of(
+                new TeamMemberResponse(MEMBER_ID, "이서준", "2020184000", "무대팀",
+                        ClubRole.MEMBER, MemberStatus.ACTIVE, false)));
+
+        mockMvc.perform(get("/api/members/me/profile"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.teamId").value(2))
+                .andExpect(jsonPath("$.teamName").value("무대팀"));
+        mockMvc.perform(get("/api/members/team-members"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].name").value("이서준"));
+
+        verify(memberProfileService).lookupProfile(ACTOR_ID);
+        verify(memberProfileService).searchTeamMembers(ACTOR_ID);
+    }
+
+    @Test
+    void 로그인_멤버가_프로필_사진을_업로드하고_삭제한다() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", "me.png",
+                "image/png", new byte[]{1, 2, 3, 4});
+        given(memberProfileService.uploadProfilePhoto(any(), any())).willReturn(profile());
+
+        mockMvc.perform(multipart("/api/members/me/profile-photo")
+                        .file(file)
+                        .with(request -> {
+                            request.setMethod("PUT");
+                            return request;
+                        }))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("이서준"));
+        mockMvc.perform(delete("/api/members/me/profile-photo"))
+                .andExpect(status().isNoContent());
+
+        verify(memberProfileService).deleteProfilePhoto(ACTOR_ID);
     }
 
     @Test
@@ -229,5 +277,12 @@ class MemberApiControllerTest {
                 "컴퓨터공학부", AcademicStatus.ENROLLED, null, 2L, 3L,
                 ClubRole.MEMBER, MemberStatus.ACTIVE, SsoLinkStatus.LINKED,
                 null, null, ACTOR_ID);
+    }
+
+    private MemberProfileResponse profile() {
+        return new MemberProfileResponse(ACTOR_ID, "2020184000", "이서준", 2L, "무대팀",
+                "26-2기", ClubRole.MEMBER, MemberStatus.ACTIVE, "컴퓨터공학부",
+                AcademicStatus.ENROLLED, LocalDateTime.now(), SsoLinkStatus.LINKED,
+                LocalDateTime.now(), LocalDateTime.now(), false);
     }
 }

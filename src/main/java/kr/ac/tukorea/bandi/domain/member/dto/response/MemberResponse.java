@@ -22,8 +22,20 @@ public record MemberResponse(
         SsoLinkStatus ssoLinkStatus,
         LocalDateTime ssoLinkedDttm,
         LocalDateTime lastLoginDttm,
-        Long registeredByMemberId
+        Long registeredByMemberId,
+        Long profilePhotoFileId
 ) {
+
+    public MemberResponse(Long memberId, String studentNo, String name,
+                          String department, AcademicStatus academicStatus,
+                          LocalDateTime academicStatusVerifiedDttm, Long teamId,
+                          Long cohortId, ClubRole role, MemberStatus status,
+                          SsoLinkStatus ssoLinkStatus, LocalDateTime ssoLinkedDttm,
+                          LocalDateTime lastLoginDttm, Long registeredByMemberId) {
+        this(memberId, studentNo, name, department, academicStatus,
+                academicStatusVerifiedDttm, teamId, cohortId, role, status,
+                ssoLinkStatus, ssoLinkedDttm, lastLoginDttm, registeredByMemberId, null);
+    }
 
     public static MemberResponse from(Member member) {
         return new MemberResponse(member.getMemberId(), member.getStudentNo(),
@@ -32,6 +44,7 @@ public record MemberResponse(
                 member.getAcademicStatusVerifiedDttm(), member.getTeamId(),
                 member.getCohortId(), member.getRole(), member.getStatus(),
                 member.getSsoLinkStatus(), member.getSsoLinkedDttm(),
-                member.getLastLoginDttm(), member.getRegisteredByMemberId());
+                member.getLastLoginDttm(), member.getRegisteredByMemberId(),
+                member.getProfilePhotoFileId());
     }
 }
