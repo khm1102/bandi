@@ -52,7 +52,7 @@ public class InternalNoticeService {
         MemberAccessContext access = memberService.lookupAccessContext(actorMemberId);
         validateManagement(access, param.targetScope(), param.teamId());
         validateActiveTarget(param.targetScope(), param.teamId());
-        validateAttachments(param.attachmentFileIds());
+        validateAttachments(param.attachmentFileIds(), actorMemberId);
         InternalNotice notice = InternalNotice.draft(param.targetScope(), param.teamId(),
                 param.title(), param.body(), param.important(), actorMemberId);
         internalNoticeMapper.insert(notice);
@@ -67,7 +67,7 @@ public class InternalNoticeService {
         validateManagement(access, original.getTargetScope(), original.getTeamId());
         validateManagement(access, param.targetScope(), param.teamId());
         validateActiveTarget(param.targetScope(), param.teamId());
-        validateAttachments(param.attachmentFileIds());
+        validateAttachments(param.attachmentFileIds(), actorMemberId);
         InternalNotice changed = original.edit(param.targetScope(), param.teamId(),
                 param.title(), param.body(), param.important(), actorMemberId);
         internalNoticeMapper.update(changed);
@@ -212,12 +212,13 @@ public class InternalNoticeService {
         }
     }
 
-    private void validateAttachments(List<Long> storedFileIds) {
+    private void validateAttachments(List<Long> storedFileIds, Long actorMemberId) {
         if (storedFileIds.stream().anyMatch(fileId -> fileId == null)
                 || new HashSet<>(storedFileIds).size() != storedFileIds.size()) {
             throw new InvalidInternalNoticeException("attachments");
         }
-        storedFileIds.forEach(fileService::lookupPrivateReady);
+        storedFileIds.forEach(storedFileId ->
+                fileService.validatePrivateReadyOwnedBy(storedFileId, actorMemberId));
     }
 
     private void attachFiles(Long internalNoticeId, List<Long> storedFileIds) {

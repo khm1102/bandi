@@ -48,7 +48,7 @@ public class AssetService {
     public Long registerItem(Long actorMemberId, AssetItemCreateParam param) {
         validateAdmin(actorMemberId);
         if (param.photoFileId() != null) {
-            fileService.validatePrivateReady(param.photoFileId());
+            fileService.validatePrivateReadyOwnedBy(param.photoFileId(), actorMemberId);
         }
         AssetItem item = AssetItem.register(param.name(), param.categoryCode(),
                 param.trackingType(), param.ownerType(), param.ownerMemberId(),
@@ -122,7 +122,7 @@ public class AssetService {
         validateAdmin(actorMemberId);
         AssetItem current = lockItem(assetItemId);
         if (param.photoFileId() != null) {
-            fileService.validatePrivateReady(param.photoFileId());
+            fileService.validatePrivateReadyOwnedBy(param.photoFileId(), actorMemberId);
         }
         AssetItem changed = current.edit(param.name(), param.categoryCode(),
                 param.ownerType(), param.ownerMemberId(),

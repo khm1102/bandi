@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.domain.file.model;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import kr.ac.tukorea.bandi.domain.file.exception.InvalidFileScopeException;
 import kr.ac.tukorea.bandi.domain.file.exception.InvalidFileStateException;
 import lombok.Getter;
@@ -82,6 +83,10 @@ public class StoredFile {
         if (storageScope != StorageScope.PUBLIC) {
             throw new InvalidFileScopeException();
         }
+    }
+
+    public boolean isUploadedBy(Long memberId) {
+        return Objects.equals(uploadedByMemberId, memberId);
     }
 
     public StoredFile createPublicPromotion(String publicStorageKey, Long uploadedByMemberId) {

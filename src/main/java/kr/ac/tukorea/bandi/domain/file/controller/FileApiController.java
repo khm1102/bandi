@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.net.URI;
+import org.springframework.http.HttpStatus;
 
 @RestController
 @RequiredArgsConstructor
@@ -39,7 +39,7 @@ public class FileApiController implements FileApiDocs {
     }
 
     private ResponseEntity<FileIdentifierResponse> created(Long id) {
-        return ResponseEntity.created(URI.create("/api/files/" + id))
+        return ResponseEntity.status(HttpStatus.CREATED)
                 .body(new FileIdentifierResponse(id));
     }
 }

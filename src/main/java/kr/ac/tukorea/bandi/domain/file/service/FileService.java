@@ -71,9 +71,14 @@ public class FileService {
     }
 
     public FileReferenceResponse lookupPrivateReady(Long storedFileId) {
-        StoredFile file = metadataService.lookup(storedFileId);
-        file.validatePrivateDownload();
-        return FileReferenceResponse.from(file);
+        return FileReferenceResponse.from(lookupPrivateStoredFile(storedFileId));
+    }
+
+    public void validatePrivateReadyOwnedBy(Long storedFileId, Long memberId) {
+        StoredFile file = lookupPrivateStoredFile(storedFileId);
+        if (!file.isUploadedBy(memberId)) {
+            throw new FileAccessDeniedException();
+        }
     }
 
     public void validatePublicReady(Long storedFileId) {
@@ -96,7 +101,10 @@ public class FileService {
 
     public Long promoteToPublic(Long privateStoredFileId, String domain,
                                 Long uploadedByMemberId) {
-        StoredFile source = metadataService.lookup(privateStoredFileId);
+        StoredFile source = lookupPrivateStoredFile(privateStoredFileId);
+        if (!source.isUploadedBy(uploadedByMemberId)) {
+            throw new FileAccessDeniedException();
+        }
         String publicKey = keyGenerator.generate(domain);
         StoredFile publicPending = source.createPublicPromotion(publicKey, uploadedByMemberId);
         StoredFile created = metadataService.createPending(publicPending);
@@ -125,6 +133,12 @@ public class FileService {
             log.warn("파일 메타데이터 실패 전환 보상 실패 - storedFileId={}",
                     storedFileId, exception);
         }
+    }
+
+    private StoredFile lookupPrivateStoredFile(Long storedFileId) {
+        StoredFile file = metadataService.lookup(storedFileId);
+        file.validatePrivateDownload();
+        return file;
     }
 
     private FileDownloadResponse download(StoredFile file, StorageScope scope) {

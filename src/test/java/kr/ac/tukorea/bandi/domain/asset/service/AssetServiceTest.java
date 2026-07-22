@@ -64,11 +64,12 @@ class AssetServiceTest {
         assetService.updateItem(ACTOR_ID, ITEM_ID,
                 new AssetItemUpdateParam("전원 케이블", "CABLE",
                         AssetOwnerType.CLUB, null, null, 12,
-                        "창고 B", null, "재고 정리"));
+                        "창고 B", 30L, "재고 정리"));
 
         ArgumentCaptor<AssetHistory> captor =
                 ArgumentCaptor.forClass(AssetHistory.class);
         verify(assetMapper).updateItem(org.mockito.ArgumentMatchers.any());
+        verify(fileService).validatePrivateReadyOwnedBy(30L, ACTOR_ID);
         verify(assetMapper, org.mockito.Mockito.times(2))
                 .insertHistory(captor.capture());
         assertThat(captor.getAllValues()).extracting(AssetHistory::action)
