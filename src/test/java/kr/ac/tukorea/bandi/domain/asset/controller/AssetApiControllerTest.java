@@ -156,11 +156,14 @@ class AssetApiControllerTest {
     }
 
     @Test
-    void 품목_사진은_presigned_url로_리다이렉트한다() throws Exception {
-        given(assetService.createPhotoDownloadUrl(ACTOR_ID, 20L))
-                .willReturn("http://localhost:9000/bandi-private/photo");
+    void 품목_사진은_애플리케이션이_직접_전송한다() throws Exception {
+        given(assetService.openPhotoDownload(ACTOR_ID, 20L))
+                .willReturn(new kr.ac.tukorea.bandi.global.response.FileDownloadResponse(
+                        "photo.png", "image/png", 4,
+                        new org.springframework.core.io.InputStreamResource(
+                                new java.io.ByteArrayInputStream(new byte[]{1, 2, 3, 4}))));
 
         mockMvc.perform(get("/api/assets/{assetItemId}/photo/download", 20L))
-                .andExpect(status().isFound());
+                .andExpect(status().isOk());
     }
 }

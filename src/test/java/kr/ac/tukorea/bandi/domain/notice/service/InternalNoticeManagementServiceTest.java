@@ -90,7 +90,6 @@ class InternalNoticeManagementServiceTest {
     @Test
     void LEADER는_소속_팀_공지와_READY_첨부를_작성한다() {
         given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(leaderContext());
-        given(fileService.lookupPrivateReady(FILE_ID)).willReturn(fileReference());
         willAnswer(invocation -> {
             assignNoticeId(invocation.getArgument(0), NOTICE_ID);
             return 1;
@@ -101,6 +100,7 @@ class InternalNoticeManagementServiceTest {
                         List.of(FILE_ID)));
 
         verify(memberService).validateActiveTeam(STAGE_TEAM_ID);
+        verify(fileService).validatePrivateReadyOwnedBy(FILE_ID, ACTOR_ID);
         ArgumentCaptor<InternalNoticeAttachment> captor =
                 ArgumentCaptor.forClass(InternalNoticeAttachment.class);
         verify(internalNoticeMapper).insertAttachment(captor.capture());
@@ -172,7 +172,6 @@ class InternalNoticeManagementServiceTest {
         given(internalNoticeMapper.lookupByIdForUpdate(NOTICE_ID))
                 .willReturn(Optional.of(persistedDraft(
                         InternalNoticeTargetScope.TEAM, STAGE_TEAM_ID)));
-        given(fileService.lookupPrivateReady(FILE_ID)).willReturn(fileReference());
         InternalNoticeUpdateParam param = new InternalNoticeUpdateParam(NOTICE_ID,
                 InternalNoticeTargetScope.TEAM, STAGE_TEAM_ID, "수정 공지", "수정 본문",
                 true, List.of(FILE_ID));

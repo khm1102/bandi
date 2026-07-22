@@ -9,3 +9,7 @@ spring:
     url: jdbc:mysql://${DB_HOST}:${DB_PORT}/bandi?serverTimezone=Asia/Seoul
     user: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+
+bandi:
+  storage:
+    root: ${FILE_STORAGE_ROOT:${java.io.tmpdir}}

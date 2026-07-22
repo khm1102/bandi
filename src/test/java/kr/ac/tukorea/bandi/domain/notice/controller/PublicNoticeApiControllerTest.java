@@ -83,15 +83,16 @@ class PublicNoticeApiControllerTest {
     }
 
     @Test
-    void 공개_첨부파일은_MinIO_주소로_리다이렉트한다() throws Exception {
-        given(publicNoticeService.createAttachmentDownloadUrl(NOTICE_ID, FILE_ID))
-                .willReturn("http://localhost:9000/bandi-private/file");
+    void 공개_첨부파일은_애플리케이션이_직접_전송한다() throws Exception {
+        given(publicNoticeService.openAttachmentDownload(NOTICE_ID, FILE_ID))
+                .willReturn(new kr.ac.tukorea.bandi.global.response.FileDownloadResponse(
+                        "notice.pdf", "application/pdf", 4,
+                        new org.springframework.core.io.InputStreamResource(
+                                new java.io.ByteArrayInputStream(new byte[]{1, 2, 3, 4}))));
 
         mockMvc.perform(get("/api/public-notices/{noticeId}/attachments/"
                         + "{fileId}/download", NOTICE_ID, FILE_ID))
-                .andExpect(status().isFound())
-                .andExpect(header().string("Location",
-                        "http://localhost:9000/bandi-private/file"));
+                .andExpect(status().isOk());
     }
 
     @Test

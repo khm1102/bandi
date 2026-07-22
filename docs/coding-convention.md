@@ -1082,6 +1082,7 @@ docker compose up -d      # MySQL 8.x (포트/계정/DB명 팀 고정)
 - **호스트 포트는 3307 고정** (3306은 로컬의 다른 MySQL과 충돌 방지). 계정 `bandi`/`bandi1234`, 스키마 `bandi`(개발)·`bandi_test`(테스트)
 - MySQL 컨테이너에 `--character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci` 고정
 - 테스트도 동일 컨테이너의 별도 스키마(`bandi_test`)를 사용하고 `application-test.yaml`(포트 3307)로 연결한다. H2 호환 모드는 MySQL 전용 SQL(Flyway)과 어긋나므로 쓰지 않는다.
+- 파일 저장 루트는 `FILE_STORAGE_ROOT`로 주입한다. 운영 기본값은 `/data/bandi`이며, 배포 전에 영구 볼륨을 마운트하고 실행 계정에 읽기·쓰기 권한을 부여한다. 애플리케이션은 루트가 디렉터리가 아니거나 쓸 수 없으면 기동하지 않아야 한다.
 
 ### 17.4 시간대
 - DB 연결: `serverTimezone=Asia/Seoul`, JVM 기본 시간대 `Asia/Seoul` 통일 (국내 단일 서비스이므로 KST 단순화 우선)
