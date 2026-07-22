@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceDetailResponse;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceSummaryResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
+import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -37,7 +38,7 @@ public interface ResourceApiDocs {
 
     @Operation(summary = "자료 파일 다운로드")
     @GetMapping("/{resourceId}/files/{storedFileId}/download")
-    ResponseEntity<Void> download(
+    ResponseEntity<Resource> download(
             @Parameter(hidden = true) @LoginMember Long memberId,
             @PathVariable Long resourceId,
             @PathVariable Long storedFileId);

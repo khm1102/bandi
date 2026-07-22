@@ -95,7 +95,7 @@ class PublicNoticeMapperTest {
     @Test
     void 공개_목록은_게시_시각이_도달한_공시만_중요도와_최신순으로_조회한다() {
         PublicNotice oldPinned = publish(draft("중요 모집 안내", true), NOW.minusDays(3), null);
-        PublicNotice newNormal = publish(draft("정기 공연 안내", false), NOW.minusDays(1), null);
+        PublicNotice newNormal = publish(draft("정기 운영 안내", false), NOW.minusDays(1), null);
         publish(draft("미래 예약 안내", true), NOW.plusDays(1), null);
         publish(draft("만료 안내", true), NOW.minusDays(3), NOW);
 
@@ -110,16 +110,16 @@ class PublicNoticeMapperTest {
 
     @Test
     void 공개_목록은_제목과_본문을_검색하고_페이지를_제한한다() {
-        publish(draft("여름 정기 공연", false), NOW.minusDays(3), null);
+        publish(draft("여름 운영 안내", false), NOW.minusDays(3), null);
         PublicNotice bodyMatched = PublicNotice.draft(
-                "RESULT", "결과 안내", "공연 오디션 합격자", false, actorMemberId);
+                "GENERAL", "결과 안내", "운영 안내 대상", false, actorMemberId);
         publish(bodyMatched, NOW.minusDays(2), null);
         publish(draft("신입 모집", false), NOW.minusDays(1), null);
 
         List<PublicNoticeSummaryResponse> firstPage = publicNoticeMapper.searchPublic(
-                new PublicNoticeSearchCondition("공연", NOW, 0, 1));
+                new PublicNoticeSearchCondition("안내", NOW, 0, 1));
         List<PublicNoticeSummaryResponse> secondPage = publicNoticeMapper.searchPublic(
-                new PublicNoticeSearchCondition("공연", NOW, 1, 1));
+                new PublicNoticeSearchCondition("안내", NOW, 1, 1));
 
         assertThat(firstPage).hasSize(1);
         assertThat(secondPage).hasSize(1);
@@ -129,13 +129,13 @@ class PublicNoticeMapperTest {
 
     @Test
     void 공개_상세는_작성자와_수정자_이름을_포함한다() {
-        PublicNotice notice = publish(draft("정기 공연 안내", true), NOW.minusDays(1), null);
+        PublicNotice notice = publish(draft("정기 운영 안내", true), NOW.minusDays(1), null);
 
         PublicNoticeContentResponse found = publicNoticeMapper.lookupPublicContent(
                         notice.getPublicNoticeId(), NOW)
                 .orElseThrow();
 
-        assertThat(found.title()).isEqualTo("정기 공연 안내");
+        assertThat(found.title()).isEqualTo("정기 운영 안내");
         assertThat(found.createdByName()).isEqualTo("이서준");
         assertThat(found.updatedByName()).isEqualTo("이서준");
     }
@@ -144,7 +144,7 @@ class PublicNoticeMapperTest {
     void 운영_목록은_임시_공시를_상태와_검색어로_조회한다() {
         PublicNotice target = draft("신입 부원 모집", true);
         publicNoticeMapper.insert(target);
-        PublicNotice other = draft("정기 공연 안내", false);
+        PublicNotice other = draft("정기 운영 안내", false);
         publicNoticeMapper.insert(other);
         publish(draft("게시된 모집 결과", false), NOW.minusDays(1), null);
 
@@ -195,7 +195,7 @@ class PublicNoticeMapperTest {
 
     @Test
     void 첨부를_표시_순서대로_조회하고_공개_연결_여부를_확인한다() {
-        PublicNotice notice = publish(draft("공연 자료", false), NOW.minusDays(1), null);
+        PublicNotice notice = publish(draft("활동 자료", false), NOW.minusDays(1), null);
         Long firstFileId = insertReadyFile("poster.pdf", "1".repeat(64));
         Long secondFileId = insertReadyFile("schedule.pdf", "2".repeat(64));
         publicNoticeMapper.insertAttachment(
@@ -258,7 +258,7 @@ class PublicNoticeMapperTest {
     }
 
     private PublicNotice draft(String title, boolean pinned) {
-        return PublicNotice.draft("PERFORMANCE", title, "공시 본문", pinned, actorMemberId);
+        return PublicNotice.draft("GENERAL", title, "공시 본문", pinned, actorMemberId);
     }
 
     private PublicNotice publish(PublicNotice draft, LocalDateTime start, LocalDateTime end) {
@@ -284,7 +284,7 @@ class PublicNoticeMapperTest {
                     category_code, title, body, status_code, is_pinned,
                     publish_start_dttm, publish_end_dttm, created_by_member_id,
                     updated_by_member_id, published_by_member_id
-                ) VALUES ('TEST', '제목', '본문', ?, 0, ?, ?, ?, ?, ?)
+                ) VALUES ('GENERAL', '제목', '본문', ?, 0, ?, ?, ?, ?, ?)
                 """, status, start, end, actorMemberId, actorMemberId,
                 publishedByMemberId);
     }

@@ -23,6 +23,7 @@ import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
 import kr.ac.tukorea.bandi.domain.file.service.FileService;
 import kr.ac.tukorea.bandi.domain.file.service.FileAccessDecision;
+import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -47,7 +48,7 @@ public class AssetService {
     public Long registerItem(Long actorMemberId, AssetItemCreateParam param) {
         validateAdmin(actorMemberId);
         if (param.photoFileId() != null) {
-            fileService.validatePrivateReady(param.photoFileId());
+            fileService.validatePrivateReadyOwnedBy(param.photoFileId(), actorMemberId);
         }
         AssetItem item = AssetItem.register(param.name(), param.categoryCode(),
                 param.trackingType(), param.ownerType(), param.ownerMemberId(),
@@ -104,14 +105,14 @@ public class AssetService {
                 .toList();
     }
 
-    public String createPhotoDownloadUrl(Long actorMemberId,
-                                         Long assetItemId) {
+    public FileDownloadResponse openPhotoDownload(Long actorMemberId,
+                                          Long assetItemId) {
         validateInternal(actorMemberId);
         AssetItem item = findItem(assetItemId);
         if (item.getPhotoFileId() == null) {
             throw new InvalidAssetException();
         }
-        return fileService.createPrivateDownloadUrl(item.getPhotoFileId(),
+        return fileService.openPrivateDownload(item.getPhotoFileId(),
                 FileAccessDecision.GRANTED);
     }
 
@@ -121,7 +122,7 @@ public class AssetService {
         validateAdmin(actorMemberId);
         AssetItem current = lockItem(assetItemId);
         if (param.photoFileId() != null) {
-            fileService.validatePrivateReady(param.photoFileId());
+            fileService.validatePrivateReadyOwnedBy(param.photoFileId(), actorMemberId);
         }
         AssetItem changed = current.edit(param.name(), param.categoryCode(),
                 param.ownerType(), param.ownerMemberId(),

@@ -9,7 +9,7 @@
         <header class="mt-4 border-b pb-6">
             <div class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 <c:if test="${notice.pinned}"><t:badge tone="accent">중요</t:badge></c:if>
-                <t:badge tone="neutral"><c:choose><c:when test="${notice.categoryCode == 'PERFORMANCE'}">공연</c:when><c:when test="${notice.categoryCode == 'RECRUITMENT'}">모집</c:when><c:when test="${notice.categoryCode == 'RESERVATION'}">관람</c:when><c:otherwise><c:out value="${notice.categoryCode}"/></c:otherwise></c:choose></t:badge>
+                <t:badge tone="neutral"><c:choose><c:when test="${notice.categoryCode == 'RECRUITMENT'}">모집</c:when><c:otherwise>일반</c:otherwise></c:choose></t:badge>
                 <time datetime="<c:out value='${notice.publishStartDttm}'/>"><c:out value="${fn:replace(notice.publishStartDttm, 'T', ' ')}"/></time>
             </div>
             <h1 class="mt-4 text-3xl font-black leading-tight tracking-tight"><c:out value="${notice.title}"/></h1>

@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.domain.resource.service;
 
 import kr.ac.tukorea.bandi.domain.file.dto.response.FileReferenceResponse;
+import kr.ac.tukorea.bandi.domain.file.exception.FileAccessDeniedException;
 import kr.ac.tukorea.bandi.domain.file.service.FileAccessDecision;
 import kr.ac.tukorea.bandi.domain.file.service.FileService;
 import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
@@ -90,7 +91,6 @@ class ResourceServiceTest {
     @Test
     void LEADER는_소속_팀_자료와_READY_파일_revision_1을_만든다() {
         given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(leaderContext());
-        given(fileService.lookupPrivateReady(FILE_ID)).willReturn(fileReference());
         willAnswer(invocation -> {
             assignResourceId(invocation.getArgument(0), RESOURCE_ID);
             return 1;
@@ -101,8 +101,23 @@ class ResourceServiceTest {
 
         ArgumentCaptor<ResourceFile> captor = ArgumentCaptor.forClass(ResourceFile.class);
         verify(resourceMapper).insertFile(captor.capture());
+        verify(fileService).validatePrivateReadyOwnedBy(FILE_ID, ACTOR_ID);
         assertThat(captor.getValue().getRevisionNo()).isEqualTo(1);
         assertThat(captor.getValue().getUploadedByMemberId()).isEqualTo(ACTOR_ID);
+    }
+
+    @Test
+    void 다른_회원의_비공개_파일은_자료에_연결할_수_없다() {
+        given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(leaderContext());
+        org.mockito.Mockito.doThrow(new FileAccessDeniedException())
+                .when(fileService).validatePrivateReadyOwnedBy(FILE_ID, ACTOR_ID);
+
+        assertThatThrownBy(() -> resourceService.createDraft(ACTOR_ID,
+                writeParam(ResourceTargetScope.TEAM, STAGE_TEAM_ID, List.of(FILE_ID))))
+                .isInstanceOf(FileAccessDeniedException.class);
+
+        verify(resourceMapper, never()).insert(any());
+        verify(resourceMapper, never()).insertFile(any());
     }
 
     @Test
@@ -153,7 +168,6 @@ class ResourceServiceTest {
                 .willReturn(Optional.of(persistedDraft(ResourceTargetScope.ALL, null)));
         given(resourceMapper.lookupMaxRevisionForUpdate(RESOURCE_ID))
                 .willReturn(Optional.of(2));
-        given(fileService.lookupPrivateReady(FILE_ID)).willReturn(fileReference());
 
         int result = resourceService.replaceFiles(ACTOR_ID,
                 new ResourceRevisionParam(RESOURCE_ID, List.of(FILE_ID)));
@@ -279,12 +293,12 @@ class ResourceServiceTest {
         given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(memberContext());
         given(resourceMapper.existsReadableCurrentFile(
                 RESOURCE_ID, FILE_ID, STAGE_TEAM_ID, false)).willReturn(true);
-        given(fileService.createPrivateDownloadUrl(FILE_ID, FileAccessDecision.GRANTED))
-                .willReturn("http://localhost:9000/download");
+        given(fileService.openPrivateDownload(FILE_ID, FileAccessDecision.GRANTED))
+                .willReturn(download());
 
-        String result = resourceService.createDownloadUrl(ACTOR_ID, RESOURCE_ID, FILE_ID);
+        var result = resourceService.openDownload(ACTOR_ID, RESOURCE_ID, FILE_ID);
 
-        assertThat(result).isEqualTo("http://localhost:9000/download");
+        assertThat(result.originalName()).isEqualTo("proof.png");
     }
 
     @Test
@@ -378,6 +392,13 @@ class ResourceServiceTest {
     private ResourceFileLinkResponse fileLink(int revisionNo) {
         return new ResourceFileLinkResponse(FILE_ID, revisionNo, 0,
                 ACTOR_ID, "관리자", NOW);
+    }
+
+    private kr.ac.tukorea.bandi.global.response.FileDownloadResponse download() {
+        return new kr.ac.tukorea.bandi.global.response.FileDownloadResponse(
+                "proof.png", "image/png", 4,
+                new org.springframework.core.io.InputStreamResource(
+                        new java.io.ByteArrayInputStream(new byte[]{1, 2, 3, 4})));
     }
 
     private void assignResourceId(Resource resource, Long resourceId) {

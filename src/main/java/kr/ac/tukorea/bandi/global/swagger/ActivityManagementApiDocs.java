@@ -17,6 +17,7 @@ import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordManageDeta
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordSummaryResponse;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivitySubmissionResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
+import org.springframework.core.io.Resource;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -53,7 +54,7 @@ public interface ActivityManagementApiDocs {
 
     @Operation(summary = "관리 가능한 현재 증빙 이미지 다운로드")
     @GetMapping("/{activityRecordId}/files/{storedFileId}/download")
-    ResponseEntity<Void> download(
+    ResponseEntity<Resource> download(
             @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @PathVariable Long activityRecordId,
             @PathVariable Long storedFileId);

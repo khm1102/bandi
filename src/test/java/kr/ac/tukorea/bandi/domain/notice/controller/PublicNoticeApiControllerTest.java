@@ -73,25 +73,26 @@ class PublicNoticeApiControllerTest {
         given(publicNoticeService.searchPublic(any())).willReturn(List.of());
 
         mockMvc.perform(get("/api/public-notices")
-                        .param("keyword", "공연")
+                        .param("keyword", "운영")
                         .param("page", "1")
                         .param("pageSize", "10"))
                 .andExpect(status().isOk());
 
         verify(publicNoticeService).searchPublic(
-                new PublicNoticeSearchParam("공연", 1, 10));
+                new PublicNoticeSearchParam("운영", 1, 10));
     }
 
     @Test
-    void 공개_첨부파일은_MinIO_주소로_리다이렉트한다() throws Exception {
-        given(publicNoticeService.createAttachmentDownloadUrl(NOTICE_ID, FILE_ID))
-                .willReturn("http://localhost:9000/bandi-private/file");
+    void 공개_첨부파일은_애플리케이션이_직접_전송한다() throws Exception {
+        given(publicNoticeService.openAttachmentDownload(NOTICE_ID, FILE_ID))
+                .willReturn(new kr.ac.tukorea.bandi.global.response.FileDownloadResponse(
+                        "notice.pdf", "application/pdf", 4,
+                        new org.springframework.core.io.InputStreamResource(
+                                new java.io.ByteArrayInputStream(new byte[]{1, 2, 3, 4}))));
 
         mockMvc.perform(get("/api/public-notices/{noticeId}/attachments/"
                         + "{fileId}/download", NOTICE_ID, FILE_ID))
-                .andExpect(status().isFound())
-                .andExpect(header().string("Location",
-                        "http://localhost:9000/bandi-private/file"));
+                .andExpect(status().isOk());
     }
 
     @Test
@@ -105,7 +106,7 @@ class PublicNoticeApiControllerTest {
                 .andExpect(jsonPath("$.publicNoticeId").value(NOTICE_ID));
 
         verify(publicNoticeService).createDraft(ACTOR_ID,
-                new PublicNoticeWriteParam("PERFORMANCE", "공연 안내",
+                new PublicNoticeWriteParam("GENERAL", "운영 안내",
                         "상세 안내", true, List.of(FILE_ID)));
     }
 
@@ -134,8 +135,8 @@ class PublicNoticeApiControllerTest {
     private String writeBody() {
         return """
                 {
-                  "categoryCode": "PERFORMANCE",
-                  "title": "공연 안내",
+                  "categoryCode": "GENERAL",
+                  "title": "운영 안내",
                   "body": "상세 안내",
                   "pinned": true,
                   "attachmentFileIds": [30]

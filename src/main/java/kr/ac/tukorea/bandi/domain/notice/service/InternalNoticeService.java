@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.domain.notice.service;
 
 import kr.ac.tukorea.bandi.domain.file.dto.response.FileReferenceResponse;
+import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
 import kr.ac.tukorea.bandi.domain.file.service.FileAccessDecision;
 import kr.ac.tukorea.bandi.domain.file.service.FileService;
 import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
@@ -51,7 +52,7 @@ public class InternalNoticeService {
         MemberAccessContext access = memberService.lookupAccessContext(actorMemberId);
         validateManagement(access, param.targetScope(), param.teamId());
         validateActiveTarget(param.targetScope(), param.teamId());
-        validateAttachments(param.attachmentFileIds());
+        validateAttachments(param.attachmentFileIds(), actorMemberId);
         InternalNotice notice = InternalNotice.draft(param.targetScope(), param.teamId(),
                 param.title(), param.body(), param.important(), actorMemberId);
         internalNoticeMapper.insert(notice);
@@ -66,7 +67,7 @@ public class InternalNoticeService {
         validateManagement(access, original.getTargetScope(), original.getTeamId());
         validateManagement(access, param.targetScope(), param.teamId());
         validateActiveTarget(param.targetScope(), param.teamId());
-        validateAttachments(param.attachmentFileIds());
+        validateAttachments(param.attachmentFileIds(), actorMemberId);
         InternalNotice changed = original.edit(param.targetScope(), param.teamId(),
                 param.title(), param.body(), param.important(), actorMemberId);
         internalNoticeMapper.update(changed);
@@ -149,8 +150,8 @@ public class InternalNoticeService {
         return InternalNoticeDetailResponse.of(content, lookupAttachments(internalNoticeId));
     }
 
-    public String createAttachmentDownloadUrl(Long memberId, Long internalNoticeId,
-                                              Long storedFileId) {
+    public FileDownloadResponse openAttachmentDownload(Long memberId, Long internalNoticeId,
+                                               Long storedFileId) {
         MemberAccessContext access = readableAccess(memberId);
         boolean readable = internalNoticeMapper.existsReadableAttachment(
                 internalNoticeId, storedFileId, LocalDateTime.now(clock),
@@ -158,7 +159,7 @@ public class InternalNoticeService {
         if (!readable) {
             throw new InternalNoticeNotFoundException(internalNoticeId);
         }
-        return fileService.createPrivateDownloadUrl(
+        return fileService.openPrivateDownload(
                 storedFileId, FileAccessDecision.GRANTED);
     }
 
@@ -211,12 +212,13 @@ public class InternalNoticeService {
         }
     }
 
-    private void validateAttachments(List<Long> storedFileIds) {
+    private void validateAttachments(List<Long> storedFileIds, Long actorMemberId) {
         if (storedFileIds.stream().anyMatch(fileId -> fileId == null)
                 || new HashSet<>(storedFileIds).size() != storedFileIds.size()) {
             throw new InvalidInternalNoticeException("attachments");
         }
-        storedFileIds.forEach(fileService::lookupPrivateReady);
+        storedFileIds.forEach(storedFileId ->
+                fileService.validatePrivateReadyOwnedBy(storedFileId, actorMemberId));
     }
 
     private void attachFiles(Long internalNoticeId, List<Long> storedFileIds) {

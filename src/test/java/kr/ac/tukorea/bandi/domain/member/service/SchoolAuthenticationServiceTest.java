@@ -1,7 +1,7 @@
 package kr.ac.tukorea.bandi.domain.member.service;
 
-import kr.ac.tukorea.bandi.domain.member.client.SchoolCredentials;
-import kr.ac.tukorea.bandi.domain.member.client.SchoolSsoClient;
+import kr.ac.tukorea.bandi.domain.member.sso.SchoolCredentials;
+import kr.ac.tukorea.bandi.domain.member.sso.SchoolSsoClient;
 import kr.ac.tukorea.bandi.domain.member.dto.response.AuthenticatedMemberResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.SchoolConnectionResponse;
 import kr.ac.tukorea.bandi.domain.member.exception.MemberLoginDeniedException;
