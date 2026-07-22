@@ -73,13 +73,13 @@ class PublicNoticeApiControllerTest {
         given(publicNoticeService.searchPublic(any())).willReturn(List.of());
 
         mockMvc.perform(get("/api/public-notices")
-                        .param("keyword", "공연")
+                        .param("keyword", "운영")
                         .param("page", "1")
                         .param("pageSize", "10"))
                 .andExpect(status().isOk());
 
         verify(publicNoticeService).searchPublic(
-                new PublicNoticeSearchParam("공연", 1, 10));
+                new PublicNoticeSearchParam("운영", 1, 10));
     }
 
     @Test
@@ -106,7 +106,7 @@ class PublicNoticeApiControllerTest {
                 .andExpect(jsonPath("$.publicNoticeId").value(NOTICE_ID));
 
         verify(publicNoticeService).createDraft(ACTOR_ID,
-                new PublicNoticeWriteParam("PERFORMANCE", "공연 안내",
+                new PublicNoticeWriteParam("GENERAL", "운영 안내",
                         "상세 안내", true, List.of(FILE_ID)));
     }
 
@@ -135,8 +135,8 @@ class PublicNoticeApiControllerTest {
     private String writeBody() {
         return """
                 {
-                  "categoryCode": "PERFORMANCE",
-                  "title": "공연 안내",
+                  "categoryCode": "GENERAL",
+                  "title": "운영 안내",
                   "body": "상세 안내",
                   "pinned": true,
                   "attachmentFileIds": [30]

@@ -41,6 +41,16 @@ class PublicNoticeTest {
     }
 
     @Test
+    void 허용되지_않은_카테고리는_공시로_등록할_수_없다() {
+        assertThatThrownBy(() -> PublicNotice.draft(
+                "INVALID_CATEGORY", "안내", "본문", false, CREATOR_ID))
+                .isInstanceOf(InvalidPublicNoticeException.class);
+        assertThatThrownBy(() -> PublicNotice.draft(
+                "ARCHIVED_CATEGORY", "안내", "본문", false, CREATOR_ID))
+                .isInstanceOf(InvalidPublicNoticeException.class);
+    }
+
+    @Test
     void 카테고리는_30자_제목은_200자를_넘을_수_없다() {
         assertThatThrownBy(() -> PublicNotice.draft(
                 "A".repeat(31), "제목", "본문", false, CREATOR_ID))
@@ -120,7 +130,7 @@ class PublicNoticeTest {
         PublicNotice archived = draft().archive(EDITOR_ID);
 
         assertThatThrownBy(() -> archived.edit(
-                "PERFORMANCE", "수정 제목", "수정 본문", false, EDITOR_ID))
+                "GENERAL", "수정 제목", "수정 본문", false, EDITOR_ID))
                 .isInstanceOf(InvalidPublicNoticeStateException.class);
         assertThatThrownBy(() -> archived.publish(null, null, EDITOR_ID, NOW))
                 .isInstanceOf(InvalidPublicNoticeStateException.class);
@@ -131,7 +141,7 @@ class PublicNoticeTest {
         PublicNotice published = persistedDraft().publish(null, NOW.plusDays(7), CREATOR_ID, NOW);
 
         PublicNotice edited = published.edit(
-                "PERFORMANCE", "정기 공연 안내", "수정된 본문", false, EDITOR_ID);
+                "GENERAL", "운영 안내", "수정된 본문", false, EDITOR_ID);
 
         assertThat(edited.getPublicNoticeId()).isEqualTo(10L);
         assertThat(edited.getCreatedByMemberId()).isEqualTo(CREATOR_ID);

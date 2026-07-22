@@ -137,14 +137,14 @@ class PublicNoticeServiceTest {
                 .willReturn(Optional.of(persistedDraft()));
         given(fileService.lookupPublicReady(SECOND_FILE_ID)).willReturn(secondFile());
         PublicNoticeUpdateParam param = new PublicNoticeUpdateParam(NOTICE_ID,
-                "PERFORMANCE", "정기 공연 안내", "수정 본문", false,
+                "GENERAL", "운영 안내", "수정 본문", false,
                 List.of(SECOND_FILE_ID));
 
         publicNoticeService.update(ACTOR_ID, param);
 
         ArgumentCaptor<PublicNotice> noticeCaptor = ArgumentCaptor.forClass(PublicNotice.class);
         verify(publicNoticeMapper).update(noticeCaptor.capture());
-        assertThat(noticeCaptor.getValue().getTitle()).isEqualTo("정기 공연 안내");
+        assertThat(noticeCaptor.getValue().getTitle()).isEqualTo("운영 안내");
         assertThat(noticeCaptor.getValue().getUpdatedByMemberId()).isEqualTo(ACTOR_ID);
         verify(publicNoticeMapper).removeAttachments(NOTICE_ID);
         verify(publicNoticeMapper).insertAttachment(any());
@@ -156,7 +156,7 @@ class PublicNoticeServiceTest {
         given(publicNoticeMapper.lookupByIdForUpdate(NOTICE_ID)).willReturn(Optional.empty());
 
         assertThatThrownBy(() -> publicNoticeService.update(ACTOR_ID,
-                new PublicNoticeUpdateParam(NOTICE_ID, "PERFORMANCE", "제목", "본문",
+                new PublicNoticeUpdateParam(NOTICE_ID, "GENERAL", "제목", "본문",
                         false, List.of())))
                 .isInstanceOf(PublicNoticeNotFoundException.class);
     }
@@ -203,18 +203,18 @@ class PublicNoticeServiceTest {
     @Test
     void 공개_목록은_현재_시각과_검색어와_페이지_조건을_전달한다() {
         PublicNoticeSummaryResponse summary = new PublicNoticeSummaryResponse(
-                NOTICE_ID, "PERFORMANCE", "정기 공연 안내", true,
+                NOTICE_ID, "GENERAL", "운영 안내", true,
                 NOW.minusDays(1), "이서준", NOW.minusHours(1));
         given(publicNoticeMapper.searchPublic(any())).willReturn(List.of(summary));
 
         List<PublicNoticeSummaryResponse> result = publicNoticeService.searchPublic(
-                new PublicNoticeSearchParam("공연", 2, 20));
+                new PublicNoticeSearchParam("운영", 2, 20));
 
         assertThat(result).containsExactly(summary);
         ArgumentCaptor<PublicNoticeSearchCondition> captor =
                 ArgumentCaptor.forClass(PublicNoticeSearchCondition.class);
         verify(publicNoticeMapper).searchPublic(captor.capture());
-        assertThat(captor.getValue().keyword()).isEqualTo("공연");
+        assertThat(captor.getValue().keyword()).isEqualTo("운영");
         assertThat(captor.getValue().currentDttm()).isEqualTo(NOW);
         assertThat(captor.getValue().offset()).isEqualTo(40);
         assertThat(captor.getValue().limit()).isEqualTo(20);
@@ -278,7 +278,7 @@ class PublicNoticeServiceTest {
 
         PublicNoticeDetailResponse result = publicNoticeService.lookupPublic(NOTICE_ID);
 
-        assertThat(result.title()).isEqualTo("정기 공연 안내");
+        assertThat(result.title()).isEqualTo("운영 안내");
         assertThat(result.attachments()).extracting("originalName")
                 .containsExactly("poster.pdf", "schedule.pdf");
     }
@@ -353,8 +353,8 @@ class PublicNoticeServiceTest {
     }
 
     private PublicNoticeContentResponse contentResponse() {
-        return new PublicNoticeContentResponse(NOTICE_ID, "PERFORMANCE", "정기 공연 안내",
-                "공연 상세 본문", true, NOW.minusDays(1), NOW.plusDays(7),
+        return new PublicNoticeContentResponse(NOTICE_ID, "GENERAL", "운영 안내",
+                "운영 상세 본문", true, NOW.minusDays(1), NOW.plusDays(7),
                 "이서준", "이서준", NOW.minusHours(1));
     }
 

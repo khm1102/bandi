@@ -1,4 +1,4 @@
-<%@ tag description="공개 셸 푸터 — 운영 주체, 관람 안내, 문의·개인정보 경로" pageEncoding="UTF-8" trimDirectiveWhitespaces="true" %>
+<%@ tag description="공개 셸 푸터 — 운영 주체, 문의와 개인정보 안내 경로" pageEncoding="UTF-8" trimDirectiveWhitespaces="true" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <footer class="border-t bg-card px-4 py-7 text-sm text-muted-foreground md:px-6">
     <div class="mx-auto grid max-w-5xl gap-6 md:grid-cols-3">

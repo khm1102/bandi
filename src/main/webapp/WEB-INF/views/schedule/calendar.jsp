@@ -4,7 +4,7 @@
 <c:set var="input" value="h-11 w-full rounded-md border border-input bg-card px-3 text-base transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm"/>
 <c:set var="label" value="mb-1.5 block text-xs font-extrabold text-muted-foreground"/>
 <t:layout title="통합 캘린더" active="calendar" role="${role}" scriptPath="schedule/calendar">
-    <t:pageHead title="통합 캘린더" description="전체 일정과 팀별 제작 일정을 월 단위로 확인하고 관리합니다">
+    <t:pageHead title="통합 캘린더" description="전체 일정과 팀별 일정을 월 단위로 확인하고 관리합니다">
         <c:if test="${role != 'member'}">
             <t:button pageAction="calendar-create">+ 일정 등록</t:button>
         </c:if>
