@@ -8,7 +8,7 @@
 - bandi (SSR 웹) — 1차 기능 정본은 `docs/feature-spec.md`, 스키마 정본은 `docs/database-schema.md`다
 - 스택: Spring Boot 3.5.x / Java 17 / MyBatis / MySQL 8 / JSP(JSTL) / Flyway / spring-session-jdbc — **war 패키징** (JSP는 실행형 jar 미지원)
 - 인증: **세션 기반** (JWT 아님 — 확정 사항)
-- 파일 저장: **로컬 영구 볼륨**. `FILE_STORAGE_ROOT`(운영 기본값 `/data/bandi`) 아래 `private/`, `public/`에 바이너리를 저장한다. DB에는 메타데이터만 둔다. 파일 전송은 Spring Boot가 권한 확인 후 직접 수행하며, `domain.file`이 저장소를 소유하고 다른 feature는 `FileService`만 호출한다
+- 파일 저장: **로컬 영구 볼륨만 사용**. `FILE_STORAGE_ROOT`(운영 기본값 `/data/bandi`) 아래 `private/`, `public/`에 바이너리를 저장하고 DB에는 메타데이터만 둔다. MinIO·S3 호환 오브젝트 스토리지·presigned URL은 사용하거나 테스트·검증 목적으로 기동하지 않는다. 파일 전송은 Spring Boot가 권한 확인 후 직접 수행하며, `domain.file`이 저장소를 소유하고 다른 feature는 `FileService`만 호출한다
 - 베이스 패키지: `kr.ac.tukorea.bandi`, package-by-feature (`domain.{feature}`)
 - 로컬 MySQL: Docker, **호스트 포트 3307** (3306 아님 — 타 프로젝트 점유). 계정 `bandi`/`bandi1234`, 스키마 `bandi`(개발)·`bandi_test`(테스트)
 - Swagger UI: `http://localhost:8080/docs`, OpenAPI JSON: `/api-docs` (prod 비활성)
