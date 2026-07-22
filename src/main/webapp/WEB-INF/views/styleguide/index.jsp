@@ -34,7 +34,7 @@
                 <p class="text-2xl font-black tracking-tight">페이지 제목 text-2xl font-black</p>
                 <p class="mt-2 text-lg font-extrabold">섹션 제목 text-lg font-extrabold</p>
                 <p class="mt-2 text-sm font-extrabold">카드 제목 text-sm font-extrabold</p>
-                <p class="mt-2 text-sm">본문 text-sm — 공연과 단원, 회비와 일정을 한 곳에서 관리한다.</p>
+                <p class="mt-2 text-sm">본문 text-sm — 일정과 활동, 자료와 멤버 정보를 한 곳에서 관리한다.</p>
                 <p class="mt-2 text-xs text-muted-foreground">보조 텍스트 text-xs text-muted-foreground</p>
             </t:card>
 
@@ -102,8 +102,8 @@
                         <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 17v5M5 3h14l-2 6 2 6H5l2-6-2-6z"/></svg>
                     </span>
                     <div class="min-w-0">
-                        <b class="text-sm">정기 공연 티켓 오픈</b>
-                        <p class="mt-0.5 text-xs text-muted-foreground">6월 정기 공연 예매가 시작되었습니다.</p>
+                        <b class="text-sm">신입 부원 모집 안내</b>
+                        <p class="mt-0.5 text-xs text-muted-foreground">이번 학기 모집 일정을 확인해 주세요.</p>
                     </div>
                 </div>
                 <div class="mt-4 rounded-lg border border-dashed">
@@ -126,7 +126,7 @@
                 <div class="flex items-center gap-3 px-5 py-3">
                     <span class="flex size-7 items-center justify-center rounded-full bg-sidebar-accent text-xs font-black text-white">김</span>
                     <div class="min-w-0 flex-1">
-                        <p class="text-sm font-bold">김반디 — 회비 납부 진행률</p>
+                        <p class="text-sm font-bold">김반디 — 활동 기록 검토 현황</p>
                         <div class="mt-2 h-2 overflow-hidden rounded-full bg-secondary">
                             <span class="block h-full w-3/5 rounded-full bg-primary"></span>
                         </div>

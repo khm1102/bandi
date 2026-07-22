@@ -6,7 +6,7 @@
     <section class="border-b pb-6">
         <p class="text-xs font-black uppercase tracking-[0.18em] text-accent-foreground">Bandi official</p>
         <h1 class="mt-2 text-3xl font-black tracking-tight">공시</h1>
-        <p class="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">모집, 공연, 관람 운영에 관한 반디의 공식 안내입니다. 일반 글·댓글·좋아요 없이 운영진이 게시한 정보만 제공합니다.</p>
+        <p class="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">동아리 운영과 모집에 관한 반디의 공식 안내입니다. 일반 글·댓글·좋아요 없이 운영진이 게시한 정보만 제공합니다.</p>
     </section>
 
     <section class="py-6" aria-labelledby="noticeListTitle">
@@ -46,7 +46,7 @@
                         <article class="p-5 transition-colors hover:bg-secondary/50 ${notice.pinned ? 'bg-accent/40' : ''}">
                             <div class="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                                 <c:if test="${notice.pinned}"><t:badge tone="accent">중요</t:badge></c:if>
-                                <t:badge tone="neutral"><c:choose><c:when test="${notice.categoryCode == 'PERFORMANCE'}">공연</c:when><c:when test="${notice.categoryCode == 'RECRUITMENT'}">모집</c:when><c:when test="${notice.categoryCode == 'RESERVATION'}">관람</c:when><c:otherwise><c:out value="${notice.categoryCode}"/></c:otherwise></c:choose></t:badge>
+                                <t:badge tone="neutral"><c:choose><c:when test="${notice.categoryCode == 'RECRUITMENT'}">모집</c:when><c:otherwise>일반</c:otherwise></c:choose></t:badge>
                                 <time datetime="<c:out value='${notice.publishStartDttm}'/>"><c:out value="${fn:replace(notice.publishStartDttm, 'T', ' ')}"/></time>
                             </div>
                             <h3 class="mt-3 text-base font-black"><a href="<c:out value='${noticeUrl}'/>" class="inline-flex min-h-11 items-center underline-offset-4 hover:text-accent-foreground hover:underline"><c:out value="${notice.title}"/></a></h3>

@@ -92,7 +92,7 @@ class PublicNoticeServiceTransactionTest {
         actorMemberId = admin.getMemberId();
         memberMapper.updateStatus(actorMemberId, MemberStatus.ACTIVE);
 
-        PublicNotice notice = PublicNotice.draft("PERFORMANCE", "원래 제목",
+        PublicNotice notice = PublicNotice.draft("GENERAL", "원래 제목",
                 "원래 본문", false, actorMemberId);
         publicNoticeMapper.insert(notice);
         publicNoticeId = notice.getPublicNoticeId();
@@ -124,7 +124,7 @@ class PublicNoticeServiceTransactionTest {
                 .willReturn(new FileReferenceResponse(MISSING_FILE_ID, "missing.pdf",
                         "application/pdf", 100L));
         PublicNoticeUpdateParam param = new PublicNoticeUpdateParam(publicNoticeId,
-                "PERFORMANCE", "바뀐 제목", "바뀐 본문", true,
+                "GENERAL", "바뀐 제목", "바뀐 본문", true,
                 List.of(MISSING_FILE_ID));
 
         assertThatThrownBy(() -> publicNoticeService.update(actorMemberId, param))

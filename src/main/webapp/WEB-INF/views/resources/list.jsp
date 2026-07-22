@@ -87,11 +87,11 @@
         </article>
     </template>
 
-    <t:modal id="uploadModal" title="자료 업로드" description="파일을 MinIO 비공개 저장소에 올린 뒤 자료 메타데이터와 함께 게시합니다.">
+    <t:modal id="uploadModal" title="자료 업로드" description="파일을 비공개 저장소에 올린 뒤 자료 메타데이터와 함께 게시합니다.">
         <jsp:attribute name="footer"><t:button variant="outline" action="close-modal">취소</t:button><t:button pageAction="resource-upload"><span data-resource-submit-label>업로드</span></t:button></jsp:attribute>
         <jsp:body>
             <div class="flex flex-col gap-3">
-                <div><label class="${label}" for="upName">자료 제목 <span class="text-accent-foreground">*</span></label><input class="${input}" id="upName" type="text" maxlength="200" placeholder="예) 정기공연 최종 대본"></div>
+                <div><label class="${label}" for="upName">자료 제목 <span class="text-accent-foreground">*</span></label><input class="${input}" id="upName" type="text" maxlength="200" placeholder="예) 팀 활동 운영 안내"></div>
                 <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
                     <div><label class="${label}" for="upCat">분류</label><select class="${input}" id="upCat"><option value="SCRIPT">대본</option><option value="MINUTES">회의록</option><option value="PROMOTION">홍보물</option><option value="VIDEO">영상</option><option value="OTHER">기타</option></select></div>
                     <div><label class="${label}" for="upTarget">공개 대상</label><select class="${input}" id="upTarget"><c:if test="${role == 'admin'}"><option value="ALL">전체</option></c:if><option value="TEAM">내 팀</option></select></div>

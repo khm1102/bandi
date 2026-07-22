@@ -83,7 +83,7 @@
                 <div><label class="${label}" for="memberChangeValue">변경 값 *</label><select class="${input}" id="memberChangeValue"></select></div>
             </div>
             <label class="${label} mt-4" for="memberChangeReason">변경 사유 *</label>
-            <textarea class="min-h-28 w-full resize-y rounded-md border border-input bg-card px-3 py-2.5 text-sm transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20" id="memberChangeReason" maxlength="500" placeholder="예) 2026-1학기 제작팀 배정 변경"></textarea>
+            <textarea class="min-h-28 w-full resize-y rounded-md border border-input bg-card px-3 py-2.5 text-sm transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20" id="memberChangeReason" maxlength="500" placeholder="예) 2026-1학기 팀 배정 변경"></textarea>
             <p class="mt-2 hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-xs text-destructive" data-member-change-error role="alert"></p>
         </jsp:body>
     </t:modal>
