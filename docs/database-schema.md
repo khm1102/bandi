@@ -37,15 +37,13 @@
 | 테이블 | 책임 |
 | --- | --- |
 | `calendar_event` | 전체·팀 일정 |
-| `public_notice`, `public_notice_attachment` | 외부 공시와 첨부 (폐기 1단계 진행 중) |
 | `internal_notice`, `internal_notice_attachment` | 내부 공지와 첨부 |
 | `internal_notice_read` | 멤버별 공지 읽음 상태 |
 | `resource`, `resource_file` | 자료와 리비전별 파일 연결 |
 | `activity_record`, `activity_record_file` | 활동 기록과 증빙 파일 |
 | `activity_record_revision`, `activity_review_history` | 활동 기록 수정·검토 이력 |
 
-`public_notice.category_code`는 `GENERAL`, `RECRUITMENT`만 허용한다. 공지와 자료의
-공개 범위는 전체 또는 팀 단위로 관리한다.
+내부 공지와 자료의 공개 범위는 전체 또는 팀 단위로 관리한다.
 
 ## 4. 소품·장비
 
@@ -62,18 +60,12 @@
 | 테이블 | 책임 |
 | --- | --- |
 | `stored_file` | 파일명, MIME, 크기, SHA-256, 저장 키, 저장 상태 |
-| `public_notice_retirement_manifest` | 외부 공시 첨부의 파일 파기 결과와 공유 참조 보존 상태 |
 | `audit_log` | 주요 운영 변경의 처리자, 대상, 시각과 사유 |
 | `SPRING_SESSION`, `SPRING_SESSION_ATTRIBUTES` | JDBC 세션 |
 
 `stored_file.storage_key`는 애플리케이션이 생성한 상대 키만 허용한다. 파일 전송은
 Spring Boot가 권한을 확인한 뒤 직접 스트리밍한다.
 
-외부 공시 폐기는 파일 파기와 스키마 제거를 분리한다. 1단계는
-`public_notice_retirement_manifest`에 첨부 파일의 저장 위치를 스냅샷하고, 내부 공지,
-자료, 활동 기록, 소품 사진에서 공유 참조된 파일은 `RETAINED_SHARED`로 남긴다.
-`PENDING` 파일은 명시적 운영 명령에서만 디스크에서 삭제하며, 2단계 마이그레이션은
-모든 행이 `DELETED` 또는 `RETAINED_SHARED`일 때만 허용한다.
 
 ## 6. 마이그레이션 원칙
 

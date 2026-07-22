@@ -7,7 +7,7 @@ import org.springframework.http.HttpStatus;
 /**
  * 에러의 단일 출처 (컨벤션 9.4).
  * 코드 접두사는 feature별 고정 — C 공통, A auth, M member, CA calendar, FI file,
- * PN public notice, NI internal notice, RS resource, AR activity record,
+ * NI internal notice, RS resource, AR activity record,
  * AS asset, AU audit.
  * message는 사용자에게 그대로 보여줄 문장으로 작성하고 내부 사정을 노출하지 않는다.
  */
@@ -60,10 +60,6 @@ public enum ErrorCode {
 
     // calendar (CA)
     CALENDAR_EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "CA001", "존재하지 않는 일정입니다."),
-
-    // public notice (PN)
-    PUBLIC_NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "PN001", "존재하지 않는 공시입니다."),
-    INVALID_PUBLIC_NOTICE_STATE(HttpStatus.CONFLICT, "PN002", "현재 상태에서는 요청한 공시 작업을 처리할 수 없습니다."),
 
     // internal notice (NI)
     INTERNAL_NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "NI001", "존재하지 않는 공지입니다."),
