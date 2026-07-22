@@ -9,7 +9,7 @@
             <p class="mt-1 text-sm text-muted-foreground" data-dashboard-date>오늘의 동아리 운영 정보를 정리하고 있습니다.</p>
         </div>
         <div class="grid w-full grid-cols-1 gap-2 md:ml-auto md:flex md:w-auto md:flex-wrap md:items-center">
-            <t:button href="/resources" variant="outline">미확인 공지 보기</t:button>
+            <t:button href="/notices" variant="outline">미확인 공지 보기</t:button>
             <sec:authorize access="hasAnyRole('ADMIN', 'LEADER')">
                 <t:button href="/calendar">일정 관리</t:button>
             </sec:authorize>
@@ -37,7 +37,7 @@
             </div>
             <p class="mt-0.5 text-xs text-muted-foreground" data-dashboard-highlight-meta></p>
         </div>
-        <a href="<c:url value='/resources'/>" class="inline-flex min-h-11 w-full shrink-0 items-center justify-center rounded-md bg-primary px-3 text-xs font-bold text-primary-foreground transition-colors hover:bg-primary-strong hover:text-white md:w-auto">공지 보기</a>
+        <a href="<c:url value='/notices'/>" class="inline-flex min-h-11 w-full shrink-0 items-center justify-center rounded-md bg-primary px-3 text-xs font-bold text-primary-foreground transition-colors hover:bg-primary-strong hover:text-white md:w-auto">공지 보기</a>
     </div>
 
     <div class="grid items-start gap-4 lg:grid-cols-[1.7fr_1fr]">
@@ -53,7 +53,7 @@
         </div>
 
         <div class="flex flex-col gap-4">
-            <t:card title="중요·미확인 공지" icon="bell" moreUrl="/resources" moreLabel="전체 →" flush="true">
+            <t:card title="중요·미확인 공지" icon="bell" moreUrl="/notices" moreLabel="전체 →" flush="true">
                 <div data-dashboard-notices></div>
                 <div class="px-5 py-8 text-center" data-dashboard-notice-state>
                     <b class="block text-sm">공지를 불러오는 중입니다</b>
@@ -97,7 +97,7 @@
     </template>
 
     <template data-dashboard-notice-template>
-        <a href="<c:url value='/resources'/>" class="flex min-h-16 items-center gap-3 border-b px-5 py-3 transition-colors last:border-b-0 hover:bg-secondary/70">
+        <a href="<c:url value='/notices'/>" class="flex min-h-16 items-center gap-3 border-b px-5 py-3 transition-colors last:border-b-0 hover:bg-secondary/70">
             <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-secondary text-xs font-black text-muted-foreground" data-notice-mark></span>
             <div class="min-w-0 flex-1">
                 <p class="truncate text-sm font-bold" data-notice-title></p>

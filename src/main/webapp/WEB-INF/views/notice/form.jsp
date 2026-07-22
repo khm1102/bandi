@@ -1,0 +1,21 @@
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true" %>
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
+<t:layout title="공지 작성" active="notices" role="${role}" scriptPath="notice/form">
+    <t:pageHead title="${empty notice ? '공지 작성' : '공지 수정'}" description="대상과 게시 시각을 확인한 뒤 내용을 작성하세요."/>
+    <form class="mx-auto max-w-5xl" data-notice-form data-notice-id="<c:out value='${notice.internalNoticeId}'/>" novalidate>
+        <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.8fr)]">
+            <section class="space-y-5">
+                <div><label class="mb-1.5 block text-xs font-extrabold text-muted-foreground" for="noticeTitle">제목</label><input id="noticeTitle" class="h-11 w-full rounded-md border border-input bg-card px-3 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20" maxlength="200" required placeholder="공지 제목" data-notice-title></div>
+                <div><div class="mb-1.5 flex items-center justify-between"><label class="text-xs font-extrabold text-muted-foreground" for="noticeBody">내용</label><button type="button" class="text-xs font-bold text-accent-foreground" data-preview-refresh>미리보기 새로고침</button></div><textarea id="noticeBody" class="min-h-[28rem] w-full rounded-md border border-input bg-card px-3 py-3 font-mono text-sm leading-6 focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20" required placeholder="# 제목\n\n공지 내용을 Markdown으로 작성하세요." data-notice-body></textarea><p class="mt-2 text-xs text-muted-foreground">제목, 목록, 링크, 인용, 코드 블록, 표를 사용할 수 있습니다. HTML과 외부 이미지는 지원하지 않습니다.</p></div>
+            </section>
+            <aside class="space-y-5 lg:sticky lg:top-20 lg:self-start">
+                <section class="rounded-lg border bg-card p-5"><h2 class="text-sm font-extrabold">게시 설정</h2><div class="mt-4 space-y-4"><div><label class="mb-1.5 block text-xs font-extrabold text-muted-foreground" for="noticeTarget">대상</label><select id="noticeTarget" class="h-11 w-full rounded-md border border-input bg-card px-3 text-sm" data-notice-target><c:if test="${role == 'admin'}"><option value="ALL">전체 멤버</option></c:if><option value="TEAM">내 팀</option></select></div><div class="hidden" data-notice-team-wrap><label class="mb-1.5 block text-xs font-extrabold text-muted-foreground" for="noticeTeam">대상 팀</label><select id="noticeTeam" class="h-11 w-full rounded-md border border-input bg-card px-3 text-sm" data-notice-team></select></div><label class="flex min-h-11 items-center gap-2 text-sm font-bold"><input class="size-4 rounded" type="checkbox" data-notice-important> 중요 공지로 표시</label><div><label class="mb-1.5 block text-xs font-extrabold text-muted-foreground" for="noticePublishAt">예약 게시</label><input id="noticePublishAt" type="datetime-local" class="h-11 w-full rounded-md border border-input bg-card px-3 text-sm" data-notice-publish-at><p class="mt-1 text-xs text-muted-foreground">비워 두면 바로 게시합니다.</p></div></div></section>
+                <section class="rounded-lg border bg-card p-5"><h2 class="text-sm font-extrabold">첨부 파일</h2><input class="mt-3 block w-full text-sm" type="file" multiple data-notice-files><ul class="mt-3 space-y-2 text-sm" data-notice-file-list></ul></section>
+                <p class="hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-xs text-destructive" role="alert" data-notice-error></p>
+            </aside>
+        </div>
+        <section class="mt-6 rounded-lg border bg-card p-5"><div class="flex items-center justify-between gap-3"><h2 class="text-sm font-extrabold">미리보기</h2><span class="text-xs text-muted-foreground" data-preview-status></span></div><div class="prose prose-slate mt-4 max-w-none text-sm leading-7" data-notice-preview><p class="text-muted-foreground">내용을 입력하면 미리보기가 표시됩니다.</p></div></section>
+        <div class="sticky bottom-0 mt-6 flex flex-wrap justify-end gap-2 border-t bg-background/95 py-4 backdrop-blur"><t:button variant="outline" href="/notices">취소</t:button><t:button type="submit" variant="outline" pageAction="save-draft">초안 저장</t:button><t:button type="submit" pageAction="publish-notice">공지 게시</t:button></div>
+    </form>
+</t:layout>

@@ -67,7 +67,7 @@ class SecurityConfigTest {
     void 폐기된_공개_경로는_로그인으로_보내지_않는다() throws Exception {
         for (String path : new String[]{"/performances/show", "/reserve/test",
                 "/api/public-performances/test", "/api/public-policies/test",
-                "/api/public-reservations/test", "/notices/test",
+                "/api/public-reservations/test",
                 "/api/public-notices/test"}) {
             mockMvc.perform(get(path)).andExpect(status().isNotFound());
         }

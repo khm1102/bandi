@@ -33,8 +33,7 @@ public class SecurityConfig {
                         DispatcherType.ERROR).permitAll()
                 .requestMatchers(PathRequest.toStaticResources()
                         .atCommonLocations()).permitAll()
-                .requestMatchers("/login", "/error", "/notices/**",
-                        "/performances/**", "/reserve/**", "/docs/**",
+                .requestMatchers("/login", "/error", "/performances/**", "/reserve/**", "/docs/**",
                         "/api-docs/**", "/swagger-ui/**").permitAll()
                 .requestMatchers("/api/public-notices/**").permitAll()
                 .requestMatchers("/api/public-performances/**",
@@ -52,6 +51,8 @@ public class SecurityConfig {
                 .requestMatchers("/profile")
                 .authenticated()
                 .requestMatchers("/team-members", "/api/members/team-members")
+                .hasAnyRole("LEADER", "ADMIN")
+                .requestMatchers("/notices/write", "/notices/*/edit")
                 .hasAnyRole("LEADER", "ADMIN")
                 .requestMatchers("/members/**", "/api/members/**")
                 .hasRole("ADMIN")

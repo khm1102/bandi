@@ -4,6 +4,7 @@ import kr.ac.tukorea.bandi.domain.notice.dto.request.InternalNoticeManageSearchP
 import kr.ac.tukorea.bandi.domain.notice.dto.request.InternalNoticeSearchParam;
 import kr.ac.tukorea.bandi.domain.notice.dto.request.InternalNoticeWriteParam;
 import kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeStatus;
+import kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeReadFilter;
 import kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeTargetScope;
 import kr.ac.tukorea.bandi.domain.notice.service.InternalNoticeService;
 import kr.ac.tukorea.bandi.global.config.SecurityWebMvcConfig;
@@ -79,7 +80,8 @@ class InternalNoticeApiControllerTest {
                 .andExpect(status().isOk());
 
         verify(internalNoticeService).searchReadable(ACTOR_ID,
-                new InternalNoticeSearchParam("연습", 0, 20));
+                new InternalNoticeSearchParam("연습", InternalNoticeReadFilter.ALL,
+                        null, 0, 20));
     }
 
     @Test
@@ -136,6 +138,16 @@ class InternalNoticeApiControllerTest {
                         .content("{\"targetScope\":\"ALL\",\"body\":\"내용\"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("C001"));
+    }
+
+    @Test
+    void Markdown_미리보기는_서버에서_정화한_HTML만_반환한다() throws Exception {
+        mockMvc.perform(post("/api/internal-notices/markdown-preview")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"bodyMarkdown\":\"# 안내\"}"))
+                .andExpect(status().isOk());
+
+        verify(internalNoticeService).preview(ACTOR_ID, "# 안내");
     }
 
     private String writeBody() {

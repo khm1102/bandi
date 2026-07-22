@@ -16,6 +16,7 @@ import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeReadStatusRe
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeSummaryResponse;
 import kr.ac.tukorea.bandi.domain.notice.model.InternalNotice;
 import kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeAttachment;
+import kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeReadFilter;
 import kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeStatus;
 import kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeTargetScope;
 import kr.ac.tukorea.bandi.global.annotation.MapperTest;
@@ -150,6 +151,26 @@ class InternalNoticeMapperTest {
                 .containsExactly("중요 안내");
         assertThat(result.get(0).read()).isTrue();
         assertThat(normal.getInternalNoticeId()).isNotNull();
+    }
+
+    @Test
+    void 미확인과_대상_범위_필터를_함께_적용한다() {
+        InternalNotice allNotice = publish(draft(InternalNoticeTargetScope.ALL,
+                null, "전체 미확인 공지"));
+        InternalNotice teamNotice = publish(draft(InternalNoticeTargetScope.TEAM,
+                stageTeamId, "팀 미확인 공지"));
+        internalNoticeMapper.upsertRead(allNotice.getInternalNoticeId(), stageMemberId, NOW);
+
+        InternalNoticeReadableSearchCondition condition =
+                new InternalNoticeReadableSearchCondition(null, NOW, stageMemberId,
+                        stageTeamId, false, InternalNoticeReadFilter.UNREAD,
+                        InternalNoticeTargetScope.TEAM, 0, 20);
+
+        List<InternalNoticeSummaryResponse> result =
+                internalNoticeMapper.searchReadable(condition);
+
+        assertThat(result).extracting(InternalNoticeSummaryResponse::title)
+                .containsExactly(teamNotice.getTitle());
     }
 
     @Test

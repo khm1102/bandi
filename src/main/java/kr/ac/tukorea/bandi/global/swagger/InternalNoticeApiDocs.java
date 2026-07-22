@@ -6,6 +6,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeDetailResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeSummaryResponse;
+import kr.ac.tukorea.bandi.domain.notice.dto.request.MarkdownPreviewRequest;
+import kr.ac.tukorea.bandi.domain.notice.dto.response.MarkdownPreviewResponse;
+import jakarta.validation.Valid;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
@@ -13,6 +16,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.List;
 
@@ -26,6 +31,8 @@ public interface InternalNoticeApiDocs {
     ResponseEntity<List<InternalNoticeSummaryResponse>> search(
             @Parameter(hidden = true) @LoginMember Long memberId,
             @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "ALL") String readFilter,
+            @RequestParam(required = false) String targetScope,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int pageSize);
 
@@ -41,4 +48,10 @@ public interface InternalNoticeApiDocs {
             @Parameter(hidden = true) @LoginMember Long memberId,
             @PathVariable Long internalNoticeId,
             @PathVariable Long storedFileId);
+
+    @Operation(summary = "공지 Markdown 미리보기")
+    @PostMapping("/markdown-preview")
+    ResponseEntity<MarkdownPreviewResponse> preview(
+            @Parameter(hidden = true) @LoginMember Long memberId,
+            @Valid @RequestBody MarkdownPreviewRequest request);
 }

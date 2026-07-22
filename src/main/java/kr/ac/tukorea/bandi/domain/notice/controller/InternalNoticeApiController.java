@@ -1,7 +1,9 @@
 package kr.ac.tukorea.bandi.domain.notice.controller;
 
 import kr.ac.tukorea.bandi.domain.notice.dto.request.InternalNoticeSearchParam;
+import kr.ac.tukorea.bandi.domain.notice.dto.request.MarkdownPreviewRequest;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeDetailResponse;
+import kr.ac.tukorea.bandi.domain.notice.dto.response.MarkdownPreviewResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeSummaryResponse;
 import kr.ac.tukorea.bandi.domain.notice.service.InternalNoticeService;
 import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
@@ -26,9 +28,10 @@ public class InternalNoticeApiController implements InternalNoticeApiDocs {
 
     @Override
     public ResponseEntity<List<InternalNoticeSummaryResponse>> search(
-            @LoginMember Long memberId, String keyword, int page, int pageSize) {
+            @LoginMember Long memberId, String keyword, String readFilter,
+            String targetScope, int page, int pageSize) {
         return ResponseEntity.ok(internalNoticeService.searchReadable(memberId,
-                new InternalNoticeSearchParam(keyword, page, pageSize)));
+                new InternalNoticeSearchParam(keyword, readFilter, targetScope, page, pageSize)));
     }
 
     @Override
@@ -44,6 +47,13 @@ public class InternalNoticeApiController implements InternalNoticeApiDocs {
                                              Long storedFileId) {
         return attachment(internalNoticeService.openAttachmentDownload(memberId,
                 internalNoticeId, storedFileId));
+    }
+
+    @Override
+    public ResponseEntity<MarkdownPreviewResponse> preview(
+            @LoginMember Long memberId, MarkdownPreviewRequest request) {
+        return ResponseEntity.ok(new MarkdownPreviewResponse(
+                internalNoticeService.preview(memberId, request.bodyMarkdown())));
     }
 
     private ResponseEntity<Resource> attachment(FileDownloadResponse file) {

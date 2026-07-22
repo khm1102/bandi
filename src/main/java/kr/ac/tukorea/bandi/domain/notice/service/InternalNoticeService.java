@@ -45,6 +45,7 @@ public class InternalNoticeService {
     private final InternalNoticeMapper internalNoticeMapper;
     private final MemberService memberService;
     private final FileService fileService;
+    private final MarkdownRenderer markdownRenderer;
     private final Clock clock;
 
     @Transactional
@@ -67,12 +68,17 @@ public class InternalNoticeService {
         validateManagement(access, original.getTargetScope(), original.getTeamId());
         validateManagement(access, param.targetScope(), param.teamId());
         validateActiveTarget(param.targetScope(), param.teamId());
-        validateAttachments(param.attachmentFileIds(), actorMemberId);
+        List<Long> existingAttachmentFileIds = internalNoticeMapper
+                .searchAttachmentFileIds(param.internalNoticeId());
+        validateUpdatedAttachments(param.attachmentFileIds(), existingAttachmentFileIds,
+                actorMemberId);
         InternalNotice changed = original.edit(param.targetScope(), param.teamId(),
                 param.title(), param.body(), param.important(), actorMemberId);
         internalNoticeMapper.update(changed);
-        internalNoticeMapper.removeAttachments(param.internalNoticeId());
-        attachFiles(param.internalNoticeId(), param.attachmentFileIds());
+        internalNoticeMapper.removeAttachmentsExcept(param.internalNoticeId(),
+                param.attachmentFileIds());
+        attachNewFiles(param.internalNoticeId(), param.attachmentFileIds(),
+                existingAttachmentFileIds);
     }
 
     @Transactional
@@ -124,7 +130,8 @@ public class InternalNoticeService {
                 .orElseThrow(() -> new InternalNoticeNotFoundException(internalNoticeId));
         validateManagement(access, content.targetScope(), content.teamId());
         return InternalNoticeManageDetailResponse.of(
-                content, lookupAttachments(internalNoticeId));
+                content, markdownRenderer.render(content.body()),
+                lookupAttachments(internalNoticeId));
     }
 
     public List<InternalNoticeSummaryResponse> searchReadable(
@@ -147,7 +154,8 @@ public class InternalNoticeService {
                         access.canManageGlobal())
                 .orElseThrow(() -> new InternalNoticeNotFoundException(internalNoticeId));
         internalNoticeMapper.upsertRead(internalNoticeId, memberId, currentDttm);
-        return InternalNoticeDetailResponse.of(content, lookupAttachments(internalNoticeId));
+        return InternalNoticeDetailResponse.of(content,
+                markdownRenderer.render(content.body()), lookupAttachments(internalNoticeId));
     }
 
     public FileDownloadResponse openAttachmentDownload(Long memberId, Long internalNoticeId,
@@ -161,6 +169,11 @@ public class InternalNoticeService {
         }
         return fileService.openPrivateDownload(
                 storedFileId, FileAccessDecision.GRANTED);
+    }
+
+    public SafeMarkdownHtml preview(Long memberId, String bodyMarkdown) {
+        readableAccess(memberId);
+        return markdownRenderer.render(bodyMarkdown);
     }
 
     public List<InternalNoticeReadStatusResponse> searchReadStatuses(
@@ -221,11 +234,35 @@ public class InternalNoticeService {
                 fileService.validatePrivateReadyOwnedBy(storedFileId, actorMemberId));
     }
 
+    private void validateUpdatedAttachments(List<Long> storedFileIds,
+                                            List<Long> existingAttachmentFileIds,
+                                            Long actorMemberId) {
+        if (storedFileIds.stream().anyMatch(fileId -> fileId == null)
+                || new HashSet<>(storedFileIds).size() != storedFileIds.size()) {
+            throw new InvalidInternalNoticeException("attachments");
+        }
+        storedFileIds.stream()
+                .filter(storedFileId -> !existingAttachmentFileIds.contains(storedFileId))
+                .forEach(storedFileId ->
+                        fileService.validatePrivateReadyOwnedBy(storedFileId, actorMemberId));
+    }
+
     private void attachFiles(Long internalNoticeId, List<Long> storedFileIds) {
         for (int index = 0; index < storedFileIds.size(); index++) {
             InternalNoticeAttachment attachment = InternalNoticeAttachment.create(
                     internalNoticeId, storedFileIds.get(index), index);
             internalNoticeMapper.insertAttachment(attachment);
+        }
+    }
+
+    private void attachNewFiles(Long internalNoticeId, List<Long> storedFileIds,
+                                List<Long> existingAttachmentFileIds) {
+        for (int index = 0; index < storedFileIds.size(); index++) {
+            Long storedFileId = storedFileIds.get(index);
+            if (!existingAttachmentFileIds.contains(storedFileId)) {
+                internalNoticeMapper.insertAttachment(InternalNoticeAttachment.create(
+                        internalNoticeId, storedFileId, index));
+            }
         }
     }
 

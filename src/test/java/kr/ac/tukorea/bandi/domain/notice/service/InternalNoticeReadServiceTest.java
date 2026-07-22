@@ -61,7 +61,7 @@ class InternalNoticeReadServiceTest {
     @BeforeEach
     void setUp() {
         internalNoticeService = new InternalNoticeService(internalNoticeMapper,
-                memberService, fileService, CLOCK);
+                memberService, fileService, new MarkdownRenderer(), CLOCK);
     }
 
     @Test

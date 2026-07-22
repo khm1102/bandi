@@ -189,6 +189,12 @@
           AND (n.title LIKE CONCAT('%', #{keyword}, '%')
                OR n.body LIKE CONCAT('%', #{keyword}, '%'))
         </if>
+        <if test="readFilter == @kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeReadFilter@UNREAD">
+          AND r.internal_notice_read_id IS NULL
+        </if>
+        <if test="targetScope != null">
+          AND n.target_scope_code = #{targetScope}
+        </if>
         ORDER BY n.is_important DESC, n.publish_start_dttm DESC,
                  n.internal_notice_id DESC
         LIMIT #{limit} OFFSET #{offset}
@@ -282,6 +288,17 @@
     <delete id="removeAttachments">
         DELETE FROM internal_notice_attachment
         WHERE internal_notice_id = #{internalNoticeId}
+    </delete>
+
+    <delete id="removeAttachmentsExcept">
+        DELETE FROM internal_notice_attachment
+        WHERE internal_notice_id = #{internalNoticeId}
+        <if test="storedFileIds != null and !storedFileIds.isEmpty()">
+          AND stored_file_id NOT IN
+          <foreach collection="storedFileIds" item="storedFileId" open="(" separator="," close=")">
+              #{storedFileId}
+          </foreach>
+        </if>
     </delete>
 
     <select id="searchAttachmentFileIds" resultType="long">
