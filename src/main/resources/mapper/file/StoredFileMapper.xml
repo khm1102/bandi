@@ -16,6 +16,7 @@
             <arg column="object_etag" javaType="java.lang.String"/>
             <arg column="uploaded_by_member_id" javaType="java.lang.Long"/>
             <arg column="upload_status_code" javaType="kr.ac.tukorea.bandi.domain.file.model.UploadStatus"/>
+            <arg column="file_purpose_code" javaType="kr.ac.tukorea.bandi.domain.file.model.FilePurpose"/>
             <arg column="created_dttm" javaType="java.time.LocalDateTime"/>
             <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
             <arg column="deleted_dttm" javaType="java.time.LocalDateTime"/>
@@ -25,6 +26,7 @@
     <sql id="storedFileColumns">
         stored_file_id, original_name, storage_scope_code, storage_key, content_type,
         size_bytes, sha256_hash, object_etag, uploaded_by_member_id, upload_status_code,
+        file_purpose_code,
         created_dttm, updated_dttm, deleted_dttm
     </sql>
 
@@ -50,10 +52,12 @@
     <insert id="insert" useGeneratedKeys="true" keyProperty="storedFileId">
         INSERT INTO stored_file (
             original_name, storage_scope_code, storage_key, content_type, size_bytes,
-            sha256_hash, object_etag, uploaded_by_member_id, upload_status_code
+            sha256_hash, object_etag, uploaded_by_member_id, upload_status_code,
+            file_purpose_code
         ) VALUES (
             #{originalName}, #{storageScope}, #{storageKey}, #{contentType}, #{sizeBytes},
-            #{sha256Hash}, #{objectEtag}, #{uploadedByMemberId}, #{uploadStatus}
+            #{sha256Hash}, #{objectEtag}, #{uploadedByMemberId}, #{uploadStatus},
+            #{purpose}
         )
     </insert>
 
@@ -73,4 +77,9 @@
           AND upload_status_code = 'PENDING'
           AND <include refid="notDeleted"/>
     </update>
+
+    <delete id="remove">
+        DELETE FROM stored_file
+        WHERE stored_file_id = #{storedFileId}
+    </delete>
 </mapper>

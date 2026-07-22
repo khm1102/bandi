@@ -10,4 +10,14 @@ public class MemberController {
     public String members() {
         return "members/list";
     }
+
+    @GetMapping("/profile")
+    public String profile() {
+        return "members/profile";
+    }
+
+    @GetMapping("/team-members")
+    public String teamMembers() {
+        return "members/team-members";
+    }
 }

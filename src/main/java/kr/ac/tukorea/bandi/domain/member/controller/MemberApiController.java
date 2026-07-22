@@ -10,13 +10,23 @@ import kr.ac.tukorea.bandi.domain.member.dto.request.TeamChangeRequest;
 import kr.ac.tukorea.bandi.domain.member.dto.response.CohortResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberCreatedResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberHistoryResponse;
+import kr.ac.tukorea.bandi.domain.member.dto.response.MemberProfileResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberResponse;
+import kr.ac.tukorea.bandi.domain.member.dto.response.TeamMemberResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.TeamResponse;
+import kr.ac.tukorea.bandi.domain.member.service.MemberProfileService;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
+import kr.ac.tukorea.bandi.domain.file.service.FileUploadParam;
+import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import kr.ac.tukorea.bandi.global.swagger.MemberApiDocs;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.core.io.Resource;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
@@ -27,11 +37,53 @@ import java.util.List;
 public class MemberApiController implements MemberApiDocs {
 
     private final MemberService memberService;
+    private final MemberProfileService memberProfileService;
 
     @Override
     public ResponseEntity<MemberResponse> lookupLoginMember(
             @LoginMember Long memberId) {
         return ResponseEntity.ok(memberService.lookupMember(memberId));
+    }
+
+    @Override
+    public ResponseEntity<MemberProfileResponse> lookupLoginMemberProfile(
+            @LoginMember Long memberId) {
+        return ResponseEntity.ok(memberProfileService.lookupProfile(memberId));
+    }
+
+    @Override
+    public ResponseEntity<MemberProfileResponse> uploadLoginMemberProfilePhoto(
+            @LoginMember Long memberId, MultipartFile file) {
+        MemberProfileResponse response = memberProfileService.uploadProfilePhoto(memberId,
+                new FileUploadParam("member-profile", file.getOriginalFilename(), file.getSize(),
+                        file::getInputStream, memberId));
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    public ResponseEntity<Void> deleteLoginMemberProfilePhoto(
+            @LoginMember Long memberId) {
+        memberProfileService.deleteProfilePhoto(memberId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public ResponseEntity<Resource> openProfilePhoto(
+            @LoginMember Long requesterMemberId, Long memberId) {
+        FileDownloadResponse download = memberProfileService.openProfilePhoto(
+                requesterMemberId, memberId);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(download.contentType()))
+                .contentLength(download.sizeBytes())
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.inline()
+                        .filename(download.originalName()).build().toString())
+                .body(download.resource());
+    }
+
+    @Override
+    public ResponseEntity<List<TeamMemberResponse>> searchTeamMembers(
+            @LoginMember Long memberId) {
+        return ResponseEntity.ok(memberProfileService.searchTeamMembers(memberId));
     }
 
     @Override

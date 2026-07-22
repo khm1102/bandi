@@ -21,7 +21,7 @@
 
 | 테이블 | 책임 |
 | --- | --- |
-| `member` | 학교 학번, 이름, 역할, 활동 상태, SSO 연결 상태 |
+| `member` | 학교 학번, 이름, 역할, 활동 상태, SSO 연결 상태, 내부 프로필 사진 FK |
 | `team` | 동아리 팀 마스터 |
 | `cohort` | 기수 |
 | `member_team_history` | 팀 변경 이력 |
@@ -59,13 +59,19 @@
 
 | 테이블 | 책임 |
 | --- | --- |
-| `stored_file` | 파일명, MIME, 크기, SHA-256, 저장 키, 저장 상태 |
+| `stored_file` | 파일명, MIME, 크기, SHA-256, 저장 키, 저장 상태, 파일 목적 |
+| `member_profile_photo_retirement_manifest` | 교체·삭제된 내부 프로필 사진의 물리 파일·메타데이터 파기 재시도 |
 | `audit_log` | 주요 운영 변경의 처리자, 대상, 시각과 사유 |
 | `SPRING_SESSION`, `SPRING_SESSION_ATTRIBUTES` | JDBC 세션 |
 
 `stored_file.storage_key`는 애플리케이션이 생성한 상대 키만 허용한다. 파일 전송은
 Spring Boot가 권한을 확인한 뒤 직접 스트리밍한다.
 
+`member.profile_photo_file_id`는 `stored_file.file_purpose_code = PROFILE_IMAGE`인
+private 파일만 참조한다. 사진을 교체하거나 삭제할 때 먼저 FK를 해제하고 retirement
+manifest를 남긴다. 로컬 객체 삭제와 `stored_file` 하드 삭제가 모두 끝난 경우에만
+`DELETED`로 완료하며, 실패는 `FAILED`로 남아
+`PROFILE_PHOTO_RETIREMENT_MODE=APPLY` 기동에서 재시도한다.
 
 ## 6. 마이그레이션 원칙
 

@@ -11,6 +11,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,6 +19,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -134,6 +136,26 @@ class SecurityConfigTest {
     }
 
     @Test
+    void 프로필은_로그인_멤버가_보고_수정하며_팀_멤버_관리는_팀장_이상만_한다()
+            throws Exception {
+        mockMvc.perform(get("/profile").with(user("member").roles("MEMBER")))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/members/me/profile").with(user("member").roles("MEMBER")))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/members/1/profile-photo").with(user("member").roles("MEMBER")))
+                .andExpect(status().isOk());
+        mockMvc.perform(put("/api/members/me/profile-photo").with(csrf()))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(put("/api/members/me/profile-photo")
+                        .with(user("member").roles("MEMBER")).with(csrf()))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/team-members").with(user("member").roles("MEMBER")))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/members/team-members").with(user("member").roles("LEADER")))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void 로그아웃은_POST_CSRF로_세션을_무효화한다() throws Exception {
         HttpSession session = mockMvc.perform(get("/dashboard")
                         .with(user("member").roles("MEMBER")))
@@ -155,7 +177,9 @@ class SecurityTestController {
 
     @GetMapping({"/dashboard", "/members/test",
             "/dispatch-target", "/api/test", "/api/members/me",
-            "/api/members/reference/teams"})
+            "/api/members/reference/teams",
+            "/profile", "/team-members", "/api/members/me/profile",
+            "/api/members/1/profile-photo", "/api/members/team-members"})
     ResponseEntity<Void> page() {
         return ResponseEntity.ok().build();
     }
@@ -167,6 +191,11 @@ class SecurityTestController {
 
     @PostMapping({"/api/files/private", "/api/files/1/public-promotions"})
     ResponseEntity<Void> fileChange() {
+        return ResponseEntity.ok().build();
+    }
+
+    @PutMapping("/api/members/me/profile-photo")
+    ResponseEntity<Void> updateProfilePhoto() {
         return ResponseEntity.ok().build();
     }
 }

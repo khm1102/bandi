@@ -119,7 +119,14 @@
 
 ### 7.2 리스트 · 미디어
 
-**아바타(이니셜)** — `flex size-7 items-center justify-center rounded-full bg-sidebar-accent text-xs font-black text-white` (테이블 안 인물 표시는 `flex items-center gap-2`로 이름과 묶는다. 사용자별 색 구분은 팀 태그 토큰 확정 후)
+**아바타(내부 사진·이니셜)** — 사진은 로그인 멤버만 볼 수 있는 내부 식별 정보다.
+`img`는 `rounded-full object-cover`로 표시하고, 로드 실패·사진 없음에는
+`flex size-7 items-center justify-center rounded-full bg-sidebar-accent text-xs font-black text-white`
+이니셜을 즉시 대체로 보인다. 외부 공개 화면에는 사용하지 않는다.
+
+**프로필·팀 변경** — 사진 교체, 소속 팀 변경처럼 결과가 이력에 남는 작업은 데스크톱과
+모바일 모두 페이지 내부 섹션에서 처리한다. PC에서 짧은 우측 패널이나 입력 모달로
+밀어 넣지 않으며, 선택값·필수 사유·즉시 반영 결과를 같은 화면에서 확인한다.
 
 **리스트 행** (일정·활동 내역 — 목업 `.row`) — 컨테이너는 `<t:card flush="true">`, 행: `flex items-center gap-3 border-b px-5 py-3 last:border-0`
 - 좌측 시간: `min-w-11 text-sm font-extrabold text-accent-foreground`

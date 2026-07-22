@@ -26,13 +26,14 @@
             <arg column="sso_linked_dttm" javaType="java.time.LocalDateTime"/>
             <arg column="last_login_dttm" javaType="java.time.LocalDateTime"/>
             <arg column="registered_by_member_id" javaType="java.lang.Long"/>
+            <arg column="profile_photo_file_id" javaType="java.lang.Long"/>
         </constructor>
     </resultMap>
 
     <sql id="memberColumns">
         member_id, student_no, name, department, academic_status_code, academic_status_verified_dttm,
         team_id, cohort_id, role_code, member_status_code, sso_link_status_code,
-        sso_linked_dttm, last_login_dttm, registered_by_member_id
+        sso_linked_dttm, last_login_dttm, registered_by_member_id, profile_photo_file_id
     </sql>
 
     <select id="lookupById" resultMap="memberResultMap">
@@ -105,11 +106,11 @@
         INSERT INTO member (
             student_no, name, department, academic_status_code, academic_status_verified_dttm,
             team_id, cohort_id, role_code, member_status_code, sso_link_status_code,
-            sso_linked_dttm, last_login_dttm, registered_by_member_id
+            sso_linked_dttm, last_login_dttm, registered_by_member_id, profile_photo_file_id
         ) VALUES (
             #{studentNo}, #{name}, #{department}, #{academicStatus}, #{academicStatusVerifiedDttm},
             #{teamId}, #{cohortId}, #{role}, #{status}, #{ssoLinkStatus},
-            #{ssoLinkedDttm}, #{lastLoginDttm}, #{registeredByMemberId}
+            #{ssoLinkedDttm}, #{lastLoginDttm}, #{registeredByMemberId}, #{profilePhotoFileId}
         )
     </insert>
 
@@ -146,6 +147,12 @@
             sso_link_status_code = #{ssoLinkStatus},
             sso_linked_dttm = #{ssoLinkedDttm},
             last_login_dttm = #{lastLoginDttm}
+        WHERE member_id = #{memberId}
+    </update>
+
+    <update id="updateProfilePhoto">
+        UPDATE member
+        SET profile_photo_file_id = #{profilePhotoFileId}
         WHERE member_id = #{memberId}
     </update>
 </mapper>

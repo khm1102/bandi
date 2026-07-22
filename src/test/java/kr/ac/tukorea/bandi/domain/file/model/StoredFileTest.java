@@ -110,6 +110,17 @@ class StoredFileTest {
     }
 
     @Test
+    void 프로필_사진은_PRIVATE_전용_목적으로_생성한다() {
+        StoredFile profile = StoredFile.pendingProfileImage("me.png",
+                "member-profile/2026/07/photo", "image/png", 12L, SHA256, 1L);
+        profile.markReady("etag-1");
+
+        profile.validateProfileImage();
+
+        assertThat(profile.getPurpose()).isEqualTo(FilePurpose.PROFILE_IMAGE);
+    }
+
+    @Test
     void 준비되지_않은_파일은_공개_승격할_수_없다() {
         StoredFile source = pendingFile();
 
