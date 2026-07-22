@@ -169,6 +169,17 @@ class FileServiceTest {
     }
 
     @Test
+    void 다른_회원의_READY_비공개_파일은_업무_레코드에_연결할_수_없다() {
+        StoredFile source = readyPrivate(PRIVATE_KEY);
+        assignId(source, PRIVATE_FILE_ID);
+        given(metadataService.lookup(PRIVATE_FILE_ID)).willReturn(source);
+
+        assertThatThrownBy(() -> fileService.validatePrivateReadyOwnedBy(
+                PRIVATE_FILE_ID, MEMBER_ID + 1))
+                .isInstanceOf(FileAccessDeniedException.class);
+    }
+
+    @Test
     void PENDING_파일은_업무_레코드에_연결할_수_없다() {
         StoredFile source = pendingPrivate(PRIVATE_KEY);
         assignId(source, PRIVATE_FILE_ID);
@@ -255,6 +266,21 @@ class FileServiceTest {
         assertThat(result).isEqualTo(PUBLIC_FILE_ID);
         assertThat(source.getStorageScope()).isEqualTo(StorageScope.PRIVATE);
         assertThat(source.getStorageKey()).isEqualTo(PRIVATE_KEY);
+    }
+
+    @Test
+    void 다른_회원의_비공개_파일은_공개로_승격할_수_없다() {
+        StoredFile source = readyPrivate(PRIVATE_KEY);
+        assignId(source, PRIVATE_FILE_ID);
+        given(metadataService.lookup(PRIVATE_FILE_ID)).willReturn(source);
+
+        assertThatThrownBy(() -> fileService.promoteToPublic(
+                PRIVATE_FILE_ID, "activity", MEMBER_ID + 1))
+                .isInstanceOf(FileAccessDeniedException.class);
+
+        verify(keyGenerator, never()).generate(any());
+        verify(metadataService, never()).createPending(any());
+        verify(objectStorage, never()).copy(any(), any(), any(), any());
     }
 
     private FileUploadParam uploadParam() {

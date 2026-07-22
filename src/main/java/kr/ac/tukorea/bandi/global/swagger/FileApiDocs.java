@@ -33,7 +33,7 @@ public interface FileApiDocs {
             @Pattern(regexp = "[a-z][a-z0-9-]{1,29}") String domain,
             @RequestPart("file") MultipartFile file);
 
-    @Operation(summary = "비공개 파일을 공개 버킷으로 승격",
+    @Operation(summary = "비공개 파일을 공개 범위로 승격",
             description = "원본 비공개 파일은 유지하고 별도의 공개 파일과 storedFileId를 만듭니다.")
     @PostMapping("/{storedFileId}/public-promotions")
     ResponseEntity<FileIdentifierResponse> promoteToPublic(

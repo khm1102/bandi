@@ -53,7 +53,7 @@ public class ResourceService {
         MemberAccessContext access = memberService.lookupAccessContext(actorMemberId);
         validateManagement(access, param.targetScope(), param.teamId());
         validateActiveTarget(param.targetScope(), param.teamId());
-        validateFiles(param.storedFileIds(), true);
+        validateFiles(param.storedFileIds(), actorMemberId, true);
         Resource resource = Resource.draft(param.targetScope(), param.teamId(),
                 param.categoryCode(), param.title(), param.description(),
                 param.pinned(), actorMemberId);
@@ -83,7 +83,7 @@ public class ResourceService {
         MemberAccessContext access = memberService.lookupAccessContext(actorMemberId);
         Resource resource = lock(param.resourceId());
         validateManagement(access, resource.getTargetScope(), resource.getTeamId());
-        validateFiles(param.storedFileIds(), false);
+        validateFiles(param.storedFileIds(), actorMemberId, false);
         int currentRevision = resourceMapper.lookupMaxRevisionForUpdate(param.resourceId())
                 .orElse(0);
         if (currentRevision == Integer.MAX_VALUE) {
@@ -198,13 +198,15 @@ public class ResourceService {
         }
     }
 
-    private void validateFiles(List<Long> storedFileIds, boolean allowEmpty) {
+    private void validateFiles(List<Long> storedFileIds, Long actorMemberId,
+                               boolean allowEmpty) {
         if ((!allowEmpty && storedFileIds.isEmpty())
                 || storedFileIds.stream().anyMatch(fileId -> fileId == null)
                 || new HashSet<>(storedFileIds).size() != storedFileIds.size()) {
             throw new InvalidResourceException("files");
         }
-        storedFileIds.forEach(fileService::lookupPrivateReady);
+        storedFileIds.forEach(storedFileId ->
+                fileService.validatePrivateReadyOwnedBy(storedFileId, actorMemberId));
     }
 
     private void insertRevision(Long resourceId, int revisionNo,
