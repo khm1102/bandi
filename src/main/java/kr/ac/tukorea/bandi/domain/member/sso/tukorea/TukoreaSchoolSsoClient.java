@@ -1,12 +1,12 @@
-package kr.ac.tukorea.bandi.domain.member.client.tukorea;
+package kr.ac.tukorea.bandi.domain.member.sso.tukorea;
 
-import kr.ac.tukorea.bandi.domain.member.client.SchoolCredentials;
-import kr.ac.tukorea.bandi.domain.member.client.SchoolSsoClient;
+import kr.ac.tukorea.bandi.domain.member.sso.SchoolCredentials;
+import kr.ac.tukorea.bandi.domain.member.sso.SchoolSsoClient;
 import kr.ac.tukorea.bandi.domain.member.exception.SchoolCredentialsInvalidException;
 import kr.ac.tukorea.bandi.domain.member.exception.SchoolSsoResponseChangedException;
 import kr.ac.tukorea.bandi.domain.member.exception.SchoolSsoUnavailableException;
 import kr.ac.tukorea.bandi.domain.member.model.SchoolIdentity;
-import kr.ac.tukorea.bandi.domain.member.client.tukorea.config.SchoolSsoProperties;
+import kr.ac.tukorea.bandi.global.config.SchoolSsoProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
