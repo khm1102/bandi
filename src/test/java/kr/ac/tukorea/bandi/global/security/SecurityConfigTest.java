@@ -50,31 +50,27 @@ class SecurityConfigTest {
         for (String role : new String[]{"MEMBER", "LEADER"}) {
             mockMvc.perform(get("/members/test").with(user("tester").roles(role)))
                     .andExpect(status().isForbidden());
-            mockMvc.perform(get("/notice-management/test")
-                            .with(user("tester").roles(role)))
-                    .andExpect(status().isForbidden());
-            mockMvc.perform(get("/api/admin/public-notices/test")
-                            .with(user("tester").roles(role)))
-                    .andExpect(status().isForbidden());
         }
     }
 
     @Test
     void 운영진은_남은_관리자_화면에_접근할_수_있다() throws Exception {
-        for (String path : new String[]{"/members/test", "/notice-management/test",
-                "/api/admin/public-notices/test"}) {
+        for (String path : new String[]{"/members/test"}) {
             mockMvc.perform(get(path).with(user("admin").roles("ADMIN")))
                     .andExpect(status().isOk());
         }
     }
 
     @Test
-    void 폐기된_공개_공연과_관람_경로는_로그인으로_보내지_않는다() throws Exception {
+    void 폐기된_공개_경로는_로그인으로_보내지_않는다() throws Exception {
         for (String path : new String[]{"/performances/show", "/reserve/test",
                 "/api/public-performances/test", "/api/public-policies/test",
-                "/api/public-reservations/test"}) {
+                "/api/public-reservations/test", "/notices/test",
+                "/api/public-notices/test"}) {
             mockMvc.perform(get(path)).andExpect(status().isNotFound());
         }
+        mockMvc.perform(post("/api/public-notices/test").with(csrf()))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -90,13 +86,6 @@ class SecurityConfigTest {
                     return request;
                 }))
                 .andExpect(status().isOk());
-    }
-
-    @Test
-    void 공개_공시_상태_변경_API는_로그인을_요구한다() throws Exception {
-        mockMvc.perform(post("/api/public-notices/test").with(csrf()))
-                .andExpect(status().isUnauthorized())
-                .andExpect(jsonPath("$.code").value("C003"));
     }
 
     @Test
@@ -164,20 +153,15 @@ class SecurityConfigTest {
 @RestController
 class SecurityTestController {
 
-    @GetMapping({"/dashboard", "/members/test", "/notice-management/test",
+    @GetMapping({"/dashboard", "/members/test",
             "/dispatch-target", "/api/test", "/api/members/me",
-            "/api/members/reference/teams", "/api/admin/public-notices/test"})
+            "/api/members/reference/teams"})
     ResponseEntity<Void> page() {
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/api/test")
     ResponseEntity<Void> change() {
-        return ResponseEntity.ok().build();
-    }
-
-    @PostMapping("/api/public-notices/test")
-    ResponseEntity<Void> changePublicNotice() {
         return ResponseEntity.ok().build();
     }
 

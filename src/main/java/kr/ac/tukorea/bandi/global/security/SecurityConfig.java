@@ -36,8 +36,7 @@ public class SecurityConfig {
                 .requestMatchers("/login", "/error", "/notices/**",
                         "/performances/**", "/reserve/**", "/docs/**",
                         "/api-docs/**", "/swagger-ui/**").permitAll()
-                .requestMatchers(HttpMethod.GET,
-                        "/api/public-notices/**").permitAll()
+                .requestMatchers("/api/public-notices/**").permitAll()
                 .requestMatchers("/api/public-performances/**",
                         "/api/public-policies/**",
                         "/api/public-reservations/**").permitAll()
@@ -47,8 +46,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/members/me",
                         "/api/members/reference/teams")
                 .authenticated()
-                .requestMatchers("/members/**", "/notice-management/**",
-                        "/api/members/**", "/api/admin/public-notices/**")
+                .requestMatchers("/members/**", "/api/members/**")
                 .hasRole("ADMIN")
                 .anyRequest().authenticated());
         http.exceptionHandling(exception -> exception

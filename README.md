@@ -66,7 +66,6 @@ src/main/resources
 | [docs/design-guide.md](docs/design-guide.md) | 디자인 시스템 정본 — 토큰·타이포·셸·컴포넌트 명세·레시피 |
 | [docs/feature-spec.md](docs/feature-spec.md) | 1차 기능 범위와 구현 순서 정본 |
 | [docs/database-schema.md](docs/database-schema.md) | 테이블·제약·트랜잭션·마이그레이션 순서 정본 |
-| [docs/public-notice-retirement.md](docs/public-notice-retirement.md) | 외부 공시 폐기 1단계 운영 절차 |
 | [docs/member-onboarding-plan.md](docs/member-onboarding-plan.md) | 후속 온보딩 설계 기록 (1차 구현 제외) |
 | [AGENTS.md](AGENTS.md) | AI 에이전트 공통 규약 (MUST 규칙·TDD·DoD·금지 목록) |
 
