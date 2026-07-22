@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordDetailResponse;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordSummaryResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
+import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -39,7 +40,7 @@ public interface ActivityRecordApiDocs {
 
     @Operation(summary = "승인된 증빙 이미지 다운로드")
     @GetMapping("/{activityRecordId}/files/{storedFileId}/download")
-    ResponseEntity<Void> download(
+    ResponseEntity<Resource> download(
             @Parameter(hidden = true) @LoginMember Long memberId,
             @PathVariable Long activityRecordId,
             @PathVariable Long storedFileId);

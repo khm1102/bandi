@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 @Getter
 public class PublicNotice {
 
-    private static final int MAX_CATEGORY_LENGTH = 30;
     private static final int MAX_TITLE_LENGTH = 200;
 
     private Long publicNoticeId;
@@ -128,7 +127,7 @@ public class PublicNotice {
                           PublicNoticeStatus statusValue,
                           LocalDateTime publishStartValue, LocalDateTime publishEndValue,
                           Long creatorId, Long updaterId) {
-        validateText(categoryCodeValue, MAX_CATEGORY_LENGTH, "categoryCode");
+        validateCategory(categoryCodeValue);
         validateText(titleValue, MAX_TITLE_LENGTH, "title");
         validateText(bodyValue, Integer.MAX_VALUE, "body");
         if (statusValue == null || creatorId == null || updaterId == null) {
@@ -146,6 +145,12 @@ public class PublicNotice {
     private void validateText(String value, int maxLength, String field) {
         if (value == null || value.isBlank() || value.length() > maxLength) {
             throw new InvalidPublicNoticeException(field);
+        }
+    }
+
+    private void validateCategory(String categoryCodeValue) {
+        if (!PublicNoticeCategory.isSupported(categoryCodeValue)) {
+            throw new InvalidPublicNoticeException("categoryCode");
         }
     }
 }

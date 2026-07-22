@@ -122,7 +122,7 @@
                     <div>
                         <label class="${label}" for="assetPhoto">품목 사진</label>
                         <input class="block min-h-11 w-full rounded-md border border-input bg-card px-3 py-2 text-sm" id="assetPhoto" name="photo" type="file" accept="image/*">
-                        <p class="mt-1 text-xs text-muted-foreground">새 파일을 선택한 경우에만 MinIO의 비공개 사진을 교체합니다.</p>
+                        <p class="mt-1 text-xs text-muted-foreground">새 파일을 선택한 경우에만 기존 사진을 교체합니다.</p>
                     </div>
                     <div>
                         <label class="${label}" for="assetNote">메모</label>

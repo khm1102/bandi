@@ -29,6 +29,7 @@ import kr.ac.tukorea.bandi.domain.activity.model.ActivityReviewHistory;
 import kr.ac.tukorea.bandi.domain.file.dto.response.FileReferenceResponse;
 import kr.ac.tukorea.bandi.domain.file.service.FileAccessDecision;
 import kr.ac.tukorea.bandi.domain.file.service.FileService;
+import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
 import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
@@ -177,14 +178,14 @@ public class ActivityRecordService {
                 toFiles(activityRecordMapper.searchCurrentFileLinks(activityRecordId)));
     }
 
-    public String createApprovedDownloadUrl(Long memberId, Long activityRecordId,
-                                            Long storedFileId) {
+    public FileDownloadResponse openApprovedDownload(Long memberId, Long activityRecordId,
+                                             Long storedFileId) {
         readableAccess(memberId);
         if (!activityRecordMapper.existsApprovedCurrentFile(
                 activityRecordId, storedFileId)) {
             throw new ActivityRecordNotFoundException(activityRecordId);
         }
-        return fileService.createPrivateDownloadUrl(
+        return fileService.openPrivateDownload(
                 storedFileId, FileAccessDecision.GRANTED);
     }
 
@@ -215,9 +216,9 @@ public class ActivityRecordService {
                 activityRecordMapper.searchReviewHistories(activityRecordId));
     }
 
-    public String createManageableDownloadUrl(Long actorMemberId,
-                                              Long activityRecordId,
-                                              Long storedFileId) {
+    public FileDownloadResponse openManageableDownload(Long actorMemberId,
+                                               Long activityRecordId,
+                                               Long storedFileId) {
         MemberAccessContext access = readableAccess(actorMemberId);
         ActivityRecordManageContentResponse content = activityRecordMapper
                 .lookupManageContent(activityRecordId)
@@ -228,7 +229,7 @@ public class ActivityRecordService {
                 activityRecordId, storedFileId)) {
             throw new ActivityRecordFileNotFoundException(storedFileId);
         }
-        return fileService.createPrivateDownloadUrl(
+        return fileService.openPrivateDownload(
                 storedFileId, FileAccessDecision.GRANTED);
     }
 

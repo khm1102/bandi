@@ -8,7 +8,7 @@
 - bandi (SSR 웹) — 1차 기능 정본은 `docs/feature-spec.md`, 스키마 정본은 `docs/database-schema.md`다
 - 스택: Spring Boot 3.5.x / Java 17 / MyBatis / MySQL 8 / JSP(JSTL) / Flyway / spring-session-jdbc — **war 패키징** (JSP는 실행형 jar 미지원)
 - 인증: **세션 기반** (JWT 아님 — 확정 사항)
-- 파일 저장: **MinIO**. DB·로컬 디스크에 바이너리 저장 금지, 내부 파일은 비공개 버킷과 권한 확인 후 presigned GET 사용. MinIO 연동은 `domain.file`이 소유하고 다른 feature는 `FileService`만 호출한다
+- 파일 저장: **로컬 영구 볼륨**. `FILE_STORAGE_ROOT`(운영 기본값 `/data/bandi`) 아래 `private/`, `public/`에 바이너리를 저장한다. DB에는 메타데이터만 둔다. 파일 전송은 Spring Boot가 권한 확인 후 직접 수행하며, `domain.file`이 저장소를 소유하고 다른 feature는 `FileService`만 호출한다
 - 베이스 패키지: `kr.ac.tukorea.bandi`, package-by-feature (`domain.{feature}`)
 - 로컬 MySQL: Docker, **호스트 포트 3307** (3306 아님 — 타 프로젝트 점유). 계정 `bandi`/`bandi1234`, 스키마 `bandi`(개발)·`bandi_test`(테스트)
 - Swagger UI: `http://localhost:8080/docs`, OpenAPI JSON: `/api-docs` (prod 비활성)
@@ -140,6 +140,5 @@ PR 검증 시 아래 순서로 점검하고, 위반은 **컨벤션 조항 번호
 - `docs/design-guide.md` — 디자인 시스템 정본 (색상 토큰 값·타이포·셸 3종·컴포넌트 태그 명세·유틸리티 레시피). 화면 작업 전 필독, 데모는 dev `/style-guide`
 - `docs/feature-spec.md` — 1차 기능 범위와 구현 순서의 정본. **온보딩은 후속 범위**이므로 관련 화면·API·테이블을 1차 구현에 포함하지 않는다
 - `docs/database-schema.md` — 1차 테이블·제약·마이그레이션 분할 순서의 정본. 실제 Flyway는 적용 이력을 확인하고 기능 코드·테스트와 같은 PR에서 추가한다
-- `docs/performance-operations-plan.md` — 공연 제작·홍보·관람 운영의 상세 정본. 좌석 배치 정책은 명시된 보류 범위를 지킨다
 - `docs/member-onboarding-plan.md` — 후속 온보딩 설계 기록. 별도 승인 전에는 구현 근거로 사용하지 않는다
 - 이슈 내용이 정본 문서와 충돌하거나 근거가 부족하면 임의로 구현하지 말고 질문하고 대기한다

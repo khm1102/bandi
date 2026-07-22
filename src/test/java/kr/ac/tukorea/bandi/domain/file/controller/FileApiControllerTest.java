@@ -28,6 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(FileApiController.class)
@@ -72,6 +73,7 @@ class FileApiControllerTest {
                         .file(file)
                         .param("domain", "activity"))
                 .andExpect(status().isCreated())
+                .andExpect(header().doesNotExist("Location"))
                 .andExpect(jsonPath("$.id").value(20));
 
         var captor = org.mockito.ArgumentCaptor

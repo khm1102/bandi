@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.PublicNoticeDetailResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.PublicNoticeSummaryResponse;
+import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,7 +31,7 @@ public interface PublicNoticeApiDocs {
 
     @Operation(summary = "공개 공시 첨부파일 다운로드")
     @GetMapping("/{publicNoticeId}/attachments/{storedFileId}/download")
-    ResponseEntity<Void> download(
+    ResponseEntity<Resource> download(
             @PathVariable Long publicNoticeId,
             @PathVariable Long storedFileId);
 }

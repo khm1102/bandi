@@ -35,8 +35,8 @@
 | 태그 | 용도 | 구조 |
 |---|---|---|
 | `<t:layout title active crumb>` | 관리자 화면 전부 | 네이비 사이드바(`w-56`, lg 미만 접근 가능한 서랍 내비) + 스티키 탑바 + `max-w-6xl` 반응형 본문 |
-| `<t:layoutPublic title>` | 예매 등 공개 화면, 에러 페이지 | 네이비 상단 내비(header.tag) + `max-w-5xl` 본문 + footer.tag |
-| `<t:layoutAuth title>` | 로그인/가입 | 데스크톱은 네이비 공연 맥락 패널 + `max-w-md` 폼의 분할 셸, 모바일은 폼에 집중하는 단일 열 |
+| `<t:layoutPublic title>` | 공시 등 공개 화면, 에러 페이지 | 네이비 상단 내비(header.tag) + `max-w-5xl` 본문 + footer.tag |
+| `<t:layoutAuth title>` | 로그인 | 데스크톱은 네이비 동아리 소개 패널 + `max-w-md` 폼의 분할 셸, 모바일은 폼에 집중하는 단일 열 |
 
 - 공통 `<head>`(폰트·tokens.css·Tailwind `@theme` 매핑)는 `head.tag` 한 곳에만 있다 — **공유 자원(22.5)**
 - 사이드바 내비 항목은 feature 확정 시 `layout.tag`에 추가하고, 페이지에서 `active="{key}"`로 활성 표시
@@ -145,36 +145,15 @@
 - 오늘: `border-primary ring-2 ring-ring/20` / 비활성(전·다음 달): `bg-secondary opacity-50`
 - 일정 칩: `mt-1 truncate rounded-sm px-1 py-0.5 text-xs font-bold` + tone별 `*-soft` 배경
 
-**시간 투표 그리드** (연습 시간 조율) — `grid gap-1` + `grid-cols-[64px_repeat(5,1fr)]` (그리드 템플릿의 임의 값은 허용 — 13.2 금지는 색·간격·radius·폰트·z-index·브레이크포인트만)
-- 셀: `h-8 rounded-md border bg-secondary transition-colors hover:border-primary`, 선택 `border-success bg-success`
-
 ### 7.5 인증 화면 (로그인 기능 구현 시 — layoutAuth 내부)
 
-**인증 셸** — 데스크톱에서 좌측 네이비 맥락 패널과 우측 폼을 분리한다. 좌측은 실제 공연 비주얼을 낮은 불투명도로 사용하고 제품 설명·현재 공연 정보만 담으며, 우측의 폼 폭은 `max-w-md`를 넘지 않는다. 모바일에서는 맥락 패널을 숨기고 로고·페이지 제목·폼을 단일 열로 제공한다. 영문 대문자 장식 레이블, 의미 없는 원호, 테스트 계정 노출, 장식용 그라디언트 배경이나 카드 안의 카드 중첩은 사용하지 않는다.
+**인증 셸** — 데스크톱에서 좌측 네이비 맥락 패널과 우측 폼을 분리한다. 좌측은 동아리 소개를 낮은 불투명도로 사용하고 제품 설명과 공시 안내만 담으며, 우측의 폼 폭은 `max-w-md`를 넘지 않는다. 모바일에서는 맥락 패널을 숨기고 로고·페이지 제목·폼을 단일 열로 제공한다. 영문 대문자 장식 레이블, 의미 없는 원호, 테스트 계정 노출, 장식용 그라디언트 배경이나 카드 안의 카드 중첩은 사용하지 않는다.
 
 **역할 선택 카드** — `flex w-full items-center gap-3 rounded-lg border-2 p-3.5 text-left transition-colors hover:border-primary hover:bg-accent` + 역할 아이콘 박스 `flex size-9 items-center justify-center rounded-md bg-sidebar text-sm font-black text-white`
 
 **구분선(또는)** — `flex items-center gap-2.5 text-xs font-bold text-muted-foreground/70 before:h-px before:flex-1 before:bg-border after:h-px after:flex-1 after:bg-border`
 
 **초대 코드** — `font-mono text-sm font-black tracking-widest text-accent-foreground`
-
-### 7.6 예매 · 좌석맵 (예매 기능 구현 시 — layoutPublic 내부)
-
-**포스터/히어로** — `relative min-h-96 overflow-hidden rounded-xl bg-sidebar p-6 text-white` + 실제 공연·무대 비주얼 `absolute inset-0 size-full object-cover` + 텍스트 대비용 단색 오버레이 `absolute inset-0 bg-sidebar/35`. 이미지가 없다는 이유로 그라디언트 색면을 포스터처럼 사용하지 않는다
-- eyebrow `text-xs font-extrabold tracking-widest text-primary`, 공연명 `text-4xl font-black leading-none tracking-tight`
-
-**날짜/회차 선택** — 날짜 카드 `rounded-lg border-2 p-3 text-center text-base font-black transition-colors` + 보조 `block text-xs font-bold text-muted-foreground`, 선택 시 `border-primary bg-accent text-accent-foreground` (회차 카드도 동일 선택 상태)
-
-**결제 요약** — `flex items-center justify-between rounded-lg bg-secondary px-4 py-3.5 text-xs font-bold text-muted-foreground`, 금액 `text-base font-black text-foreground`
-**대형 CTA** — `h-12 w-full rounded-lg bg-primary text-base font-black text-primary-foreground transition-colors hover:bg-primary-strong hover:text-white`
-**시놉시스 인용** — `rounded-lg border bg-secondary px-5 py-4` + 제목 `text-sm font-extrabold` + 본문 `mt-2 text-sm leading-relaxed`
-
-**좌석맵**
-- 무대 바: `rounded-md bg-sidebar py-2 text-center text-xs font-extrabold tracking-widest text-sidebar-foreground`
-- 좌석: `size-11 rounded-md border bg-card text-xs font-extrabold text-muted-foreground transition-colors hover:border-primary hover:bg-accent hover:text-accent-foreground`, 각 버튼은 행·좌석을 포함한 접근 가능한 이름과 `aria-pressed`를 제공한다
-  - 선택: `border-primary bg-primary text-primary-foreground` / 매진: `cursor-not-allowed border-border bg-secondary text-muted-foreground/50`
-- 선택 좌석 칩: `inline-flex items-center gap-1 rounded-md bg-accent py-1 pl-2.5 pr-1.5 text-xs font-extrabold text-accent-foreground` + 제거 버튼 `flex size-8 items-center justify-center rounded-sm bg-primary/20`
-- 범례: `flex justify-center gap-4 text-xs font-bold text-muted-foreground`
 
 ## 8. 금지/주의 (컨벤션 13.2 재확인 + 이 시스템 고유)
 

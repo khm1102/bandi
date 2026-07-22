@@ -38,25 +38,25 @@ class NoticeControllerTest {
     void 공개_공시_목록을_검색어와_페이지로_SSR_렌더링한다()
             throws Exception {
         PublicNoticeSummaryResponse notice =
-                new PublicNoticeSummaryResponse(1L, "PERFORMANCE",
-                        "공연 안내", true,
+                new PublicNoticeSummaryResponse(1L, "GENERAL",
+                        "운영 안내", true,
                         LocalDateTime.of(2026, 11, 1, 10, 0),
                         "운영진", LocalDateTime.of(2026, 11, 1, 10, 0));
         given(publicNoticeService.searchPublic(
-                new PublicNoticeSearchParam("공연", 0, 20)))
+                new PublicNoticeSearchParam("운영", 0, 20)))
                 .willReturn(List.of(notice));
 
-        mockMvc.perform(get("/notices").param("keyword", "공연"))
+        mockMvc.perform(get("/notices").param("keyword", "운영"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("notice/list"))
                 .andExpect(model().attribute("notices", List.of(notice)))
-                .andExpect(model().attribute("keyword", "공연"));
+                .andExpect(model().attribute("keyword", "운영"));
     }
 
     @Test
     void 공개_공시_상세를_SSR_렌더링한다() throws Exception {
         PublicNoticeDetailResponse notice = new PublicNoticeDetailResponse(
-                1L, "PERFORMANCE", "공연 안내", "공시 본문", true,
+                1L, "GENERAL", "운영 안내", "공시 본문", true,
                 LocalDateTime.of(2026, 11, 1, 10, 0), null,
                 "운영진", "운영진",
                 LocalDateTime.of(2026, 11, 1, 10, 0), List.of());

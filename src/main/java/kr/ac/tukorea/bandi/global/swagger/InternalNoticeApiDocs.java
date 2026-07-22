@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeDetailResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeSummaryResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
+import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -36,7 +37,7 @@ public interface InternalNoticeApiDocs {
 
     @Operation(summary = "공지 첨부파일 다운로드")
     @GetMapping("/{internalNoticeId}/attachments/{storedFileId}/download")
-    ResponseEntity<Void> download(
+    ResponseEntity<Resource> download(
             @Parameter(hidden = true) @LoginMember Long memberId,
             @PathVariable Long internalNoticeId,
             @PathVariable Long storedFileId);

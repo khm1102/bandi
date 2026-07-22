@@ -3,6 +3,7 @@ package kr.ac.tukorea.bandi.domain.resource.service;
 import kr.ac.tukorea.bandi.domain.file.dto.response.FileReferenceResponse;
 import kr.ac.tukorea.bandi.domain.file.service.FileAccessDecision;
 import kr.ac.tukorea.bandi.domain.file.service.FileService;
+import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
 import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
 import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceManageSearchCondition;
@@ -52,7 +53,7 @@ public class ResourceService {
         MemberAccessContext access = memberService.lookupAccessContext(actorMemberId);
         validateManagement(access, param.targetScope(), param.teamId());
         validateActiveTarget(param.targetScope(), param.teamId());
-        validateFiles(param.storedFileIds(), true);
+        validateFiles(param.storedFileIds(), actorMemberId, true);
         Resource resource = Resource.draft(param.targetScope(), param.teamId(),
                 param.categoryCode(), param.title(), param.description(),
                 param.pinned(), actorMemberId);
@@ -82,7 +83,7 @@ public class ResourceService {
         MemberAccessContext access = memberService.lookupAccessContext(actorMemberId);
         Resource resource = lock(param.resourceId());
         validateManagement(access, resource.getTargetScope(), resource.getTeamId());
-        validateFiles(param.storedFileIds(), false);
+        validateFiles(param.storedFileIds(), actorMemberId, false);
         int currentRevision = resourceMapper.lookupMaxRevisionForUpdate(param.resourceId())
                 .orElse(0);
         if (currentRevision == Integer.MAX_VALUE) {
@@ -157,14 +158,14 @@ public class ResourceService {
                 toFiles(resourceMapper.searchCurrentFileLinks(resourceId)));
     }
 
-    public String createDownloadUrl(Long memberId, Long resourceId, Long storedFileId) {
+    public FileDownloadResponse openDownload(Long memberId, Long resourceId, Long storedFileId) {
         MemberAccessContext access = readableAccess(memberId);
         boolean readable = resourceMapper.existsReadableCurrentFile(resourceId,
                 storedFileId, access.teamId(), access.canManageGlobal());
         if (!readable) {
             throw new ResourceNotFoundException(resourceId);
         }
-        return fileService.createPrivateDownloadUrl(
+        return fileService.openPrivateDownload(
                 storedFileId, FileAccessDecision.GRANTED);
     }
 
@@ -197,13 +198,15 @@ public class ResourceService {
         }
     }
 
-    private void validateFiles(List<Long> storedFileIds, boolean allowEmpty) {
+    private void validateFiles(List<Long> storedFileIds, Long actorMemberId,
+                               boolean allowEmpty) {
         if ((!allowEmpty && storedFileIds.isEmpty())
                 || storedFileIds.stream().anyMatch(fileId -> fileId == null)
                 || new HashSet<>(storedFileIds).size() != storedFileIds.size()) {
             throw new InvalidResourceException("files");
         }
-        storedFileIds.forEach(fileService::lookupPrivateReady);
+        storedFileIds.forEach(storedFileId ->
+                fileService.validatePrivateReadyOwnedBy(storedFileId, actorMemberId));
     }
 
     private void insertRevision(Long resourceId, int revisionNo,
