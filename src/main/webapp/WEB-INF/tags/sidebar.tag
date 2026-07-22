@@ -33,9 +33,6 @@
             <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 8l-9-5-9 5 9 5 9-5zM3 8v8l9 5 9-5V8M12 13v8"/></svg>소품·장비
         </a>
         <c:if test="${role == 'admin'}">
-            <a href="<c:url value='/notice-management'/>" class="${navBase} ${active == 'notice-management' ? navOn : navOff}" aria-current="${active == 'notice-management' ? 'page' : 'false'}">
-                <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4zM8 8h8M8 12h8M8 16h5"/></svg>공시 관리
-            </a>
             <a href="<c:url value='/members'/>" class="${navBase} ${active == 'members' ? navOn : navOff}" aria-current="${active == 'members' ? 'page' : 'false'}">
                 <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>멤버·권한
             </a>
@@ -49,7 +46,6 @@
                 <span class="block truncate text-xs leading-4 text-sidebar-muted" data-session-meta>잠시만 기다려 주세요</span>
             </span>
         </div>
-        <a href="<c:url value='/notices'/>" class="inline-flex min-h-11 items-center justify-center rounded-md px-3 text-xs font-bold text-sidebar-muted transition-colors hover:bg-sidebar-accent hover:text-white">공시·운영 안내</a>
         <p class="text-center text-xs text-sidebar-muted">개인정보 안내 · 운영 문의</p>
         <form action="<c:url value='/logout'/>" method="post">
             <input type="hidden" name="<c:out value='${_csrf.parameterName}'/>" value="<c:out value='${_csrf.token}'/>">

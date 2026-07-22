@@ -46,8 +46,4 @@
         <p class="mt-1">학교 인증 결과에서 학번·이름·학적 상태만 확인하며, 로그인할 때마다 재학생 여부를 다시 확인합니다.</p>
         <p class="mt-2 rounded-md bg-accent/60 px-3 py-2 text-accent-foreground">인증이 끝나면 비밀번호는 즉시 폐기하고, 세션에는 멤버 식별자와 역할만 유지합니다.</p>
     </div>
-
-    <div class="mt-4 border-t pt-4">
-        <a href="<c:url value='/notices'/>" class="inline-flex min-h-11 flex-1 items-center justify-center rounded-md border bg-card px-3 text-xs font-bold transition-colors hover:bg-secondary">로그인 장애·운영 공시</a>
-    </div>
 </t:layoutAuth>

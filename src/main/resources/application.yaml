@@ -37,6 +37,9 @@ bandi:
   storage:
     root: ${FILE_STORAGE_ROOT:/data/bandi}
     max-upload-bytes: ${FILE_STORAGE_MAX_UPLOAD_BYTES:524288000}
+  retirement:
+    public-notice:
+      mode: ${PUBLIC_NOTICE_RETIREMENT_MODE:OFF}
   school-sso:
     login-page-url: "https://ksc.tukorea.ac.kr/sso/login_stand.jsp"
     login-process-url: "https://ksc.tukorea.ac.kr/sso/login_proc.jsp?returnurl=null"

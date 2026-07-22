@@ -100,6 +100,15 @@ class LocalFileObjectStorageTest {
     }
 
     @Test
+    void 없는_파일_삭제는_퇴역_재시도를_위해_성공으로_처리한다() {
+        LocalFileObjectStorage storage = storage();
+
+        storage.remove(StorageScope.PUBLIC, "notice/already-removed");
+
+        assertThat(storageRoot.resolve("public/notice/already-removed")).doesNotExist();
+    }
+
+    @Test
     void 기본_로케일과_관계없이_scope_디렉터리는_영문_소문자를_사용한다() throws Exception {
         Locale previous = Locale.getDefault();
         Locale.setDefault(Locale.forLanguageTag("tr-TR"));
