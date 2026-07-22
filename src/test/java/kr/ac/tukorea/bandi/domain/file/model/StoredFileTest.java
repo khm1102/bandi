@@ -97,7 +97,7 @@ class StoredFileTest {
         source.markReady("private-etag");
 
         StoredFile promoted = source.createPublicPromotion(
-                "public-notice/2026/07/22222222-2222-2222-2222-222222222222",
+                "resource/2026/07/22222222-2222-2222-2222-222222222222",
                 2L);
 
         assertThat(source.getStorageScope()).isEqualTo(StorageScope.PRIVATE);
@@ -143,7 +143,7 @@ class StoredFileTest {
         StoredFile file = StoredFile.pending(
                 "poster.png",
                 StorageScope.PUBLIC,
-                "public-notice/2026/07/33333333-3333-3333-3333-333333333333",
+                "resource/2026/07/33333333-3333-3333-3333-333333333333",
                 "image/png",
                 12L,
                 SHA256,

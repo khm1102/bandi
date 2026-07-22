@@ -37,15 +37,13 @@
 | 테이블 | 책임 |
 | --- | --- |
 | `calendar_event` | 전체·팀 일정 |
-| `public_notice`, `public_notice_attachment` | 외부 공시와 첨부 |
 | `internal_notice`, `internal_notice_attachment` | 내부 공지와 첨부 |
 | `internal_notice_read` | 멤버별 공지 읽음 상태 |
 | `resource`, `resource_file` | 자료와 리비전별 파일 연결 |
 | `activity_record`, `activity_record_file` | 활동 기록과 증빙 파일 |
 | `activity_record_revision`, `activity_review_history` | 활동 기록 수정·검토 이력 |
 
-`public_notice.category_code`는 `GENERAL`, `RECRUITMENT`만 허용한다. 공지와 자료의
-공개 범위는 전체 또는 팀 단위로 관리한다.
+내부 공지와 자료의 공개 범위는 전체 또는 팀 단위로 관리한다.
 
 ## 4. 소품·장비
 

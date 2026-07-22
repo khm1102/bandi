@@ -4,7 +4,6 @@ public final class ApiTag {
 
     public static final String MEMBER = "멤버";
     public static final String CALENDAR = "캘린더";
-    public static final String PUBLIC_NOTICE = "공시";
     public static final String INTERNAL_NOTICE = "공지";
     public static final String RESOURCE = "자료실";
     public static final String ACTIVITY = "활동 기록";

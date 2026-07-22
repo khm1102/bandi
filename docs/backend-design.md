@@ -6,7 +6,7 @@
 
 ## 1. 목적
 
-bandi는 학교 SSO로 확인된 동아리 멤버가 일정, 공시·공지·자료, 활동 기록,
+bandi는 학교 SSO로 확인된 동아리 멤버가 일정, 공지·자료, 활동 기록,
 소품·장비와 멤버 권한을 운영하는 SSR 웹 서비스다.
 
 학교 비밀번호와 학교 세션은 인증 요청 중에만 사용하며, DB·세션·로그에 저장하지
@@ -34,7 +34,7 @@ Controller → Service → Mapper → Model
 | --- | --- |
 | `member` | 멤버 사전 등록, 학교 SSO 연결, 내 프로필, 팀·기수·역할·상태와 이력 |
 | `calendar` | 전체·팀 일정 관리 |
-| `notice` | 외부 공시와 내부 공지, 읽음 상태 및 첨부 연결 |
+| `notice` | 내부 공지, 읽음 상태 및 첨부 연결 |
 | `resource` | 전체·팀 자료와 파일 리비전 |
 | `activity` | 팀 활동 기록, 증빙 사진, 검토와 수정 이력 |
 | `asset` | 소품·장비 품목, 개별 장비, 상태 이력과 사진 연결 |
@@ -47,8 +47,7 @@ Controller → Service → Mapper → Model
 - 페이지 조회는 JSP SSR Controller를 사용한다.
 - 부분 갱신과 상태 변경은 `/api/**`에서 세션 인증과 CSRF 보호를 적용한다.
 - Swagger 계약은 `global.swagger` 인터페이스에만 둔다.
-- 파일은 Spring Boot가 권한을 확인한 뒤 직접 스트리밍한다. 공개 공시 첨부만
-  비로그인 열람을 허용한다.
+- 파일은 Spring Boot가 권한을 확인한 뒤 직접 스트리밍한다.
 - `/profile`과 `/api/members/me/**`는 로그인 멤버가 사용한다. `/team-members`와
   `/api/members/team-members`는 `LEADER`·`ADMIN`만 URL 단계에서 허용하고,
   팀·대상 범위는 `MemberService`가 다시 검사한다.

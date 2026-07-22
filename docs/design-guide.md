@@ -35,7 +35,7 @@
 | 태그 | 용도 | 구조 |
 |---|---|---|
 | `<t:layout title active crumb>` | 관리자 화면 전부 | 네이비 사이드바(`w-56`, lg 미만 접근 가능한 서랍 내비) + 스티키 탑바 + `max-w-6xl` 반응형 본문 |
-| `<t:layoutPublic title>` | 공시 등 공개 화면, 에러 페이지 | 네이비 상단 내비(header.tag) + `max-w-5xl` 본문 + footer.tag |
+| `<t:layoutPublic title>` | 오류 등 비인증 화면 | 네이비 상단 내비(header.tag) + `max-w-5xl` 본문 + footer.tag |
 | `<t:layoutAuth title>` | 로그인 | 데스크톱은 네이비 동아리 소개 패널 + `max-w-md` 폼의 분할 셸, 모바일은 폼에 집중하는 단일 열 |
 
 - 공통 `<head>`(폰트·tokens.css·Tailwind `@theme` 매핑)는 `head.tag` 한 곳에만 있다 — **공유 자원(22.5)**
@@ -154,7 +154,7 @@
 
 ### 7.5 인증 화면 (로그인 기능 구현 시 — layoutAuth 내부)
 
-**인증 셸** — 데스크톱에서 좌측 네이비 맥락 패널과 우측 폼을 분리한다. 좌측은 동아리 소개를 낮은 불투명도로 사용하고 제품 설명과 공시 안내만 담으며, 우측의 폼 폭은 `max-w-md`를 넘지 않는다. 모바일에서는 맥락 패널을 숨기고 로고·페이지 제목·폼을 단일 열로 제공한다. 영문 대문자 장식 레이블, 의미 없는 원호, 테스트 계정 노출, 장식용 그라디언트 배경이나 카드 안의 카드 중첩은 사용하지 않는다.
+**인증 셸** — 데스크톱에서 좌측 네이비 맥락 패널과 우측 폼을 분리한다. 좌측은 동아리 소개를 낮은 불투명도로 사용하고 제품 설명만 담으며, 우측의 폼 폭은 `max-w-md`를 넘지 않는다. 모바일에서는 맥락 패널을 숨기고 로고·페이지 제목·폼을 단일 열로 제공한다. 영문 대문자 장식 레이블, 의미 없는 원호, 테스트 계정 노출, 장식용 그라디언트 배경이나 카드 안의 카드 중첩은 사용하지 않는다.
 
 **역할 선택 카드** — `flex w-full items-center gap-3 rounded-lg border-2 p-3.5 text-left transition-colors hover:border-primary hover:bg-accent` + 역할 아이콘 박스 `flex size-9 items-center justify-center rounded-md bg-sidebar text-sm font-black text-white`
 

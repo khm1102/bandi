@@ -7,11 +7,6 @@ public record NoticePublishRequest(
         LocalDateTime publishEndDttm
 ) {
 
-    public PublicNoticePublishParam toPublicParam(Long publicNoticeId) {
-        return new PublicNoticePublishParam(publicNoticeId, publishStartDttm,
-                publishEndDttm);
-    }
-
     public InternalNoticePublishParam toInternalParam(Long internalNoticeId) {
         return new InternalNoticePublishParam(internalNoticeId, publishStartDttm,
                 publishEndDttm);
