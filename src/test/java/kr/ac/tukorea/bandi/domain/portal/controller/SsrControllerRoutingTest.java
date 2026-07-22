@@ -101,7 +101,7 @@ class SsrControllerRoutingTest {
     @ValueSource(strings = {"schedule", "community", "dues", "attendance",
             "production", "checklist", "performance-management",
             "performance-content-management", "reservations", "showops",
-            "reserve", "reserve/lookup", "performances/house-boy"})
+            "reserve", "reserve/lookup", "performances/house-boy", "style-guide"})
     void 폐기된_화면은_라우팅하지_않는다(String page) throws Exception {
         mockMvc.perform(get("/" + page))
                 .andExpect(status().isNotFound());

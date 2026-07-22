@@ -849,7 +849,7 @@ src/main/resources/static
 - `@theme inline` 매핑(토큰→유틸리티)과 `@layer base`는 `WEB-INF/tags/head.tag`의 `<style type="text/tailwindcss">` 블록에만 둔다. 새 토큰은 tokens.css의 `:root`와 이 매핑에 **함께** 추가한다
 - 폰트는 **Noto Sans KR**(Google Fonts, head.tag에서 로드) — 폰트 변경도 head.tag에서만
 - tokens.css와 head.tag의 Tailwind 블록은 공유 자원이다(22.5) — 수정 전 보고
-- 팔레트 값·용도·컴포넌트 레시피의 정본은 `docs/design-guide.md` (+ dev의 `/style-guide` 데모 페이지)
+- 팔레트 값·용도·컴포넌트 레시피의 정본은 `docs/design-guide.md`다. 폐기된 화면 데모는 `docs/archive/style-guide.html`에만 보관한다
 
 **색상 (MUST)**
 - 색상은 **shadcn 시맨틱 토큰 유틸리티만** 사용한다: `bg-background`, `text-foreground`, `text-muted-foreground`, `bg-primary`/`text-primary-foreground`/`bg-primary-strong`(hover), `bg-secondary`, `bg-accent`/`text-accent-foreground`, `text-destructive`, `border-border`(기본 `border`), `bg-card`, `ring-ring`, 상태색 `success`/`warning`/`destructive`/`info`(+`*-soft` 배경), 네이비 셸 `sidebar` 계열 — 값과 용도는 `docs/design-guide.md` 2장
