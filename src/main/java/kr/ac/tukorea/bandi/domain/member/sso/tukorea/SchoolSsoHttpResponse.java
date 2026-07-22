@@ -1,4 +1,4 @@
-package kr.ac.tukorea.bandi.domain.member.client.tukorea;
+package kr.ac.tukorea.bandi.domain.member.sso.tukorea;
 
 import java.net.URI;
 

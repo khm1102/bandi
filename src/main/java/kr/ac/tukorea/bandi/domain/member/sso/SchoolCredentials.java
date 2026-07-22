@@ -1,4 +1,4 @@
-package kr.ac.tukorea.bandi.domain.member.client;
+package kr.ac.tukorea.bandi.domain.member.sso;
 
 /**
  * 학교 자격증명은 요청 처리 중에만 유지한다.

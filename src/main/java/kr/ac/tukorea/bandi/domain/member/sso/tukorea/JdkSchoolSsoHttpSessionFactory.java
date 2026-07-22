@@ -1,6 +1,6 @@
-package kr.ac.tukorea.bandi.domain.member.client.tukorea;
+package kr.ac.tukorea.bandi.domain.member.sso.tukorea;
 
-import kr.ac.tukorea.bandi.domain.member.client.tukorea.config.SchoolSsoProperties;
+import kr.ac.tukorea.bandi.global.config.SchoolSsoProperties;
 import kr.ac.tukorea.bandi.domain.member.exception.SchoolSsoResponseChangedException;
 import kr.ac.tukorea.bandi.domain.member.exception.SchoolSsoUnavailableException;
 import lombok.RequiredArgsConstructor;

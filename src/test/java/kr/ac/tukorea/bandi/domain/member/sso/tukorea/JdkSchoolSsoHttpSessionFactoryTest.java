@@ -1,8 +1,8 @@
-package kr.ac.tukorea.bandi.domain.member.client.tukorea;
+package kr.ac.tukorea.bandi.domain.member.sso.tukorea;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
-import kr.ac.tukorea.bandi.domain.member.client.tukorea.config.SchoolSsoProperties;
+import kr.ac.tukorea.bandi.global.config.SchoolSsoProperties;
 import kr.ac.tukorea.bandi.domain.member.exception.SchoolSsoResponseChangedException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
