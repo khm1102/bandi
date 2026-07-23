@@ -1,4 +1,4 @@
-import {get, getBlob, post, put} from '../common/api.js';
+import {ApiError, get, getBlob, post, put} from '../common/api.js';
 import {
     initializeDateTimeFields,
     readDateTimeValue,
@@ -32,6 +32,7 @@ let savedDocumentFileId = null;
 let lastDownloadFilename = '';
 let hasStoredPhoto = false;
 let submitted = false;
+let submissionPending = false;
 let dirty = false;
 let searchTimer = 0;
 let searchGeneration = 0;
@@ -41,7 +42,13 @@ function show(element, visible, display = 'block') {
     if (!element) {
         return;
     }
+    element.hidden = !visible;
     element.classList.toggle('hidden', !visible);
+    if (!visible) {
+        element.style.setProperty('display', 'none');
+    } else {
+        element.style.removeProperty('display');
+    }
     if (visible && display === 'flex') {
         element.classList.add('flex');
     } else if (!visible) {
@@ -337,6 +344,7 @@ function setGenerating(generating, submitting = false) {
 
 function lockSubmittedForm() {
     show(document.querySelector('[data-save-actions]'), false);
+    show(document.querySelector('[data-page-action="submit-saved"]'), false);
     form.querySelectorAll('button, input, textarea, select').forEach((control) => {
         if (!control.closest('[data-success-state]')) {
             control.disabled = true;
@@ -413,17 +421,37 @@ async function saveDocument(submitAfterSave) {
 }
 
 async function submitSavedDocument() {
-    if (!savedRecordId) {
+    if (!savedRecordId || submitted || submissionPending) {
         return;
     }
-    await post(`/api/activity-report-documents/${savedRecordId}/submit`, {});
-    document.querySelector('[data-success-title]').textContent =
-        '운영진에게 검수를 요청했어요.';
-    document.querySelector('[data-success-message]').textContent =
-        '활동 기록에서 처리 상태를 확인할 수 있습니다.';
-    show(document.querySelector('[data-page-action="submit-saved"]'), false);
-    submitted = true;
-    lockSubmittedForm();
+    const submitButton = document.querySelector('[data-page-action="submit-saved"]');
+    submissionPending = true;
+    if (submitButton) {
+        submitButton.disabled = true;
+        submitButton.textContent = '요청하는 중…';
+    }
+    try {
+        await post(`/api/activity-report-documents/${savedRecordId}/submit`, {});
+        document.querySelector('[data-success-title]').textContent =
+            '운영진에게 검수를 요청했어요.';
+        document.querySelector('[data-success-message]').textContent =
+            '활동 기록에서 처리 상태를 확인할 수 있습니다.';
+        submitted = true;
+        lockSubmittedForm();
+    } catch (error) {
+        if (error instanceof ApiError && error.code === 'AR002') {
+            await loadSavedDraft();
+            clearErrors();
+            return;
+        }
+        throw error;
+    } finally {
+        submissionPending = false;
+        if (submitButton && !submitted) {
+            submitButton.disabled = false;
+            submitButton.textContent = '검수 요청';
+        }
+    }
 }
 
 async function downloadBlank() {
@@ -454,6 +482,7 @@ function resetForm() {
     savedDocumentFileId = null;
     hasStoredPhoto = false;
     submitted = false;
+    submissionPending = false;
     lastDownloadFilename = '';
     dirty = false;
     window.history.replaceState({}, '', '/activity-documents');
@@ -582,9 +611,13 @@ async function loadSavedDraft() {
             submitted = true;
             lockSubmittedForm();
             document.querySelector('[data-success-title]').textContent =
-                '현재 상태에서는 문서를 수정할 수 없습니다.';
+                draft.status === 'SUBMITTED'
+                    ? '운영진에게 검수를 요청했어요.'
+                    : '현재 상태에서는 문서를 수정할 수 없습니다.';
             document.querySelector('[data-success-message]').textContent =
-                '활동 기록에서 검수 상태와 운영진 의견을 확인해 주세요.';
+                draft.status === 'SUBMITTED'
+                    ? '활동 기록에서 처리 상태를 확인할 수 있습니다.'
+                    : '활동 기록에서 검수 상태와 운영진 의견을 확인해 주세요.';
             show(document.querySelector('[data-page-action="submit-saved"]'), false);
             show(successState, true);
         }
