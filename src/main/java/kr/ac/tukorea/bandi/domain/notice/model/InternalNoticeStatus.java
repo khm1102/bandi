@@ -20,7 +20,15 @@ public enum InternalNoticeStatus {
     }
 
     public boolean canArchive() {
-        return this != ARCHIVED;
+        return this == CLOSED;
+    }
+
+    public boolean canReturnToDraft() {
+        return this == SCHEDULED || this == ARCHIVED;
+    }
+
+    public boolean canDelete() {
+        return this == DRAFT;
     }
 
     public boolean canBePublic() {

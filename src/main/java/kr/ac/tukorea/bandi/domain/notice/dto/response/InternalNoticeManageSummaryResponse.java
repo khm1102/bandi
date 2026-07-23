@@ -15,6 +15,7 @@ public record InternalNoticeManageSummaryResponse(
         boolean important,
         LocalDateTime publishStartDttm,
         LocalDateTime publishEndDttm,
+        String createdByName,
         String updatedByName,
         LocalDateTime updatedDttm
 ) {

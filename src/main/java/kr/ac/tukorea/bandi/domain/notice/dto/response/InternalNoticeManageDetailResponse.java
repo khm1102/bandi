@@ -20,6 +20,7 @@ public record InternalNoticeManageDetailResponse(
         LocalDateTime publishStartDttm,
         LocalDateTime publishEndDttm,
         String createdByName,
+        String publishedByName,
         String updatedByName,
         LocalDateTime updatedDttm,
         List<InternalNoticeAttachmentResponse> attachments
@@ -33,7 +34,7 @@ public record InternalNoticeManageDetailResponse(
                 content.targetScope(), content.teamId(), content.teamName(), content.title(),
                 content.body(), bodyHtml, content.status(), content.important(),
                 content.publishStartDttm(), content.publishEndDttm(),
-                content.createdByName(), content.updatedByName(), content.updatedDttm(),
-                List.copyOf(attachments));
+                content.createdByName(), content.publishedByName(), content.updatedByName(),
+                content.updatedDttm(), List.copyOf(attachments));
     }
 }

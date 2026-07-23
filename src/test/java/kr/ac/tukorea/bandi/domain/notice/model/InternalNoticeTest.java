@@ -107,7 +107,7 @@ class InternalNoticeTest {
     void 종료하거나_보관한_공지는_수정하거나_다시_게시할_수_없다() {
         InternalNotice closed = teamDraft().publish(null, null, ACTOR_ID, NOW)
                 .close(EDITOR_ID);
-        InternalNotice archived = teamDraft().archive(EDITOR_ID);
+        InternalNotice archived = closed.archive(EDITOR_ID);
 
         assertThatThrownBy(() -> closed.edit(InternalNoticeTargetScope.TEAM,
                 TEAM_ID, "수정", "수정 본문", false, EDITOR_ID))
@@ -116,6 +116,60 @@ class InternalNoticeTest {
                 TEAM_ID, "수정", "수정 본문", false, EDITOR_ID))
                 .isInstanceOf(InvalidInternalNoticeStateException.class);
         assertThatThrownBy(() -> archived.publish(null, null, EDITOR_ID, NOW))
+                .isInstanceOf(InvalidInternalNoticeStateException.class);
+    }
+
+    @Test
+    void 종료된_공지만_보관할_수_있다() {
+        InternalNotice closed = teamDraft().publish(null, null, ACTOR_ID, NOW)
+                .close(EDITOR_ID);
+
+        InternalNotice archived = closed.archive(EDITOR_ID);
+
+        assertThat(archived.getStatus()).isEqualTo(InternalNoticeStatus.ARCHIVED);
+        assertThatThrownBy(() -> teamDraft().archive(EDITOR_ID))
+                .isInstanceOf(InvalidInternalNoticeStateException.class);
+        assertThatThrownBy(() -> teamDraft().publish(null, null, ACTOR_ID, NOW)
+                .archive(EDITOR_ID))
+                .isInstanceOf(InvalidInternalNoticeStateException.class);
+    }
+
+    @Test
+    void 예약과_보관_공지는_게시_정보를_지우고_초안으로_되돌린다() {
+        InternalNotice scheduled = teamDraft().publish(
+                NOW.plusDays(1), NOW.plusDays(7), ACTOR_ID, NOW);
+        InternalNotice archived = teamDraft().publish(null, null, ACTOR_ID, NOW)
+                .close(EDITOR_ID)
+                .archive(EDITOR_ID);
+
+        InternalNotice scheduledDraft = scheduled.returnToDraft(EDITOR_ID);
+        InternalNotice archivedDraft = archived.returnToDraft(EDITOR_ID);
+
+        assertThat(scheduledDraft.getStatus()).isEqualTo(InternalNoticeStatus.DRAFT);
+        assertThat(scheduledDraft.getPublishStartDttm()).isNull();
+        assertThat(scheduledDraft.getPublishEndDttm()).isNull();
+        assertThat(scheduledDraft.getPublishedByMemberId()).isNull();
+        assertThat(archivedDraft.getStatus()).isEqualTo(InternalNoticeStatus.DRAFT);
+        assertThat(archivedDraft.getUpdatedByMemberId()).isEqualTo(EDITOR_ID);
+    }
+
+    @Test
+    void 게시_중이거나_종료된_공지는_초안으로_되돌릴_수_없다() {
+        InternalNotice published = teamDraft().publish(null, null, ACTOR_ID, NOW);
+        InternalNotice closed = published.close(EDITOR_ID);
+
+        assertThatThrownBy(() -> published.returnToDraft(EDITOR_ID))
+                .isInstanceOf(InvalidInternalNoticeStateException.class);
+        assertThatThrownBy(() -> closed.returnToDraft(EDITOR_ID))
+                .isInstanceOf(InvalidInternalNoticeStateException.class);
+    }
+
+    @Test
+    void 초안만_삭제할_수_있다() {
+        teamDraft().validateDeletable();
+        InternalNotice published = teamDraft().publish(null, null, ACTOR_ID, NOW);
+
+        assertThatThrownBy(published::validateDeletable)
                 .isInstanceOf(InvalidInternalNoticeStateException.class);
     }
 

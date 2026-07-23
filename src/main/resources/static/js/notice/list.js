@@ -25,7 +25,8 @@ function appendNotice(notice) {
     badges.appendChild(element('span', 'rounded-full bg-info-soft px-2 py-1 text-xs font-bold text-info', notice.targetScope === 'TEAM' ? notice.teamName || '팀 공지' : '전체 공지'));
     if (!notice.read) badges.appendChild(element('span', 'rounded-full bg-accent px-2 py-1 text-xs font-bold text-accent-foreground', '미확인'));
     lookup('[data-notice-title]', row).textContent = notice.title;
-    lookup('[data-notice-meta]', row).textContent = `${new Date(notice.publishStartDttm).toLocaleString('ko-KR')} 게시`;
+    lookup('[data-notice-meta]', row).textContent =
+        `작성 ${notice.createdByName} · ${new Date(notice.publishStartDttm).toLocaleString('ko-KR')} 게시`;
     lookup('[data-notice-list]').appendChild(row);
 }
 

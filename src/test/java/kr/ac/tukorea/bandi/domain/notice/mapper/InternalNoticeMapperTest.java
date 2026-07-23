@@ -12,6 +12,7 @@ import kr.ac.tukorea.bandi.domain.member.model.SsoLinkStatus;
 import kr.ac.tukorea.bandi.domain.member.model.Team;
 import kr.ac.tukorea.bandi.domain.notice.dto.request.InternalNoticeManageSearchCondition;
 import kr.ac.tukorea.bandi.domain.notice.dto.request.InternalNoticeReadableSearchCondition;
+import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeManageSummaryResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeReadStatusResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeSummaryResponse;
 import kr.ac.tukorea.bandi.domain.notice.model.InternalNotice;
@@ -93,6 +94,14 @@ class InternalNoticeMapperTest {
                 .get()
                 .extracting("createdByName")
                 .isEqualTo("관리자");
+        List<InternalNoticeManageSummaryResponse> summaries =
+                internalNoticeMapper.searchManageable(
+                        new InternalNoticeManageSearchCondition(null, null, null,
+                                null, 0, 20));
+        assertThat(summaries).singleElement()
+                .extracting(InternalNoticeManageSummaryResponse::createdByName,
+                        InternalNoticeManageSummaryResponse::updatedByName)
+                .containsExactly("관리자", "관리자");
     }
 
     @Test
@@ -108,6 +117,8 @@ class InternalNoticeMapperTest {
 
         assertThat(memberResult).extracting(InternalNoticeSummaryResponse::title)
                 .containsExactlyInAnyOrder("전체 공지", "무대 공지");
+        assertThat(memberResult).extracting(InternalNoticeSummaryResponse::createdByName)
+                .containsOnly("관리자");
         assertThat(adminResult).extracting(InternalNoticeSummaryResponse::title)
                 .containsExactlyInAnyOrder("전체 공지", "무대 공지", "오퍼 공지");
     }
@@ -256,6 +267,23 @@ class InternalNoticeMapperTest {
                         null, 0, 20))).isEmpty();
         assertThat(internalNoticeMapper.searchReadable(
                 readableCondition(stageMemberId, stageTeamId, false))).isEmpty();
+    }
+
+    @Test
+    void 초안을_소프트_삭제하면_조회에서_제외하고_첨부_연결은_유지한다() {
+        InternalNotice notice = draft(InternalNoticeTargetScope.ALL, null, "삭제할 초안");
+        internalNoticeMapper.insert(notice);
+        Long fileId = insertStoredFile("초안.pdf", "c");
+        internalNoticeMapper.insertAttachment(InternalNoticeAttachment.create(
+                notice.getInternalNoticeId(), fileId, 0));
+
+        int affected = internalNoticeMapper.delete(notice.getInternalNoticeId(),
+                adminMemberId, NOW);
+
+        assertThat(affected).isEqualTo(1);
+        assertThat(internalNoticeMapper.lookupById(notice.getInternalNoticeId())).isEmpty();
+        assertThat(internalNoticeMapper.searchAttachmentFileIds(notice.getInternalNoticeId()))
+                .containsExactly(fileId);
     }
 
     private InternalNotice draft(InternalNoticeTargetScope scope, Long teamId,

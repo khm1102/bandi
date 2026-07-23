@@ -47,6 +47,8 @@ public interface InternalNoticeMapper {
                    @Param("memberId") Long memberId,
                    @Param("readDttm") LocalDateTime readDttm);
 
+    int removeReads(Long internalNoticeId);
+
     List<InternalNoticeReadStatusResponse> searchReadStatuses(
             @Param("internalNoticeId") Long internalNoticeId,
             @Param("targetScope") InternalNoticeTargetScope targetScope,
@@ -55,6 +57,10 @@ public interface InternalNoticeMapper {
     int insert(InternalNotice internalNotice);
 
     int update(InternalNotice internalNotice);
+
+    int delete(@Param("internalNoticeId") Long internalNoticeId,
+               @Param("actorMemberId") Long actorMemberId,
+               @Param("deletedDttm") LocalDateTime deletedDttm);
 
     int insertAttachment(InternalNoticeAttachment attachment);
 

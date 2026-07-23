@@ -2,6 +2,8 @@ package kr.ac.tukorea.bandi.domain.notice.controller;
 
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeDetailResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeDetailViewResponse;
+import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeManageDetailResponse;
+import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeManageDetailViewResponse;
 import kr.ac.tukorea.bandi.domain.notice.service.InternalNoticeService;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +31,21 @@ public class NoticeController {
     @GetMapping("/notices/write")
     public String write() {
         return "notice/form";
+    }
+
+    @GetMapping("/notices/manage")
+    public String manage() {
+        return "notice/manage-list";
+    }
+
+    @GetMapping("/notices/manage/{internalNoticeId}")
+    public String manageDetail(@LoginMember Long memberId,
+                               @PathVariable Long internalNoticeId, Model model) {
+        InternalNoticeManageDetailResponse notice = internalNoticeService.lookupManageable(
+                memberId, internalNoticeId);
+        model.addAttribute("notice", InternalNoticeManageDetailViewResponse.from(notice,
+                DISPLAY_DATE_TIME_FORMATTER));
+        return "notice/manage-detail";
     }
 
     @GetMapping("/notices/{internalNoticeId}")

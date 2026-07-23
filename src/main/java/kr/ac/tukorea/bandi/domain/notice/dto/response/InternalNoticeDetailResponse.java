@@ -16,19 +16,23 @@ public record InternalNoticeDetailResponse(
         boolean important,
         LocalDateTime publishStartDttm,
         LocalDateTime publishEndDttm,
+        String createdByName,
         String publishedByName,
         LocalDateTime updatedDttm,
+        boolean canManage,
         List<InternalNoticeAttachmentResponse> attachments
 ) {
 
     public static InternalNoticeDetailResponse of(
             InternalNoticeContentResponse content,
             SafeMarkdownHtml bodyHtml,
+            boolean canManage,
             List<InternalNoticeAttachmentResponse> attachments) {
         return new InternalNoticeDetailResponse(content.internalNoticeId(),
                 content.targetScope(), content.teamId(), content.teamName(), content.title(),
                 bodyHtml, content.important(), content.publishStartDttm(),
-                content.publishEndDttm(), content.publishedByName(), content.updatedDttm(),
+                content.publishEndDttm(), content.createdByName(),
+                content.publishedByName(), content.updatedDttm(), canManage,
                 List.copyOf(attachments));
     }
 }

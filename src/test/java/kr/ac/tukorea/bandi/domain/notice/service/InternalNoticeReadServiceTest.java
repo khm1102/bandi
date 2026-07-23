@@ -120,7 +120,34 @@ class InternalNoticeReadServiceTest {
                 MEMBER_ID, NOTICE_ID);
 
         assertThat(result.internalNoticeId()).isEqualTo(NOTICE_ID);
+        assertThat(result.createdByName()).isEqualTo("김현민");
+        assertThat(result.canManage()).isFalse();
         verify(internalNoticeMapper).upsertRead(NOTICE_ID, MEMBER_ID, NOW);
+    }
+
+    @Test
+    void 상세의_관리_버튼은_실제_대상_관리_범위로_판정한다() {
+        given(memberService.lookupAccessContext(MEMBER_ID)).willReturn(leaderContext());
+        given(internalNoticeMapper.lookupReadableContent(
+                NOTICE_ID, NOW, STAGE_TEAM_ID, false))
+                .willReturn(Optional.of(content(InternalNoticeTargetScope.TEAM,
+                        STAGE_TEAM_ID)));
+        given(internalNoticeMapper.searchAttachmentFileIds(NOTICE_ID))
+                .willReturn(List.of());
+
+        InternalNoticeDetailResponse teamNotice = internalNoticeService.lookupReadable(
+                MEMBER_ID, NOTICE_ID);
+
+        assertThat(teamNotice.canManage()).isTrue();
+
+        given(internalNoticeMapper.lookupReadableContent(
+                NOTICE_ID, NOW, STAGE_TEAM_ID, false))
+                .willReturn(Optional.of(content(InternalNoticeTargetScope.ALL, null)));
+
+        InternalNoticeDetailResponse globalNotice = internalNoticeService.lookupReadable(
+                MEMBER_ID, NOTICE_ID);
+
+        assertThat(globalNotice.canManage()).isFalse();
     }
 
     @Test
@@ -236,14 +263,14 @@ class InternalNoticeReadServiceTest {
     private InternalNoticeSummaryResponse summary() {
         return new InternalNoticeSummaryResponse(NOTICE_ID,
                 InternalNoticeTargetScope.TEAM, STAGE_TEAM_ID, "무대팀", "공지 제목",
-                true, NOW.minusHours(1), NOW.plusDays(1), false);
+                "이서준", true, NOW.minusHours(1), NOW.plusDays(1), false);
     }
 
     private InternalNoticeContentResponse content(InternalNoticeTargetScope scope,
                                                    Long teamId) {
         return new InternalNoticeContentResponse(NOTICE_ID, scope, teamId, "무대팀",
                 "공지 제목", "공지 본문", true, NOW.minusHours(1), NOW.plusDays(1),
-                "이서준", NOW.minusHours(1));
+                "김현민", "이서준", NOW.minusHours(1));
     }
 
     private InternalNotice notice(InternalNoticeTargetScope scope, Long teamId) {

@@ -3,7 +3,12 @@
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
 <t:layout title="공지" active="notices" role="${role}" scriptPath="notice/list">
     <t:pageHead title="공지" description="전체 공지와 내 팀 공지를 확인하세요.">
-        <c:if test="${role != 'member'}"><t:button href="/notices/write">공지 작성</t:button></c:if>
+        <c:if test="${role != 'member'}">
+            <div class="flex gap-2">
+                <t:button variant="outline" href="/notices/manage">공지 관리</t:button>
+                <t:button href="/notices/write">공지 작성</t:button>
+            </div>
+        </c:if>
     </t:pageHead>
     <div class="mb-4 flex flex-col gap-3 md:flex-row">
         <input class="h-11 min-w-0 flex-1 rounded-md border border-input bg-card px-3 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20" type="search" data-notice-search placeholder="제목과 내용으로 검색" aria-label="공지 검색">
