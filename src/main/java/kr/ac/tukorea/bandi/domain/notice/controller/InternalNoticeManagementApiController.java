@@ -63,6 +63,14 @@ public class InternalNoticeManagementApiController
     }
 
     @Override
+    public ResponseEntity<Resource> downloadAttachment(@LoginMember Long actorMemberId,
+                                                       Long internalNoticeId,
+                                                       Long storedFileId) {
+        return attachment(internalNoticeService.openManageableAttachmentDownload(actorMemberId,
+                internalNoticeId, storedFileId));
+    }
+
+    @Override
     public ResponseEntity<MarkdownPreviewResponse> preview(@LoginMember Long actorMemberId,
                                                             MarkdownPreviewRequest request) {
         return ResponseEntity.ok(new MarkdownPreviewResponse(internalNoticeService.preview(
@@ -129,6 +137,20 @@ public class InternalNoticeManagementApiController
     }
 
     @Override
+    public ResponseEntity<Void> returnToDraft(@LoginMember Long actorMemberId,
+                                              Long internalNoticeId) {
+        internalNoticeService.returnToDraft(actorMemberId, internalNoticeId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public ResponseEntity<Void> deleteDraft(@LoginMember Long actorMemberId,
+                                            Long internalNoticeId) {
+        internalNoticeService.deleteDraft(actorMemberId, internalNoticeId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
     public ResponseEntity<List<InternalNoticeReadStatusResponse>> searchReadStatuses(
             @LoginMember Long actorMemberId, Long internalNoticeId) {
         return ResponseEntity.ok(internalNoticeService.searchReadStatuses(actorMemberId,
@@ -140,6 +162,15 @@ public class InternalNoticeManagementApiController
                 .contentType(MediaType.parseMediaType(file.contentType()))
                 .contentLength(file.sizeBytes())
                 .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.inline()
+                        .filename(file.originalName(), StandardCharsets.UTF_8).build().toString())
+                .body(file.resource());
+    }
+
+    private ResponseEntity<Resource> attachment(FileDownloadResponse file) {
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(file.contentType()))
+                .contentLength(file.sizeBytes())
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
                         .filename(file.originalName(), StandardCharsets.UTF_8).build().toString())
                 .body(file.resource());
     }

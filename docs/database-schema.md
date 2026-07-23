@@ -50,6 +50,13 @@
 `internal_notice_attachment`는 현재 연결만 보관한다. 수정에서 분리된 private 파일은
 파일 feature의 미연결 파일 정리 대상으로 남긴다.
 
+`internal_notice.status_code`는 `DRAFT`, `SCHEDULED`, `PUBLISHED`, `CLOSED`,
+`ARCHIVED`를 사용한다. 보관은 `CLOSED`에서만, 초안 복귀는 `SCHEDULED`·`ARCHIVED`에서만
+허용한다. 초안 복귀는 게시 시각·게시자와 기존 `internal_notice_read`를 초기화한다.
+`DRAFT` 삭제는 `deleted_dttm`을 기록하는 소프트 삭제이며 첨부 연결과 파일 메타데이터는
+미연결 파일 정리 정책이 마련될 때까지 유지한다. 모든 공지 조회는 `deleted_dttm IS NULL`을
+강제한다.
+
 `calendar_event`의 유효 기간은 `end_dttm > start_dttm`이며, 기간 조회는
 `start_dttm < rangeEnd AND end_dttm > rangeStart`의 반개구간으로 겹침을 판정한다.
 종일 일정은 시작일 00:00을 포함하고 사용자가 선택한 마지막 날 다음 날 00:00을

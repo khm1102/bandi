@@ -14,6 +14,7 @@ public record InternalNoticeContentResponse(
         boolean important,
         LocalDateTime publishStartDttm,
         LocalDateTime publishEndDttm,
+        String createdByName,
         String publishedByName,
         LocalDateTime updatedDttm
 ) {

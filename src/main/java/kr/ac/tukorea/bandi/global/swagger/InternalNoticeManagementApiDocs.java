@@ -21,6 +21,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.http.MediaType;
 import org.springframework.core.io.Resource;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -53,6 +54,13 @@ public interface InternalNoticeManagementApiDocs {
     @Operation(summary = "관리용 공지 본문 이미지 조회")
     @GetMapping("/{internalNoticeId}/attachments/{storedFileId}/inline")
     ResponseEntity<Resource> inlineAttachmentImage(
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
+            @PathVariable Long internalNoticeId,
+            @PathVariable Long storedFileId);
+
+    @Operation(summary = "관리용 공지 첨부파일 다운로드")
+    @GetMapping("/{internalNoticeId}/attachments/{storedFileId}/download")
+    ResponseEntity<Resource> downloadAttachment(
             @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @PathVariable Long internalNoticeId,
             @PathVariable Long storedFileId);
@@ -108,6 +116,18 @@ public interface InternalNoticeManagementApiDocs {
     @Operation(summary = "공지 보관")
     @PostMapping("/{internalNoticeId}/archive")
     ResponseEntity<Void> archive(
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
+            @PathVariable Long internalNoticeId);
+
+    @Operation(summary = "공지 초안 복귀")
+    @PostMapping("/{internalNoticeId}/draft")
+    ResponseEntity<Void> returnToDraft(
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
+            @PathVariable Long internalNoticeId);
+
+    @Operation(summary = "공지 초안 삭제")
+    @DeleteMapping("/{internalNoticeId}")
+    ResponseEntity<Void> deleteDraft(
             @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @PathVariable Long internalNoticeId);
 

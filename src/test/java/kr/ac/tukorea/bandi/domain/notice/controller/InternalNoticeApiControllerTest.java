@@ -32,6 +32,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -155,6 +156,39 @@ class InternalNoticeApiControllerTest {
                 new InternalNoticeManageSearchParam(null,
                         InternalNoticeStatus.PUBLISHED,
                         InternalNoticeTargetScope.TEAM, TEAM_ID, 0, 20));
+    }
+
+    @Test
+    void 관리자는_공지_상태를_변경하고_초안을_삭제한다() throws Exception {
+        mockMvc.perform(post("/api/internal-notice-management/{noticeId}/draft", NOTICE_ID))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(post("/api/internal-notice-management/{noticeId}/close", NOTICE_ID))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(post("/api/internal-notice-management/{noticeId}/archive", NOTICE_ID))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(delete("/api/internal-notice-management/{noticeId}", NOTICE_ID))
+                .andExpect(status().isNoContent());
+
+        verify(internalNoticeService).returnToDraft(ACTOR_ID, NOTICE_ID);
+        verify(internalNoticeService).close(ACTOR_ID, NOTICE_ID);
+        verify(internalNoticeService).archive(ACTOR_ID, NOTICE_ID);
+        verify(internalNoticeService).deleteDraft(ACTOR_ID, NOTICE_ID);
+    }
+
+    @Test
+    void 관리_상세의_첨부파일을_직접_전송한다() throws Exception {
+        given(internalNoticeService.openManageableAttachmentDownload(
+                ACTOR_ID, NOTICE_ID, FILE_ID)).willReturn(
+                new kr.ac.tukorea.bandi.global.response.FileDownloadResponse(
+                        "notice.pdf", "application/pdf", 4,
+                        new org.springframework.core.io.InputStreamResource(
+                                new java.io.ByteArrayInputStream(new byte[]{1, 2, 3, 4}))));
+
+        mockMvc.perform(get("/api/internal-notice-management/{noticeId}/attachments/"
+                        + "{fileId}/download", NOTICE_ID, FILE_ID))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition",
+                        org.hamcrest.Matchers.containsString("attachment")));
     }
 
     @Test

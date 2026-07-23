@@ -52,8 +52,13 @@ Controller → Service → Mapper → Model
   `/api/members/team-members`는 `LEADER`·`ADMIN`만 URL 단계에서 허용하고,
   팀·대상 범위는 `MemberService`가 다시 검사한다.
 - `/notices`는 인증 멤버의 내부 공지 목록·상세 화면이며, `/notices/write`와
-  `/notices/{id}/edit`는 `LEADER`·`ADMIN`만 URL 단계에서 허용한다. 실제 공지 대상
-  범위와 상태 전이는 `InternalNoticeService`가 다시 검사한다.
+  `/notices/{id}/edit`, `/notices/manage`, `/notices/manage/{id}`는 `LEADER`·`ADMIN`만
+  URL 단계에서 허용한다. 일반 상세의 `canManage`도 실제 공지 대상과 로그인 멤버의 팀
+  범위를 Service에서 계산하며, 버튼 노출과 관계없이 모든 관리 API가 같은 범위를 다시 검사한다.
+- 공지 상태 API는 게시·종료·보관 외에 `POST /api/internal-notice-management/{id}/draft`와
+  `DELETE /api/internal-notice-management/{id}`를 제공한다. 보관은 종료 공지만, 초안 복귀는
+  예약·보관 공지만, 소프트 삭제는 초안만 허용한다. 초안 복귀 시 게시 정보와 이전 읽음
+  기록을 같은 트랜잭션에서 초기화한다.
 - 공지 Markdown은 `notice.MarkdownRenderer`가 GFM을 렌더링하고 allowlist sanitizer를
   거친 `SafeMarkdownHtml` 값만 만든다. JSP는 전용 `<t:markdown>` 태그만 이 값을
   원문 출력할 수 있으며, 일반 JSP/JS의 HTML 출력 금지 규칙은 그대로 유지한다.

@@ -118,6 +118,24 @@ public class InternalNoticeService {
         internalNoticeMapper.update(original.archive(actorMemberId));
     }
 
+    @Transactional
+    public void returnToDraft(Long actorMemberId, Long internalNoticeId) {
+        MemberAccessContext access = memberService.lookupAccessContext(actorMemberId);
+        InternalNotice original = lock(internalNoticeId);
+        validateManagement(access, original.getTargetScope(), original.getTeamId());
+        internalNoticeMapper.update(original.returnToDraft(actorMemberId));
+        internalNoticeMapper.removeReads(internalNoticeId);
+    }
+
+    @Transactional
+    public void deleteDraft(Long actorMemberId, Long internalNoticeId) {
+        MemberAccessContext access = memberService.lookupAccessContext(actorMemberId);
+        InternalNotice original = lock(internalNoticeId);
+        validateManagement(access, original.getTargetScope(), original.getTeamId());
+        original.validateDeletable();
+        internalNoticeMapper.delete(internalNoticeId, actorMemberId, LocalDateTime.now(clock));
+    }
+
     public List<InternalNoticeManageSummaryResponse> searchManageable(
             Long actorMemberId, InternalNoticeManageSearchParam param) {
         MemberAccessContext access = memberService.lookupAccessContext(actorMemberId);
@@ -166,7 +184,8 @@ public class InternalNoticeService {
         internalNoticeMapper.upsertRead(internalNoticeId, memberId, currentDttm);
         List<InternalNoticeAttachmentResponse> attachments = lookupAttachments(internalNoticeId);
         return InternalNoticeDetailResponse.of(content,
-                renderReadableMarkdown(content.body(), internalNoticeId, attachments), attachments);
+                renderReadableMarkdown(content.body(), internalNoticeId, attachments),
+                canManage(access, content.targetScope(), content.teamId()), attachments);
     }
 
     public FileDownloadResponse openAttachmentDownload(Long memberId, Long internalNoticeId,
@@ -203,14 +222,15 @@ public class InternalNoticeService {
     public FileDownloadResponse openManageableAttachmentInline(Long actorMemberId,
                                                                 Long internalNoticeId,
                                                                 Long storedFileId) {
-        MemberAccessContext access = memberService.lookupAccessContext(actorMemberId);
-        InternalNotice notice = internalNoticeMapper.lookupById(internalNoticeId)
-                .orElseThrow(() -> new InternalNoticeNotFoundException(internalNoticeId));
-        validateManagement(access, notice.getTargetScope(), notice.getTeamId());
-        if (!internalNoticeMapper.searchAttachmentFileIds(internalNoticeId).contains(storedFileId)) {
-            throw new InternalNoticeNotFoundException(internalNoticeId);
-        }
+        validateManageableAttachment(actorMemberId, internalNoticeId, storedFileId);
         return fileService.openPrivateNoticeInlineImage(storedFileId, FileAccessDecision.GRANTED);
+    }
+
+    public FileDownloadResponse openManageableAttachmentDownload(Long actorMemberId,
+                                                                  Long internalNoticeId,
+                                                                  Long storedFileId) {
+        validateManageableAttachment(actorMemberId, internalNoticeId, storedFileId);
+        return fileService.openPrivateDownload(storedFileId, FileAccessDecision.GRANTED);
     }
 
     public SafeMarkdownHtml preview(Long actorMemberId, Long internalNoticeId,
@@ -256,6 +276,18 @@ public class InternalNoticeService {
         return access;
     }
 
+    private void validateManageableAttachment(Long actorMemberId, Long internalNoticeId,
+                                              Long storedFileId) {
+        MemberAccessContext access = memberService.lookupAccessContext(actorMemberId);
+        InternalNotice notice = internalNoticeMapper.lookupById(internalNoticeId)
+                .orElseThrow(() -> new InternalNoticeNotFoundException(internalNoticeId));
+        validateManagement(access, notice.getTargetScope(), notice.getTeamId());
+        if (!internalNoticeMapper.searchAttachmentFileIds(internalNoticeId)
+                .contains(storedFileId)) {
+            throw new InternalNoticeNotFoundException(internalNoticeId);
+        }
+    }
+
     private void validateReadStatusManagement(MemberAccessContext access,
                                               InternalNotice notice) {
         boolean allowed = access.canManageGlobal()
@@ -268,12 +300,16 @@ public class InternalNoticeService {
 
     private void validateManagement(MemberAccessContext access,
                                     InternalNoticeTargetScope scope, Long teamId) {
-        boolean allowed = scope == InternalNoticeTargetScope.ALL
-                ? access.canManageGlobal()
-                : access.canManageTeam(teamId);
-        if (!allowed) {
+        if (!canManage(access, scope, teamId)) {
             throw new InternalNoticeAccessDeniedException();
         }
+    }
+
+    private boolean canManage(MemberAccessContext access,
+                              InternalNoticeTargetScope scope, Long teamId) {
+        return scope == InternalNoticeTargetScope.ALL
+                ? access.canManageGlobal()
+                : access.canManageTeam(teamId);
     }
 
     private void validateActiveTarget(InternalNoticeTargetScope scope, Long teamId) {

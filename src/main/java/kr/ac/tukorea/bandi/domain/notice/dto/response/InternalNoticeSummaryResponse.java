@@ -10,6 +10,7 @@ public record InternalNoticeSummaryResponse(
         Long teamId,
         String teamName,
         String title,
+        String createdByName,
         boolean important,
         LocalDateTime publishStartDttm,
         LocalDateTime publishEndDttm,

@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -18,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -166,6 +168,24 @@ class SecurityConfigTest {
         mockMvc.perform(post("/api/internal-notice-management/test")
                         .with(user("leader").roles("LEADER")).with(csrf()))
                 .andExpect(status().isOk());
+        mockMvc.perform(delete("/api/internal-notice-management/test")
+                        .with(user("leader").roles("LEADER")))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(delete("/api/internal-notice-management/test")
+                        .with(user("leader").roles("LEADER")).with(csrf()))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void 공지_관리_화면은_팀장과_운영진만_접근한다() throws Exception {
+        for (String path : new String[]{"/notices/manage", "/notices/manage/1"}) {
+            mockMvc.perform(get(path).with(user("member").roles("MEMBER")))
+                    .andExpect(status().isForbidden());
+            mockMvc.perform(get(path).with(user("leader").roles("LEADER")))
+                    .andExpect(status().isOk());
+            mockMvc.perform(get(path).with(user("admin").roles("ADMIN")))
+                    .andExpect(status().isOk());
+        }
     }
 
     @Test
@@ -193,7 +213,8 @@ class SecurityTestController {
             "/api/members/reference/teams",
             "/profile", "/team-members", "/api/members/me/profile",
             "/api/members/1/profile-photo", "/api/members/team-members",
-            "/api/internal-notice-management/test"})
+            "/api/internal-notice-management/test", "/notices/manage",
+            "/notices/manage/1"})
     ResponseEntity<Void> page() {
         return ResponseEntity.ok().build();
     }
@@ -210,6 +231,11 @@ class SecurityTestController {
 
     @PostMapping("/api/internal-notice-management/test")
     ResponseEntity<Void> manageNotice() {
+        return ResponseEntity.ok().build();
+    }
+
+    @DeleteMapping("/api/internal-notice-management/test")
+    ResponseEntity<Void> deleteNotice() {
         return ResponseEntity.ok().build();
     }
 
