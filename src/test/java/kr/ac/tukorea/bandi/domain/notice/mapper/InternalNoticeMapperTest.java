@@ -160,6 +160,7 @@ class InternalNoticeMapperTest {
 
         assertThat(result).extracting(InternalNoticeSummaryResponse::title)
                 .containsExactly("중요 안내");
+        assertThat(internalNoticeMapper.countReadable(condition)).isEqualTo(result.size());
         assertThat(result.get(0).read()).isTrue();
         assertThat(normal.getInternalNoticeId()).isNotNull();
     }
@@ -182,6 +183,7 @@ class InternalNoticeMapperTest {
 
         assertThat(result).extracting(InternalNoticeSummaryResponse::title)
                 .containsExactly(teamNotice.getTitle());
+        assertThat(internalNoticeMapper.countReadable(condition)).isEqualTo(result.size());
     }
 
     @Test

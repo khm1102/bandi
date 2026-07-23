@@ -123,6 +123,37 @@
         )
     </sql>
 
+    <sql id="manageSearchCondition">
+        n.deleted_dttm IS NULL
+        <if test="keyword != null">
+          AND (n.title LIKE CONCAT('%', #{keyword}, '%')
+               OR n.body LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="status != null">
+          AND n.status_code = #{status}
+        </if>
+        <if test="targetScope != null">
+          AND n.target_scope_code = #{targetScope}
+        </if>
+        <if test="teamId != null">
+          AND n.team_id = #{teamId}
+        </if>
+    </sql>
+
+    <sql id="readableSearchCondition">
+        <include refid="readableCondition"/>
+        <if test="keyword != null">
+          AND (n.title LIKE CONCAT('%', #{keyword}, '%')
+               OR n.body LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="readFilter == @kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeReadFilter@UNREAD">
+          AND r.internal_notice_read_id IS NULL
+        </if>
+        <if test="targetScope != null">
+          AND n.target_scope_code = #{targetScope}
+        </if>
+    </sql>
+
     <select id="lookupById" resultMap="internalNoticeResultMap">
         SELECT <include refid="internalNoticeColumns"/>
         FROM internal_notice
@@ -148,22 +179,15 @@
         LEFT JOIN team t ON t.team_id = n.team_id
         JOIN member creator ON creator.member_id = n.created_by_member_id
         JOIN member updater ON updater.member_id = n.updated_by_member_id
-        WHERE n.deleted_dttm IS NULL
-        <if test="keyword != null">
-          AND (n.title LIKE CONCAT('%', #{keyword}, '%')
-               OR n.body LIKE CONCAT('%', #{keyword}, '%'))
-        </if>
-        <if test="status != null">
-          AND n.status_code = #{status}
-        </if>
-        <if test="targetScope != null">
-          AND n.target_scope_code = #{targetScope}
-        </if>
-        <if test="teamId != null">
-          AND n.team_id = #{teamId}
-        </if>
+        WHERE <include refid="manageSearchCondition"/>
         ORDER BY n.updated_dttm DESC, n.internal_notice_id DESC
         LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countManageable" resultType="long">
+        SELECT COUNT(*)
+        FROM internal_notice n
+        WHERE <include refid="manageSearchCondition"/>
     </select>
 
     <select id="lookupManageContent" resultMap="manageContentResultMap">
@@ -194,20 +218,19 @@
         LEFT JOIN internal_notice_read r
           ON r.internal_notice_id = n.internal_notice_id
          AND r.member_id = #{memberId}
-        WHERE <include refid="readableCondition"/>
-        <if test="keyword != null">
-          AND (n.title LIKE CONCAT('%', #{keyword}, '%')
-               OR n.body LIKE CONCAT('%', #{keyword}, '%'))
-        </if>
-        <if test="readFilter == @kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeReadFilter@UNREAD">
-          AND r.internal_notice_read_id IS NULL
-        </if>
-        <if test="targetScope != null">
-          AND n.target_scope_code = #{targetScope}
-        </if>
+        WHERE <include refid="readableSearchCondition"/>
         ORDER BY n.is_important DESC, n.publish_start_dttm DESC,
                  n.internal_notice_id DESC
         LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countReadable" resultType="long">
+        SELECT COUNT(*)
+        FROM internal_notice n
+        LEFT JOIN internal_notice_read r
+          ON r.internal_notice_id = n.internal_notice_id
+         AND r.member_id = #{memberId}
+        WHERE <include refid="readableSearchCondition"/>
     </select>
 
     <select id="lookupReadableContent" resultMap="readableContentResultMap">

@@ -4,6 +4,7 @@ import kr.ac.tukorea.bandi.domain.file.dto.response.FileReferenceResponse;
 import kr.ac.tukorea.bandi.domain.file.service.FileAccessDecision;
 import kr.ac.tukorea.bandi.domain.file.service.FileService;
 import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
 import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceManageSearchCondition;
@@ -117,7 +118,7 @@ public class ResourceService {
         resourceMapper.update(resource.archive(actorMemberId));
     }
 
-    public List<ResourceManageSummaryResponse> searchManageable(
+    public PageResponse<ResourceManageSummaryResponse> searchManageable(
             Long actorMemberId, ResourceManageSearchParam param) {
         MemberAccessContext access = memberService.lookupAccessContext(actorMemberId);
         ResourceManageSearchCondition condition;
@@ -128,7 +129,8 @@ public class ResourceService {
         } else {
             throw new ResourceAccessDeniedException();
         }
-        return resourceMapper.searchManageable(condition);
+        return PageResponse.of(resourceMapper.searchManageable(condition),
+                param.page(), param.pageSize(), resourceMapper.countManageable(condition));
     }
 
     public ResourceManageDetailResponse lookupManageable(Long actorMemberId,
@@ -142,11 +144,13 @@ public class ResourceService {
         return ResourceManageDetailResponse.of(content, revisions);
     }
 
-    public List<ResourceSummaryResponse> searchReadable(
+    public PageResponse<ResourceSummaryResponse> searchReadable(
             Long memberId, ResourceSearchParam param) {
         MemberAccessContext access = readableAccess(memberId);
-        return resourceMapper.searchReadable(ResourceReadableSearchCondition.from(
-                param, access.teamId(), access.canManageGlobal()));
+        ResourceReadableSearchCondition condition = ResourceReadableSearchCondition.from(
+                param, access.teamId(), access.canManageGlobal());
+        return PageResponse.of(resourceMapper.searchReadable(condition),
+                param.page(), param.pageSize(), resourceMapper.countReadable(condition));
     }
 
     public ResourceDetailResponse lookupReadable(Long memberId, Long resourceId) {

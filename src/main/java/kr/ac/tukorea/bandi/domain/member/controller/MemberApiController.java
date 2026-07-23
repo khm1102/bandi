@@ -2,6 +2,7 @@ package kr.ac.tukorea.bandi.domain.member.controller;
 
 import kr.ac.tukorea.bandi.domain.member.dto.request.CohortChangeRequest;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPreRegisterRequest;
+import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchFilter;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchCondition;
 import kr.ac.tukorea.bandi.domain.member.dto.request.RoleChangeRequest;
@@ -12,12 +13,14 @@ import kr.ac.tukorea.bandi.domain.member.dto.response.MemberCreatedResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberHistoryResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberProfileResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberResponse;
+import kr.ac.tukorea.bandi.domain.member.dto.response.MemberStatsResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.TeamMemberResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.TeamResponse;
 import kr.ac.tukorea.bandi.domain.member.service.MemberProfileService;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
 import kr.ac.tukorea.bandi.domain.file.service.FileUploadParam;
 import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import kr.ac.tukorea.bandi.global.swagger.MemberApiDocs;
 import lombok.RequiredArgsConstructor;
@@ -81,19 +84,30 @@ public class MemberApiController implements MemberApiDocs {
     }
 
     @Override
-    public ResponseEntity<List<TeamMemberResponse>> searchTeamMembers(
-            @LoginMember Long memberId) {
-        return ResponseEntity.ok(memberProfileService.searchTeamMembers(memberId));
+    public ResponseEntity<PageResponse<TeamMemberResponse>> searchTeamMembers(
+            @LoginMember Long memberId, String keyword, Long teamId,
+            MemberSearchFilter filter, int page, int pageSize) {
+        return ResponseEntity.ok(memberProfileService.searchTeamMembers(memberId,
+                new MemberPageSearchParam(keyword, teamId, null, filter.status(),
+                        null, null, page, pageSize)));
     }
 
     @Override
-    public ResponseEntity<List<MemberResponse>> searchMembers(
+    public ResponseEntity<PageResponse<MemberResponse>> searchMembers(
             String keyword,
             Long teamId,
-            MemberSearchFilter filter) {
-        return ResponseEntity.ok(memberService.searchMembers(
-                new MemberSearchCondition(keyword, teamId, filter.status(),
-                        filter.role(), filter.ssoLinkStatus())));
+            Long cohortId,
+            MemberSearchFilter filter,
+            int page,
+            int pageSize) {
+        return ResponseEntity.ok(memberService.searchMemberPage(
+                new MemberPageSearchParam(keyword, teamId, cohortId, filter.status(),
+                        filter.role(), filter.ssoLinkStatus(), page, pageSize)));
+    }
+
+    @Override
+    public ResponseEntity<MemberStatsResponse> lookupMemberStats() {
+        return ResponseEntity.ok(memberService.lookupMemberStats());
     }
 
     @Override

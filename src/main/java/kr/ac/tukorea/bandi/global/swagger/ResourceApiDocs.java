@@ -6,15 +6,17 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceDetailResponse;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceSummaryResponse;
+import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceReadFilter;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-
-import java.util.List;
 
 @RequestMapping("/api/resources")
 @Tag(name = ApiTag.RESOURCE, description = "전체·팀 자료실 열람 API")
@@ -23,10 +25,11 @@ public interface ResourceApiDocs {
 
     @Operation(summary = "읽을 수 있는 자료 목록 조회")
     @GetMapping
-    ResponseEntity<List<ResourceSummaryResponse>> search(
+    ResponseEntity<PageResponse<ResourceSummaryResponse>> search(
             @Parameter(hidden = true) @LoginMember Long memberId,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String categoryCode,
+            @ParameterObject @ModelAttribute ResourceReadFilter filter,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int pageSize);
 

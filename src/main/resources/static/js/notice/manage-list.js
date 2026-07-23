@@ -1,5 +1,6 @@
 import {get} from '../common/api.js';
 import {debounce, element, lookup} from '../common/dom.js';
+import {renderPagination, readPageFromUrl, setUrlPage, writeUrl, normalizePage} from '../common/pagination.js';
 import {badge} from '../common/view.js';
 
 const PAGE_SIZE = 20;
@@ -18,24 +19,37 @@ const searchInput = lookup('[data-manage-search]');
 const statusSelect = lookup('[data-manage-status]');
 const scopeSelect = lookup('[data-manage-scope]');
 const teamSelect = lookup('[data-manage-team]');
-const moreButton = lookup('[data-manage-more]');
-
-let page = 0;
-let loading = false;
-let lastPage = false;
+const pagination = lookup('[data-pagination]');
 let requestGeneration = 0;
 
-function formatDateTime(value) {
-    if (!value) {
-        return '';
+function readUrlState() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+        params,
+        query: params.get('q') || '',
+        status: params.get('status') || '',
+        scope: params.get('scope') || '',
+        team: params.get('team') || '',
+        page: readPageFromUrl(params),
+    };
+}
+
+function syncControls(urlState) {
+    searchInput.value = urlState.query;
+    statusSelect.value = urlState.status;
+    if (scopeSelect) {
+        scopeSelect.value = urlState.scope;
     }
-    return new Date(value).toLocaleString('ko-KR', {
-        year: 'numeric',
-        month: 'numeric',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-    });
+    if (teamSelect) {
+        teamSelect.value = urlState.team;
+        teamSelect.classList.toggle('hidden', urlState.scope !== 'TEAM');
+    }
+}
+
+function formatDateTime(value) {
+    return value ? new Date(value).toLocaleString('ko-KR', {
+        year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit',
+    }) : '';
 }
 
 function setState(title, message, options = {}) {
@@ -46,17 +60,13 @@ function setState(title, message, options = {}) {
     state.classList.remove('hidden');
 }
 
-function targetLabel(notice) {
-    return notice.targetScope === 'TEAM' ? notice.teamName : '전체 공지';
-}
-
 function appendNotice(notice) {
     const row = lookup('[data-manage-row-template]').content.firstElementChild.cloneNode(true);
     row.href = `/notices/manage/${notice.internalNoticeId}`;
     const badges = lookup('[data-manage-badges]', row);
     const presentation = STATUS_PRESENTATION[notice.status] || STATUS_PRESENTATION.DRAFT;
     badges.appendChild(badge(presentation.label, presentation.tone));
-    badges.appendChild(badge(targetLabel(notice), 'info'));
+    badges.appendChild(badge(notice.targetScope === 'TEAM' ? notice.teamName : '전체 공지', 'info'));
     if (notice.important) {
         badges.appendChild(badge('중요', 'warning'));
     }
@@ -69,76 +79,84 @@ function appendNotice(notice) {
     list.appendChild(row);
 }
 
-function hasFilter() {
-    return Boolean(searchInput.value.trim() || statusSelect.value
-        || scopeSelect?.value || teamSelect?.value);
+function hasFilter(urlState) {
+    return Boolean(urlState.query || urlState.status || urlState.scope || urlState.team);
 }
 
-function query() {
-    return {
-        keyword: searchInput.value.trim(),
-        status: statusSelect.value,
-        targetScope: scopeSelect?.value,
-        teamId: scopeSelect?.value === 'TEAM' ? teamSelect?.value : null,
-        page,
-        pageSize: PAGE_SIZE,
-    };
+function replaceFilters(changes) {
+    const urlState = readUrlState();
+    Object.entries(changes).forEach(([key, value]) => {
+        if (value) {
+            urlState.params.set(key, value);
+        } else {
+            urlState.params.delete(key);
+        }
+    });
+    setUrlPage(urlState.params, 0);
+    writeUrl(urlState.params, false);
+    load();
 }
 
-async function load(reset = false) {
-    if (loading && !reset) {
-        return;
+function changePage(page) {
+    const urlState = readUrlState();
+    setUrlPage(urlState.params, page);
+    writeUrl(urlState.params, true);
+    load({focus: true});
+}
+
+function focusList() {
+    const first = list.querySelector('[data-manage-link]');
+    if (first) {
+        first.focus({preventScroll: true});
     }
-    if (lastPage && !reset) {
-        return;
-    }
-    if (reset) {
-        page = 0;
-        lastPage = false;
-        list.replaceChildren();
-    }
+    list.scrollIntoView({behavior: 'smooth', block: 'start'});
+}
+
+async function load(options = {}) {
+    const urlState = readUrlState();
+    syncControls(urlState);
     const generation = ++requestGeneration;
-    loading = true;
     try {
-        const currentPage = page;
-        const notices = await get('/api/internal-notice-management', query());
+        const response = await get('/api/internal-notice-management', {
+            keyword: urlState.query,
+            status: urlState.status,
+            targetScope: urlState.scope,
+            teamId: urlState.scope === 'TEAM' ? urlState.team : null,
+            page: urlState.page,
+            pageSize: PAGE_SIZE,
+        });
         if (generation !== requestGeneration) {
             return;
         }
-        notices.forEach(appendNotice);
-        lastPage = notices.length < PAGE_SIZE;
-        page += 1;
-        moreButton.classList.toggle('hidden', lastPage);
-        state.classList.toggle('hidden', notices.length > 0 || currentPage > 0);
-        if (notices.length === 0 && currentPage === 0) {
-            setState(hasFilter() ? '조건에 맞는 공지가 없습니다' : '관리할 공지가 없습니다',
-                hasFilter() ? '검색어나 필터를 초기화해 보세요.'
-                    : '새 공지를 작성하면 여기에 표시됩니다.',
-                {reset: hasFilter()});
+        const normalized = normalizePage(response, urlState.page);
+        if (normalized !== urlState.page) {
+            setUrlPage(urlState.params, normalized);
+            writeUrl(urlState.params, false);
+            await load(options);
+            return;
+        }
+        list.replaceChildren();
+        response.items.forEach(appendNotice);
+        state.classList.toggle('hidden', response.items.length > 0);
+        if (response.totalElements > 0) {
+            renderPagination(pagination, response, changePage);
+        } else {
+            pagination.classList.add('hidden');
+        }
+        if (response.items.length === 0) {
+            const filtered = hasFilter(urlState);
+            setState(filtered ? '조건에 맞는 공지가 없습니다' : '관리할 공지가 없습니다',
+                filtered ? '검색어나 필터를 초기화해 보세요.' : '새 공지를 작성하면 여기에 표시됩니다.',
+                {reset: filtered});
+        } else if (options.focus) {
+            focusList();
         }
     } catch (error) {
         if (generation === requestGeneration) {
             setState('공지 관리 목록을 불러오지 못했습니다',
                 error.message || '잠시 후 다시 시도해 주세요.', {retry: true});
         }
-    } finally {
-        if (generation === requestGeneration) {
-            loading = false;
-        }
     }
-}
-
-function resetFilters() {
-    searchInput.value = '';
-    statusSelect.value = '';
-    if (scopeSelect) {
-        scopeSelect.value = '';
-    }
-    if (teamSelect) {
-        teamSelect.value = '';
-        teamSelect.classList.add('hidden');
-    }
-    load(true);
 }
 
 async function initializeTeams() {
@@ -148,31 +166,33 @@ async function initializeTeams() {
     try {
         const teams = await get('/api/members/reference/teams', {activeOnly: true});
         teams.forEach((team) => {
-            teamSelect.appendChild(element('option', '', team.name));
-            teamSelect.lastElementChild.value = String(team.teamId);
+            const option = element('option', '', team.name);
+            option.value = String(team.teamId);
+            teamSelect.appendChild(option);
         });
-    } catch (error) {
-        const unavailableOption = element('option', '', '팀 목록을 불러오지 못했어요');
-        unavailableOption.value = '';
-        teamSelect.replaceChildren(unavailableOption);
+    } catch {
+        const unavailable = element('option', '', '팀 목록을 불러오지 못했어요');
+        unavailable.value = '';
+        teamSelect.replaceChildren(unavailable);
         teamSelect.disabled = true;
     }
 }
 
-searchInput.addEventListener('input', debounce(() => load(true)));
-statusSelect.addEventListener('change', () => load(true));
+searchInput.addEventListener('input', debounce(() => replaceFilters({q: searchInput.value.trim()}), 300));
+statusSelect.addEventListener('change', () => replaceFilters({status: statusSelect.value}));
 scopeSelect?.addEventListener('change', () => {
-    const teamScope = scopeSelect.value === 'TEAM';
-    teamSelect.classList.toggle('hidden', !teamScope);
-    if (!teamScope) {
+    if (scopeSelect.value !== 'TEAM' && teamSelect) {
         teamSelect.value = '';
     }
-    load(true);
+    replaceFilters({scope: scopeSelect.value, team: ''});
 });
-teamSelect?.addEventListener('change', () => load(true));
-lookup('[data-manage-reset]').addEventListener('click', resetFilters);
-lookup('[data-manage-retry]').addEventListener('click', () => load(true));
-moreButton.addEventListener('click', () => load());
+teamSelect?.addEventListener('change', () => replaceFilters({team: teamSelect.value}));
+lookup('[data-manage-reset]').addEventListener('click', () => {
+    writeUrl(new URLSearchParams(), false);
+    load();
+});
+lookup('[data-manage-retry]').addEventListener('click', () => load());
+window.addEventListener('popstate', () => load({focus: true}));
 
 await initializeTeams();
-load(true);
+load();

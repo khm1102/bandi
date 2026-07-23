@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.domain.member.mapper;
 
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchCondition;
+import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchCondition;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
 import kr.ac.tukorea.bandi.domain.member.model.MemberSchoolConnection;
@@ -24,6 +25,14 @@ public interface MemberMapper {
     Optional<Member> lookupByIdForUpdate(Long memberId);
 
     List<Member> searchByCondition(MemberSearchCondition condition);
+
+    List<Member> searchPage(MemberPageSearchCondition condition);
+
+    long countByPageCondition(MemberPageSearchCondition condition);
+
+    long countActive();
+
+    long countSsoVerificationRequired();
 
     List<Member> searchActiveByKeyword(@Param("keyword") String keyword,
                                        @Param("limit") int limit);

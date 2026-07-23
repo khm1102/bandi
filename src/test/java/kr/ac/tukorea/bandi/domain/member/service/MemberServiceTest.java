@@ -5,6 +5,8 @@ import kr.ac.tukorea.bandi.domain.audit.model.AuditTargetType;
 import kr.ac.tukorea.bandi.domain.audit.service.AuditService;
 import kr.ac.tukorea.bandi.domain.member.dto.request.CohortChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPreRegisterParam;
+import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchCondition;
+import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchCondition;
 import kr.ac.tukorea.bandi.domain.member.dto.request.RoleChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.StatusChangeParam;
@@ -112,6 +114,45 @@ class MemberServiceTest {
         verify(memberMapper).searchByCondition(captor.capture());
         assertThat(captor.getValue().teamId()).isEqualTo(STAGE_TEAM_ID);
         assertThat(captor.getValue().status()).isEqualTo(MemberStatus.ACTIVE);
+    }
+
+    @Test
+    void 멤버_페이지는_목록과_같은_조건의_전체_건수로_메타데이터를_계산한다() {
+        given(memberMapper.searchPage(any())).willReturn(List.of(
+                member(TARGET_ID, STAGE_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
+        given(memberMapper.countByPageCondition(any())).willReturn(41L);
+        MemberPageSearchParam param = new MemberPageSearchParam("서준", STAGE_TEAM_ID,
+                COHORT_ID, MemberStatus.ACTIVE, ClubRole.MEMBER,
+                SsoLinkStatus.LINKED, 1, 20);
+
+        var result = memberService.searchMemberPage(param);
+
+        assertThat(result.items()).hasSize(1);
+        assertThat(result.page()).isEqualTo(1);
+        assertThat(result.totalElements()).isEqualTo(41);
+        assertThat(result.totalPages()).isEqualTo(3);
+        assertThat(result.hasPrevious()).isTrue();
+        assertThat(result.hasNext()).isTrue();
+        ArgumentCaptor<MemberPageSearchCondition> captor =
+                ArgumentCaptor.forClass(MemberPageSearchCondition.class);
+        verify(memberMapper).searchPage(captor.capture());
+        verify(memberMapper).countByPageCondition(captor.getValue());
+        assertThat(captor.getValue().offset()).isEqualTo(20);
+    }
+
+    @Test
+    void 멤버_통계는_현재_페이지가_아닌_전체_활성_데이터로_계산한다() {
+        given(memberMapper.countActive()).willReturn(42L);
+        given(memberMapper.countSsoVerificationRequired()).willReturn(5L);
+        given(cohortMapper.searchAll()).willReturn(List.of(cohort(),
+                new Cohort(NEW_COHORT_ID, "27-1기", (short) 2027,
+                        CohortTerm.FIRST, false)));
+
+        var result = memberService.lookupMemberStats();
+
+        assertThat(result.activeMemberCount()).isEqualTo(42);
+        assertThat(result.activeCohortCount()).isEqualTo(1);
+        assertThat(result.ssoVerificationRequiredCount()).isEqualTo(5);
     }
 
     private static Member member(Long memberId, Long teamId, ClubRole role, MemberStatus status) {

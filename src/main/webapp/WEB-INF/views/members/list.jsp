@@ -12,13 +12,28 @@
     <div class="mb-4 grid grid-cols-1 gap-2.5 md:grid-cols-3 md:gap-4">
         <t:statCard label="활성 멤버" value="—" unit="명" valueHook="active-members"/>
         <t:statCard label="운영 중인 기수" value="—" unit="개" delta="불러오는 중" valueHook="active-cohorts" deltaHook="active-cohort-names"/>
-        <t:statCard label="SSO 연결 대기" value="—" unit="명" tone="danger" valueHook="waiting-sso"/>
+        <t:statCard label="SSO 확인 필요" value="—" unit="명" tone="danger" valueHook="waiting-sso"/>
     </div>
 
     <div class="mb-4 flex items-start gap-3 rounded-lg border bg-accent/50 px-4 py-3.5">
         <span class="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary text-sm font-black text-primary-foreground">SSO</span>
         <div class="min-w-0"><b class="block text-sm">멤버 등록은 운영진 사전 등록으로만 진행합니다</b><p class="mt-1 text-xs leading-5 text-muted-foreground">운영진이 멤버를 먼저 등록하면, 멤버가 학교 계정으로 처음 로그인할 때 학번을 기준으로 계정이 연결됩니다.</p></div>
     </div>
+
+    <section class="mb-4 rounded-lg border bg-card p-4" aria-label="멤버 검색과 필터">
+        <input class="${input}" type="search" data-member-search placeholder="이름 또는 학번으로 검색" aria-label="멤버 검색">
+        <details class="mt-3" data-member-filter-details open>
+            <summary class="flex min-h-11 cursor-pointer items-center text-sm font-bold md:hidden">상세 필터</summary>
+            <div class="grid gap-3 pt-3 sm:grid-cols-2 lg:grid-cols-5 md:pt-0">
+                <select class="${input}" data-member-filter="team" aria-label="팀 필터"><option value="">전체 팀</option></select>
+                <select class="${input}" data-member-filter="cohort" aria-label="기수 필터"><option value="">전체 기수</option></select>
+                <select class="${input}" data-member-filter="status" aria-label="활동 상태 필터"><option value="">전체 활동 상태</option><option value="PRE_REGISTERED">사전 등록</option><option value="ACTIVE">활동 중</option><option value="SUSPENDED">활동 중지</option><option value="WITHDRAWN">탈퇴</option><option value="REGISTRATION_CANCELLED">등록 취소</option></select>
+                <select class="${input}" data-member-filter="role" aria-label="역할 필터"><option value="">전체 역할</option><option value="MEMBER">일반 부원</option><option value="LEADER">팀장</option><option value="ADMIN">운영진</option></select>
+                <select class="${input}" data-member-filter="sso" aria-label="SSO 상태 필터"><option value="">전체 SSO 상태</option><option value="WAITING">연결 대기</option><option value="LINKED">연결 완료</option><option value="REVIEW_REQUIRED">확인 필요</option></select>
+            </div>
+        </details>
+        <button type="button" class="mt-3 hidden min-h-11 rounded-md border px-4 text-sm font-bold" data-member-filter-reset>필터 초기화</button>
+    </section>
 
     <div class="rounded-lg border bg-card">
         <t:dataTable caption="멤버와 권한 목록">
@@ -34,6 +49,7 @@
             </tbody>
         </t:dataTable>
     </div>
+    <t:pagination id="memberPagination" label="멤버 목록 페이지"/>
 
     <template data-member-row-template>
         <tr>

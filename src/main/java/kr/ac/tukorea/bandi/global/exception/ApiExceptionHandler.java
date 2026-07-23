@@ -39,7 +39,8 @@ public class ApiExceptionHandler {
             MethodArgumentTypeMismatchException.class,
             MissingServletRequestParameterException.class,
             MissingServletRequestPartException.class,
-            HandlerMethodValidationException.class})
+            HandlerMethodValidationException.class,
+            IllegalArgumentException.class})
     public ResponseEntity<ErrorResponse> handleBinding(Exception exception) {
         log.debug("API 요청 바인딩 실패 - type={}",
                 exception.getClass().getSimpleName());

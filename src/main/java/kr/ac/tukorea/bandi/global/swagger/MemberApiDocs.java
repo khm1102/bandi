@@ -16,9 +16,11 @@ import kr.ac.tukorea.bandi.domain.member.dto.response.MemberCreatedResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberHistoryResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberProfileResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberResponse;
+import kr.ac.tukorea.bandi.domain.member.dto.response.MemberStatsResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.TeamMemberResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.TeamResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
 import org.springframework.core.io.Resource;
@@ -71,15 +73,27 @@ public interface MemberApiDocs {
 
     @Operation(summary = "팀 멤버 목록 조회")
     @GetMapping("/team-members")
-    ResponseEntity<List<TeamMemberResponse>> searchTeamMembers(
-            @Parameter(hidden = true) @LoginMember Long memberId);
+    ResponseEntity<PageResponse<TeamMemberResponse>> searchTeamMembers(
+            @Parameter(hidden = true) @LoginMember Long memberId,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long teamId,
+            @ParameterObject @ModelAttribute MemberSearchFilter filter,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int pageSize);
 
     @Operation(summary = "멤버 목록 조회")
     @GetMapping
-    ResponseEntity<List<MemberResponse>> searchMembers(
+    ResponseEntity<PageResponse<MemberResponse>> searchMembers(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long teamId,
-            @ParameterObject @ModelAttribute MemberSearchFilter filter);
+            @RequestParam(required = false) Long cohortId,
+            @ParameterObject @ModelAttribute MemberSearchFilter filter,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int pageSize);
+
+    @Operation(summary = "멤버 운영 통계 조회")
+    @GetMapping("/stats")
+    ResponseEntity<MemberStatsResponse> lookupMemberStats();
 
     @Operation(summary = "멤버 상세 조회")
     @GetMapping("/{memberId}")

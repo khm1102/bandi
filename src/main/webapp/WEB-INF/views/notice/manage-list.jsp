@@ -37,7 +37,7 @@
                 <button type="button" class="mt-4 hidden min-h-11 rounded-md border bg-card px-4 text-sm font-bold" data-manage-retry>다시 시도</button>
             </div>
         </section>
-        <button type="button" class="mx-auto mt-5 hidden min-h-11 rounded-md border bg-card px-4 text-sm font-bold" data-manage-more>공지 더 보기</button>
+        <t:pagination id="noticeManagePagination" label="공지 관리 목록 페이지"/>
         <template data-manage-row-template>
             <a class="block px-5 py-5 transition-colors hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring" data-manage-link>
                 <div class="flex flex-wrap items-center gap-2" data-manage-badges></div>

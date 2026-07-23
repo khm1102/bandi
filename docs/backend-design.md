@@ -46,6 +46,9 @@ Controller → Service → Mapper → Model
 
 - 페이지 조회는 JSP SSR Controller를 사용한다.
 - 부분 갱신과 상태 변경은 `/api/**`에서 세션 인증과 CSRF 보호를 적용한다.
+- 공지·공지 관리·자료실·자료 관리·멤버·팀 멤버 목록은 공통 `PageResponse<T>`로 응답한다.
+  API의 `page`는 0부터 시작하고 `pageSize`는 최대 100이며, 제품 화면은 20건으로 고정한다.
+  목록과 `COUNT(*)` 쿼리는 검색·권한·소프트 삭제 조건을 같은 SQL 조각으로 공유한다.
 - Swagger 계약은 `global.swagger` 인터페이스에만 둔다.
 - 파일은 Spring Boot가 권한을 확인한 뒤 직접 스트리밍한다.
 - `/profile`과 `/api/members/me/**`는 로그인 멤버가 사용한다. `/team-members`와
