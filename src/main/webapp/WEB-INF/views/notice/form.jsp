@@ -25,6 +25,18 @@
                     <label class="mb-2 block text-sm font-bold" for="noticeTeam">대상 팀</label>
                     <select id="noticeTeam" class="h-11 w-full rounded-md border border-input bg-card px-3 text-sm" data-notice-team></select>
                 </div>
+                <label class="inline-flex min-h-11 items-center gap-2 rounded-md border bg-card px-3 text-sm font-bold hover:bg-secondary">
+                    <input class="size-4 rounded" type="checkbox" data-notice-important>
+                    중요 공지
+                </label>
+                <label class="inline-flex min-h-11 items-center gap-2 rounded-md border bg-card px-3 text-sm font-bold hover:bg-secondary">
+                    <input class="size-4 rounded" type="checkbox" data-notice-schedule-enabled>
+                    예약 게시
+                </label>
+                <div class="hidden min-w-64" data-notice-schedule-wrap>
+                    <label class="sr-only" for="noticePublishAt">게시 시각</label>
+                    <input id="noticePublishAt" type="datetime-local" class="h-11 w-full rounded-md border border-input bg-card px-3 text-sm" data-notice-publish-at>
+                </div>
             </div>
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <h2 id="noticeBodyHeading" class="text-base font-extrabold">본문</h2>
@@ -74,28 +86,6 @@
             <p class="hidden border-x border-b border-destructive bg-destructive-soft px-4 py-2.5 text-sm text-destructive" role="alert" data-notice-upload-error></p>
             <ul class="space-y-2 border-x border-b px-4 py-3" data-notice-file-list></ul>
         </section>
-
-        <fieldset class="flex flex-wrap items-center justify-between gap-5 border-y py-5">
-            <legend class="sr-only">추가 게시 설정</legend>
-            <div>
-                <h2 class="text-base font-extrabold">게시 설정</h2>
-                <p class="mt-1 text-xs text-muted-foreground">필요한 경우에만 중요 공지나 예약 게시를 선택하세요.</p>
-            </div>
-            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
-                <label class="inline-flex min-h-11 items-center gap-2 rounded-md border bg-card px-3 text-sm font-bold hover:bg-secondary">
-                    <input class="size-4 rounded" type="checkbox" data-notice-important>
-                    중요 공지로 표시
-                </label>
-                <label class="inline-flex min-h-11 items-center gap-2 rounded-md border bg-card px-3 text-sm font-bold hover:bg-secondary">
-                    <input class="size-4 rounded" type="checkbox" data-notice-schedule-enabled>
-                    예약 게시
-                </label>
-                <div class="hidden min-w-64" data-notice-schedule-wrap>
-                    <label class="sr-only" for="noticePublishAt">게시 시각</label>
-                    <input id="noticePublishAt" type="datetime-local" class="h-11 w-full rounded-md border border-input bg-card px-3 text-sm" data-notice-publish-at>
-                </div>
-            </div>
-        </fieldset>
 
         <p class="hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-sm text-destructive" role="alert" data-notice-error></p>
 
