@@ -21,6 +21,7 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.authenticated;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -53,6 +54,22 @@ class AuthenticationControllerTest {
                 .andExpect(view().name("auth/login"))
                 .andExpect(model().attribute("schoolLoginForm",
                         instanceOf(SchoolLoginForm.class)));
+    }
+
+    @Test
+    void 비로그인_사용자가_기본_주소로_접근하면_로그인_화면으로_이동한다()
+            throws Exception {
+        mockMvc.perform(get("/"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login"));
+    }
+
+    @Test
+    void 로그인_사용자가_기본_주소로_접근하면_대시보드로_이동한다()
+            throws Exception {
+        mockMvc.perform(get("/").with(user("member").roles("MEMBER")))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/dashboard"));
     }
 
     @ParameterizedTest
