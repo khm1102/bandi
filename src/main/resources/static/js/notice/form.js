@@ -33,7 +33,6 @@ const teamSelect = lookup('[data-notice-team]');
 const teamWrap = lookup('[data-notice-team-wrap]');
 const importantInput = lookup('[data-notice-important]');
 const publishAtInput = lookup('[data-notice-publish-at]');
-const noticeOptions = lookup('[data-notice-options]');
 const scheduleEnabledInput = lookup('[data-notice-schedule-enabled]');
 const scheduleWrap = lookup('[data-notice-schedule-wrap]');
 const writePanel = lookup('[data-notice-panel="write"]');
@@ -108,6 +107,14 @@ function isInlineImage(file) {
 
 function updateTeamField() {
     teamWrap.classList.toggle('hidden', targetSelect.value !== 'TEAM');
+}
+
+function updateTargetLabel() {
+    const teamOption = targetSelect.querySelector('option[value="TEAM"]');
+    const team = teams.find((item) => item.teamId === Number(teamSelect.value));
+    if (teamOption && team) {
+        teamOption.textContent = `${team.name} 멤버`;
+    }
 }
 
 function updateScheduleField() {
@@ -301,6 +308,7 @@ async function initialize() {
             option.textContent = team.name;
             teamSelect.appendChild(option);
         });
+    teamSelect.value = String(member.teamId);
     if (noticeId) {
         const notice = await get(`/api/internal-notice-management/${noticeId}`);
         targetSelect.value = notice.targetScope;
@@ -313,11 +321,11 @@ async function initialize() {
         scheduleEnabledInput.checked = notice.status === 'SCHEDULED';
         publishAtInput.value = scheduleEnabledInput.checked && notice.publishStartDttm
             ? notice.publishStartDttm.slice(0, 16) : '';
-        noticeOptions.open = notice.important || scheduleEnabledInput.checked;
         attachments = notice.attachments;
     }
     renderAttachments();
     updateTeamField();
+    updateTargetLabel();
     updateScheduleField();
 }
 
@@ -358,7 +366,11 @@ form.addEventListener('click', (event) => {
 document.querySelectorAll('[data-notice-tab]').forEach((tab) => {
     tab.addEventListener('click', () => setActiveTab(tab.dataset.noticeTab));
 });
-targetSelect.addEventListener('change', updateTeamField);
+targetSelect.addEventListener('change', () => {
+    updateTeamField();
+    updateTargetLabel();
+});
+teamSelect.addEventListener('change', updateTargetLabel);
 scheduleEnabledInput.addEventListener('change', updateScheduleField);
 attachmentInput.addEventListener('change', () => {
     pendingAttachmentFiles = pendingAttachmentFiles.concat([...attachmentInput.files]);

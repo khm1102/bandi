@@ -13,6 +13,19 @@
                 <label class="mb-2 block text-sm font-extrabold" for="noticeTitle">제목</label>
                 <input id="noticeTitle" class="h-12 w-full rounded-md border border-input bg-card px-4 text-base placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20" maxlength="200" required placeholder="공지 제목을 입력하세요" data-notice-title>
             </div>
+            <div class="flex flex-wrap items-end gap-4 border-b pb-5">
+                <div class="min-w-52">
+                    <label class="mb-2 block text-sm font-bold" for="noticeTarget">게시 대상</label>
+                    <select id="noticeTarget" class="h-11 w-full rounded-md border border-input bg-card px-3 text-sm" data-notice-target>
+                        <c:if test="${role == 'admin'}"><option value="ALL">전체 멤버</option></c:if>
+                        <option value="TEAM">소속 팀 멤버</option>
+                    </select>
+                </div>
+                <div class="hidden min-w-52" data-notice-team-wrap>
+                    <label class="mb-2 block text-sm font-bold" for="noticeTeam">대상 팀</label>
+                    <select id="noticeTeam" class="h-11 w-full rounded-md border border-input bg-card px-3 text-sm" data-notice-team></select>
+                </div>
+            </div>
             <div class="flex flex-wrap items-center justify-between gap-3">
                 <h2 id="noticeBodyHeading" class="text-base font-extrabold">본문</h2>
                 <div class="flex rounded-md border bg-card p-1" role="tablist" aria-label="본문 보기 방식">
@@ -62,42 +75,27 @@
             <ul class="space-y-2 border-x border-b px-4 py-3" data-notice-file-list></ul>
         </section>
 
-        <section class="border-y py-5" aria-labelledby="noticePublishSettingsHeading">
-            <div class="flex flex-wrap items-end gap-4">
-                <div class="min-w-52">
-                    <label id="noticePublishSettingsHeading" class="mb-2 block text-sm font-bold" for="noticeTarget">게시 대상</label>
-                    <select id="noticeTarget" class="h-11 w-full rounded-md border border-input bg-card px-3 text-sm" data-notice-target>
-                        <c:if test="${role == 'admin'}"><option value="ALL">전체 멤버</option></c:if>
-                        <option value="TEAM">내 팀</option>
-                    </select>
-                </div>
-                <div class="hidden min-w-52" data-notice-team-wrap>
-                    <label class="mb-2 block text-sm font-bold" for="noticeTeam">대상 팀</label>
-                    <select id="noticeTeam" class="h-11 w-full rounded-md border border-input bg-card px-3 text-sm" data-notice-team></select>
-                </div>
-                <details class="min-w-44" data-notice-options>
-                    <summary class="flex min-h-11 cursor-pointer list-none items-center justify-between rounded-md border bg-card px-3 text-sm font-bold hover:bg-secondary">
-                        게시 옵션
-                        <span class="text-muted-foreground" aria-hidden="true">⌄</span>
-                    </summary>
-                    <div class="mt-3 space-y-4 rounded-md border bg-card p-4">
-                        <label class="flex min-h-8 items-center gap-2 text-sm font-bold">
-                            <input class="size-4 rounded" type="checkbox" data-notice-important>
-                            중요 공지로 표시
-                        </label>
-                        <label class="flex min-h-8 items-center gap-2 text-sm font-bold">
-                            <input class="size-4 rounded" type="checkbox" data-notice-schedule-enabled>
-                            예약 게시
-                        </label>
-                        <div class="hidden" data-notice-schedule-wrap>
-                            <label class="mb-2 block text-sm font-bold" for="noticePublishAt">게시 시각</label>
-                            <input id="noticePublishAt" type="datetime-local" class="h-11 w-full rounded-md border border-input bg-card px-3 text-sm" data-notice-publish-at>
-                            <p class="mt-1.5 text-xs text-muted-foreground">지정한 시각에 공지가 공개돼요.</p>
-                        </div>
-                    </div>
-                </details>
+        <fieldset class="flex flex-wrap items-center justify-between gap-5 border-y py-5">
+            <legend class="sr-only">추가 게시 설정</legend>
+            <div>
+                <h2 class="text-base font-extrabold">게시 설정</h2>
+                <p class="mt-1 text-xs text-muted-foreground">필요한 경우에만 중요 공지나 예약 게시를 선택하세요.</p>
             </div>
-        </section>
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                <label class="inline-flex min-h-11 items-center gap-2 rounded-md border bg-card px-3 text-sm font-bold hover:bg-secondary">
+                    <input class="size-4 rounded" type="checkbox" data-notice-important>
+                    중요 공지로 표시
+                </label>
+                <label class="inline-flex min-h-11 items-center gap-2 rounded-md border bg-card px-3 text-sm font-bold hover:bg-secondary">
+                    <input class="size-4 rounded" type="checkbox" data-notice-schedule-enabled>
+                    예약 게시
+                </label>
+                <div class="hidden min-w-64" data-notice-schedule-wrap>
+                    <label class="sr-only" for="noticePublishAt">게시 시각</label>
+                    <input id="noticePublishAt" type="datetime-local" class="h-11 w-full rounded-md border border-input bg-card px-3 text-sm" data-notice-publish-at>
+                </div>
+            </div>
+        </fieldset>
 
         <p class="hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-sm text-destructive" role="alert" data-notice-error></p>
 
