@@ -6,7 +6,7 @@
         <link rel="stylesheet" href="<c:url value='/css/notice/markdown.css'/>">
     </jsp:attribute>
     <jsp:body>
-    <article class="mx-auto max-w-3xl">
+    <article class="mx-auto max-w-3xl rounded-xl border bg-card p-5 md:p-8">
         <div class="border-b pb-5">
             <div class="flex flex-wrap gap-2"><t:badge tone="info"><c:choose><c:when test="${notice.teamNotice}"><c:out value="${notice.teamName}"/></c:when><c:otherwise>전체 공지</c:otherwise></c:choose></t:badge><c:if test="${notice.important}"><t:badge tone="warning" dot="true">중요</t:badge></c:if></div>
             <h1 class="mt-3 text-2xl font-black tracking-tight"><c:out value="${notice.title}"/></h1>
