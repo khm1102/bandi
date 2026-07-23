@@ -1,9 +1,7 @@
 package kr.ac.tukorea.bandi.domain.notice.controller;
 
 import kr.ac.tukorea.bandi.domain.notice.dto.request.InternalNoticeSearchParam;
-import kr.ac.tukorea.bandi.domain.notice.dto.request.MarkdownPreviewRequest;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeDetailResponse;
-import kr.ac.tukorea.bandi.domain.notice.dto.response.MarkdownPreviewResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeSummaryResponse;
 import kr.ac.tukorea.bandi.domain.notice.service.InternalNoticeService;
 import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
@@ -50,10 +48,10 @@ public class InternalNoticeApiController implements InternalNoticeApiDocs {
     }
 
     @Override
-    public ResponseEntity<MarkdownPreviewResponse> preview(
-            @LoginMember Long memberId, MarkdownPreviewRequest request) {
-        return ResponseEntity.ok(new MarkdownPreviewResponse(
-                internalNoticeService.preview(memberId, request.bodyMarkdown())));
+    public ResponseEntity<Resource> inline(@LoginMember Long memberId,
+                                           Long internalNoticeId, Long storedFileId) {
+        return inline(internalNoticeService.openAttachmentInline(memberId,
+                internalNoticeId, storedFileId));
     }
 
     private ResponseEntity<Resource> attachment(FileDownloadResponse file) {
@@ -61,6 +59,15 @@ public class InternalNoticeApiController implements InternalNoticeApiDocs {
                 .contentType(MediaType.parseMediaType(file.contentType()))
                 .contentLength(file.sizeBytes())
                 .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
+                        .filename(file.originalName(), StandardCharsets.UTF_8).build().toString())
+                .body(file.resource());
+    }
+
+    private ResponseEntity<Resource> inline(FileDownloadResponse file) {
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(file.contentType()))
+                .contentLength(file.sizeBytes())
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.inline()
                         .filename(file.originalName(), StandardCharsets.UTF_8).build().toString())
                 .body(file.resource());
     }

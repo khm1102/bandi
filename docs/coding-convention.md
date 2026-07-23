@@ -799,7 +799,9 @@ src/main/webapp/WEB-INF
 - `<c:out escapeXml="false">` 등 **원문 HTML 출력 금지.** 단, 내부 공지 Markdown은
   `domain.notice.service.MarkdownRenderer`가 allowlist sanitizer를 통과시켜 만든
   `SafeMarkdownHtml`만 `<t:markdown>` 태그로 출력할 수 있다. 이 태그는 일반 문자열을
-  받지 않으며, 다른 JSP·태그·JavaScript에는 이 예외를 확대하지 않는다.
+  받지 않으며, 다른 JSP·태그·JavaScript에는 이 예외를 확대하지 않는다. 공지 본문 이미지는
+  `attachment://{storedFileId}` 내부 참조만 서버에서 인증 inline URL로 변환한다. 외부 URL,
+  원시 HTML 이미지와 일반 문자열 HTML의 출력 예외는 허용하지 않는다.
 - 인라인 `<script>` 블록에 EL로 서버 데이터를 직접 조립하지 않는다. 서버 데이터 → JS 전달은 **`data-*` 속성 + `<c:out>`** 으로 마크업에 싣고, JS에서 `dataset`으로 읽는다.
 - 폼은 `<form:form>` 사용 시 CSRF hidden 필드가 자동 삽입된다(`CsrfRequestDataValueProcessor`). **JS fetch로 POST할 때는** layout의 `<meta name="_csrf">`를 헤더로 전달한다. ([13.4] 참조)
 - 인증/인가 분기는 `<sec:authorize access="...">`를 사용하고, 컨트롤러/서비스 레벨 인가와 항상 이중으로 건다 (뷰 숨김은 보안이 아님).

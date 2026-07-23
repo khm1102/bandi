@@ -2,6 +2,8 @@ package kr.ac.tukorea.bandi.domain.notice.service;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.Map;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 class MarkdownRendererTest {
@@ -43,5 +45,17 @@ class MarkdownRendererTest {
                 .doesNotContain("javascript:")
                 .doesNotContain("<img")
                 .doesNotContain("onerror");
+    }
+
+    @Test
+    void 첨부된_내부_이미지만_안전한_이미지_태그로_렌더링한다() {
+        String markdown = "![공연 포스터](attachment://42)";
+
+        String html = renderer.render(markdown, Map.of(42L,
+                "/api/internal-notices/8/attachments/42/inline")).getValue();
+
+        assertThat(html).contains("<img")
+                .contains("/api/internal-notices/8/attachments/42/inline")
+                .contains("alt=\"공연 포스터\"");
     }
 }

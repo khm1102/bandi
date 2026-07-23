@@ -124,6 +124,41 @@ class FileServiceTest {
     }
 
     @Test
+    void 공지_본문_이미지는_전용_검사와_notice_경로로_저장한다() {
+        FileUploadParam param = uploadParam();
+        FileInspection inspection = new FileInspection("image/png", CONTENT.length, "abc123");
+        StoredFile pending = pendingPrivate(PRIVATE_KEY);
+        assignId(pending, PRIVATE_FILE_ID);
+        StoredFile ready = readyPrivate(PRIVATE_KEY);
+        assignId(ready, PRIVATE_FILE_ID);
+        given(inspector.inspectNoticeInlineImage(param.originalName(), param.sizeBytes(),
+                param.contentSource())).willReturn(inspection);
+        given(keyGenerator.generate("notice")).willReturn(PRIVATE_KEY);
+        given(metadataService.createPending(any())).willReturn(pending);
+        given(objectStorage.upload(StorageScope.PRIVATE, PRIVATE_KEY, "image/png",
+                CONTENT.length, param.contentSource())).willReturn("etag-1");
+        given(metadataService.markReady(PRIVATE_FILE_ID, "etag-1")).willReturn(ready);
+
+        fileService.uploadNoticeInlineImage(param);
+
+        verify(inspector).inspectNoticeInlineImage(param.originalName(), param.sizeBytes(),
+                param.contentSource());
+        verify(keyGenerator).generate("notice");
+    }
+
+    @Test
+    void 본문_이미지가_아닌_비공개_파일은_inline_조회할_수_없다() {
+        StoredFile source = StoredFile.pending("animation.gif", StorageScope.PRIVATE,
+                PRIVATE_KEY, "image/gif", CONTENT.length, "abc123", MEMBER_ID);
+        source.markReady("etag-1");
+        assignId(source, PRIVATE_FILE_ID);
+        given(metadataService.lookup(PRIVATE_FILE_ID)).willReturn(source);
+
+        assertThatThrownBy(() -> fileService.lookupPrivateNoticeInlineImage(PRIVATE_FILE_ID))
+                .isInstanceOf(InvalidFileException.class);
+    }
+
+    @Test
     void READY_전환이_실패하면_업로드된_객체를_삭제하고_FAILED로_전환한다() {
         FileUploadParam param = uploadParam();
         StoredFile pending = pendingPrivate(PRIVATE_KEY);

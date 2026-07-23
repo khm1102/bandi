@@ -54,6 +54,8 @@ public class SecurityConfig {
                 .hasAnyRole("LEADER", "ADMIN")
                 .requestMatchers("/notices/write", "/notices/*/edit")
                 .hasAnyRole("LEADER", "ADMIN")
+                .requestMatchers("/api/internal-notice-management/**")
+                .hasAnyRole("LEADER", "ADMIN")
                 .requestMatchers("/members/**", "/api/members/**")
                 .hasRole("ADMIN")
                 .anyRequest().authenticated());

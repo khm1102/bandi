@@ -3,6 +3,7 @@ package kr.ac.tukorea.bandi.domain.notice.controller;
 import kr.ac.tukorea.bandi.domain.notice.dto.request.InternalNoticeManageSearchParam;
 import kr.ac.tukorea.bandi.domain.notice.dto.request.InternalNoticeSearchParam;
 import kr.ac.tukorea.bandi.domain.notice.dto.request.InternalNoticeWriteParam;
+import kr.ac.tukorea.bandi.domain.file.dto.response.FileReferenceResponse;
 import kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeStatus;
 import kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeReadFilter;
 import kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeTargetScope;
@@ -23,6 +24,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.mock.web.MockMultipartFile;
 
 import java.util.List;
 
@@ -31,6 +33,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -99,6 +102,29 @@ class InternalNoticeApiControllerTest {
     }
 
     @Test
+    void 공지_본문_이미지는_전용_API로_업로드하고_inline으로_전송한다() throws Exception {
+        given(internalNoticeService.uploadInlineImage(any(), any()))
+                .willReturn(new FileReferenceResponse(FILE_ID, "poster.png", "image/png", 4));
+        given(internalNoticeService.openAttachmentInline(ACTOR_ID, NOTICE_ID, FILE_ID))
+                .willReturn(new kr.ac.tukorea.bandi.global.response.FileDownloadResponse(
+                        "poster.png", "image/png", 4,
+                        new org.springframework.core.io.InputStreamResource(
+                                new java.io.ByteArrayInputStream(new byte[]{1, 2, 3, 4}))));
+
+        mockMvc.perform(multipart("/api/internal-notice-management/images")
+                        .file(new MockMultipartFile("file", "poster.png", "image/png",
+                                new byte[]{1, 2, 3, 4})))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.storedFileId").value(FILE_ID))
+                .andExpect(jsonPath("$.previewUrl").value(
+                        "/api/internal-notice-management/images/30/preview"));
+        mockMvc.perform(get("/api/internal-notices/{noticeId}/attachments/{fileId}/inline",
+                        NOTICE_ID, FILE_ID))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition", org.hamcrest.Matchers.containsString("inline")));
+    }
+
+    @Test
     void 팀장이_팀_공지_초안을_등록한다() throws Exception {
         given(internalNoticeService.createDraft(any(), any())).willReturn(NOTICE_ID);
 
@@ -141,13 +167,13 @@ class InternalNoticeApiControllerTest {
     }
 
     @Test
-    void Markdown_미리보기는_서버에서_정화한_HTML만_반환한다() throws Exception {
-        mockMvc.perform(post("/api/internal-notices/markdown-preview")
+    void Markdown_미리보기는_관리_API에서_서버_정화_HTML만_반환한다() throws Exception {
+        mockMvc.perform(post("/api/internal-notice-management/markdown-preview")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"bodyMarkdown\":\"# 안내\"}"))
+                        .content("{\"bodyMarkdown\":\"# 안내\",\"attachmentFileIds\":[]}"))
                 .andExpect(status().isOk());
 
-        verify(internalNoticeService).preview(ACTOR_ID, "# 안내");
+        verify(internalNoticeService).preview(ACTOR_ID, null, "# 안내", List.of());
     }
 
     private String writeBody() {

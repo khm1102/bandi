@@ -119,12 +119,16 @@
 **내부 공지 게시판** — `/notices`는 중요 공지 우선 목록, 읽음·대상 범위 필터, 검색과
 페이지 단위 더 보기를 사용한다. 상세는 제목·대상·게시 및 마지막 수정 시각·작성자·본문·
 첨부만 보여 주며 조회수 지표를 넣지 않는다. 작성과 수정은 모달이 아니라 전용 페이지로
-연다. 데스크톱은 Markdown 편집 영역과 게시 설정을 분리하고, 모바일은 편집 후
-미리보기 섹션으로 이동해 확인한다.
+연다. 제목 다음에 대상·중요 여부·예약 게시를 짧은 메타데이터 행으로 두고, 본문은 전체 폭
+편집 영역으로 이어진다. 작성과 미리보기는 탭으로 전환하며 동시에 좁게 나누지 않는다.
+첨부는 본문 아래에 둔다. 상단과 하단의 게시 버튼은 같은 제출 흐름을 사용한다.
 
 **Markdown** — 미리보기와 상세 모두 서버가 정화한 결과를 안전 DOM 마운터 또는
-`<t:markdown>`으로만 렌더링한다. 원시 HTML·외부 이미지는 지원하지 않으며, 링크는
-새 창에서 열 때 `noopener noreferrer`를 함께 적용한다.
+`<t:markdown>`으로만 렌더링한다. 원시 HTML·외부 이미지는 지원하지 않는다. 본문 이미지는
+`attachment://{storedFileId}` 내부 참조만 사용하며, 이미지 도구 모음으로 올린 JPEG·PNG·WebP
+10MiB 이하 파일을 같은 첨부 목록에 표시한다. 새 글의 미리보기는 업로더 전용 URL을,
+기존 글은 공지 첨부 권한을 통과한 inline URL을 사용한다. 링크는 새 창에서 열 때
+`noopener noreferrer`를 함께 적용한다.
 
 **입력(formField 밖에서 쓸 때)** — `h-10 w-full rounded-md border border-input bg-card px-3 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20`
 

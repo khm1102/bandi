@@ -4,6 +4,7 @@ import kr.ac.tukorea.bandi.domain.file.dto.response.FileReferenceResponse;
 import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
 import kr.ac.tukorea.bandi.domain.file.service.FileAccessDecision;
 import kr.ac.tukorea.bandi.domain.file.service.FileService;
+import kr.ac.tukorea.bandi.domain.file.service.FileUploadParam;
 import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
 import kr.ac.tukorea.bandi.domain.notice.dto.request.InternalNoticeManageSearchCondition;
@@ -36,11 +37,18 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class InternalNoticeService {
+
+    private static final long INLINE_IMAGE_MAX_BYTES = 10L * 1024 * 1024;
+    private static final Set<String> INLINE_IMAGE_CONTENT_TYPES = Set.of(
+            "image/jpeg", "image/png", "image/webp");
 
     private final InternalNoticeMapper internalNoticeMapper;
     private final MemberService memberService;
@@ -54,6 +62,7 @@ public class InternalNoticeService {
         validateManagement(access, param.targetScope(), param.teamId());
         validateActiveTarget(param.targetScope(), param.teamId());
         validateAttachments(param.attachmentFileIds(), actorMemberId);
+        validateAttachedInlineImages(param.body(), param.attachmentFileIds());
         InternalNotice notice = InternalNotice.draft(param.targetScope(), param.teamId(),
                 param.title(), param.body(), param.important(), actorMemberId);
         internalNoticeMapper.insert(notice);
@@ -72,6 +81,7 @@ public class InternalNoticeService {
                 .searchAttachmentFileIds(param.internalNoticeId());
         validateUpdatedAttachments(param.attachmentFileIds(), existingAttachmentFileIds,
                 actorMemberId);
+        validateAttachedInlineImages(param.body(), param.attachmentFileIds());
         InternalNotice changed = original.edit(param.targetScope(), param.teamId(),
                 param.title(), param.body(), param.important(), actorMemberId);
         internalNoticeMapper.update(changed);
@@ -129,9 +139,9 @@ public class InternalNoticeService {
                 .lookupManageContent(internalNoticeId)
                 .orElseThrow(() -> new InternalNoticeNotFoundException(internalNoticeId));
         validateManagement(access, content.targetScope(), content.teamId());
-        return InternalNoticeManageDetailResponse.of(
-                content, markdownRenderer.render(content.body()),
-                lookupAttachments(internalNoticeId));
+        List<InternalNoticeAttachmentResponse> attachments = lookupAttachments(internalNoticeId);
+        return InternalNoticeManageDetailResponse.of(content,
+                renderManageableMarkdown(content.body(), internalNoticeId, attachments), attachments);
     }
 
     public List<InternalNoticeSummaryResponse> searchReadable(
@@ -154,8 +164,9 @@ public class InternalNoticeService {
                         access.canManageGlobal())
                 .orElseThrow(() -> new InternalNoticeNotFoundException(internalNoticeId));
         internalNoticeMapper.upsertRead(internalNoticeId, memberId, currentDttm);
+        List<InternalNoticeAttachmentResponse> attachments = lookupAttachments(internalNoticeId);
         return InternalNoticeDetailResponse.of(content,
-                markdownRenderer.render(content.body()), lookupAttachments(internalNoticeId));
+                renderReadableMarkdown(content.body(), internalNoticeId, attachments), attachments);
     }
 
     public FileDownloadResponse openAttachmentDownload(Long memberId, Long internalNoticeId,
@@ -171,9 +182,48 @@ public class InternalNoticeService {
                 storedFileId, FileAccessDecision.GRANTED);
     }
 
-    public SafeMarkdownHtml preview(Long memberId, String bodyMarkdown) {
-        readableAccess(memberId);
-        return markdownRenderer.render(bodyMarkdown);
+    public FileDownloadResponse openAttachmentInline(Long memberId, Long internalNoticeId,
+                                                     Long storedFileId) {
+        MemberAccessContext access = readableAccess(memberId);
+        validateReadableAttachment(internalNoticeId, storedFileId, access);
+        return fileService.openPrivateNoticeInlineImage(storedFileId, FileAccessDecision.GRANTED);
+    }
+
+    public FileReferenceResponse uploadInlineImage(Long actorMemberId, FileUploadParam param) {
+        managementAccess(actorMemberId);
+        Long storedFileId = fileService.uploadNoticeInlineImage(new FileUploadParam("notice",
+                param.originalName(), param.sizeBytes(), param.contentSource(), actorMemberId));
+        return fileService.lookupPrivateNoticeInlineImage(storedFileId);
+    }
+
+    public FileDownloadResponse openTemporaryInlineImage(Long actorMemberId, Long storedFileId) {
+        managementAccess(actorMemberId);
+        return fileService.openPrivateNoticeInlineImageOwnedBy(storedFileId, actorMemberId);
+    }
+
+    public FileDownloadResponse openManageableAttachmentInline(Long actorMemberId,
+                                                                Long internalNoticeId,
+                                                                Long storedFileId) {
+        MemberAccessContext access = memberService.lookupAccessContext(actorMemberId);
+        InternalNotice notice = internalNoticeMapper.lookupById(internalNoticeId)
+                .orElseThrow(() -> new InternalNoticeNotFoundException(internalNoticeId));
+        validateManagement(access, notice.getTargetScope(), notice.getTeamId());
+        if (!internalNoticeMapper.searchAttachmentFileIds(internalNoticeId).contains(storedFileId)) {
+            throw new InternalNoticeNotFoundException(internalNoticeId);
+        }
+        return fileService.openPrivateNoticeInlineImage(storedFileId, FileAccessDecision.GRANTED);
+    }
+
+    public SafeMarkdownHtml preview(Long actorMemberId, Long internalNoticeId,
+                                    String bodyMarkdown, List<Long> attachmentFileIds) {
+        MemberAccessContext access = managementAccess(actorMemberId);
+        Set<Long> referencedImageIds = extractReferencedImageIds(bodyMarkdown);
+        validatePreviewAttachmentReferences(referencedImageIds, attachmentFileIds);
+        Map<Long, String> imageUrls = internalNoticeId == null
+                ? temporaryImageUrls(actorMemberId, referencedImageIds)
+                : previewImageUrls(actorMemberId, access, internalNoticeId,
+                        referencedImageIds);
+        return markdownRenderer.render(bodyMarkdown, imageUrls);
     }
 
     public List<InternalNoticeReadStatusResponse> searchReadStatuses(
@@ -194,6 +244,14 @@ public class InternalNoticeService {
     private MemberAccessContext readableAccess(Long memberId) {
         MemberAccessContext access = memberService.lookupAccessContext(memberId);
         if (!access.canReadInternal()) {
+            throw new InternalNoticeAccessDeniedException();
+        }
+        return access;
+    }
+
+    private MemberAccessContext managementAccess(Long memberId) {
+        MemberAccessContext access = memberService.lookupAccessContext(memberId);
+        if (!access.canManageGlobal() && !access.canManageTeam(access.teamId())) {
             throw new InternalNoticeAccessDeniedException();
         }
         return access;
@@ -232,6 +290,14 @@ public class InternalNoticeService {
         }
         storedFileIds.forEach(storedFileId ->
                 fileService.validatePrivateReadyOwnedBy(storedFileId, actorMemberId));
+    }
+
+    private void validateAttachedInlineImages(String body, List<Long> attachmentFileIds) {
+        Set<Long> referencedImageIds = extractReferencedImageIds(body);
+        if (!new HashSet<>(attachmentFileIds).containsAll(referencedImageIds)) {
+            throw new InvalidInternalNoticeException("body-image");
+        }
+        referencedImageIds.forEach(fileService::lookupPrivateNoticeInlineImage);
     }
 
     private void validateUpdatedAttachments(List<Long> storedFileIds,
@@ -276,5 +342,97 @@ public class InternalNoticeService {
     private InternalNoticeAttachmentResponse toAttachmentResponse(FileReferenceResponse file) {
         return new InternalNoticeAttachmentResponse(file.storedFileId(), file.originalName(),
                 file.contentType(), file.sizeBytes());
+    }
+
+    private void validateReadableAttachment(Long internalNoticeId, Long storedFileId,
+                                            MemberAccessContext access) {
+        boolean readable = internalNoticeMapper.existsReadableAttachment(
+                internalNoticeId, storedFileId, LocalDateTime.now(clock),
+                access.teamId(), access.canManageGlobal());
+        if (!readable) {
+            throw new InternalNoticeNotFoundException(internalNoticeId);
+        }
+    }
+
+    private SafeMarkdownHtml renderReadableMarkdown(String body, Long internalNoticeId,
+                                                     List<InternalNoticeAttachmentResponse> attachments) {
+        return markdownRenderer.render(body, attachedImageUrls(attachments,
+                storedFileId -> "/api/internal-notices/" + internalNoticeId
+                        + "/attachments/" + storedFileId + "/inline"));
+    }
+
+    private SafeMarkdownHtml renderManageableMarkdown(String body, Long internalNoticeId,
+                                                       List<InternalNoticeAttachmentResponse> attachments) {
+        return markdownRenderer.render(body, attachedImageUrls(attachments,
+                storedFileId -> "/api/internal-notice-management/" + internalNoticeId
+                        + "/attachments/" + storedFileId + "/inline"));
+    }
+
+    private Map<Long, String> attachedImageUrls(List<InternalNoticeAttachmentResponse> attachments,
+                                                 java.util.function.Function<Long, String> urlFactory) {
+        return attachments.stream()
+                .filter(this::isInlineImage)
+                .collect(Collectors.toMap(InternalNoticeAttachmentResponse::storedFileId,
+                        attachment -> urlFactory.apply(attachment.storedFileId())));
+    }
+
+    private boolean isInlineImage(InternalNoticeAttachmentResponse attachment) {
+        return attachment.sizeBytes() <= INLINE_IMAGE_MAX_BYTES
+                && INLINE_IMAGE_CONTENT_TYPES.contains(attachment.contentType());
+    }
+
+    private Set<Long> extractReferencedImageIds(String bodyMarkdown) {
+        return markdownRenderer.extractAttachmentImageReferences(bodyMarkdown).stream()
+                .map(this::parseStoredFileId)
+                .collect(Collectors.toUnmodifiableSet());
+    }
+
+    private Long parseStoredFileId(String reference) {
+        String value = reference.substring("attachment://".length());
+        try {
+            return Long.valueOf(value);
+        } catch (NumberFormatException exception) {
+            throw new InvalidInternalNoticeException("body-image");
+        }
+    }
+
+    private void validatePreviewAttachmentReferences(Set<Long> referencedImageIds,
+                                                     List<Long> attachmentFileIds) {
+        if (attachmentFileIds == null
+                || !new HashSet<>(attachmentFileIds).containsAll(referencedImageIds)) {
+            throw new InvalidInternalNoticeException("body-image");
+        }
+    }
+
+    private Map<Long, String> temporaryImageUrls(Long actorMemberId,
+                                                  Set<Long> referencedImageIds) {
+        referencedImageIds.forEach(storedFileId ->
+                fileService.validatePrivateNoticeInlineImageOwnedBy(storedFileId, actorMemberId));
+        return referencedImageIds.stream().collect(Collectors.toMap(storedFileId -> storedFileId,
+                storedFileId -> "/api/internal-notice-management/images/" + storedFileId
+                        + "/preview"));
+    }
+
+    private Map<Long, String> previewImageUrls(Long actorMemberId, MemberAccessContext access,
+                                                Long internalNoticeId, Set<Long> referencedImageIds) {
+        InternalNotice notice = internalNoticeMapper.lookupById(internalNoticeId)
+                .orElseThrow(() -> new InternalNoticeNotFoundException(internalNoticeId));
+        validateManagement(access, notice.getTargetScope(), notice.getTeamId());
+        Set<Long> existingAttachmentIds = new HashSet<>(internalNoticeMapper
+                .searchAttachmentFileIds(internalNoticeId));
+        return referencedImageIds.stream().collect(Collectors.toMap(storedFileId -> storedFileId,
+                storedFileId -> previewImageUrl(actorMemberId, internalNoticeId,
+                        existingAttachmentIds, storedFileId)));
+    }
+
+    private String previewImageUrl(Long actorMemberId, Long internalNoticeId,
+                                   Set<Long> existingAttachmentIds, Long storedFileId) {
+        if (existingAttachmentIds.contains(storedFileId)) {
+            fileService.lookupPrivateNoticeInlineImage(storedFileId);
+            return "/api/internal-notice-management/" + internalNoticeId
+                    + "/attachments/" + storedFileId + "/inline";
+        }
+        fileService.validatePrivateNoticeInlineImageOwnedBy(storedFileId, actorMemberId);
+        return "/api/internal-notice-management/images/" + storedFileId + "/preview";
     }
 }

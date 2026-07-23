@@ -202,6 +202,19 @@ class InternalNoticeManagementServiceTest {
     }
 
     @Test
+    void 본문_이미지는_반드시_첨부_목록에_포함되어야_한다() {
+        given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(adminContext());
+
+        assertThatThrownBy(() -> internalNoticeService.createDraft(ACTOR_ID,
+                new InternalNoticeWriteParam(InternalNoticeTargetScope.ALL, null,
+                        "공지 제목", "![포스터](attachment://" + FILE_ID + ")", false,
+                        List.of())))
+                .isInstanceOf(InvalidInternalNoticeException.class);
+
+        verify(internalNoticeMapper, never()).insert(any());
+    }
+
+    @Test
     void 게시_종료_보관은_잠근_공지의_대상_권한과_상태를_검증한다() {
         given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(leaderContext());
         given(internalNoticeMapper.lookupByIdForUpdate(NOTICE_ID))

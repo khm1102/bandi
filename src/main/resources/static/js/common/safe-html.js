@@ -1,6 +1,6 @@
 const ALLOWED_TAGS = new Set(['A', 'BLOCKQUOTE', 'BR', 'CODE', 'DEL', 'EM', 'H1', 'H2',
     'H3', 'H4', 'H5', 'H6', 'HR', 'LI', 'OL', 'P', 'PRE', 'STRONG', 'TABLE', 'TBODY',
-    'TD', 'TH', 'THEAD', 'TR', 'UL']);
+    'TD', 'TH', 'THEAD', 'TR', 'UL', 'IMG']);
 
 function cloneSafeNode(node) {
     if (node.nodeType === Node.TEXT_NODE) return document.createTextNode(node.textContent);
@@ -11,6 +11,19 @@ function cloneSafeNode(node) {
         if (href) copy.setAttribute('href', href);
         copy.setAttribute('target', '_blank');
         copy.setAttribute('rel', 'noopener noreferrer');
+    }
+    if (node.tagName === 'IMG') {
+        const src = node.getAttribute('src');
+        if (!src || (!src.startsWith('/api/internal-notices/')
+                && !src.startsWith('/api/internal-notice-management/'))) {
+            return null;
+        }
+        copy.setAttribute('src', src);
+        copy.setAttribute('alt', node.getAttribute('alt') || '공지 첨부 이미지');
+        const title = node.getAttribute('title');
+        if (title) {
+            copy.setAttribute('title', title);
+        }
     }
     node.childNodes.forEach((child) => {
         const safeChild = cloneSafeNode(child);
