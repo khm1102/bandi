@@ -7,6 +7,7 @@ import kr.ac.tukorea.bandi.domain.dashboard.controller.DashboardController;
 import kr.ac.tukorea.bandi.domain.member.controller.MemberController;
 import kr.ac.tukorea.bandi.domain.notice.controller.NoticeController;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeDetailResponse;
+import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeDetailViewResponse;
 import kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeTargetScope;
 import kr.ac.tukorea.bandi.domain.notice.service.InternalNoticeService;
 import kr.ac.tukorea.bandi.domain.resource.controller.ResourceController;
@@ -26,10 +27,12 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Map;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import static org.mockito.BDDMockito.given;
+import static org.hamcrest.Matchers.instanceOf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -93,7 +96,19 @@ class SsrControllerRoutingTest {
         mockMvc.perform(get("/notices/10"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("notice/detail"))
-                .andExpect(model().attributeExists("notice"));
+                .andExpect(model().attribute("notice", instanceOf(
+                        InternalNoticeDetailViewResponse.class)));
+    }
+
+    @Test
+    void 공지_수정_화면은_JSP에_record를_전달하지_않는다() throws Exception {
+        authenticate();
+
+        mockMvc.perform(get("/notices/10/edit"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("notice/form"))
+                .andExpect(model().attribute("noticeId", 10L))
+                .andExpect(model().attributeDoesNotExist("notice"));
     }
 
     @ParameterizedTest
@@ -117,6 +132,7 @@ class SsrControllerRoutingTest {
     private InternalNoticeDetailResponse noticeDetail() {
         return new InternalNoticeDetailResponse(10L, InternalNoticeTargetScope.ALL,
                 null, null, "공지", null, false,
-                null, null, "관리자", null, List.of());
+                LocalDateTime.of(2026, 7, 23, 16, 30), null, "관리자",
+                LocalDateTime.of(2026, 7, 23, 17, 10), List.of());
     }
 }

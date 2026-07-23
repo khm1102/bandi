@@ -62,6 +62,12 @@ Controller → Service → Mapper → Model
   `MarkdownRenderer`는 검증된 ID를 해당 공지의 인증 inline URL로만 바꾼다. 작성 중인
   새 이미지는 업로더 전용 임시 미리보기 URL을 사용하며 외부 URL·원시 HTML 이미지는
   렌더링하지 않는다.
+- 캘린더 API는 KST `LocalDateTime`과 기존 `/api/calendar-events` 계약을 유지한다.
+  일정 기간은 `endDttm > startDttm`이며, 조회 범위와의 겹침은 반개구간
+  `startDttm < rangeEnd && endDttm > rangeStart`로 판정한다. 종일 일정의 종료값은
+  사용자가 선택한 마지막 날 다음 날 00:00이다. `colorCode`는 제한된 일정 표시 팔레트
+  (`NAVY`, `MINT`, `BLUE`, `PLUM`, `AMBER`, `ROSE`)이며, 생략한 이전 API 클라이언트는
+  생성 시 `NAVY`, 수정 시 기존 값을 사용한다.
 
 ## 5. 후속 범위
 

@@ -2,6 +2,7 @@ package kr.ac.tukorea.bandi.domain.calendar.mapper;
 
 import kr.ac.tukorea.bandi.domain.calendar.dto.request.CalendarEventSearchCondition;
 import kr.ac.tukorea.bandi.domain.calendar.model.CalendarEvent;
+import kr.ac.tukorea.bandi.domain.calendar.model.CalendarEventColor;
 import kr.ac.tukorea.bandi.domain.member.mapper.CohortMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.MemberMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.TeamMapper;
@@ -71,7 +72,9 @@ class CalendarEventMapperTest {
 
     @Test
     void 일정을_저장하고_단건_조회한다() {
-        CalendarEvent event = event(stageTeamId, "무대 연습", JULY_START.plusDays(1));
+        CalendarEvent event = CalendarEvent.create(stageTeamId, "무대 연습", "일정 설명",
+                JULY_START.plusDays(1), JULY_START.plusDays(1).plusHours(2), false,
+                "학생회관 소극장", CalendarEventColor.MINT, actorMemberId);
 
         calendarEventMapper.insert(event);
         CalendarEvent found = calendarEventMapper.lookupById(event.getCalendarEventId())
@@ -80,6 +83,7 @@ class CalendarEventMapperTest {
         assertThat(event.getCalendarEventId()).isNotNull();
         assertThat(found.getTeamId()).isEqualTo(stageTeamId);
         assertThat(found.getTitle()).isEqualTo("무대 연습");
+        assertThat(found.getColorCode()).isEqualTo(CalendarEventColor.MINT);
         assertThat(found.getCreatedDttm()).isNotNull();
     }
 
@@ -97,6 +101,20 @@ class CalendarEventMapperTest {
 
         assertThat(found).extracting(CalendarEvent::getTitle)
                 .containsExactly("월초 전체 일정", "월말 무대 일정");
+    }
+
+    @Test
+    void 조회_시작과_같은_시각에_끝나는_일정은_제외한다() {
+        calendarEventMapper.insert(event(stageTeamId, "지난 일정",
+                JULY_START.minusHours(2), JULY_START));
+        calendarEventMapper.insert(event(stageTeamId, "현재 일정",
+                JULY_START, JULY_START.plusHours(2)));
+
+        List<CalendarEvent> found = calendarEventMapper.searchOverlapping(
+                new CalendarEventSearchCondition(JULY_START, AUGUST_START, null));
+
+        assertThat(found).extracting(CalendarEvent::getTitle)
+                .containsExactly("현재 일정");
     }
 
     @Test
@@ -118,7 +136,7 @@ class CalendarEventMapperTest {
         calendarEventMapper.insert(original);
         CalendarEvent changed = original.change(operatorTeamId, "오퍼 연습", "음향 큐 연습",
                 JULY_START.plusDays(2), JULY_START.plusDays(2).plusHours(2),
-                false, "대학극장", actorMemberId);
+                false, "대학극장", CalendarEventColor.ROSE, actorMemberId);
 
         int affected = calendarEventMapper.update(changed);
 
@@ -129,6 +147,7 @@ class CalendarEventMapperTest {
                 .satisfies(found -> {
                     assertThat(found.getTeamId()).isEqualTo(operatorTeamId);
                     assertThat(found.getTitle()).isEqualTo("오퍼 연습");
+                    assertThat(found.getColorCode()).isEqualTo(CalendarEventColor.ROSE);
                     assertThat(found.getUpdatedByMemberId()).isEqualTo(actorMemberId);
                 });
     }
@@ -167,6 +186,18 @@ class CalendarEventMapperTest {
                     created_by_member_id, updated_by_member_id
                 ) VALUES (?, '잘못된 일정', '설명', ?, ?, 0, '장소', ?, ?)
                 """, stageTeamId, JULY_START.plusHours(2), JULY_START,
+                actorMemberId, actorMemberId))
+                .isInstanceOf(DataAccessException.class);
+    }
+
+    @Test
+    void DB도_종료가_시작과_같은_일정을_거부한다() {
+        assertThatThrownBy(() -> jdbcTemplate.update("""
+                INSERT INTO calendar_event (
+                    team_id, title, description, start_dttm, end_dttm, is_all_day, place,
+                    created_by_member_id, updated_by_member_id
+                ) VALUES (?, '잘못된 일정', NULL, ?, ?, 0, NULL, ?, ?)
+                """, stageTeamId, JULY_START, JULY_START,
                 actorMemberId, actorMemberId))
                 .isInstanceOf(DataAccessException.class);
     }

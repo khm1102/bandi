@@ -166,12 +166,26 @@ Typography 플러그인의 `prose` 클래스가 존재한다고 가정하지 않
 
 **스테퍼(수량)** — 래퍼 `flex items-center justify-between rounded-lg border p-1.5`, 버튼 `flex size-8 items-center justify-center rounded-md border bg-card text-lg font-extrabold`, 값 `text-sm font-black`
 
-### 7.4 캘린더 · 시간 그리드 (일정 기능 구현 시)
+### 7.4 캘린더 · 날짜/시간 입력
 
-**월 캘린더** — `grid grid-cols-7 gap-1.5`, 요일 헤더 `py-1 text-center text-xs font-extrabold text-muted-foreground`
-- 날짜 셀: `min-h-20 cursor-pointer rounded-md border bg-card p-1.5 transition-colors hover:border-primary`, 날짜 숫자 `text-xs font-extrabold`
-- 오늘: `border-primary ring-2 ring-ring/20` / 비활성(전·다음 달): `bg-secondary opacity-50`
-- 일정 칩: `mt-1 truncate rounded-sm px-1 py-0.5 text-xs font-bold` + tone별 `*-soft` 배경
+**통합 캘린더** — FullCalendar 7.0.1을 사용한다. 상단 도구는 오늘, 이전·다음,
+현재 기간, 월·주·목록 보기, 실제 팀 이름 필터, 일정 등록 순으로 배치한다.
+- 데스크톱·가로 태블릿은 월간, 모바일·세로 태블릿은 주간 목록을 기본으로 한다.
+- 월간은 하루 최대 3건만 먼저 보이고 나머지는 `N개 더 보기`로 연다.
+- 일정 표시 색상은 네이비·민트·파랑·보라·주황·장미의 제한된 팔레트에서 고른다.
+  색상은 팀 범위나 일정 종류를 뜻하지 않으므로 실제 팀명과 일정 제목을 항상 함께
+  표시한다.
+- 일정 클릭은 읽기 상세를 먼저 연다. 수정·삭제는 권한이 있을 때만 상세에서 시작한다.
+- 드래그·리사이즈로 서버 상태를 즉시 바꾸지 않는다.
+
+**날짜·시간 입력** — 공통 `<t:dateTimeField>`를 사용한다. 모바일과 JS 실패 시
+`datetime-local` 네이티브 입력을 유지하고, 데스크톱 초기화에 성공했을 때만 Vanilla
+Calendar Pro 3.1.0 날짜 입력과 24시간제 시간 입력을 분리한다.
+- 일정은 30분, 공지 예약과 활동 기록은 5분 단위다.
+- 직접 입력·붙여넣기·키보드 이동을 허용하며 달력 선택만 강제하지 않는다.
+- 종일 일정은 화면에서 포함형 종료일을 받고 서버 전송 직전에 다음 날 00:00의
+  배타적 종료값으로 변환한다.
+- 대화상자는 데스크톱에서 넓은 중앙형, 모바일에서 전체 화면형을 사용한다.
 
 ### 7.5 인증 화면 (로그인 기능 구현 시 — layoutAuth 내부)
 

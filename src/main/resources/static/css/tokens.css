@@ -46,3 +46,42 @@
     --sidebar-muted: #aebdca;
     --sidebar-border: rgba(255, 255, 255, .10);
 }
+
+/* 모달 폭은 Tailwind Browser의 동적 클래스 탐색에 맡기지 않는다.
+   긴 데스크톱 화면에서도 읽기와 입력을 위한 폭으로 제한한다. */
+.bandi-modal-backdrop {
+    padding: 1rem;
+}
+
+.bandi-modal-panel {
+    width: min(100%, 34rem);
+    max-height: calc(100dvh - 2rem);
+    border-radius: var(--radius);
+}
+
+.bandi-modal-panel[data-modal-size="lg"] {
+    width: min(100%, 54rem);
+}
+
+@media (min-width: 768px) {
+    .bandi-modal-backdrop {
+        padding: 1.5rem;
+    }
+
+    .bandi-modal-panel {
+        max-height: calc(100dvh - 3rem);
+    }
+}
+
+@media (max-width: 767px) {
+    .bandi-modal-backdrop[data-mobile-fullscreen="true"] {
+        padding: 0;
+    }
+
+    .bandi-modal-backdrop[data-mobile-fullscreen="true"] .bandi-modal-panel {
+        width: 100%;
+        max-height: 100dvh;
+        min-height: 100dvh;
+        border-radius: 0;
+    }
+}

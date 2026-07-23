@@ -50,6 +50,14 @@
 `internal_notice_attachment`는 현재 연결만 보관한다. 수정에서 분리된 private 파일은
 파일 feature의 미연결 파일 정리 대상으로 남긴다.
 
+`calendar_event`의 유효 기간은 `end_dttm > start_dttm`이며, 기간 조회는
+`start_dttm < rangeEnd AND end_dttm > rangeStart`의 반개구간으로 겹침을 판정한다.
+종일 일정은 시작일 00:00을 포함하고 사용자가 선택한 마지막 날 다음 날 00:00을
+제외하는 배타적 종료값을 저장한다. 설명과 장소는 선택값이며 제목은 최대 150자다.
+`color_code`는 `NAVY`, `MINT`, `BLUE`, `PLUM`, `AMBER`, `ROSE` 중 하나를 저장하며,
+기존·미지정 일정의 기본값은 `NAVY`다. 색상은 일정의 보조 구분 정보이므로 팀 범위와
+제목을 함께 표시한다.
+
 ## 4. 소품·장비
 
 | 테이블 | 책임 |

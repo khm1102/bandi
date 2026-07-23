@@ -3,6 +3,12 @@ import {lockBodyScroll, unlockBodyScroll} from './scroll-lock.js';
 const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 const modalTriggers = new WeakMap();
 
+function visibleFocusables(modal) {
+    return Array.from(modal.querySelectorAll(FOCUSABLE_SELECTOR))
+        .filter((element) => element.getClientRects().length > 0
+            && element.getAttribute('aria-hidden') !== 'true');
+}
+
 export function openModal(modalId, trigger = document.activeElement) {
     const modal = document.getElementById(modalId);
     if (!modal) {
@@ -13,7 +19,7 @@ export function openModal(modalId, trigger = document.activeElement) {
     modal.classList.add('flex');
     modal.setAttribute('aria-hidden', 'false');
     lockBodyScroll(modal);
-    const focusables = modal.querySelectorAll(FOCUSABLE_SELECTOR);
+    const focusables = visibleFocusables(modal);
     if (focusables.length > 0) {
         focusables[0].focus();
         return;
@@ -40,7 +46,8 @@ export function closeModal(modal) {
 }
 
 function lookupOpenedModal() {
-    return document.querySelector('[data-modal-back].flex');
+    const opened = document.querySelectorAll('[data-modal-back].flex');
+    return opened.length > 0 ? opened[opened.length - 1] : null;
 }
 
 document.addEventListener('click', (event) => {
@@ -71,7 +78,7 @@ document.addEventListener('keydown', (event) => {
     if (event.key !== 'Tab') {
         return;
     }
-    const focusables = modal.querySelectorAll(FOCUSABLE_SELECTOR);
+    const focusables = visibleFocusables(modal);
     if (focusables.length === 0) {
         return;
     }

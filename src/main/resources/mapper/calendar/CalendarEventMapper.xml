@@ -14,6 +14,7 @@
             <arg column="end_dttm" javaType="java.time.LocalDateTime"/>
             <arg column="is_all_day" javaType="_boolean"/>
             <arg column="place" javaType="java.lang.String"/>
+            <arg column="color_code" javaType="kr.ac.tukorea.bandi.domain.calendar.model.CalendarEventColor"/>
             <arg column="created_by_member_id" javaType="java.lang.Long"/>
             <arg column="updated_by_member_id" javaType="java.lang.Long"/>
             <arg column="created_dttm" javaType="java.time.LocalDateTime"/>
@@ -24,7 +25,7 @@
 
     <sql id="calendarEventColumns">
         calendar_event_id, team_id, title, description, start_dttm, end_dttm,
-        is_all_day, place, created_by_member_id, updated_by_member_id,
+        is_all_day, place, color_code, created_by_member_id, updated_by_member_id,
         created_dttm, updated_dttm, deleted_dttm
     </sql>
 
@@ -51,7 +52,7 @@
         SELECT <include refid="calendarEventColumns"/>
         FROM calendar_event
         WHERE start_dttm &lt; #{rangeEnd}
-          AND end_dttm &gt;= #{rangeStart}
+          AND end_dttm &gt; #{rangeStart}
           AND <include refid="notDeleted"/>
         <if test="teamId != null">
           AND (team_id = #{teamId} OR team_id IS NULL)
@@ -61,10 +62,10 @@
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="calendarEventId">
         INSERT INTO calendar_event (
-            team_id, title, description, start_dttm, end_dttm, is_all_day, place,
+            team_id, title, description, start_dttm, end_dttm, is_all_day, place, color_code,
             created_by_member_id, updated_by_member_id
         ) VALUES (
-            #{teamId}, #{title}, #{description}, #{startDttm}, #{endDttm}, #{allDay}, #{place},
+            #{teamId}, #{title}, #{description}, #{startDttm}, #{endDttm}, #{allDay}, #{place}, #{colorCode},
             #{createdByMemberId}, #{updatedByMemberId}
         )
     </insert>
@@ -78,6 +79,7 @@
             end_dttm = #{endDttm},
             is_all_day = #{allDay},
             place = #{place},
+            color_code = #{colorCode},
             updated_by_member_id = #{updatedByMemberId}
         WHERE calendar_event_id = #{calendarEventId}
           AND <include refid="notDeleted"/>
