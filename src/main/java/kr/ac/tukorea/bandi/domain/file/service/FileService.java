@@ -109,6 +109,11 @@ public class FileService {
         return FileReferenceResponse.from(lookupPrivateStoredFile(storedFileId));
     }
 
+    public FileReferenceResponse lookupPrivateReadyForUpdate(Long storedFileId) {
+        return FileReferenceResponse.from(validatePrivateStoredFile(
+                metadataService.lookupForUpdate(storedFileId)));
+    }
+
     public void validatePrivateReadyOwnedBy(Long storedFileId, Long memberId) {
         StoredFile file = lookupPrivateStoredFile(storedFileId);
         if (!file.isUploadedBy(memberId)) {
@@ -222,7 +227,10 @@ public class FileService {
     }
 
     private StoredFile lookupPrivateStoredFile(Long storedFileId) {
-        StoredFile file = metadataService.lookup(storedFileId);
+        return validatePrivateStoredFile(metadataService.lookup(storedFileId));
+    }
+
+    private StoredFile validatePrivateStoredFile(StoredFile file) {
         file.validatePrivateDownload();
         file.validateGeneralPurpose();
         return file;

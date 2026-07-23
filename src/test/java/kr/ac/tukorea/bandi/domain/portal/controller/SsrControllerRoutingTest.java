@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.domain.portal.controller;
 
 import kr.ac.tukorea.bandi.domain.activity.controller.ActivityController;
+import kr.ac.tukorea.bandi.domain.activity.service.ActivityReportDocumentService;
 import kr.ac.tukorea.bandi.domain.asset.controller.AssetController;
 import kr.ac.tukorea.bandi.domain.calendar.controller.CalendarController;
 import kr.ac.tukorea.bandi.domain.dashboard.controller.DashboardController;
@@ -64,6 +65,9 @@ class SsrControllerRoutingTest {
 
     @MockitoBean
     private InternalNoticeService internalNoticeService;
+
+    @MockitoBean
+    private ActivityReportDocumentService activityReportDocumentService;
 
     private final MockMvc mockMvc;
 

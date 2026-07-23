@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.ac.tukorea.bandi.domain.member.mapper.ClubOfficerMapper">
+
+    <select id="lookupActiveMemberNameByPosition" resultType="java.lang.String">
+        SELECT m.name
+        FROM club_officer co
+        JOIN member m ON m.member_id = co.member_id
+        WHERE co.position_code = #{position}
+          AND m.member_status_code = 'ACTIVE'
+    </select>
+
+    <insert id="insert">
+        INSERT INTO club_officer (position_code, member_id, appointed_dttm)
+        VALUES (#{position}, #{memberId}, #{appointedDttm})
+    </insert>
+
+    <update id="updateMember">
+        UPDATE club_officer
+        SET member_id = #{memberId},
+            appointed_dttm = #{appointedDttm},
+            updated_dttm = CURRENT_TIMESTAMP
+        WHERE position_code = #{position}
+    </update>
+</mapper>

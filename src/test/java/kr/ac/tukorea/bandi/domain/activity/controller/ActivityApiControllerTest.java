@@ -123,6 +123,23 @@ class ActivityApiControllerTest {
     }
 
     @Test
+    void HWPX_활동_내역서는_첨부_파일로_전송한다() throws Exception {
+        given(activityRecordService.openManageableDownload(ACTOR_ID,
+                RECORD_ID, FILE_ID)).willReturn(
+                new kr.ac.tukorea.bandi.global.response.FileDownloadResponse(
+                        "activity-report.hwpx", "application/hwp+zip", 4,
+                        new org.springframework.core.io.InputStreamResource(
+                                new java.io.ByteArrayInputStream(
+                                        new byte[]{1, 2, 3, 4}))));
+
+        mockMvc.perform(get("/api/activity-management/{recordId}/files/"
+                        + "{fileId}/download", RECORD_ID, FILE_ID))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition",
+                        org.hamcrest.Matchers.containsString("attachment")));
+    }
+
+    @Test
     void 멤버가_자기_팀_활동_초안을_등록한다() throws Exception {
         given(activityRecordService.createDraft(any(), any())).willReturn(RECORD_ID);
 

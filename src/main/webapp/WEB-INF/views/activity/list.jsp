@@ -15,6 +15,7 @@
     </jsp:attribute>
     <jsp:body>
     <t:pageHead title="활동 기록" description="팀 활동을 네이비즘 인증 사진과 함께 제출하고 검수 이력을 관리합니다">
+        <t:button href="/activity-documents" variant="outline">활동 내역서 만들기</t:button>
         <t:button pageAction="activity-create-open">+ 활동 기록</t:button>
     </t:pageHead>
 
@@ -129,9 +130,9 @@
             <p class="mt-4 whitespace-pre-wrap text-sm leading-6" data-activity-detail-body></p>
 
             <section class="mt-5 border-t pt-4">
-                <div class="flex items-center gap-2"><h4 class="text-sm font-extrabold">증빙 사진</h4><span class="text-xs text-muted-foreground" data-activity-file-count></span></div>
+                <div class="flex items-center gap-2"><h4 class="text-sm font-extrabold">증빙 및 문서</h4><span class="text-xs text-muted-foreground" data-activity-file-count></span></div>
                 <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2" data-activity-detail-files></div>
-                <p class="mt-3 hidden text-xs text-muted-foreground" data-activity-file-empty>등록된 현재 사진이 없습니다.</p>
+                <p class="mt-3 hidden text-xs text-muted-foreground" data-activity-file-empty>등록된 증빙이나 문서가 없습니다.</p>
             </section>
 
             <section class="mt-5 hidden border-t pt-4" data-activity-review-section>

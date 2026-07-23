@@ -156,6 +156,26 @@ class MemberMapperTest {
     }
 
     @Test
+    void 활동_내역서_참여자_검색은_활성_멤버만_지정한_수만큼_반환한다() {
+        Member first = new Member(null, "2020184000", "김현민", "컴퓨터공학부",
+                AcademicStatus.ENROLLED, null, actorTeamId, cohortId,
+                ClubRole.MEMBER, MemberStatus.ACTIVE, SsoLinkStatus.LINKED,
+                null, null, null);
+        Member second = new Member(null, "2020184001", "김현우", "디자인공학부",
+                AcademicStatus.ENROLLED, null, actorTeamId, cohortId,
+                ClubRole.MEMBER, MemberStatus.ACTIVE, SsoLinkStatus.LINKED,
+                null, null, null);
+        memberMapper.insert(first);
+        memberMapper.insert(second);
+        memberMapper.insert(preRegistered("2020184002", actorTeamId));
+
+        List<Member> result = memberMapper.searchActiveByKeyword("김현", 1);
+
+        assertThat(result).hasSize(1)
+                .allMatch(member -> member.getStatus() == MemberStatus.ACTIVE);
+    }
+
+    @Test
     void 팀을_변경하면_현재_팀이_갱신된다() {
         // given
         Member member = preRegistered("2021184000", actorTeamId);

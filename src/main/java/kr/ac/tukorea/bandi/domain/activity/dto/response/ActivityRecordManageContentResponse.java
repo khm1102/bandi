@@ -18,6 +18,7 @@ public record ActivityRecordManageContentResponse(
         String updatedByName,
         LocalDateTime submittedDttm,
         LocalDateTime reviewedDttm,
-        LocalDateTime updatedDttm
+        LocalDateTime updatedDttm,
+        boolean reportDocument
 ) {
 }

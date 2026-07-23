@@ -52,6 +52,16 @@ class FileMetadataServiceTest {
     }
 
     @Test
+    void 최신_파일을_잠금_조회한다() {
+        StoredFile pending = pending();
+        given(storedFileMapper.lookupByIdForUpdate(FILE_ID))
+                .willReturn(Optional.of(pending));
+
+        assertThat(metadataService.lookupForUpdate(FILE_ID)).isSameAs(pending);
+        verify(storedFileMapper).lookupByIdForUpdate(FILE_ID);
+    }
+
+    @Test
     void 잠근_PENDING_파일을_READY로_전환한다() {
         StoredFile pending = pending();
         given(storedFileMapper.lookupByIdForUpdate(FILE_ID)).willReturn(Optional.of(pending));
