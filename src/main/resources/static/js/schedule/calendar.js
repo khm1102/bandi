@@ -47,6 +47,16 @@ const formError = lookup('[data-calendar-form-error]');
 const periodError = lookup('[data-calendar-period-error]');
 const detailError = lookup('[data-calendar-detail-error]');
 
+function selectedColorCode() {
+    return all('input[name="ceColor"]').find((input) => input.checked)?.value || 'NAVY';
+}
+
+function setSelectedColorCode(colorCode) {
+    const selected = all('input[name="ceColor"]')
+        .find((input) => input.value === colorCode) || document.getElementById('ceColorNavy');
+    selected.checked = true;
+}
+
 function errorMessage(error) {
     if (error instanceof ApiError && error.fieldErrors.length > 0) {
         return error.fieldErrors[0].reason;
@@ -416,7 +426,7 @@ function fillCreateForm(startDate, endDate, allDay) {
     document.getElementById('calendarEventModalTitle').textContent = '일정 등록';
     document.getElementById('ceTitle').value = '';
     document.getElementById('ceTeam').value = defaultTeamId();
-    document.getElementById('ceColor').value = 'NAVY';
+    setSelectedColorCode('NAVY');
     document.getElementById('ceAllDay').checked = allDay;
     configureDateMode(allDay);
     if (allDay) {
@@ -473,7 +483,7 @@ function fillEditForm(eventData) {
     document.getElementById('calendarEventModalTitle').textContent = '일정 수정';
     document.getElementById('ceTitle').value = eventData.title;
     document.getElementById('ceTeam').value = eventData.teamId || '';
-    document.getElementById('ceColor').value = eventData.colorCode || 'NAVY';
+    setSelectedColorCode(eventData.colorCode || 'NAVY');
     document.getElementById('ceAllDay').checked = eventData.allDay;
     configureDateMode(eventData.allDay);
     if (eventData.allDay) {
@@ -559,7 +569,7 @@ function formRequest() {
         endDttm: period.endDttm,
         allDay,
         place: readValue('ceLoc') || null,
-        colorCode: readValue('ceColor'),
+        colorCode: selectedColorCode(),
         rawStart: startValue,
         rawEnd: endValue,
     };

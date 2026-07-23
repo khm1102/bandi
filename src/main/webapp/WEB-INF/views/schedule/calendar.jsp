@@ -111,18 +111,42 @@
                                 <label class="${label}" for="ceTeam">일정 범위</label>
                                 <select class="${input}" id="ceTeam"></select>
                             </div>
-                            <div class="flex flex-wrap items-end gap-3">
-                                <div class="min-w-32">
-                                    <label class="${label}" for="ceColor">표시 색상</label>
-                                    <select class="${input}" id="ceColor">
-                                        <option value="NAVY">네이비</option>
-                                        <option value="MINT">민트</option>
-                                        <option value="BLUE">파랑</option>
-                                        <option value="PLUM">보라</option>
-                                        <option value="AMBER">주황</option>
-                                        <option value="ROSE">장미</option>
-                                    </select>
-                                </div>
+                            <div class="flex flex-wrap items-end gap-4">
+                                <fieldset>
+                                    <legend class="${label}">표시 색상</legend>
+                                    <div class="calendar-color-picker">
+                                        <label class="calendar-color-option" data-calendar-color-option="NAVY" for="ceColorNavy">
+                                            <input id="ceColorNavy" name="ceColor" type="radio" value="NAVY" checked>
+                                            <span class="calendar-color-swatch" aria-hidden="true"></span>
+                                            <span class="sr-only">네이비</span>
+                                        </label>
+                                        <label class="calendar-color-option" data-calendar-color-option="MINT" for="ceColorMint">
+                                            <input id="ceColorMint" name="ceColor" type="radio" value="MINT">
+                                            <span class="calendar-color-swatch" aria-hidden="true"></span>
+                                            <span class="sr-only">민트</span>
+                                        </label>
+                                        <label class="calendar-color-option" data-calendar-color-option="BLUE" for="ceColorBlue">
+                                            <input id="ceColorBlue" name="ceColor" type="radio" value="BLUE">
+                                            <span class="calendar-color-swatch" aria-hidden="true"></span>
+                                            <span class="sr-only">파랑</span>
+                                        </label>
+                                        <label class="calendar-color-option" data-calendar-color-option="PLUM" for="ceColorPlum">
+                                            <input id="ceColorPlum" name="ceColor" type="radio" value="PLUM">
+                                            <span class="calendar-color-swatch" aria-hidden="true"></span>
+                                            <span class="sr-only">보라</span>
+                                        </label>
+                                        <label class="calendar-color-option" data-calendar-color-option="AMBER" for="ceColorAmber">
+                                            <input id="ceColorAmber" name="ceColor" type="radio" value="AMBER">
+                                            <span class="calendar-color-swatch" aria-hidden="true"></span>
+                                            <span class="sr-only">주황</span>
+                                        </label>
+                                        <label class="calendar-color-option" data-calendar-color-option="ROSE" for="ceColorRose">
+                                            <input id="ceColorRose" name="ceColor" type="radio" value="ROSE">
+                                            <span class="calendar-color-swatch" aria-hidden="true"></span>
+                                            <span class="sr-only">장미</span>
+                                        </label>
+                                    </div>
+                                </fieldset>
                                 <label class="flex min-h-11 items-center gap-3 self-end rounded-md border bg-card px-3 text-sm font-bold">
                                     <input id="ceAllDay" type="checkbox" class="size-4 rounded border-input">
                                     종일 일정

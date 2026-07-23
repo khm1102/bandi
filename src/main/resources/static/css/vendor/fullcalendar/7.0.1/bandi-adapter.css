@@ -1,11 +1,14 @@
 /* bandi 디자인 토큰과 FullCalendar 7.0.1 classic theme의 연결 계층. */
-[data-calendar-shell] {
+:root {
     --calendar-event-navy: #0b1f33;
     --calendar-event-mint: #0b715f;
     --calendar-event-blue: #315f8f;
     --calendar-event-plum: #704983;
     --calendar-event-amber: #80530a;
     --calendar-event-rose: #a63c4d;
+}
+
+[data-calendar-shell] {
     --fc-classic-primary: var(--primary-strong);
     --fc-classic-primary-foreground: var(--destructive-foreground);
     --fc-classic-event: var(--primary-strong);
@@ -63,6 +66,94 @@
 [data-calendar-shell] .bandi-calendar-event-title {
     flex: 1 1 auto;
     font-weight: 700;
+}
+
+.calendar-color-picker {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+}
+
+.calendar-color-option {
+    display: inline-grid;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    cursor: pointer;
+    place-items: center;
+}
+
+.calendar-color-option input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    clip-path: inset(50%);
+}
+
+.calendar-color-swatch {
+    display: grid;
+    width: 1.5rem;
+    height: 1.5rem;
+    place-items: center;
+    border: 2px solid transparent;
+    border-radius: 9999px;
+    transition: box-shadow 150ms ease-out, transform 150ms ease-out;
+}
+
+.calendar-color-swatch::after {
+    width: 0.5rem;
+    height: 0.5rem;
+    content: '';
+    border: 2px solid var(--card);
+    border-top: 0;
+    border-left: 0;
+    opacity: 0;
+    transform: rotate(45deg) translate(-1px, -1px);
+}
+
+[data-calendar-color-option="NAVY"] .calendar-color-swatch {
+    background: var(--calendar-event-navy);
+}
+
+[data-calendar-color-option="MINT"] .calendar-color-swatch {
+    background: var(--calendar-event-mint);
+}
+
+[data-calendar-color-option="BLUE"] .calendar-color-swatch {
+    background: var(--calendar-event-blue);
+}
+
+[data-calendar-color-option="PLUM"] .calendar-color-swatch {
+    background: var(--calendar-event-plum);
+}
+
+[data-calendar-color-option="AMBER"] .calendar-color-swatch {
+    background: var(--calendar-event-amber);
+}
+
+[data-calendar-color-option="ROSE"] .calendar-color-swatch {
+    background: var(--calendar-event-rose);
+}
+
+.calendar-color-option input:checked + .calendar-color-swatch {
+    box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--ring);
+}
+
+.calendar-color-option input:checked + .calendar-color-swatch::after {
+    opacity: 1;
+}
+
+.calendar-color-option input:focus-visible + .calendar-color-swatch {
+    outline: 2px solid var(--ring);
+    outline-offset: 4px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .calendar-color-option:hover .calendar-color-swatch {
+        transform: scale(1.08);
+    }
 }
 
 @media (max-width: 767px) {
