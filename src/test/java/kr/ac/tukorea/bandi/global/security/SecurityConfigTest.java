@@ -138,6 +138,29 @@ class SecurityConfigTest {
     }
 
     @Test
+    void 활동_내역서_화면과_생성_API는_모든_로그인_멤버가_사용한다()
+            throws Exception {
+        mockMvc.perform(get("/activity-documents"))
+                .andExpect(status().is3xxRedirection());
+        mockMvc.perform(get("/api/activity-report-documents/blank"))
+                .andExpect(status().isUnauthorized());
+        for (String role : new String[]{"MEMBER", "LEADER", "ADMIN"}) {
+            mockMvc.perform(get("/activity-documents")
+                            .with(user("tester").roles(role)))
+                    .andExpect(status().isOk());
+            mockMvc.perform(get("/api/activity-report-documents/blank")
+                            .with(user("tester").roles(role)))
+                    .andExpect(status().isOk());
+            mockMvc.perform(post("/api/activity-report-documents")
+                            .with(user("tester").roles(role)))
+                    .andExpect(status().isForbidden());
+            mockMvc.perform(post("/api/activity-report-documents")
+                            .with(user("tester").roles(role)).with(csrf()))
+                    .andExpect(status().isOk());
+        }
+    }
+
+    @Test
     void 프로필은_로그인_멤버가_보고_수정하며_팀_멤버_관리는_팀장_이상만_한다()
             throws Exception {
         mockMvc.perform(get("/profile").with(user("member").roles("MEMBER")))
@@ -214,13 +237,19 @@ class SecurityTestController {
             "/profile", "/team-members", "/api/members/me/profile",
             "/api/members/1/profile-photo", "/api/members/team-members",
             "/api/internal-notice-management/test", "/notices/manage",
-            "/notices/manage/1"})
+            "/notices/manage/1", "/activity-documents",
+            "/api/activity-report-documents/blank"})
     ResponseEntity<Void> page() {
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/api/test")
     ResponseEntity<Void> change() {
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/api/activity-report-documents")
+    ResponseEntity<Void> createActivityReport() {
         return ResponseEntity.ok().build();
     }
 

@@ -2,7 +2,7 @@
 
 > 문서 상태: 현행 구현 기준
 > 기준 문서: `feature-spec.md`, `database-schema.md`, `coding-convention.md`
-> 작성 기준일: 2026-07-22
+> 작성 기준일: 2026-07-23
 
 ## 1. 목적
 
@@ -36,7 +36,7 @@ Controller → Service → Mapper → Model
 | `calendar` | 전체·팀 일정 관리 |
 | `notice` | 내부 공지, 읽음 상태 및 첨부 연결 |
 | `resource` | 전체·팀 자료와 파일 리비전 |
-| `activity` | 팀 활동 기록, 증빙 사진, 검토와 수정 이력 |
+| `activity` | 팀 활동 기록·검토 이력과 비저장 HWPX 활동 내역서 생성 |
 | `asset` | 소품·장비 품목, 개별 장비, 상태 이력과 사진 연결 |
 | `file` | 파일 메타데이터와 로컬 파일 저장·전송, 프로필 사진 파기 재시도 |
 | `dashboard` | 각 feature의 읽기 전용 요약 |
@@ -73,6 +73,15 @@ Controller → Service → Mapper → Model
   사용자가 선택한 마지막 날 다음 날 00:00이다. `colorCode`는 제한된 일정 표시 팔레트
   (`NAVY`, `MINT`, `BLUE`, `PLUM`, `AMBER`, `ROSE`)이며, 생략한 이전 API 클라이언트는
   생성 시 `NAVY`, 수정 시 기존 값을 사용한다.
+- `/activity-documents`와 `/api/activity-report-documents/**`는 모든 인증 멤버에게
+  활동 내역서 HWPX 생성과 빈 양식 다운로드를 제공한다. 생성 입력 JSON과 사진은 요청
+  동안만 메모리에서 처리하며 `FileService`, `stored_file`, 활동 기록 테이블을 호출하지 않는다.
+- HWPX 엔진은 개인정보가 제거된 런타임 정본을 복사하고 namespace-aware XML DOM으로
+  이름이 지정된 표 셀만 수정한다. 외부 DTD·스키마·엔티티는 비활성화하고, 사용자 문자열은
+  text node로 삽입한다. 사진은 JPEG·PNG만 허용하며 EXIF 방향 적용과 메타데이터 제거 후
+  1600×1200 흰 캔버스 안에 비율을 유지해 배치한다.
+- 현재 회장 이름은 `activity`가 `MemberService`를 통해 조회한다. 회장 미설정 또는 비활성
+  상태에서는 빈 양식과 완성본을 모두 409로 차단한다.
 
 ## 5. 후속 범위
 

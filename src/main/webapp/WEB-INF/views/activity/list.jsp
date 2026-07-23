@@ -15,6 +15,7 @@
     </jsp:attribute>
     <jsp:body>
     <t:pageHead title="활동 기록" description="팀 활동을 네이비즘 인증 사진과 함께 제출하고 검수 이력을 관리합니다">
+        <t:button href="/activity-documents" variant="outline">활동 내역서 만들기</t:button>
         <t:button pageAction="activity-create-open">+ 활동 기록</t:button>
     </t:pageHead>
 

@@ -21,6 +21,7 @@ import kr.ac.tukorea.bandi.domain.member.exception.NoChangeException;
 import kr.ac.tukorea.bandi.domain.member.exception.SelfRoleDemotionException;
 import kr.ac.tukorea.bandi.domain.member.exception.TeamNotFoundException;
 import kr.ac.tukorea.bandi.domain.member.mapper.CohortMapper;
+import kr.ac.tukorea.bandi.domain.member.mapper.ClubOfficerMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.MemberHistoryMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.MemberMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.TeamMapper;
@@ -82,6 +83,8 @@ class MemberServiceTest {
     @Mock
     private MemberHistoryMapper memberHistoryMapper;
     @Mock
+    private ClubOfficerMapper clubOfficerMapper;
+    @Mock
     private AuditService auditService;
 
     private MemberService memberService;
@@ -91,7 +94,8 @@ class MemberServiceTest {
         // 이력의 changed_dttm을 단언할 수 있도록 시각을 고정한다 (컨벤션 9.5).
         Clock clock = Clock.fixed(FIXED_INSTANT, SEOUL);
         memberService = new MemberService(memberMapper, teamMapper,
-                cohortMapper, memberHistoryMapper, auditService, clock);
+                cohortMapper, memberHistoryMapper, clubOfficerMapper,
+                auditService, clock);
     }
 
     @Test

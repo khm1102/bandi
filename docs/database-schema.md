@@ -1,7 +1,7 @@
 # bandi 데이터베이스 스키마
 
 > 문서 상태: 1차 구현 기준
-> 작성 기준일: 2026-07-22
+> 작성 기준일: 2026-07-23
 > DBMS: MySQL 8
 
 실제 스키마 변경은 `src/main/resources/db/migration`의 Flyway 파일만으로 수행한다.
@@ -28,9 +28,15 @@
 | `member_role_history` | 역할 변경 이력 |
 | `member_status_history` | 활동 상태 변경 이력 |
 | `member_cohort_history` | 기수 변경 이력 |
+| `club_officer` | 권한과 독립된 현재 동아리 직책 담당자 |
 
 현재 멤버는 하나의 팀만 참조한다. 학번은 재사용하지 않으며, 역할과 상태 변경은
 이력 테이블에도 기록한다.
+
+`club_officer.position_code`는 현재 `PRESIDENT`만 허용하며 직책별 한 명만 존재한다.
+활동 내역서 생성은 이 테이블이 참조하는 활성 멤버 이름을 매 요청마다 조회한다.
+HWPX 생성 입력·사진·결과 파일은 DB에 저장하지 않으므로 별도 문서 테이블이나
+`stored_file` 연결을 만들지 않는다.
 
 ## 3. 일정과 콘텐츠
 

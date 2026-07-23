@@ -4,6 +4,7 @@ import kr.ac.tukorea.bandi.domain.audit.service.AuditService;
 import kr.ac.tukorea.bandi.domain.member.dto.response.SchoolConnectionResponse;
 import kr.ac.tukorea.bandi.domain.member.exception.SchoolMemberNotRegisteredException;
 import kr.ac.tukorea.bandi.domain.member.mapper.CohortMapper;
+import kr.ac.tukorea.bandi.domain.member.mapper.ClubOfficerMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.MemberHistoryMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.MemberMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.TeamMapper;
@@ -50,6 +51,8 @@ class MemberSchoolConnectionServiceTest {
     @Mock
     private MemberHistoryMapper memberHistoryMapper;
     @Mock
+    private ClubOfficerMapper clubOfficerMapper;
+    @Mock
     private AuditService auditService;
 
     private MemberService memberService;
@@ -58,7 +61,8 @@ class MemberSchoolConnectionServiceTest {
     void setUp() {
         Clock clock = Clock.fixed(FIXED_INSTANT, ZoneId.of("Asia/Seoul"));
         memberService = new MemberService(memberMapper, teamMapper,
-                cohortMapper, memberHistoryMapper, auditService, clock);
+                cohortMapper, memberHistoryMapper, clubOfficerMapper,
+                auditService, clock);
     }
 
     @Test
