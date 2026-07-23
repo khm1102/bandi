@@ -5,6 +5,7 @@ import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeDetailRespon
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeSummaryResponse;
 import kr.ac.tukorea.bandi.domain.notice.service.InternalNoticeService;
 import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import kr.ac.tukorea.bandi.global.swagger.InternalNoticeApiDocs;
 import lombok.RequiredArgsConstructor;
@@ -16,8 +17,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-
 @RestController
 @RequiredArgsConstructor
 public class InternalNoticeApiController implements InternalNoticeApiDocs {
@@ -25,7 +24,7 @@ public class InternalNoticeApiController implements InternalNoticeApiDocs {
     private final InternalNoticeService internalNoticeService;
 
     @Override
-    public ResponseEntity<List<InternalNoticeSummaryResponse>> search(
+    public ResponseEntity<PageResponse<InternalNoticeSummaryResponse>> search(
             @LoginMember Long memberId, String keyword, String readFilter,
             String targetScope, int page, int pageSize) {
         return ResponseEntity.ok(internalNoticeService.searchReadable(memberId,

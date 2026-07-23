@@ -3,6 +3,7 @@ package kr.ac.tukorea.bandi.domain.resource.controller;
 import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceManageSearchParam;
 import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceRevisionParam;
 import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceSearchParam;
+import kr.ac.tukorea.bandi.domain.resource.model.ResourceTargetScope;
 import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceWriteParam;
 import kr.ac.tukorea.bandi.domain.resource.model.ResourceStatus;
 import kr.ac.tukorea.bandi.domain.resource.model.ResourceTargetScope;
@@ -71,15 +72,18 @@ class ResourceApiControllerTest {
 
     @Test
     void 읽을_수_있는_자료를_검색한다() throws Exception {
-        given(resourceService.searchReadable(any(), any())).willReturn(List.of());
+        given(resourceService.searchReadable(any(), any())).willReturn(
+                kr.ac.tukorea.bandi.global.response.PageResponse.of(List.of(), 0, 20, 0));
 
         mockMvc.perform(get("/api/resources")
                         .param("keyword", "대본")
-                        .param("categoryCode", "SCRIPT"))
+                        .param("categoryCode", "SCRIPT")
+                        .param("targetScope", "TEAM"))
                 .andExpect(status().isOk());
 
         verify(resourceService).searchReadable(ACTOR_ID,
-                new ResourceSearchParam("대본", "SCRIPT", 0, 20));
+                new ResourceSearchParam("대본", "SCRIPT", ResourceTargetScope.TEAM,
+                        0, 20));
     }
 
     @Test
@@ -130,7 +134,8 @@ class ResourceApiControllerTest {
 
     @Test
     void 관리_자료를_범위와_상태로_검색한다() throws Exception {
-        given(resourceService.searchManageable(any(), any())).willReturn(List.of());
+        given(resourceService.searchManageable(any(), any())).willReturn(
+                kr.ac.tukorea.bandi.global.response.PageResponse.of(List.of(), 0, 20, 0));
 
         mockMvc.perform(get("/api/resource-management")
                         .param("status", "PUBLISHED")

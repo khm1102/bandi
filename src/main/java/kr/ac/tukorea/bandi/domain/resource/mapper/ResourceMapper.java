@@ -25,9 +25,13 @@ public interface ResourceMapper {
     List<ResourceManageSummaryResponse> searchManageable(
             ResourceManageSearchCondition condition);
 
+    long countManageable(ResourceManageSearchCondition condition);
+
     Optional<ResourceManageContentResponse> lookupManageContent(Long resourceId);
 
     List<ResourceSummaryResponse> searchReadable(ResourceReadableSearchCondition condition);
+
+    long countReadable(ResourceReadableSearchCondition condition);
 
     Optional<ResourceContentResponse> lookupReadableContent(
             @Param("resourceId") Long resourceId,

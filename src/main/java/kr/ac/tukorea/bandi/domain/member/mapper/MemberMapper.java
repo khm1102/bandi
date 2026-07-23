@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.domain.member.mapper;
 
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchCondition;
+import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchCondition;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
 import kr.ac.tukorea.bandi.domain.member.model.MemberSchoolConnection;
@@ -24,6 +25,14 @@ public interface MemberMapper {
     Optional<Member> lookupByIdForUpdate(Long memberId);
 
     List<Member> searchByCondition(MemberSearchCondition condition);
+
+    List<Member> searchPage(MemberPageSearchCondition condition);
+
+    long countByPageCondition(MemberPageSearchCondition condition);
+
+    long countActive();
+
+    long countSsoVerificationRequired();
 
     /**
      * 활성 운영진의 식별자를 잠금 조회한다. 마지막 운영진 보호 규칙(정본 5.4)이

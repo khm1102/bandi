@@ -4,7 +4,8 @@ import kr.ac.tukorea.bandi.domain.file.model.StoredFile;
 import kr.ac.tukorea.bandi.domain.file.service.FileService;
 import kr.ac.tukorea.bandi.domain.file.service.FileUploadParam;
 import kr.ac.tukorea.bandi.domain.file.service.ProfilePhotoRetirementService;
-import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchCondition;
+import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchCondition;
+import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchParam;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberProfileResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.TeamMemberResponse;
 import kr.ac.tukorea.bandi.domain.member.exception.CohortNotFoundException;
@@ -18,11 +19,14 @@ import kr.ac.tukorea.bandi.domain.member.model.Cohort;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
 import kr.ac.tukorea.bandi.domain.member.model.Team;
 import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -39,18 +43,23 @@ public class MemberProfileService {
         return toProfile(findMember(memberId));
     }
 
-    public List<TeamMemberResponse> searchTeamMembers(Long actorMemberId) {
+    public PageResponse<TeamMemberResponse> searchTeamMembers(
+            Long actorMemberId, MemberPageSearchParam param) {
         Member actor = findMember(actorMemberId);
         MemberAccessContext access = MemberAccessContext.from(actor);
         if (!access.canManageGlobal() && !access.canManageTeam(actor.getTeamId())) {
             throw new MemberManagementForbiddenException(actorMemberId);
         }
-        Long teamId = access.canManageGlobal() ? null : actor.getTeamId();
-        return memberMapper.searchByCondition(new MemberSearchCondition(
-                        null, teamId, null, null, null)).stream()
+        Long teamId = access.canManageGlobal() ? param.teamId() : actor.getTeamId();
+        MemberPageSearchCondition condition = MemberPageSearchCondition.forTeam(param, teamId);
+        Map<Long, String> teamNames = teamMapper.searchAll().stream()
+                .collect(Collectors.toMap(Team::getTeamId, Team::getName));
+        List<TeamMemberResponse> items = memberMapper.searchPage(condition).stream()
                 .map(member -> TeamMemberResponse.from(member,
-                        findTeam(member.getTeamId()).getName()))
+                        teamNames.getOrDefault(member.getTeamId(), "알 수 없는 팀")))
                 .toList();
+        return PageResponse.of(items, param.page(), param.pageSize(),
+                memberMapper.countByPageCondition(condition));
     }
 
     @Transactional

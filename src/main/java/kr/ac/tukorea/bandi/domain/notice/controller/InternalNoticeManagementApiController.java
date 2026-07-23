@@ -14,6 +14,7 @@ import kr.ac.tukorea.bandi.domain.notice.dto.response.NoticeInlineImageResponse;
 import kr.ac.tukorea.bandi.domain.file.dto.response.FileReferenceResponse;
 import kr.ac.tukorea.bandi.domain.file.service.FileUploadParam;
 import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 import kr.ac.tukorea.bandi.domain.notice.service.InternalNoticeService;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import kr.ac.tukorea.bandi.global.swagger.InternalNoticeManagementApiDocs;
@@ -79,7 +80,7 @@ public class InternalNoticeManagementApiController
     }
 
     @Override
-    public ResponseEntity<List<InternalNoticeManageSummaryResponse>> search(
+    public ResponseEntity<PageResponse<InternalNoticeManageSummaryResponse>> search(
             @LoginMember Long actorMemberId, String keyword,
             InternalNoticeManageFilter filter, Long teamId, int page,
             int pageSize) {

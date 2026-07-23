@@ -12,6 +12,7 @@ import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceUpdateRequest;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceCreatedResponse;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceManageDetailResponse;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceManageSummaryResponse;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceRevisionCreatedResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import org.springdoc.core.annotations.ParameterObject;
@@ -34,7 +35,7 @@ public interface ResourceManagementApiDocs {
 
     @Operation(summary = "관리 가능한 자료 목록 조회")
     @GetMapping
-    ResponseEntity<List<ResourceManageSummaryResponse>> search(
+    ResponseEntity<PageResponse<ResourceManageSummaryResponse>> search(
             @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String categoryCode,

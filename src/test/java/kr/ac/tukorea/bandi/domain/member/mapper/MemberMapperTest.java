@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.domain.member.mapper;
 
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchCondition;
+import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchCondition;
 import kr.ac.tukorea.bandi.domain.member.model.AcademicStatus;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
@@ -153,6 +154,25 @@ class MemberMapperTest {
                 .containsExactly(linked.getMemberId());
         assertThat(byStudentNo).extracting(Member::getMemberId)
                 .containsExactly(linked.getMemberId());
+    }
+
+    @Test
+    void 멤버_페이지와_전체_건수는_같은_다중_필터를_적용한다() {
+        Member linked = new Member(null, "2020184000", "이서준", null,
+                AcademicStatus.ENROLLED, null, actorTeamId, cohortId,
+                ClubRole.MEMBER, MemberStatus.ACTIVE, SsoLinkStatus.LINKED,
+                null, null, null);
+        memberMapper.insert(linked);
+        memberMapper.insert(preRegistered("2021184001", stageTeamId));
+        MemberPageSearchCondition condition = new MemberPageSearchCondition(
+                "서준", actorTeamId, cohortId, MemberStatus.ACTIVE,
+                ClubRole.MEMBER, SsoLinkStatus.LINKED, 0, 20);
+
+        List<Member> result = memberMapper.searchPage(condition);
+
+        assertThat(result).extracting(Member::getMemberId)
+                .containsExactly(linked.getMemberId());
+        assertThat(memberMapper.countByPageCondition(condition)).isEqualTo(result.size());
     }
 
     @Test

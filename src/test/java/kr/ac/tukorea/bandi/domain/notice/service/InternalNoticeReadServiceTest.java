@@ -68,11 +68,13 @@ class InternalNoticeReadServiceTest {
     void 활성_MEMBER는_전체와_소속_팀_공지를_조회한다() {
         given(memberService.lookupAccessContext(MEMBER_ID)).willReturn(memberContext());
         given(internalNoticeMapper.searchReadable(any())).willReturn(List.of(summary()));
+        given(internalNoticeMapper.countReadable(any())).willReturn(1L);
 
-        List<InternalNoticeSummaryResponse> result = internalNoticeService.searchReadable(
+        var result = internalNoticeService.searchReadable(
                 MEMBER_ID, new InternalNoticeSearchParam("안내", 0, 20));
 
-        assertThat(result).hasSize(1);
+        assertThat(result.items()).hasSize(1);
+        assertThat(result.totalElements()).isEqualTo(1);
         ArgumentCaptor<InternalNoticeReadableSearchCondition> captor =
                 ArgumentCaptor.forClass(InternalNoticeReadableSearchCondition.class);
         verify(internalNoticeMapper).searchReadable(captor.capture());
@@ -85,6 +87,7 @@ class InternalNoticeReadServiceTest {
     void 활성_ADMIN은_모든_팀_공지를_조회한다() {
         given(memberService.lookupAccessContext(MEMBER_ID)).willReturn(adminContext());
         given(internalNoticeMapper.searchReadable(any())).willReturn(List.of());
+        given(internalNoticeMapper.countReadable(any())).willReturn(0L);
 
         internalNoticeService.searchReadable(MEMBER_ID,
                 new InternalNoticeSearchParam(null, 0, 20));

@@ -5,6 +5,8 @@ import kr.ac.tukorea.bandi.domain.audit.model.AuditTargetType;
 import kr.ac.tukorea.bandi.domain.audit.service.AuditService;
 import kr.ac.tukorea.bandi.domain.member.dto.request.CohortChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPreRegisterParam;
+import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchCondition;
+import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchCondition;
 import kr.ac.tukorea.bandi.domain.member.dto.request.RoleChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.StatusChangeParam;
@@ -12,6 +14,7 @@ import kr.ac.tukorea.bandi.domain.member.dto.request.TeamChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.response.CohortResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberHistoryResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberResponse;
+import kr.ac.tukorea.bandi.domain.member.dto.response.MemberStatsResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.SchoolConnectionResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.TeamResponse;
 import kr.ac.tukorea.bandi.domain.member.exception.ChangeReasonRequiredException;
@@ -42,6 +45,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
@@ -90,6 +94,23 @@ public class MemberService {
         return memberMapper.searchByCondition(condition).stream()
                 .map(MemberResponse::from)
                 .toList();
+    }
+
+    public PageResponse<MemberResponse> searchMemberPage(MemberPageSearchParam param) {
+        MemberPageSearchCondition condition = MemberPageSearchCondition.from(param);
+        List<MemberResponse> items = memberMapper.searchPage(condition).stream()
+                .map(MemberResponse::from)
+                .toList();
+        return PageResponse.of(items, param.page(), param.pageSize(),
+                memberMapper.countByPageCondition(condition));
+    }
+
+    public MemberStatsResponse lookupMemberStats() {
+        long activeCohortCount = cohortMapper.searchAll().stream()
+                .filter(Cohort::isActive)
+                .count();
+        return new MemberStatsResponse(memberMapper.countActive(), activeCohortCount,
+                memberMapper.countSsoVerificationRequired());
     }
 
     public MemberResponse lookupMember(Long memberId) {

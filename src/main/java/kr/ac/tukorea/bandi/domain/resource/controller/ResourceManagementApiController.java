@@ -11,6 +11,7 @@ import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceManageSummaryRes
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceRevisionCreatedResponse;
 import kr.ac.tukorea.bandi.domain.resource.service.ResourceService;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 import kr.ac.tukorea.bandi.global.swagger.ResourceManagementApiDocs;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -26,7 +27,7 @@ public class ResourceManagementApiController implements ResourceManagementApiDoc
     private final ResourceService resourceService;
 
     @Override
-    public ResponseEntity<List<ResourceManageSummaryResponse>> search(
+    public ResponseEntity<PageResponse<ResourceManageSummaryResponse>> search(
             @LoginMember Long actorMemberId, String keyword, String categoryCode,
             ResourceManageFilter filter, Long teamId, int page, int pageSize) {
         return ResponseEntity.ok(resourceService.searchManageable(actorMemberId,

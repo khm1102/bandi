@@ -315,13 +315,14 @@ class InternalNoticeManagementServiceTest {
         InternalNoticeManageSummaryResponse summary = manageSummary();
         given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(adminContext());
         given(internalNoticeMapper.searchManageable(any())).willReturn(List.of(summary));
+        given(internalNoticeMapper.countManageable(any())).willReturn(1L);
 
-        List<InternalNoticeManageSummaryResponse> adminResult =
+        var adminResult =
                 internalNoticeService.searchManageable(ACTOR_ID,
                         new InternalNoticeManageSearchParam("공지", InternalNoticeStatus.DRAFT,
                                 InternalNoticeTargetScope.ALL, null, 0, 20));
 
-        assertThat(adminResult).containsExactly(summary);
+        assertThat(adminResult.items()).containsExactly(summary);
         ArgumentCaptor<InternalNoticeManageSearchCondition> adminCaptor =
                 ArgumentCaptor.forClass(InternalNoticeManageSearchCondition.class);
         verify(internalNoticeMapper).searchManageable(adminCaptor.capture());

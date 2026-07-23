@@ -112,6 +112,42 @@
         )
     </sql>
 
+    <sql id="manageSearchCondition">
+        r.deleted_dttm IS NULL
+        <if test="keyword != null">
+          AND (r.title LIKE CONCAT('%', #{keyword}, '%')
+               OR r.description LIKE CONCAT('%', #{keyword}, '%')
+               OR updater.name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="categoryCode != null">
+          AND r.category_code = #{categoryCode}
+        </if>
+        <if test="status != null">
+          AND r.status_code = #{status}
+        </if>
+        <if test="targetScope != null">
+          AND r.target_scope_code = #{targetScope}
+        </if>
+        <if test="teamId != null">
+          AND r.team_id = #{teamId}
+        </if>
+    </sql>
+
+    <sql id="readableSearchCondition">
+        <include refid="readableCondition"/>
+        <if test="keyword != null">
+          AND (r.title LIKE CONCAT('%', #{keyword}, '%')
+               OR r.description LIKE CONCAT('%', #{keyword}, '%')
+               OR updater.name LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="categoryCode != null">
+          AND r.category_code = #{categoryCode}
+        </if>
+        <if test="targetScope != null">
+          AND r.target_scope_code = #{targetScope}
+        </if>
+    </sql>
+
     <select id="lookupById" resultMap="resourceResultMap">
         SELECT <include refid="resourceColumns"/>
         FROM resource
@@ -145,28 +181,19 @@
         LEFT JOIN team t ON t.team_id = r.team_id
         JOIN member updater ON updater.member_id = r.updated_by_member_id
         LEFT JOIN resource_file rf ON rf.resource_id = r.resource_id
-        WHERE r.deleted_dttm IS NULL
-        <if test="keyword != null">
-          AND (r.title LIKE CONCAT('%', #{keyword}, '%')
-               OR r.description LIKE CONCAT('%', #{keyword}, '%'))
-        </if>
-        <if test="categoryCode != null">
-          AND r.category_code = #{categoryCode}
-        </if>
-        <if test="status != null">
-          AND r.status_code = #{status}
-        </if>
-        <if test="targetScope != null">
-          AND r.target_scope_code = #{targetScope}
-        </if>
-        <if test="teamId != null">
-          AND r.team_id = #{teamId}
-        </if>
+        WHERE <include refid="manageSearchCondition"/>
         GROUP BY r.resource_id, r.target_scope_code, r.team_id, t.name,
                  r.category_code, r.title, r.status_code, r.is_pinned,
                  updater.name, r.updated_dttm
-        ORDER BY r.updated_dttm DESC, r.resource_id DESC
+        ORDER BY r.is_pinned DESC, r.updated_dttm DESC, r.resource_id DESC
         LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countManageable" resultType="long">
+        SELECT COUNT(*)
+        FROM resource r
+        JOIN member updater ON updater.member_id = r.updated_by_member_id
+        WHERE <include refid="manageSearchCondition"/>
     </select>
 
     <select id="lookupManageContent" resultMap="manageContentResultMap">
@@ -191,18 +218,23 @@
         LEFT JOIN team t ON t.team_id = r.team_id
         JOIN member updater ON updater.member_id = r.updated_by_member_id
         JOIN resource_file rf ON rf.resource_id = r.resource_id
-        WHERE <include refid="readableCondition"/>
-        <if test="keyword != null">
-          AND (r.title LIKE CONCAT('%', #{keyword}, '%')
-               OR r.description LIKE CONCAT('%', #{keyword}, '%'))
-        </if>
-        <if test="categoryCode != null">
-          AND r.category_code = #{categoryCode}
-        </if>
+        WHERE <include refid="readableSearchCondition"/>
         GROUP BY r.resource_id, r.target_scope_code, r.team_id, t.name,
                  r.category_code, r.title, r.is_pinned, updater.name, r.updated_dttm
         ORDER BY r.is_pinned DESC, r.updated_dttm DESC, r.resource_id DESC
         LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countReadable" resultType="long">
+        SELECT COUNT(*)
+        FROM resource r
+        JOIN member updater ON updater.member_id = r.updated_by_member_id
+        WHERE <include refid="readableSearchCondition"/>
+          AND EXISTS (
+              SELECT 1
+              FROM resource_file rf
+              WHERE rf.resource_id = r.resource_id
+          )
     </select>
 
     <select id="lookupReadableContent" resultMap="readableContentResultMap">

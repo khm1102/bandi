@@ -1,10 +1,12 @@
 package kr.ac.tukorea.bandi.domain.resource.dto.request;
 
 import kr.ac.tukorea.bandi.domain.resource.exception.InvalidResourceException;
+import kr.ac.tukorea.bandi.domain.resource.model.ResourceTargetScope;
 
 public record ResourceSearchParam(
         String keyword,
         String categoryCode,
+        ResourceTargetScope targetScope,
         int page,
         int pageSize
 ) {
@@ -12,6 +14,10 @@ public record ResourceSearchParam(
     private static final int MAX_KEYWORD_LENGTH = 200;
     private static final int MAX_CATEGORY_LENGTH = 30;
     private static final int MAX_PAGE_SIZE = 100;
+
+    public ResourceSearchParam(String keyword, String categoryCode, int page, int pageSize) {
+        this(keyword, categoryCode, null, page, pageSize);
+    }
 
     public ResourceSearchParam {
         if (page < 0 || pageSize < 1 || pageSize > MAX_PAGE_SIZE

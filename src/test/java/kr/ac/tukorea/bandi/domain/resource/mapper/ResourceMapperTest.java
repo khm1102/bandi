@@ -159,9 +159,13 @@ class ResourceMapperTest {
                 new ResourceReadableSearchCondition("검색 대상", "SCRIPT",
                         stageTeamId, false, 0, 20));
 
+        ResourceReadableSearchCondition condition = new ResourceReadableSearchCondition(
+                "검색 대상", "SCRIPT", stageTeamId, false, 0, 20);
+
         assertThat(result).extracting(ResourceSummaryResponse::title)
                 .containsExactly("중요 대본");
         assertThat(result.get(0).pinned()).isTrue();
+        assertThat(resourceMapper.countReadable(condition)).isEqualTo(result.size());
     }
 
     @Test

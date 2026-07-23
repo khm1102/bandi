@@ -25,10 +25,14 @@ public interface InternalNoticeMapper {
     List<InternalNoticeManageSummaryResponse> searchManageable(
             InternalNoticeManageSearchCondition condition);
 
+    long countManageable(InternalNoticeManageSearchCondition condition);
+
     Optional<InternalNoticeManageContentResponse> lookupManageContent(Long internalNoticeId);
 
     List<InternalNoticeSummaryResponse> searchReadable(
             InternalNoticeReadableSearchCondition condition);
+
+    long countReadable(InternalNoticeReadableSearchCondition condition);
 
     Optional<InternalNoticeContentResponse> lookupReadableContent(
             @Param("internalNoticeId") Long internalNoticeId,

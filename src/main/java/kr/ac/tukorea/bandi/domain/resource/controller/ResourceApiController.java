@@ -1,10 +1,12 @@
 package kr.ac.tukorea.bandi.domain.resource.controller;
 
 import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceSearchParam;
+import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceReadFilter;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceDetailResponse;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceSummaryResponse;
 import kr.ac.tukorea.bandi.domain.resource.service.ResourceService;
 import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import kr.ac.tukorea.bandi.global.swagger.ResourceApiDocs;
 import lombok.RequiredArgsConstructor;
@@ -16,8 +18,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-
 @RestController
 @RequiredArgsConstructor
 public class ResourceApiController implements ResourceApiDocs {
@@ -25,11 +25,12 @@ public class ResourceApiController implements ResourceApiDocs {
     private final ResourceService resourceService;
 
     @Override
-    public ResponseEntity<List<ResourceSummaryResponse>> search(
+    public ResponseEntity<PageResponse<ResourceSummaryResponse>> search(
             @LoginMember Long memberId, String keyword, String categoryCode,
-            int page, int pageSize) {
+            ResourceReadFilter filter, int page, int pageSize) {
         return ResponseEntity.ok(resourceService.searchReadable(memberId,
-                new ResourceSearchParam(keyword, categoryCode, page, pageSize)));
+                new ResourceSearchParam(keyword, categoryCode, filter.targetScope(),
+                        page, pageSize)));
     }
 
     @Override

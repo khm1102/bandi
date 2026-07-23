@@ -2,6 +2,7 @@ package kr.ac.tukorea.bandi.domain.notice.service;
 
 import kr.ac.tukorea.bandi.domain.file.dto.response.FileReferenceResponse;
 import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 import kr.ac.tukorea.bandi.domain.file.service.FileAccessDecision;
 import kr.ac.tukorea.bandi.domain.file.service.FileService;
 import kr.ac.tukorea.bandi.domain.file.service.FileUploadParam;
@@ -136,7 +137,7 @@ public class InternalNoticeService {
         internalNoticeMapper.delete(internalNoticeId, actorMemberId, LocalDateTime.now(clock));
     }
 
-    public List<InternalNoticeManageSummaryResponse> searchManageable(
+    public PageResponse<InternalNoticeManageSummaryResponse> searchManageable(
             Long actorMemberId, InternalNoticeManageSearchParam param) {
         MemberAccessContext access = memberService.lookupAccessContext(actorMemberId);
         InternalNoticeManageSearchCondition condition;
@@ -147,7 +148,8 @@ public class InternalNoticeService {
         } else {
             throw new InternalNoticeAccessDeniedException();
         }
-        return internalNoticeMapper.searchManageable(condition);
+        return PageResponse.of(internalNoticeMapper.searchManageable(condition),
+                param.page(), param.pageSize(), internalNoticeMapper.countManageable(condition));
     }
 
     public InternalNoticeManageDetailResponse lookupManageable(Long actorMemberId,
@@ -162,14 +164,15 @@ public class InternalNoticeService {
                 renderManageableMarkdown(content.body(), internalNoticeId, attachments), attachments);
     }
 
-    public List<InternalNoticeSummaryResponse> searchReadable(
+    public PageResponse<InternalNoticeSummaryResponse> searchReadable(
             Long memberId, InternalNoticeSearchParam param) {
         MemberAccessContext access = readableAccess(memberId);
         InternalNoticeReadableSearchCondition condition =
                 InternalNoticeReadableSearchCondition.from(param,
                         LocalDateTime.now(clock), memberId, access.teamId(),
                         access.canManageGlobal());
-        return internalNoticeMapper.searchReadable(condition);
+        return PageResponse.of(internalNoticeMapper.searchReadable(condition),
+                param.page(), param.pageSize(), internalNoticeMapper.countReadable(condition));
     }
 
     @Transactional

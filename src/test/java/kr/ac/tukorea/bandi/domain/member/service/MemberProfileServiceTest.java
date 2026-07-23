@@ -117,14 +117,21 @@ class MemberProfileServiceTest {
         Member leader = member(MEMBER_ID, TEAM_ID, ClubRole.LEADER, null);
         Member teammate = member(11L, TEAM_ID, ClubRole.MEMBER, null);
         given(memberMapper.lookupById(MEMBER_ID)).willReturn(Optional.of(leader));
-        given(memberMapper.searchByCondition(org.mockito.ArgumentMatchers.any()))
+        given(memberMapper.searchPage(org.mockito.ArgumentMatchers.any()))
                 .willReturn(List.of(teammate));
-        given(teamMapper.lookupById(TEAM_ID)).willReturn(Optional.of(team(TEAM_ID, "무대팀")));
+        given(memberMapper.countByPageCondition(org.mockito.ArgumentMatchers.any()))
+                .willReturn(1L);
+        given(teamMapper.searchAll()).willReturn(List.of(team(TEAM_ID, "무대팀")));
 
-        assertThat(profileService.searchTeamMembers(MEMBER_ID)).hasSize(1);
+        var result = profileService.searchTeamMembers(MEMBER_ID,
+                new kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchParam(
+                        null, null, null, null, null, null, 0, 20));
+        assertThat(result.items()).hasSize(1);
 
-        ArgumentCaptor<MemberSearchCondition> captor = ArgumentCaptor.forClass(MemberSearchCondition.class);
-        verify(memberMapper).searchByCondition(captor.capture());
+        ArgumentCaptor<kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchCondition>
+                captor = ArgumentCaptor.forClass(
+                kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchCondition.class);
+        verify(memberMapper).searchPage(captor.capture());
         assertThat(captor.getValue().teamId()).isEqualTo(TEAM_ID);
     }
 
@@ -133,7 +140,9 @@ class MemberProfileServiceTest {
         given(memberMapper.lookupById(MEMBER_ID)).willReturn(Optional.of(
                 member(MEMBER_ID, TEAM_ID, ClubRole.MEMBER, null)));
 
-        assertThatThrownBy(() -> profileService.searchTeamMembers(MEMBER_ID))
+        assertThatThrownBy(() -> profileService.searchTeamMembers(MEMBER_ID,
+                new kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchParam(
+                        null, null, null, null, null, null, 0, 20)))
                 .isInstanceOf(MemberManagementForbiddenException.class);
     }
 

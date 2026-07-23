@@ -9,6 +9,7 @@ import kr.ac.tukorea.bandi.domain.member.dto.request.TeamChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberHistoryResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberProfileResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberResponse;
+import kr.ac.tukorea.bandi.domain.member.dto.response.MemberStatsResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.TeamMemberResponse;
 import kr.ac.tukorea.bandi.domain.member.model.AcademicStatus;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
@@ -85,7 +86,9 @@ class MemberApiControllerTest {
 
     @Test
     void 멤버_목록_검색_조건을_Service에_전달한다() throws Exception {
-        given(memberService.searchMembers(any())).willReturn(List.of(member()));
+        given(memberService.searchMemberPage(any())).willReturn(
+                kr.ac.tukorea.bandi.global.response.PageResponse.of(
+                        List.of(member()), 0, 20, 1));
 
         mockMvc.perform(get("/api/members")
                         .param("keyword", "서준")
@@ -94,13 +97,33 @@ class MemberApiControllerTest {
                         .param("role", "MEMBER")
                         .param("ssoLinkStatus", "LINKED"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].memberId").value(MEMBER_ID))
-                .andExpect(jsonPath("$[0].studentNo")
+                .andExpect(jsonPath("$.items[0].memberId").value(MEMBER_ID))
+                .andExpect(jsonPath("$.items[0].studentNo")
                         .value("2020184000"));
 
-        verify(memberService).searchMembers(new MemberSearchCondition(
-                "서준", 2L, MemberStatus.ACTIVE, ClubRole.MEMBER,
-                SsoLinkStatus.LINKED));
+        verify(memberService).searchMemberPage(
+                new kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchParam(
+                        "서준", 2L, null, MemberStatus.ACTIVE, ClubRole.MEMBER,
+                        SsoLinkStatus.LINKED, 0, 20));
+    }
+
+    @Test
+    void 페이지_크기가_100을_초과하면_잘못된_요청을_반환한다() throws Exception {
+        mockMvc.perform(get("/api/members").param("pageSize", "101"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("C001"));
+    }
+
+    @Test
+    void 현재_페이지와_분리된_전체_멤버_통계를_조회한다() throws Exception {
+        given(memberService.lookupMemberStats())
+                .willReturn(new MemberStatsResponse(42, 3, 5));
+
+        mockMvc.perform(get("/api/members/stats"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.activeMemberCount").value(42))
+                .andExpect(jsonPath("$.activeCohortCount").value(3))
+                .andExpect(jsonPath("$.ssoVerificationRequiredCount").value(5));
     }
 
     @Test
@@ -117,9 +140,11 @@ class MemberApiControllerTest {
     @Test
     void 로그인_멤버가_프로필과_팀_멤버를_조회한다() throws Exception {
         given(memberProfileService.lookupProfile(ACTOR_ID)).willReturn(profile());
-        given(memberProfileService.searchTeamMembers(ACTOR_ID)).willReturn(List.of(
-                new TeamMemberResponse(MEMBER_ID, "이서준", "2020184000", "무대팀",
-                        ClubRole.MEMBER, MemberStatus.ACTIVE, false)));
+        given(memberProfileService.searchTeamMembers(any(), any())).willReturn(
+                kr.ac.tukorea.bandi.global.response.PageResponse.of(List.of(
+                        new TeamMemberResponse(MEMBER_ID, "이서준", "2020184000",
+                                2L, "무대팀", ClubRole.MEMBER,
+                                MemberStatus.ACTIVE, false)), 0, 20, 1));
 
         mockMvc.perform(get("/api/members/me/profile"))
                 .andExpect(status().isOk())
@@ -127,10 +152,13 @@ class MemberApiControllerTest {
                 .andExpect(jsonPath("$.teamName").value("무대팀"));
         mockMvc.perform(get("/api/members/team-members"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].name").value("이서준"));
+                .andExpect(jsonPath("$.items[0].name").value("이서준"))
+                .andExpect(jsonPath("$.items[0].teamId").value(2));
 
         verify(memberProfileService).lookupProfile(ACTOR_ID);
-        verify(memberProfileService).searchTeamMembers(ACTOR_ID);
+        verify(memberProfileService).searchTeamMembers(ACTOR_ID,
+                new kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchParam(
+                        null, null, null, null, null, null, 0, 20));
     }
 
     @Test

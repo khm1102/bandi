@@ -12,6 +12,7 @@ import kr.ac.tukorea.bandi.domain.notice.dto.request.MarkdownPreviewRequest;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeCreatedResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeManageDetailResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeManageSummaryResponse;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeReadStatusResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.MarkdownPreviewResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.NoticeInlineImageResponse;
@@ -73,7 +74,7 @@ public interface InternalNoticeManagementApiDocs {
 
     @Operation(summary = "관리 가능한 공지 목록 조회")
     @GetMapping
-    ResponseEntity<List<InternalNoticeManageSummaryResponse>> search(
+    ResponseEntity<PageResponse<InternalNoticeManageSummaryResponse>> search(
             @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @RequestParam(required = false) String keyword,
             @ParameterObject @ModelAttribute InternalNoticeManageFilter filter,

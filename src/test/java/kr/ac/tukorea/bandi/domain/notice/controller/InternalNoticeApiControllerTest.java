@@ -77,7 +77,8 @@ class InternalNoticeApiControllerTest {
     @Test
     void 읽을_수_있는_공지를_검색한다() throws Exception {
         given(internalNoticeService.searchReadable(any(), any()))
-                .willReturn(List.of());
+                .willReturn(kr.ac.tukorea.bandi.global.response.PageResponse.of(
+                        List.of(), 0, 20, 0));
 
         mockMvc.perform(get("/api/internal-notices")
                         .param("keyword", "연습"))
@@ -144,7 +145,8 @@ class InternalNoticeApiControllerTest {
     @Test
     void 관리_목록은_대상과_상태로_검색한다() throws Exception {
         given(internalNoticeService.searchManageable(any(), any()))
-                .willReturn(List.of());
+                .willReturn(kr.ac.tukorea.bandi.global.response.PageResponse.of(
+                        List.of(), 0, 20, 0));
 
         mockMvc.perform(get("/api/internal-notice-management")
                         .param("status", "PUBLISHED")

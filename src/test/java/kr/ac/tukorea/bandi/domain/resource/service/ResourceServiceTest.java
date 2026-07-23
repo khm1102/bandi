@@ -230,6 +230,7 @@ class ResourceServiceTest {
     void ADMIN은_운영_목록을_필터링하고_LEADER는_소속_팀으로_강제된다() {
         given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(adminContext());
         given(resourceMapper.searchManageable(any())).willReturn(List.of(manageSummary()));
+        given(resourceMapper.countManageable(any())).willReturn(1L);
 
         resourceService.searchManageable(ACTOR_ID,
                 new ResourceManageSearchParam("대본", "SCRIPT", ResourceStatus.DRAFT,
@@ -252,11 +253,13 @@ class ResourceServiceTest {
     void 활성_MEMBER는_전체와_소속_팀_게시_자료를_조회한다() {
         given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(memberContext());
         given(resourceMapper.searchReadable(any())).willReturn(List.of(readSummary()));
+        given(resourceMapper.countReadable(any())).willReturn(1L);
 
-        List<ResourceSummaryResponse> result = resourceService.searchReadable(ACTOR_ID,
+        var result = resourceService.searchReadable(ACTOR_ID,
                 new ResourceSearchParam("대본", null, 0, 20));
 
-        assertThat(result).hasSize(1);
+        assertThat(result.items()).hasSize(1);
+        assertThat(result.totalElements()).isEqualTo(1);
         ArgumentCaptor<ResourceReadableSearchCondition> captor =
                 ArgumentCaptor.forClass(ResourceReadableSearchCondition.class);
         verify(resourceMapper).searchReadable(captor.capture());
