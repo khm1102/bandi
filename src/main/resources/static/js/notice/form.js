@@ -33,9 +33,11 @@ const teamSelect = lookup('[data-notice-team]');
 const teamWrap = lookup('[data-notice-team-wrap]');
 const importantInput = lookup('[data-notice-important]');
 const publishAtInput = lookup('[data-notice-publish-at]');
+const noticeOptions = lookup('[data-notice-options]');
+const scheduleEnabledInput = lookup('[data-notice-schedule-enabled]');
+const scheduleWrap = lookup('[data-notice-schedule-wrap]');
 const writePanel = lookup('[data-notice-panel="write"]');
 const previewPanel = lookup('[data-notice-panel="preview"]');
-const topPublishButton = lookup('[data-notice-top-publish]');
 let attachments = [];
 let pendingAttachmentFiles = [];
 let teams = [];
@@ -96,6 +98,8 @@ function renderAttachments() {
         row.appendChild(remove);
         attachmentList.appendChild(row);
     });
+    attachmentList.classList.toggle('hidden', attachments.length === 0
+        && pendingAttachmentFiles.length === 0);
 }
 
 function isInlineImage(file) {
@@ -104,6 +108,12 @@ function isInlineImage(file) {
 
 function updateTeamField() {
     teamWrap.classList.toggle('hidden', targetSelect.value !== 'TEAM');
+}
+
+function updateScheduleField() {
+    const enabled = scheduleEnabledInput.checked;
+    scheduleWrap.classList.toggle('hidden', !enabled);
+    publishAtInput.disabled = !enabled;
 }
 
 function setActiveTab(nextTab) {
@@ -249,6 +259,12 @@ async function save(publish) {
     }
     setError();
     setUploadError();
+    const scheduledAt = scheduleEnabledInput.checked ? publishAtInput.value : '';
+    if (publish && scheduleEnabledInput.checked && !scheduledAt) {
+        setError('예약 게시 시각을 선택해 주세요.');
+        publishAtInput.focus();
+        return;
+    }
     setSubmitting(true);
     try {
         await uploadAttachments();
@@ -260,7 +276,6 @@ async function save(publish) {
             const created = await post('/api/internal-notice-management', body);
             savedNoticeId = created.internalNoticeId;
         }
-        const scheduledAt = publishAtInput.value;
         if (publish) {
             await post(`/api/internal-notice-management/${savedNoticeId}/publish`, {
                 publishStartDttm: scheduledAt ? `${scheduledAt}:00` : null,
@@ -295,12 +310,15 @@ async function initialize() {
         titleInput.value = notice.title;
         bodyInput.value = notice.bodyMarkdown;
         importantInput.checked = notice.important;
-        publishAtInput.value = notice.publishStartDttm
+        scheduleEnabledInput.checked = notice.status === 'SCHEDULED';
+        publishAtInput.value = scheduleEnabledInput.checked && notice.publishStartDttm
             ? notice.publishStartDttm.slice(0, 16) : '';
+        noticeOptions.open = notice.important || scheduleEnabledInput.checked;
         attachments = notice.attachments;
-        renderAttachments();
     }
+    renderAttachments();
     updateTeamField();
+    updateScheduleField();
 }
 
 form.addEventListener('submit', (event) => {
@@ -341,6 +359,7 @@ document.querySelectorAll('[data-notice-tab]').forEach((tab) => {
     tab.addEventListener('click', () => setActiveTab(tab.dataset.noticeTab));
 });
 targetSelect.addEventListener('change', updateTeamField);
+scheduleEnabledInput.addEventListener('change', updateScheduleField);
 attachmentInput.addEventListener('change', () => {
     pendingAttachmentFiles = pendingAttachmentFiles.concat([...attachmentInput.files]);
     attachmentInput.value = '';
@@ -361,6 +380,4 @@ document.addEventListener('keydown', (event) => {
         save(false);
     }
 });
-topPublishButton.addEventListener('click', () => save(true));
-
 initialize().catch((error) => setError(error.message));
