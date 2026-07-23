@@ -1,0 +1,63 @@
+services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD is required}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-bandi}
+      MYSQL_USER: ${DB_USERNAME:?DB_USERNAME is required}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+    volumes:
+      - bandi-test-mysql-data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p\"$${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+    networks:
+      - bandi-test
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SERVER_FORWARD_HEADERS_STRATEGY: framework
+      DB_HOST: mysql
+      DB_USERNAME: ${DB_USERNAME:?DB_USERNAME is required}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+      FILE_STORAGE_ROOT: /data/bandi
+      FILE_STORAGE_MAX_UPLOAD_BYTES: ${FILE_STORAGE_MAX_UPLOAD_BYTES:-524288000}
+      FILE_STORAGE_MAX_UPLOAD_SIZE: ${FILE_STORAGE_MAX_UPLOAD_SIZE:-500MB}
+      FILE_STORAGE_MAX_REQUEST_SIZE: ${FILE_STORAGE_MAX_REQUEST_SIZE:-501MB}
+      TZ: Asia/Seoul
+    volumes:
+      - ${BANDI_FILE_STORAGE_HOST_PATH:?BANDI_FILE_STORAGE_HOST_PATH is required}:/data/bandi
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - bandi-test
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN:?CLOUDFLARE_TUNNEL_TOKEN is required}
+    depends_on:
+      app:
+        condition: service_started
+    networks:
+      - bandi-test
+
+networks:
+  bandi-test:
+    driver: bridge
+
+volumes:
+  bandi-test-mysql-data:
+    name: bandi-test-mysql-data

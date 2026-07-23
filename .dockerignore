@@ -1,0 +1,14 @@
+.git
+.github
+.gradle
+.idea
+.vscode
+build
+out
+logs
+.env
+.env.*
+testPW.txt
+.bandi-review-stage.tar.gz
+report_output
+docs/*활동*내역서*양식.hwpx
