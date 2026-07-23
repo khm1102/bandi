@@ -33,7 +33,7 @@ public class SecurityConfig {
                         DispatcherType.ERROR).permitAll()
                 .requestMatchers(PathRequest.toStaticResources()
                         .atCommonLocations()).permitAll()
-                .requestMatchers("/login", "/error", "/performances/**", "/reserve/**", "/docs/**",
+                .requestMatchers("/", "/login", "/error", "/performances/**", "/reserve/**", "/docs/**",
                         "/api-docs/**", "/swagger-ui/**").permitAll()
                 .requestMatchers("/api/public-notices/**").permitAll()
                 .requestMatchers("/api/public-performances/**",

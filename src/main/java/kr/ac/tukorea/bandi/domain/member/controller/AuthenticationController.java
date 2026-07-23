@@ -1,6 +1,8 @@
 package kr.ac.tukorea.bandi.domain.member.controller;
 
 import kr.ac.tukorea.bandi.domain.member.dto.request.SchoolLoginForm;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -30,6 +32,15 @@ public class AuthenticationController {
             "member-restricted", new LoginError(
                     "멤버 이용 상태 확인 필요",
                     "현재 멤버 상태로는 로그인할 수 없습니다. 동아리 운영진에게 문의해 주세요."));
+
+    @GetMapping("/")
+    public String entry(Authentication authentication) {
+        if (authentication == null
+                || authentication instanceof AnonymousAuthenticationToken) {
+            return "redirect:/login";
+        }
+        return "redirect:/dashboard";
+    }
 
     @GetMapping("/login")
     public String login(@RequestParam(required = false) String error,
