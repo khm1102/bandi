@@ -71,7 +71,7 @@
                     <button type="button" class="min-h-9 rounded-sm px-2 text-xs font-bold hover:bg-card" data-markdown-action="image">이미지</button>
                 </div>
                 <textarea id="noticeBody" class="min-h-[30rem] w-full rounded-b-md border border-input bg-card px-4 py-4 font-mono text-sm leading-6 placeholder:text-muted-foreground focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20" required placeholder="# 공지 제목\n\n공지 내용을 Markdown으로 작성하세요." data-notice-body></textarea>
-                <p class="mt-2 text-xs leading-5 text-muted-foreground">제목, 목록, 링크, 인용, 코드 블록, 표를 사용할 수 있어요. 외부 이미지와 HTML은 지원하지 않아요.</p>
+                <p class="mt-2 text-xs leading-5 text-muted-foreground">제목, 목록, 링크, 인용, 코드 블록, 표를 사용할 수 있어요. 이미지 버튼이나 파일 끌어놓기로 본문 이미지를 추가할 수 있고, 외부 이미지는 HTTPS Markdown 주소만 지원해요. HTML은 지원하지 않아요.</p>
             </div>
 
             <div id="noticePreviewPanel" class="mt-3 hidden rounded-md border bg-card p-5" role="tabpanel" aria-labelledby="noticePreviewTab" data-notice-panel="preview" tabindex="-1">

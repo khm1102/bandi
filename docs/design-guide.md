@@ -127,11 +127,13 @@
 않고 하단의 하나의 액션 바에서 초안 저장·게시를 처리한다.
 
 **Markdown** — 미리보기와 상세 모두 서버가 정화한 결과를 안전 DOM 마운터 또는
-`<t:markdown>`으로만 렌더링한다. 원시 HTML·외부 이미지는 지원하지 않는다. 본문 이미지는
-`attachment://{storedFileId}` 내부 참조만 사용하며, 이미지 도구 모음으로 올린 JPEG·PNG·WebP
-10MiB 이하 파일을 같은 첨부 목록에 표시한다. 새 글의 미리보기는 업로더 전용 URL을,
-기존 글은 공지 첨부 권한을 통과한 inline URL을 사용한다. 링크는 새 창에서 열 때
-`noopener noreferrer`를 함께 적용한다.
+`<t:markdown>`으로만 렌더링한다. 원시 HTML·HTTP/data URL 이미지는 지원하지 않는다. 본문
+이미지는 `attachment://{storedFileId}` 내부 참조 또는 HTTPS 외부 URL을 사용한다. 이미지 도구
+모음이나 편집기 드롭으로 올린 JPEG·PNG·WebP 10MiB 이하 파일은 같은 첨부 목록에 표시한다.
+외부 이미지는 직접 로드하므로 해당 제공자가 열람자의 접속 정보를 처리할 수 있음을 작성
+화면에서 안내한다. 새 글의 내부 이미지 미리보기는 업로더 전용 URL을, 기존 글은 공지 첨부
+권한을 통과한 inline URL을 사용한다. 링크는 새 창에서 열 때 `noopener noreferrer`를 함께
+적용한다.
 렌더링된 본문은 공지 전용 `markdown-content` 스타일을 사용해 제목 1~6, 문단, 목록,
 인용, 코드, 표와 이미지의 위계를 미리보기와 상세에서 동일하게 유지한다. Tailwind
 Typography 플러그인의 `prose` 클래스가 존재한다고 가정하지 않는다.

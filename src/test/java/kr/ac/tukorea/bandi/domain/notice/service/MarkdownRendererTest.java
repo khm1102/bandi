@@ -31,11 +31,12 @@ class MarkdownRendererTest {
     }
 
     @Test
-    void 원시_HTML과_스크립트_URL_외부_이미지를_제거한다() {
+    void 원시_HTML과_스크립트_URL_HTTP_이미지를_제거한다() {
         String markdown = """
                 <script>alert('xss')</script>
                 [위험](javascript:alert(1))
-                ![외부 이미지](https://example.com/image.png)
+                ![HTTP 이미지](http://example.com/image.png)
+                ![HTTPS 이미지](https://example.com/image.png)
                 <img src=x onerror=alert(1)>
                 """;
 
@@ -43,8 +44,10 @@ class MarkdownRendererTest {
 
         assertThat(html).doesNotContain("script")
                 .doesNotContain("javascript:")
-                .doesNotContain("<img")
-                .doesNotContain("onerror");
+                .doesNotContain("http://example.com/image.png")
+                .doesNotContain("onerror")
+                .contains("<img")
+                .contains("https://example.com/image.png");
     }
 
     @Test
