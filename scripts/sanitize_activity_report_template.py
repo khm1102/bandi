@@ -15,6 +15,7 @@ from pathlib import Path
 
 
 HP = "http://www.hancom.co.kr/hwpml/2011/paragraph"
+HC = "http://www.hancom.co.kr/hwpml/2011/core"
 OPF = "http://www.idpf.org/2007/opf/"
 GENERIC_METADATA_VALUES = {"", "text", "bandi"}
 def register_namespaces(xml_bytes: bytes) -> None:
@@ -60,9 +61,46 @@ def white_png(width: int = 4, height: int = 3) -> bytes:
     return signature + chunk(b"IHDR", header) + chunk(b"IDAT", zlib.compress(rows)) + chunk(b"IEND", b"")
 
 
+def normalize_photo_orientation(root: ET.Element) -> None:
+    pictures = []
+    for picture in root.findall(f".//{{{HP}}}pic"):
+        images = picture.findall(f".//{{{HC}}}img")
+        if len(images) == 1 and images[0].get("binaryItemIDRef") == "image1":
+            pictures.append(picture)
+    if len(pictures) != 1:
+        raise ValueError("activity photo object must exist exactly once")
+
+    picture = pictures[0]
+    picture.set("reverse", "0")
+    flip = picture.find(f"{{{HP}}}flip")
+    rotation = picture.find(f"{{{HP}}}rotationInfo")
+    rendering = picture.find(f"{{{HP}}}renderingInfo")
+    if flip is None or rotation is None or rendering is None:
+        raise ValueError("activity photo transform is incomplete")
+
+    flip.set("horizontal", "0")
+    flip.set("vertical", "0")
+    rotation.set("angle", "0")
+    rotation.set("rotateimage", "0")
+
+    translation = rendering.find(f"{{{HC}}}transMatrix")
+    scale = rendering.find(f"{{{HC}}}scaMatrix")
+    rotation_matrix = rendering.find(f"{{{HC}}}rotMatrix")
+    if translation is None or scale is None or rotation_matrix is None:
+        raise ValueError("activity photo matrix is incomplete")
+
+    for matrix in (translation, rotation_matrix):
+        matrix.attrib.update({
+            "e1": "1", "e2": "0", "e3": "0",
+            "e4": "0", "e5": "1", "e6": "0",
+        })
+    scale.attrib.update({"e2": "0", "e3": "0", "e4": "0", "e6": "0"})
+
+
 def sanitize_section(xml_bytes: bytes) -> tuple[bytes, set[str]]:
     register_namespaces(xml_bytes)
     root = ET.fromstring(xml_bytes)
+    normalize_photo_orientation(root)
     tables = root.findall(f".//{{{HP}}}tbl")
     if len(tables) != 2:
         raise ValueError("reference form must contain exactly two tables")

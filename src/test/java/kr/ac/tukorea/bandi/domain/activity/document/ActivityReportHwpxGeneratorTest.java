@@ -86,6 +86,37 @@ class ActivityReportHwpxGeneratorTest {
                 "참여인원 총 01명", "2026.11.03 09:05");
     }
 
+    @Test
+    void 완성본_사진_개체는_회전과_반전_없이_생성한다() throws Exception {
+        ActivityReportDocument document = ActivityReportDocument.create(
+                "대표", "장소", LocalDateTime.of(2026, 7, 24, 0, 5), "내용",
+                List.of(new ActivityReportParticipant("참여자", null, null, null)));
+
+        String section = readEntries(generator.generate(document, "회장",
+                photoProcessor.normalize(new ActivityReportPhotoParam(
+                        png(40, 30), "image/png"))))
+                .text("Contents/section0.xml");
+
+        assertPhotoOrientationIsNeutral(section);
+    }
+
+    @Test
+    void 빈_양식_사진_개체도_회전과_반전_없이_생성한다() throws Exception {
+        String section = readEntries(generator.generateBlank("회장"))
+                .text("Contents/section0.xml");
+
+        assertPhotoOrientationIsNeutral(section);
+    }
+
+    private void assertPhotoOrientationIsNeutral(String section) {
+        assertThat(section).contains(
+                "<hp:flip horizontal=\"0\" vertical=\"0\"",
+                "<hp:rotationInfo angle=\"0\"",
+                "rotateimage=\"0\"",
+                "<hc:rotMatrix e1=\"1\" e2=\"0\" e3=\"0\" e4=\"0\" e5=\"1\" e6=\"0\"",
+                "<hc:scaMatrix e1=\"6.945305\" e2=\"0\" e3=\"0\" e4=\"0\" e5=\"6.945398\" e6=\"0\"");
+    }
+
     private byte[] png(int width, int height) throws Exception {
         BufferedImage image = new BufferedImage(width, height,
                 BufferedImage.TYPE_INT_RGB);

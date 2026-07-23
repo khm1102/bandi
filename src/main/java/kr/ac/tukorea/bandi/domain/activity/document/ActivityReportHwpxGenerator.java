@@ -47,6 +47,8 @@ public class ActivityReportHwpxGenerator {
             "templates/hwpx/bandi-activity-report-template.hwpx";
     private static final String HP_NAMESPACE =
             "http://www.hancom.co.kr/hwpml/2011/paragraph";
+    private static final String HC_NAMESPACE =
+            "http://www.hancom.co.kr/hwpml/2011/core";
     private static final String SECTION_PATH = "Contents/section0.xml";
     private static final String PHOTO_PATH = "BinData/activity-photo.png";
     private static final String PREVIEW_TEXT_PATH = "Preview/PrvText.txt";
@@ -138,6 +140,7 @@ public class ActivityReportHwpxGenerator {
     }
 
     private byte[] write(Document section, byte[] photo, String previewText) {
+        normalizePhotoOrientation(section);
         Map<String, byte[]> entries = new LinkedHashMap<>(templateEntries);
         entries.put(SECTION_PATH, serializeXml(section));
         entries.put(PHOTO_PATH, photo.clone());
@@ -238,6 +241,109 @@ public class ActivityReportHwpxGenerator {
                 throw new IllegalStateException("치환되지 않은 HWPX 표식이 있습니다.");
             }
         }
+        validatePhotoOrientation(parseXml(entries.get(SECTION_PATH)));
+    }
+
+    private void normalizePhotoOrientation(Document document) {
+        Element picture = findPhotoPicture(document);
+        picture.setAttribute("reverse", "0");
+
+        Element flip = findSingleDescendant(picture, HP_NAMESPACE, "flip");
+        flip.setAttribute("horizontal", "0");
+        flip.setAttribute("vertical", "0");
+
+        Element rotation = findSingleDescendant(picture, HP_NAMESPACE,
+                "rotationInfo");
+        rotation.setAttribute("angle", "0");
+        rotation.setAttribute("rotateimage", "0");
+
+        Element rendering = findSingleDescendant(picture, HP_NAMESPACE,
+                "renderingInfo");
+        setIdentityMatrix(findSingleDescendant(rendering, HC_NAMESPACE,
+                "transMatrix"));
+        Element scale = findSingleDescendant(rendering, HC_NAMESPACE, "scaMatrix");
+        scale.setAttribute("e2", "0");
+        scale.setAttribute("e3", "0");
+        scale.setAttribute("e4", "0");
+        scale.setAttribute("e6", "0");
+        setIdentityMatrix(findSingleDescendant(rendering, HC_NAMESPACE,
+                "rotMatrix"));
+    }
+
+    private void validatePhotoOrientation(Document document) {
+        Element picture = findPhotoPicture(document);
+        Element flip = findSingleDescendant(picture, HP_NAMESPACE, "flip");
+        Element rotation = findSingleDescendant(picture, HP_NAMESPACE,
+                "rotationInfo");
+        Element rendering = findSingleDescendant(picture, HP_NAMESPACE,
+                "renderingInfo");
+        Element translation = findSingleDescendant(rendering, HC_NAMESPACE,
+                "transMatrix");
+        Element scale = findSingleDescendant(rendering, HC_NAMESPACE, "scaMatrix");
+        Element rotationMatrix = findSingleDescendant(rendering, HC_NAMESPACE,
+                "rotMatrix");
+
+        if (!"0".equals(flip.getAttribute("horizontal"))
+                || !"0".equals(flip.getAttribute("vertical"))
+                || !"0".equals(rotation.getAttribute("angle"))
+                || !"0".equals(rotation.getAttribute("rotateimage"))
+                || !isIdentityMatrix(translation)
+                || !"0".equals(scale.getAttribute("e2"))
+                || !"0".equals(scale.getAttribute("e3"))
+                || !"0".equals(scale.getAttribute("e4"))
+                || !"0".equals(scale.getAttribute("e6"))
+                || !isIdentityMatrix(rotationMatrix)) {
+            throw new IllegalStateException("생성 HWPX의 활동 사진 방향이 올바르지 않습니다.");
+        }
+    }
+
+    private Element findPhotoPicture(Document document) {
+        NodeList pictures = document.getElementsByTagNameNS(HP_NAMESPACE, "pic");
+        Element found = null;
+        for (int index = 0; index < pictures.getLength(); index++) {
+            Element picture = (Element) pictures.item(index);
+            NodeList images = picture.getElementsByTagNameNS(HC_NAMESPACE, "img");
+            if (images.getLength() == 1
+                    && "image1".equals(((Element) images.item(0))
+                    .getAttribute("binaryItemIDRef"))) {
+                if (found != null) {
+                    throw new IllegalStateException("활동 사진 개체가 중복되었습니다.");
+                }
+                found = picture;
+            }
+        }
+        if (found == null) {
+            throw new IllegalStateException("활동 사진 개체를 찾을 수 없습니다.");
+        }
+        return found;
+    }
+
+    private Element findSingleDescendant(Element parent, String namespace,
+                                         String localName) {
+        NodeList nodes = parent.getElementsByTagNameNS(namespace, localName);
+        if (nodes.getLength() != 1) {
+            throw new IllegalStateException("HWPX 사진 속성이 올바르지 않습니다: "
+                    + localName);
+        }
+        return (Element) nodes.item(0);
+    }
+
+    private void setIdentityMatrix(Element matrix) {
+        matrix.setAttribute("e1", "1");
+        matrix.setAttribute("e2", "0");
+        matrix.setAttribute("e3", "0");
+        matrix.setAttribute("e4", "0");
+        matrix.setAttribute("e5", "1");
+        matrix.setAttribute("e6", "0");
+    }
+
+    private boolean isIdentityMatrix(Element matrix) {
+        return "1".equals(matrix.getAttribute("e1"))
+                && "0".equals(matrix.getAttribute("e2"))
+                && "0".equals(matrix.getAttribute("e3"))
+                && "0".equals(matrix.getAttribute("e4"))
+                && "1".equals(matrix.getAttribute("e5"))
+                && "0".equals(matrix.getAttribute("e6"));
     }
 
     private Document parseXml(byte[] bytes) {
