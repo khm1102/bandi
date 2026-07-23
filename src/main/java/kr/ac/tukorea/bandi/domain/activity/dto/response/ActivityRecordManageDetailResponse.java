@@ -20,6 +20,7 @@ public record ActivityRecordManageDetailResponse(
         LocalDateTime submittedDttm,
         LocalDateTime reviewedDttm,
         LocalDateTime updatedDttm,
+        boolean reportDocument,
         List<ActivityFileResponse> currentFiles,
         List<ActivityRevisionResponse> revisions,
         List<ActivityReviewHistoryResponse> reviewHistories
@@ -35,7 +36,7 @@ public record ActivityRecordManageDetailResponse(
                 content.title(), content.body(), content.participantCount(),
                 content.status(), content.createdByMemberId(), content.createdByName(),
                 content.updatedByName(), content.submittedDttm(), content.reviewedDttm(),
-                content.updatedDttm(), List.copyOf(currentFiles),
+                content.updatedDttm(), content.reportDocument(), List.copyOf(currentFiles),
                 List.copyOf(revisions), List.copyOf(histories));
     }
 }

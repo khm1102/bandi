@@ -8,6 +8,7 @@ import kr.ac.tukorea.bandi.domain.member.dto.response.MemberResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.TeamResponse;
 import kr.ac.tukorea.bandi.domain.member.exception.MemberNotFoundException;
 import kr.ac.tukorea.bandi.domain.member.mapper.CohortMapper;
+import kr.ac.tukorea.bandi.domain.member.mapper.ClubOfficerMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.MemberHistoryMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.MemberMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.TeamMapper;
@@ -58,6 +59,8 @@ class MemberQueryServiceTest {
     @Mock
     private MemberHistoryMapper memberHistoryMapper;
     @Mock
+    private ClubOfficerMapper clubOfficerMapper;
+    @Mock
     private AuditService auditService;
 
     private MemberService memberService;
@@ -65,7 +68,7 @@ class MemberQueryServiceTest {
     @BeforeEach
     void setUp() {
         memberService = new MemberService(memberMapper, teamMapper,
-                cohortMapper, memberHistoryMapper, auditService,
+                cohortMapper, memberHistoryMapper, clubOfficerMapper, auditService,
                 Clock.systemUTC());
     }
 

@@ -36,6 +36,7 @@ const STATUS_META = Object.freeze({
 const FILE_ROLE_META = Object.freeze({
     EVIDENCE: ['인증', 'accent'],
     ADDITIONAL: ['추가', 'neutral'],
+    DOCUMENT: ['HWPX', 'info'],
 });
 
 const canReview = currentUserRole === 'admin' || currentUserRole === 'leader';
@@ -293,6 +294,11 @@ function openEditModal(trigger) {
     if (!currentDetail) {
         return;
     }
+    if (currentDetail.reportDocument) {
+        window.location.href = `/activity-documents?activityRecordId=`
+                + `${currentDetail.activityRecordId}`;
+        return;
+    }
     populateEditForm(currentDetail);
     closeModal(document.getElementById('activityDetailModal'));
     openModal('activityModal', trigger);
@@ -401,26 +407,37 @@ function renderDetailFiles(detail, manageable) {
     const files = detail.currentFiles || detail.files || [];
     const container = lookup('[data-activity-detail-files]');
     container.replaceChildren();
-    setText('[data-activity-file-count]', `${files.length}장`);
+    setText('[data-activity-file-count]', `${files.length}개`);
     lookup('[data-activity-file-empty]').classList.toggle('hidden', files.length > 0);
     files.forEach((file) => {
         const figure = lookup('[data-activity-file-template]').content.firstElementChild.cloneNode(true);
         figure.dataset.activityRecordFileId = file.activityRecordFileId;
+        const fileUrl = imageUrl(detail.activityRecordId, file.storedFileId, manageable);
         const image = lookup('[data-activity-file-image]', figure);
-        image.src = imageUrl(detail.activityRecordId, file.storedFileId, manageable);
-        image.alt = `${detail.title} ${FILE_ROLE_META[file.fileRole]?.[0] || '활동'} 사진`;
-        image.addEventListener('error', () => {
-            image.replaceWith(element('span',
-                    'px-4 text-center text-xs font-bold text-muted-foreground',
-                    '사진을 불러오지 못했습니다'));
-        }, {once: true});
+        if (file.fileRole === 'DOCUMENT') {
+            const media = image.parentElement;
+            const link = element('a',
+                    'flex min-h-40 w-full items-center justify-center px-4 text-center text-sm font-extrabold text-info underline underline-offset-4',
+                    'HWPX 활동 내역서 다운로드');
+            link.href = fileUrl;
+            media.replaceChildren(link);
+        } else {
+            image.src = fileUrl;
+            image.alt = `${detail.title} ${FILE_ROLE_META[file.fileRole]?.[0] || '활동'} 사진`;
+            image.addEventListener('error', () => {
+                image.replaceWith(element('span',
+                        'px-4 text-center text-xs font-bold text-muted-foreground',
+                        '사진을 불러오지 못했습니다'));
+            }, {once: true});
+        }
         lookup('[data-activity-file-role]', figure).appendChild(fileRoleBadge(file.fileRole));
         setText('[data-activity-file-name]', file.originalName, figure);
         setText('[data-activity-file-meta]',
                 `${file.uploadedByName || '업로더 미상'} · ${formatDateTime(file.uploadedDttm)}`, figure);
         const replaceAction = lookup('[data-file-replace-action]', figure);
         replaceAction.classList.toggle('hidden',
-                !manageable || !['DRAFT', 'REVISION_REQUESTED'].includes(detail.status));
+                file.fileRole === 'DOCUMENT' || !manageable
+                || !['DRAFT', 'REVISION_REQUESTED'].includes(detail.status));
         container.appendChild(figure);
     });
 }
@@ -476,6 +493,11 @@ function renderDetailActions(detail, manageable) {
     showDetailAction('approve', manageable && canReview && detail.status === 'SUBMITTED');
     showDetailAction('revision', manageable && canReview && detail.status === 'SUBMITTED');
     showDetailAction('archive', manageable && canReview && detail.status !== 'ARCHIVED');
+    const editButton = lookup('[data-detail-action="edit"] [data-page-action]');
+    if (editButton) {
+        editButton.textContent = detail.reportDocument
+            ? '활동 내역서 수정' : '수정·사진 추가';
+    }
 }
 
 function renderDetail(detail, manageable) {

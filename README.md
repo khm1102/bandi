@@ -36,6 +36,12 @@ docker compose up -d        # MySQL 8.4 (3307, bandi/bandi1234, 스키마 bandi�
 권한을 확인한 뒤 파일을 직접 스트리밍하며, MinIO·S3 호환 저장소·presigned URL은
 사용하지 않는다. 운영 기본 경로는 `/data/bandi`다.
 
+## 팀 공유 테스트 서버
+
+Cloudflare Tunnel을 사용하는 `app + MySQL + cloudflared` 테스트 서버 구성은
+[docs/test-server-deployment.md](docs/test-server-deployment.md)를 따른다. 실제 토큰과
+서버 환경값은 Git에 넣지 않고 `.env.test`에서 관리한다.
+
 ## 현재 상태 / 임시 결정 (로그인 기능 도입 시 해소)
 
 - **Security는 임시 전체 개방**(`SecurityConfig`의 `permitAll`) — 로그인 기능이 없어서다. CSRF는 활성 유지. 로그인 구현 시 인가 규칙을 작성한다 (컨벤션 18장이 목표 상태)

@@ -97,6 +97,44 @@ async function request(method, url, options = {}) {
     return payload;
 }
 
+function filenameFromDisposition(disposition) {
+    if (!disposition) {
+        return '';
+    }
+    const utf8 = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+    if (utf8) {
+        try {
+            return decodeURIComponent(utf8[1]);
+        } catch (error) {
+            return '';
+        }
+    }
+    const plain = disposition.match(/filename="?([^";]+)"?/i);
+    return plain ? plain[1] : '';
+}
+
+async function requestBlob(method, url, options = {}) {
+    const normalizedMethod = method.toUpperCase();
+    const response = await fetch(appendQuery(url, options.query), {
+        method: normalizedMethod,
+        credentials: 'same-origin',
+        headers: buildHeaders(normalizedMethod, options.body, options.headers),
+        body: toRequestBody(options.body),
+        signal: options.signal,
+    });
+    if (!response.ok) {
+        const payload = await parseResponse(response);
+        throw new ApiError(response.status, payload?.code || 'HTTP_ERROR',
+                payload?.message || `요청을 처리하지 못했습니다. (${response.status})`,
+                payload?.fieldErrors || []);
+    }
+    return {
+        blob: await response.blob(),
+        filename: filenameFromDisposition(
+                response.headers.get('content-disposition')),
+    };
+}
+
 export const get = (url, query, options = {}) => request('GET', url, {
     ...options,
     query,
@@ -114,6 +152,14 @@ export const patch = (url, body, options = {}) => request('PATCH', url, {
     body,
 });
 export const del = (url, body, options = {}) => request('DELETE', url, {
+    ...options,
+    body,
+});
+export const getBlob = (url, query, options = {}) => requestBlob('GET', url, {
+    ...options,
+    query,
+});
+export const postBlob = (url, body, options = {}) => requestBlob('POST', url, {
     ...options,
     body,
 });

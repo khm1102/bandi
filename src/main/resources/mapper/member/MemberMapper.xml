@@ -137,6 +137,16 @@
           AND sso_link_status_code IN ('WAITING', 'REVIEW_REQUIRED')
     </select>
 
+    <select id="searchActiveByKeyword" resultMap="memberResultMap">
+        SELECT <include refid="memberColumns"/>
+        FROM member
+        WHERE member_status_code = 'ACTIVE'
+          AND (name LIKE CONCAT('%', #{keyword}, '%')
+            OR student_no LIKE CONCAT('%', #{keyword}, '%'))
+        ORDER BY name, member_id
+        LIMIT #{limit}
+    </select>
+
     <!-- 마지막 운영진 보호 검증 전에 활성 운영진 행을 잠근다 (정본 5.4) -->
     <select id="searchActiveAdminIdsForUpdate" resultType="java.lang.Long">
         SELECT member_id

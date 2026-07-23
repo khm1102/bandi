@@ -85,6 +85,7 @@
             <arg column="submitted_dttm" javaType="java.time.LocalDateTime"/>
             <arg column="reviewed_dttm" javaType="java.time.LocalDateTime"/>
             <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="is_report_document" javaType="_boolean"/>
         </constructor>
     </resultMap>
 
@@ -213,7 +214,12 @@
                r.status_code, r.created_by_member_id,
                creator.name AS created_by_name,
                updater.name AS updated_by_name,
-               r.submitted_dttm, r.reviewed_dttm, r.updated_dttm
+               r.submitted_dttm, r.reviewed_dttm, r.updated_dttm,
+               EXISTS(
+                   SELECT 1
+                   FROM activity_report_document report
+                   WHERE report.activity_record_id = r.activity_record_id
+               ) AS is_report_document
         FROM activity_record r
         JOIN team t ON t.team_id = r.team_id
         JOIN member creator ON creator.member_id = r.created_by_member_id

@@ -9,6 +9,10 @@ import kr.ac.tukorea.bandi.domain.activity.model.ActivityRecordFile;
 import kr.ac.tukorea.bandi.domain.activity.model.ActivityRecordRevision;
 import kr.ac.tukorea.bandi.domain.activity.model.ActivityRecordStatus;
 import kr.ac.tukorea.bandi.domain.activity.model.ActivityReviewHistory;
+import kr.ac.tukorea.bandi.domain.activity.model.ActivityReportDocument;
+import kr.ac.tukorea.bandi.domain.activity.model.ActivityReportDocumentRecord;
+import kr.ac.tukorea.bandi.domain.activity.model.ActivityReportParticipant;
+import kr.ac.tukorea.bandi.domain.activity.model.ActivityReportParticipantRecord;
 import kr.ac.tukorea.bandi.domain.member.mapper.CohortMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.MemberMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.TeamMapper;
@@ -38,6 +42,7 @@ class ActivityRecordMapperTest {
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 7, 20, 20, 0);
 
     private final ActivityRecordMapper mapper;
+    private final ActivityReportDocumentMapper reportDocumentMapper;
     private final TeamMapper teamMapper;
     private final CohortMapper cohortMapper;
     private final MemberMapper memberMapper;
@@ -49,10 +54,13 @@ class ActivityRecordMapperTest {
     private Long memberId;
 
     @Autowired
-    ActivityRecordMapperTest(ActivityRecordMapper mapper, TeamMapper teamMapper,
+    ActivityRecordMapperTest(ActivityRecordMapper mapper,
+                             ActivityReportDocumentMapper reportDocumentMapper,
+                             TeamMapper teamMapper,
                              CohortMapper cohortMapper, MemberMapper memberMapper,
                              JdbcTemplate jdbcTemplate) {
         this.mapper = mapper;
+        this.reportDocumentMapper = reportDocumentMapper;
         this.teamMapper = teamMapper;
         this.cohortMapper = cohortMapper;
         this.memberMapper = memberMapper;
@@ -83,6 +91,33 @@ class ActivityRecordMapperTest {
         assertThat(mapper.lookupManageContent(record.getActivityRecordId()))
                 .isPresent().get().extracting("createdByName")
                 .isEqualTo("작성자");
+    }
+
+    @Test
+    void HWPX_활동_내역서_입력값과_참여자를_활동_기록에_연결한다() {
+        ActivityRecord activityRecord = insertDraft(stageTeamId, "7월 활동 내역서");
+        ActivityReportDocument document = ActivityReportDocument.create(
+                "대표자", "종합관", NOW, "활동 내용",
+                List.of(new ActivityReportParticipant("김현민", "컴퓨터공학부",
+                        "2025591010", null)));
+        ActivityReportDocumentRecord saved = ActivityReportDocumentRecord.create(
+                activityRecord.getActivityRecordId(), document);
+        reportDocumentMapper.insert(saved);
+        reportDocumentMapper.insertParticipant(ActivityReportParticipantRecord.create(
+                saved.getActivityReportDocumentId(), 0, document.participants().get(0)));
+
+        assertThat(reportDocumentMapper.lookupByActivityRecordId(
+                activityRecord.getActivityRecordId()))
+                .isPresent().get().extracting(
+                        ActivityReportDocumentRecord::getRepresentative)
+                .isEqualTo("대표자");
+        assertThat(reportDocumentMapper.searchParticipants(
+                saved.getActivityReportDocumentId()))
+                .singleElement().extracting(ActivityReportParticipantRecord::getStudentNo)
+                .isEqualTo("2025591010");
+        assertThat(mapper.lookupManageContent(activityRecord.getActivityRecordId()))
+                .isPresent().get().extracting("reportDocument")
+                .isEqualTo(true);
     }
 
     @Test

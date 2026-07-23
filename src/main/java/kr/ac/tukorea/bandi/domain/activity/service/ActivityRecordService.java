@@ -74,6 +74,9 @@ public class ActivityRecordService {
 
     @Transactional
     public void addFile(Long actorMemberId, ActivityFileAddParam param) {
+        if (param.fileRole() == ActivityFileRole.DOCUMENT) {
+            throw new InvalidActivityRecordException("document-file-managed-by-server");
+        }
         MemberAccessContext access = memberService.lookupAccessContext(actorMemberId);
         ActivityRecord record = lock(param.activityRecordId());
         validateEdit(access, record, actorMemberId);
@@ -85,6 +88,30 @@ public class ActivityRecordService {
         activityRecordMapper.insertFile(ActivityRecordFile.create(
                 param.activityRecordId(), param.storedFileId(), param.fileRole(),
                 displayOrder, actorMemberId));
+    }
+
+    @Transactional
+    public void attachGeneratedFile(Long actorMemberId, Long activityRecordId,
+                                    Long storedFileId, ActivityFileRole fileRole) {
+        if (fileRole != ActivityFileRole.EVIDENCE
+                && fileRole != ActivityFileRole.DOCUMENT) {
+            throw new InvalidActivityRecordException("generated-file-role");
+        }
+        MemberAccessContext access = memberService.lookupAccessContext(actorMemberId);
+        ActivityRecord record = lock(activityRecordId);
+        validateEdit(access, record, actorMemberId);
+        record.validateFileChange();
+        FileReferenceResponse file = fileService.lookupPrivateReadyForUpdate(storedFileId);
+        if (!Objects.equals(file.uploadedByMemberId(), actorMemberId)) {
+            throw new ActivityRecordAccessDeniedException();
+        }
+        validateGeneratedFileType(fileRole, file);
+        validateCurrentDuplicate(activityRecordId, storedFileId);
+        int displayOrder = activityRecordMapper.lookupNextDisplayOrder(
+                activityRecordId, fileRole);
+        activityRecordMapper.insertFile(ActivityRecordFile.create(
+                activityRecordId, storedFileId, fileRole, displayOrder,
+                actorMemberId));
     }
 
     @Transactional
@@ -102,6 +129,42 @@ public class ActivityRecordService {
         ActivityRecordFile replacement = ActivityRecordFile.create(
                 original.getActivityRecordId(), param.newStoredFileId(),
                 original.getFileRole(), original.getDisplayOrder(), actorMemberId);
+        activityRecordMapper.insertFile(replacement);
+        activityRecordMapper.updateFile(original.markReplaced(
+                replacement.getActivityRecordFileId(), actorMemberId,
+                LocalDateTime.now(clock)));
+    }
+
+    @Transactional
+    public void replaceGeneratedFile(Long actorMemberId,
+                                     Long activityRecordFileId,
+                                     Long newStoredFileId,
+                                     ActivityFileRole expectedRole) {
+        if (expectedRole != ActivityFileRole.EVIDENCE
+                && expectedRole != ActivityFileRole.DOCUMENT) {
+            throw new InvalidActivityRecordException("generated-file-role");
+        }
+        MemberAccessContext access = memberService.lookupAccessContext(actorMemberId);
+        ActivityRecordFile original = activityRecordMapper
+                .lookupFileByIdForUpdate(activityRecordFileId)
+                .orElseThrow(() -> new ActivityRecordFileNotFoundException(
+                        activityRecordFileId));
+        if (original.getFileRole() != expectedRole) {
+            throw new InvalidActivityRecordException("generated-file-role-mismatch");
+        }
+        ActivityRecord record = lock(original.getActivityRecordId());
+        validateEdit(access, record, actorMemberId);
+        record.validateFileChange();
+        FileReferenceResponse file = fileService.lookupPrivateReadyForUpdate(
+                newStoredFileId);
+        if (!Objects.equals(file.uploadedByMemberId(), actorMemberId)) {
+            throw new ActivityRecordAccessDeniedException();
+        }
+        validateGeneratedFileType(expectedRole, file);
+        validateCurrentDuplicate(record.getActivityRecordId(), newStoredFileId);
+        ActivityRecordFile replacement = ActivityRecordFile.create(
+                original.getActivityRecordId(), newStoredFileId, expectedRole,
+                original.getDisplayOrder(), actorMemberId);
         activityRecordMapper.insertFile(replacement);
         activityRecordMapper.updateFile(original.markReplaced(
                 replacement.getActivityRecordFileId(), actorMemberId,
@@ -302,6 +365,17 @@ public class ActivityRecordService {
         }
         if (file.contentType() == null || !file.contentType().startsWith("image/")) {
             throw new InvalidActivityRecordException("image");
+        }
+    }
+
+    private void validateGeneratedFileType(ActivityFileRole fileRole,
+                                           FileReferenceResponse file) {
+        boolean validEvidence = fileRole == ActivityFileRole.EVIDENCE
+                && file.contentType() != null && file.contentType().startsWith("image/");
+        boolean validDocument = fileRole == ActivityFileRole.DOCUMENT
+                && "application/hwp+zip".equals(file.contentType());
+        if (!validEvidence && !validDocument) {
+            throw new InvalidActivityRecordException("generated-file-type");
         }
     }
 

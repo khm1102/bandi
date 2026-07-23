@@ -19,6 +19,7 @@ import kr.ac.tukorea.bandi.domain.member.dto.response.SchoolConnectionResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.TeamResponse;
 import kr.ac.tukorea.bandi.domain.member.exception.ChangeReasonRequiredException;
 import kr.ac.tukorea.bandi.domain.member.exception.CohortNotFoundException;
+import kr.ac.tukorea.bandi.domain.member.exception.ClubPresidentUnavailableException;
 import kr.ac.tukorea.bandi.domain.member.exception.DuplicateStudentNoException;
 import kr.ac.tukorea.bandi.domain.member.exception.LastActiveAdminException;
 import kr.ac.tukorea.bandi.domain.member.exception.MemberManagementForbiddenException;
@@ -26,9 +27,11 @@ import kr.ac.tukorea.bandi.domain.member.exception.MemberNotFoundException;
 import kr.ac.tukorea.bandi.domain.member.exception.SchoolMemberNotRegisteredException;
 import kr.ac.tukorea.bandi.domain.member.exception.TeamNotFoundException;
 import kr.ac.tukorea.bandi.domain.member.mapper.CohortMapper;
+import kr.ac.tukorea.bandi.domain.member.mapper.ClubOfficerMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.MemberHistoryMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.MemberMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.TeamMapper;
+import kr.ac.tukorea.bandi.domain.member.model.ClubOfficerPosition;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
@@ -51,6 +54,7 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * 멤버 등록과 팀·기수·권한·상태 변경.
@@ -69,6 +73,7 @@ public class MemberService {
     private final TeamMapper teamMapper;
     private final CohortMapper cohortMapper;
     private final MemberHistoryMapper memberHistoryMapper;
+    private final ClubOfficerMapper clubOfficerMapper;
     private final AuditService auditService;
     private final Clock clock;
 
@@ -87,6 +92,31 @@ public class MemberService {
                         null, teamId, MemberStatus.ACTIVE, null, null)).stream()
                 .map(Member::getMemberId)
                 .toList();
+    }
+
+    public String lookupActivePresidentName() {
+        return lookupActivePresidentNameIfPresent()
+                .orElseThrow(ClubPresidentUnavailableException::new);
+    }
+
+    public Optional<String> lookupActivePresidentNameIfPresent() {
+        return clubOfficerMapper.lookupActiveMemberNameByPosition(
+                ClubOfficerPosition.PRESIDENT);
+    }
+
+    public List<ActivityReportParticipantLookup> searchActivityReportParticipants(
+            String keyword) {
+        return memberMapper.searchActiveByKeyword(keyword, 10).stream()
+                .map(member -> new ActivityReportParticipantLookup(member.getName(),
+                        member.getDepartment(), member.getStudentNo()))
+                .toList();
+    }
+
+    public record ActivityReportParticipantLookup(
+            String name,
+            String department,
+            String studentNo
+    ) {
     }
 
     public List<MemberResponse> searchMembers(
