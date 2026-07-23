@@ -20,6 +20,11 @@ public class FileMetadataService {
                 .orElseThrow(() -> new StoredFileNotFoundException(storedFileId));
     }
 
+    @Transactional
+    public StoredFile lookupForUpdate(Long storedFileId) {
+        return lock(storedFileId);
+    }
+
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public StoredFile createPending(StoredFile pendingFile) {
         storedFileMapper.insert(pendingFile);

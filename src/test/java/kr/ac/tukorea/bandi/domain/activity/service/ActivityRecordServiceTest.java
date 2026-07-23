@@ -153,7 +153,7 @@ class ActivityRecordServiceTest {
         given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(memberContext());
         given(activityRecordMapper.lookupByIdForUpdate(RECORD_ID))
                 .willReturn(Optional.of(draft(ACTOR_ID)));
-        given(fileService.lookupPrivateReady(FILE_ID)).willReturn(
+        given(fileService.lookupPrivateReadyForUpdate(FILE_ID)).willReturn(
                 new FileReferenceResponse(FILE_ID, "activity.hwpx",
                         "application/hwp+zip", 2048L, ACTOR_ID));
         given(activityRecordMapper.existsCurrentStoredFile(RECORD_ID, FILE_ID))

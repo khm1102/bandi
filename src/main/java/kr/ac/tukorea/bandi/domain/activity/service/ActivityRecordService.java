@@ -101,7 +101,7 @@ public class ActivityRecordService {
         ActivityRecord record = lock(activityRecordId);
         validateEdit(access, record, actorMemberId);
         record.validateFileChange();
-        FileReferenceResponse file = fileService.lookupPrivateReady(storedFileId);
+        FileReferenceResponse file = fileService.lookupPrivateReadyForUpdate(storedFileId);
         if (!Objects.equals(file.uploadedByMemberId(), actorMemberId)) {
             throw new ActivityRecordAccessDeniedException();
         }
@@ -155,7 +155,8 @@ public class ActivityRecordService {
         ActivityRecord record = lock(original.getActivityRecordId());
         validateEdit(access, record, actorMemberId);
         record.validateFileChange();
-        FileReferenceResponse file = fileService.lookupPrivateReady(newStoredFileId);
+        FileReferenceResponse file = fileService.lookupPrivateReadyForUpdate(
+                newStoredFileId);
         if (!Objects.equals(file.uploadedByMemberId(), actorMemberId)) {
             throw new ActivityRecordAccessDeniedException();
         }
