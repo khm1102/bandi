@@ -19,7 +19,7 @@ function setState(title, message, retry = false) {
 
 function appendNotice(notice) {
     const row = lookup('[data-notice-row-template]').content.firstElementChild.cloneNode(true);
-    lookup('[data-notice-link]', row).href = `/notices/${notice.internalNoticeId}`;
+    row.href = `/notices/${notice.internalNoticeId}`;
     const badges = lookup('[data-notice-badges]', row);
     if (notice.important) badges.appendChild(element('span', 'rounded-full bg-warning-soft px-2 py-1 text-xs font-bold text-warning', '중요'));
     badges.appendChild(element('span', 'rounded-full bg-info-soft px-2 py-1 text-xs font-bold text-info', notice.targetScope === 'TEAM' ? notice.teamName || '팀 공지' : '전체 공지'));
@@ -48,9 +48,13 @@ async function load(reset = false) {
         lookup('[data-notice-more]').classList.toggle('hidden', lastPage);
         lookup('[data-notice-state]').classList.toggle('hidden', notices.length > 0 || currentPage > 0);
         if (!notices.length && currentPage === 0) {
-            setState('표시할 공지가 없습니다', '필터를 바꾸거나 새 공지가 게시될 때 다시 확인해 주세요.');
+            const filtered = Boolean(query) || readFilter !== 'ALL' || targetScope !== null;
+            setState(filtered ? '조건에 맞는 공지가 없습니다' : '아직 게시된 공지가 없습니다',
+                filtered ? '검색어나 필터를 바꿔 보세요.' : '새 공지가 게시되면 여기에 표시됩니다.');
         }
-    } catch (error) { setState('공지를 불러오지 못했습니다', error.message, true); }
+    } catch {
+        setState('공지를 불러오지 못했습니다', '잠시 후 다시 시도해 주세요.', true);
+    }
     finally { loading = false; }
 }
 
