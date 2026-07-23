@@ -792,6 +792,10 @@ src/main/webapp/WEB-INF
 ```
 
 - 반복되는 UI 블록(페이지네이션, 카드, 폼 필드)은 **태그 파일**로 추출하고, 파라미터는 `<%@ attribute %>`로 명시한다: `<%@ attribute name="page" required="true" type="..." %>`
+- 증가하는 목록 API는 `PageResponse<T>`의 `items`, `page`, `pageSize`, `totalElements`,
+  `totalPages`, `hasPrevious`, `hasNext` 계약을 사용한다. API 페이지는 0부터, 화면 URL의
+  `page`는 1부터 시작한다. 목록과 count Mapper는 권한·삭제·필터 조건을 같은 `<sql>`로
+  공유한다.
 - `<jsp:include>`는 태그 파일로 표현할 수 없는 경우에만 예외적으로 사용한다. **(SHOULD)**
 
 ### 12.3 출력/보안 규칙
