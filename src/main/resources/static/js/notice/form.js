@@ -63,6 +63,10 @@ function setUploadError(message = '') {
     setMessage(uploadErrorTarget, message);
 }
 
+function hasDroppedFiles(event) {
+    return Array.from(event.dataTransfer?.types || []).includes('Files');
+}
+
 function attachmentIds() {
     return attachments.map((attachment) => attachment.storedFileId);
 }
@@ -232,8 +236,7 @@ async function uploadAttachments() {
     }
 }
 
-async function uploadInlineImages() {
-    const files = [...imageInput.files];
+async function uploadInlineImages(files) {
     setUploadError();
     for (const file of files) {
         if (!INLINE_IMAGE_TYPES.has(file.type) || file.size > MAX_INLINE_IMAGE_BYTES) {
@@ -247,7 +250,6 @@ async function uploadInlineImages() {
         bodyInput.setRangeText(`![${uploaded.originalName}](attachment://${uploaded.storedFileId})`,
                 start, bodyInput.selectionEnd, 'end');
     }
-    imageInput.value = '';
     renderAttachments();
     bodyInput.focus();
     bodyInput.dispatchEvent(new Event('input', {bubbles: true}));
@@ -401,10 +403,36 @@ attachmentInput.addEventListener('change', () => {
     attachmentInput.value = '';
     renderAttachments();
 });
-imageInput.addEventListener('change', () => uploadInlineImages().catch((error) => {
-    setUploadError(error.message
-        || '이미지를 올리지 못했어요. 파일을 확인한 뒤 다시 시도해 주세요.');
-}));
+imageInput.addEventListener('change', () => {
+    const files = [...imageInput.files];
+    imageInput.value = '';
+    uploadInlineImages(files).catch((error) => {
+        setUploadError(error.message
+            || '이미지를 올리지 못했어요. 파일을 확인한 뒤 다시 시도해 주세요.');
+    });
+});
+bodyInput.addEventListener('dragover', (event) => {
+    if (!hasDroppedFiles(event)) {
+        return;
+    }
+    event.preventDefault();
+    bodyInput.classList.add('border-ring', 'bg-accent/40');
+});
+bodyInput.addEventListener('dragleave', () => {
+    bodyInput.classList.remove('border-ring', 'bg-accent/40');
+});
+bodyInput.addEventListener('drop', (event) => {
+    if (!hasDroppedFiles(event)) {
+        return;
+    }
+    event.preventDefault();
+    bodyInput.classList.remove('border-ring', 'bg-accent/40');
+    bodyInput.focus();
+    uploadInlineImages([...event.dataTransfer.files]).catch((error) => {
+        setUploadError(error.message
+            || '이미지를 올리지 못했어요. 파일을 확인한 뒤 다시 시도해 주세요.');
+    });
+});
 bodyInput.addEventListener('input', debounce(() => {
     if (activeTab === 'preview') {
         refreshPreview();

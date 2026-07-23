@@ -42,7 +42,8 @@ public class FileService {
         return uploadPrivate(param, inspection, StoredFile.pending(
                 param.originalName(), StorageScope.PRIVATE,
                 keyGenerator.generate(param.domain()), inspection.contentType(),
-                inspection.sizeBytes(), inspection.sha256Hash(), param.uploadedByMemberId()));
+                inspection.sizeBytes(), inspection.sha256Hash(), param.uploadedByMemberId()))
+                .getStoredFileId();
     }
 
     public Long uploadProfileImage(FileUploadParam param) {
@@ -52,28 +53,27 @@ public class FileService {
         StoredFile pending = StoredFile.pendingProfileImage(param.originalName(), storageKey,
                 inspection.contentType(), inspection.sizeBytes(), inspection.sha256Hash(),
                 param.uploadedByMemberId());
-        return uploadPrivate(param, inspection, pending);
+        return uploadPrivate(param, inspection, pending).getStoredFileId();
     }
 
-    public Long uploadNoticeInlineImage(FileUploadParam param) {
+    public FileReferenceResponse uploadNoticeInlineImage(FileUploadParam param) {
         FileInspection inspection = inspector.inspectNoticeInlineImage(
                 param.originalName(), param.sizeBytes(), param.contentSource());
         StoredFile pending = StoredFile.pending(param.originalName(), StorageScope.PRIVATE,
                 keyGenerator.generate("notice"), inspection.contentType(), inspection.sizeBytes(),
                 inspection.sha256Hash(), param.uploadedByMemberId());
-        return uploadPrivate(param, inspection, pending);
+        return FileReferenceResponse.from(uploadPrivate(param, inspection, pending));
     }
 
-    private Long uploadPrivate(FileUploadParam param, FileInspection inspection,
-                               StoredFile pending) {
+    private StoredFile uploadPrivate(FileUploadParam param, FileInspection inspection,
+                                     StoredFile pending) {
         String storageKey = pending.getStorageKey();
         StoredFile created = metadataService.createPending(pending);
 
         try {
             String etag = objectStorage.upload(StorageScope.PRIVATE, storageKey,
                     inspection.contentType(), inspection.sizeBytes(), param.contentSource());
-            StoredFile ready = metadataService.markReady(created.getStoredFileId(), etag);
-            return ready.getStoredFileId();
+            return metadataService.markReady(created.getStoredFileId(), etag);
         } catch (RuntimeException exception) {
             compensateFailure(created.getStoredFileId(), StorageScope.PRIVATE, storageKey);
             throw exception;

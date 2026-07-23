@@ -191,9 +191,8 @@ public class InternalNoticeService {
 
     public FileReferenceResponse uploadInlineImage(Long actorMemberId, FileUploadParam param) {
         managementAccess(actorMemberId);
-        Long storedFileId = fileService.uploadNoticeInlineImage(new FileUploadParam("notice",
+        return fileService.uploadNoticeInlineImage(new FileUploadParam("notice",
                 param.originalName(), param.sizeBytes(), param.contentSource(), actorMemberId));
-        return fileService.lookupPrivateNoticeInlineImage(storedFileId);
     }
 
     public FileDownloadResponse openTemporaryInlineImage(Long actorMemberId, Long storedFileId) {

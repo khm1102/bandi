@@ -1,7 +1,17 @@
 package kr.ac.tukorea.bandi.domain.notice.service;
 
+import java.io.ByteArrayInputStream;
+import java.lang.reflect.Field;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.Optional;
+
 import kr.ac.tukorea.bandi.domain.file.dto.response.FileReferenceResponse;
 import kr.ac.tukorea.bandi.domain.file.service.FileService;
+import kr.ac.tukorea.bandi.domain.file.service.FileUploadParam;
 import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
 import kr.ac.tukorea.bandi.domain.notice.dto.request.InternalNoticeManageSearchCondition;
@@ -26,20 +36,13 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.lang.reflect.Field;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.List;
-import java.util.Optional;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willAnswer;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
@@ -212,6 +215,21 @@ class InternalNoticeManagementServiceTest {
                 .isInstanceOf(InvalidInternalNoticeException.class);
 
         verify(internalNoticeMapper, never()).insert(any());
+    }
+
+    @Test
+    void 본문_이미지_업로드는_독립_저장_트랜잭션의_파일을_다시_조회하지_않는다() {
+        FileReferenceResponse uploaded = new FileReferenceResponse(FILE_ID, "poster.png",
+                "image/png", 4);
+        given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(adminContext());
+        doReturn(uploaded).when(fileService).uploadNoticeInlineImage(any());
+
+        FileReferenceResponse result = internalNoticeService.uploadInlineImage(ACTOR_ID,
+                new FileUploadParam("notice", "poster.png", 4,
+                        () -> new ByteArrayInputStream(new byte[]{1, 2, 3, 4}), ACTOR_ID));
+
+        assertThat(result).isEqualTo(uploaded);
+        verify(fileService, never()).lookupPrivateNoticeInlineImage(any());
     }
 
     @Test

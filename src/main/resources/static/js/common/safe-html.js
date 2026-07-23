@@ -2,6 +2,22 @@ const ALLOWED_TAGS = new Set(['A', 'BLOCKQUOTE', 'BR', 'CODE', 'DEL', 'EM', 'H1'
     'H3', 'H4', 'H5', 'H6', 'HR', 'LI', 'OL', 'P', 'PRE', 'STRONG', 'TABLE', 'TBODY',
     'TD', 'TH', 'THEAD', 'TR', 'UL', 'IMG']);
 
+function isSafeExternalImageUrl(source) {
+    try {
+        const url = new URL(source);
+        return url.protocol === 'https:' && Boolean(url.hostname)
+            && !url.username && !url.password;
+    } catch (error) {
+        return false;
+    }
+}
+
+function isSafeImageSource(source) {
+    return source.startsWith('/api/internal-notices/')
+        || source.startsWith('/api/internal-notice-management/')
+        || isSafeExternalImageUrl(source);
+}
+
 function cloneSafeNode(node) {
     if (node.nodeType === Node.TEXT_NODE) return document.createTextNode(node.textContent);
     if (node.nodeType !== Node.ELEMENT_NODE || !ALLOWED_TAGS.has(node.tagName)) return null;
@@ -14,8 +30,7 @@ function cloneSafeNode(node) {
     }
     if (node.tagName === 'IMG') {
         const src = node.getAttribute('src');
-        if (!src || (!src.startsWith('/api/internal-notices/')
-                && !src.startsWith('/api/internal-notice-management/'))) {
+        if (!src || !isSafeImageSource(src)) {
             return null;
         }
         copy.setAttribute('src', src);

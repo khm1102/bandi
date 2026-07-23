@@ -2,6 +2,7 @@ package kr.ac.tukorea.bandi.domain.notice.service;
 
 import org.commonmark.Extension;
 import org.commonmark.ext.gfm.tables.TablesExtension;
+import org.commonmark.node.Image;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
@@ -9,9 +10,9 @@ import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
 import org.springframework.stereotype.Component;
 
-import org.commonmark.node.Image;
-import java.util.List;
+import java.net.URI;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -70,7 +71,13 @@ public class MarkdownRenderer {
     private void replaceUnsafeImages(Node document, Map<Long, String> imageUrls) {
         visitImages(document, image -> {
             Long storedFileId = extractStoredFileId(image.getDestination());
-            String imageUrl = storedFileId == null ? null : imageUrls.get(storedFileId);
+            if (storedFileId == null) {
+                if (!isSafeExternalImageUrl(image.getDestination())) {
+                    image.unlink();
+                }
+                return;
+            }
+            String imageUrl = imageUrls.get(storedFileId);
             if (!isSafeInlineImageUrl(imageUrl)) {
                 image.unlink();
                 return;
@@ -90,6 +97,17 @@ public class MarkdownRenderer {
     private boolean isSafeInlineImageUrl(String imageUrl) {
         return imageUrl != null && (imageUrl.startsWith("/api/internal-notices/")
                 || imageUrl.startsWith("/api/internal-notice-management/"));
+    }
+
+    private boolean isSafeExternalImageUrl(String imageUrl) {
+        try {
+            URI uri = URI.create(imageUrl);
+            return "https".equalsIgnoreCase(uri.getScheme())
+                    && uri.getHost() != null
+                    && uri.getUserInfo() == null;
+        } catch (IllegalArgumentException exception) {
+            return false;
+        }
     }
 
     private void visitImages(Node node, java.util.function.Consumer<Image> visitor) {
