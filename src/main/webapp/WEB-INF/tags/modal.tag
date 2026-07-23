@@ -4,10 +4,15 @@
 <%@ attribute name="title" required="true" %>
 <%@ attribute name="description" %>
 <%@ attribute name="footer" fragment="true" %>
+<%@ attribute name="size" %>
+<%@ attribute name="mobileFullscreen" type="java.lang.Boolean" %>
 <c:set var="descriptionId" value="${id}Description"/>
-<div id="${id}" class="fixed inset-0 z-50 hidden items-center justify-center bg-sidebar/50 p-4 backdrop-blur-sm md:p-6"
+<c:set var="backdropSpacing" value="${mobileFullscreen ? 'p-0 md:p-6' : 'p-4 md:p-6'}"/>
+<c:set var="panelWidth" value="${size == 'lg' ? 'max-w-3xl' : 'max-w-lg'}"/>
+<c:set var="panelShape" value="${mobileFullscreen ? 'h-full rounded-none md:h-auto md:rounded-xl' : 'rounded-xl'}"/>
+<div id="${id}" class="fixed inset-0 z-50 hidden items-center justify-center bg-sidebar/50 ${backdropSpacing} backdrop-blur-sm"
      data-modal-back aria-hidden="true">
-    <div class="max-h-full w-full max-w-lg overflow-y-auto overscroll-contain rounded-xl bg-card shadow-xl"
+    <div class="max-h-full w-full ${panelWidth} ${panelShape} overflow-y-auto overscroll-contain bg-card shadow-xl"
          role="dialog" aria-modal="true" aria-labelledby="${id}Title"
          aria-describedby="${not empty description ? descriptionId : ''}"
          data-modal-panel tabindex="-1">

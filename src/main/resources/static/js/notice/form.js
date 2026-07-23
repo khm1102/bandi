@@ -1,4 +1,11 @@
 import {get, post, put} from '../common/api.js';
+import {
+    focusDateTimeField,
+    initializeDateTimeFields,
+    readDateTimeValue,
+    setDateTimeDisabled,
+    setDateTimeValue,
+} from '../common/date-time-field.js';
 import {debounce, element, lookup} from '../common/dom.js';
 import {mountSafeHtml} from '../common/safe-html.js';
 
@@ -32,9 +39,9 @@ const targetSelect = lookup('[data-notice-target]');
 const teamSelect = lookup('[data-notice-team]');
 const teamWrap = lookup('[data-notice-team-wrap]');
 const importantInput = lookup('[data-notice-important]');
-const publishAtInput = lookup('[data-notice-publish-at]');
 const scheduleEnabledInput = lookup('[data-notice-schedule-enabled]');
 const scheduleWrap = lookup('[data-notice-schedule-wrap]');
+const scheduleError = lookup('[data-notice-schedule-error]');
 const writePanel = lookup('[data-notice-panel="write"]');
 const previewPanel = lookup('[data-notice-panel="preview"]');
 let attachments = [];
@@ -120,7 +127,12 @@ function updateTargetLabel() {
 function updateScheduleField() {
     const enabled = scheduleEnabledInput.checked;
     scheduleWrap.classList.toggle('hidden', !enabled);
-    publishAtInput.disabled = !enabled;
+    setDateTimeDisabled('noticePublishAt', !enabled);
+    setMessage(scheduleError);
+}
+
+function followsMinuteStep(value, step) {
+    return value && Number(value.slice(14, 16)) % step === 0;
 }
 
 function setActiveTab(nextTab) {
@@ -266,10 +278,21 @@ async function save(publish) {
     }
     setError();
     setUploadError();
-    const scheduledAt = scheduleEnabledInput.checked ? publishAtInput.value : '';
+    const scheduledAt = scheduleEnabledInput.checked
+        ? readDateTimeValue('noticePublishAt') : '';
     if (publish && scheduleEnabledInput.checked && !scheduledAt) {
-        setError('예약 게시 시각을 선택해 주세요.');
-        publishAtInput.focus();
+        setMessage(scheduleError, '예약 게시 시각을 선택해 주세요.');
+        focusDateTimeField('noticePublishAt');
+        return;
+    }
+    if (publish && scheduledAt && new Date(scheduledAt) <= new Date()) {
+        setMessage(scheduleError, '예약 게시 시각은 현재보다 뒤로 선택해 주세요.');
+        focusDateTimeField('noticePublishAt');
+        return;
+    }
+    if (publish && scheduledAt && !followsMinuteStep(scheduledAt, 5)) {
+        setMessage(scheduleError, '예약 게시 시각은 5분 단위로 입력해 주세요.');
+        focusDateTimeField('noticePublishAt');
         return;
     }
     setSubmitting(true);
@@ -319,8 +342,9 @@ async function initialize() {
         bodyInput.value = notice.bodyMarkdown;
         importantInput.checked = notice.important;
         scheduleEnabledInput.checked = notice.status === 'SCHEDULED';
-        publishAtInput.value = scheduleEnabledInput.checked && notice.publishStartDttm
-            ? notice.publishStartDttm.slice(0, 16) : '';
+        setDateTimeValue('noticePublishAt',
+                scheduleEnabledInput.checked && notice.publishStartDttm
+                    ? notice.publishStartDttm.slice(0, 16) : '');
         attachments = notice.attachments;
     }
     renderAttachments();
@@ -392,4 +416,5 @@ document.addEventListener('keydown', (event) => {
         save(false);
     }
 });
+initializeDateTimeFields();
 initialize().catch((error) => setError(error.message));

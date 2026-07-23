@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
 
 public record CalendarEventCreateRequest(
         @Positive Long teamId,
-        @NotBlank @Size(max = 200) String title,
+        @NotBlank @Size(max = 150) String title,
         String description,
         @NotNull LocalDateTime startDttm,
         @NotNull LocalDateTime endDttm,

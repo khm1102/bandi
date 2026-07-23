@@ -5,6 +5,15 @@
 <c:set var="label" value="mb-1.5 block text-xs font-extrabold text-muted-foreground"/>
 <c:set var="canReview" value="${role == 'admin' || role == 'leader'}"/>
 <t:layout title="활동 기록" active="activity" role="${role}" scriptPath="activity/list">
+    <jsp:attribute name="css">
+        <link rel="stylesheet" href="<c:url value='/css/vendor/vanilla-calendar-pro/3.1.0/layout.css'/>">
+        <link rel="stylesheet" href="<c:url value='/css/vendor/vanilla-calendar-pro/3.1.0/light.css'/>">
+        <link rel="stylesheet" href="<c:url value='/css/vendor/vanilla-calendar-pro/3.1.0/bandi-adapter.css'/>">
+    </jsp:attribute>
+    <jsp:attribute name="script">
+        <script src="<c:url value='/js/vendor/vanilla-calendar-pro/3.1.0/vanilla-calendar-pro.js'/>"></script>
+    </jsp:attribute>
+    <jsp:body>
     <t:pageHead title="활동 기록" description="팀 활동을 네이비즘 인증 사진과 함께 제출하고 검수 이력을 관리합니다">
         <t:button pageAction="activity-create-open">+ 활동 기록</t:button>
     </t:pageHead>
@@ -76,7 +85,7 @@
                     <input class="${input}" id="activityTitle" type="text" maxlength="150" placeholder="예) 2막 전체 런스루">
                 </div>
                 <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
-                    <div><label class="${label}" for="activityDttm">활동 일시 <span class="text-accent-foreground">*</span></label><input class="${input}" id="activityDttm" type="datetime-local"></div>
+                    <t:dateTimeField id="activityDttm" label="활동 일시" required="true" minuteStep="5"/>
                     <div><label class="${label}" for="activityParticipantCount">참여 인원 <span class="text-accent-foreground">*</span></label><input class="${input}" id="activityParticipantCount" type="number" min="1" step="1" inputmode="numeric"></div>
                 </div>
                 <div>
@@ -159,4 +168,5 @@
             <p class="mt-3 hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-xs text-destructive" data-activity-revision-error role="alert"></p>
         </jsp:body>
     </t:modal>
+    </jsp:body>
 </t:layout>

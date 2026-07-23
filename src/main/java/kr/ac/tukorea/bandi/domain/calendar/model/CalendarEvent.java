@@ -4,6 +4,7 @@ import kr.ac.tukorea.bandi.domain.calendar.exception.InvalidCalendarEventExcepti
 import lombok.Getter;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 @Getter
 public class CalendarEvent {
@@ -30,8 +31,8 @@ public class CalendarEvent {
                          String place, Long createdByMemberId, Long updatedByMemberId,
                          LocalDateTime createdDttm, LocalDateTime updatedDttm,
                          LocalDateTime deletedDttm) {
-        validate(title, description, startDttm, endDttm, place, createdByMemberId,
-                updatedByMemberId);
+        validate(title, description, startDttm, endDttm, allDay, place,
+                createdByMemberId, updatedByMemberId);
         this.calendarEventId = calendarEventId;
         this.teamId = teamId;
         this.title = title;
@@ -64,12 +65,17 @@ public class CalendarEvent {
 
     private void validate(String titleValue, String descriptionValue,
                           LocalDateTime startValue, LocalDateTime endValue,
-                          String placeValue, Long creatorId, Long updaterId) {
+                          boolean allDayValue, String placeValue, Long creatorId,
+                          Long updaterId) {
         validateText(titleValue, MAX_TITLE_LENGTH, "title");
-        validateText(descriptionValue, Integer.MAX_VALUE, "description");
-        validateText(placeValue, MAX_PLACE_LENGTH, "place");
-        if (startValue == null || endValue == null || endValue.isBefore(startValue)) {
+        validateOptionalText(descriptionValue, Integer.MAX_VALUE, "description");
+        validateOptionalText(placeValue, MAX_PLACE_LENGTH, "place");
+        if (startValue == null || endValue == null || !endValue.isAfter(startValue)) {
             throw new InvalidCalendarEventException("period");
+        }
+        if (allDayValue && (!startValue.toLocalTime().equals(LocalTime.MIDNIGHT)
+                || !endValue.toLocalTime().equals(LocalTime.MIDNIGHT))) {
+            throw new InvalidCalendarEventException("allDayPeriod");
         }
         if (creatorId == null || updaterId == null) {
             throw new InvalidCalendarEventException("actor");
@@ -78,6 +84,12 @@ public class CalendarEvent {
 
     private void validateText(String value, int maxLength, String field) {
         if (value == null || value.isBlank() || value.length() > maxLength) {
+            throw new InvalidCalendarEventException(field);
+        }
+    }
+
+    private void validateOptionalText(String value, int maxLength, String field) {
+        if (value != null && value.length() > maxLength) {
             throw new InvalidCalendarEventException(field);
         }
     }

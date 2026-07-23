@@ -1,4 +1,9 @@
 import {ApiError, get, post, put} from '../common/api.js';
+import {
+    initializeDateTimeFields,
+    readDateTimeValue,
+    setDateTimeValue,
+} from '../common/date-time-field.js';
 import {all, bindPageActions, element, lookup, readValue} from '../common/dom.js';
 import {closeModal, openModal} from '../common/modal.js';
 import {currentUserRole} from '../common/session.js';
@@ -71,6 +76,7 @@ function toDateTimeInput(value) {
 }
 
 function localInputValue(date) {
+    date.setMinutes(Math.round(date.getMinutes() / 5) * 5, 0, 0);
     const offset = date.getTimezoneOffset() * 60000;
     return new Date(date.getTime() - offset).toISOString().slice(0, 16);
 }
@@ -240,7 +246,7 @@ function resetActivityForm() {
     document.getElementById('activityTeam').value = currentUserRole === 'admin'
         ? '' : loginMember?.teamId || '';
     document.getElementById('activityTitle').value = '';
-    document.getElementById('activityDttm').value = localInputValue(new Date());
+    setDateTimeValue('activityDttm', localInputValue(new Date()));
     document.getElementById('activityParticipantCount').value = '1';
     document.getElementById('activityBody').value = '';
     document.getElementById('activityEvidence').value = '';
@@ -269,7 +275,7 @@ function populateEditForm(detail) {
     document.getElementById('activityTeam').disabled = true;
     document.getElementById('activityTeam').value = detail.teamId;
     document.getElementById('activityTitle').value = detail.title;
-    document.getElementById('activityDttm').value = toDateTimeInput(detail.activityDttm);
+    setDateTimeValue('activityDttm', toDateTimeInput(detail.activityDttm));
     document.getElementById('activityParticipantCount').value = detail.participantCount;
     document.getElementById('activityBody').value = detail.body;
     document.getElementById('activityEvidence').value = '';
@@ -295,8 +301,8 @@ function openEditModal(trigger) {
 function activityPayload() {
     return {
         teamId: Number(readValue('activityTeam')),
-        activityDttm: readValue('activityDttm')
-            ? `${readValue('activityDttm')}:00` : null,
+        activityDttm: readDateTimeValue('activityDttm')
+            ? `${readDateTimeValue('activityDttm')}:00` : null,
         title: readValue('activityTitle'),
         body: readValue('activityBody'),
         participantCount: Number(readValue('activityParticipantCount')),
@@ -307,6 +313,9 @@ function validateActivityForm(payload, submitAfterSave) {
     if (!payload.teamId || !payload.activityDttm || !payload.title
             || !payload.body || payload.participantCount < 1) {
         return '담당 팀과 필수 활동 정보를 모두 입력해 주세요.';
+    }
+    if (Number(payload.activityDttm.slice(14, 16)) % 5 !== 0) {
+        return '활동 일시는 5분 단위로 입력해 주세요.';
     }
     const evidence = document.getElementById('activityEvidence').files[0];
     if (submitAfterSave && !pendingHasEvidence && !evidence) {
@@ -653,6 +662,7 @@ bindPageActions({
     [ACTIONS.FILE_REPLACE]: selectReplacementFile,
 });
 
+initializeDateTimeFields();
 initializeReferences().catch((error) => {
     showToast(`기준 정보를 불러오지 못했습니다. ${errorMessage(error)}`);
 });

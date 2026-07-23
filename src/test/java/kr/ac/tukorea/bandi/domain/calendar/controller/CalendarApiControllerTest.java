@@ -125,6 +125,43 @@ class CalendarApiControllerTest {
     }
 
     @Test
+    void 제목이_150자를_넘으면_C001을_반환한다() throws Exception {
+        mockMvc.perform(post("/api/calendar-events")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "%s",
+                                  "startDttm": "2026-08-01T10:00:00",
+                                  "endDttm": "2026-08-01T12:00:00",
+                                  "allDay": false
+                                }
+                                """.formatted("가".repeat(151))))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("C001"));
+    }
+
+    @Test
+    void 장소와_설명_없이_일정을_등록한다() throws Exception {
+        given(calendarService.create(any(), any())).willReturn(EVENT_ID);
+
+        mockMvc.perform(post("/api/calendar-events")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title": "전체 연습",
+                                  "startDttm": "2026-08-01T10:00:00",
+                                  "endDttm": "2026-08-01T12:00:00",
+                                  "allDay": false
+                                }
+                                """))
+                .andExpect(status().isCreated());
+
+        verify(calendarService).create(ACTOR_ID,
+                new CalendarEventCreateParam(null, "전체 연습", null,
+                        START, END, false, null));
+    }
+
+    @Test
     void 검색_종료가_시작보다_빠르면_C001을_반환한다() throws Exception {
         mockMvc.perform(get("/api/calendar-events")
                         .param("rangeStart", END.toString())

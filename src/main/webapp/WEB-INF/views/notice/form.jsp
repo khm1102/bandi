@@ -4,6 +4,12 @@
 <t:layout title="${empty notice ? '공지 작성' : '공지 수정'}" active="notices" role="${role}" scriptPath="notice/form">
     <jsp:attribute name="css">
         <link rel="stylesheet" href="<c:url value='/css/notice/markdown.css'/>">
+        <link rel="stylesheet" href="<c:url value='/css/vendor/vanilla-calendar-pro/3.1.0/layout.css'/>">
+        <link rel="stylesheet" href="<c:url value='/css/vendor/vanilla-calendar-pro/3.1.0/light.css'/>">
+        <link rel="stylesheet" href="<c:url value='/css/vendor/vanilla-calendar-pro/3.1.0/bandi-adapter.css'/>">
+    </jsp:attribute>
+    <jsp:attribute name="script">
+        <script src="<c:url value='/js/vendor/vanilla-calendar-pro/3.1.0/vanilla-calendar-pro.js'/>"></script>
     </jsp:attribute>
     <jsp:body>
     <t:pageHead title="${empty notice ? '공지 작성' : '공지 수정'}" description="동아리 멤버에게 전달할 내용을 작성하세요.">
@@ -38,8 +44,8 @@
                     예약 게시
                 </label>
                 <div class="hidden min-w-64" data-notice-schedule-wrap>
-                    <label class="sr-only" for="noticePublishAt">게시 시각</label>
-                    <input id="noticePublishAt" type="datetime-local" class="h-11 w-full rounded-md border border-input bg-card px-3 text-sm" data-notice-publish-at>
+                    <t:dateTimeField id="noticePublishAt" label="게시 시각" required="true" minuteStep="5"/>
+                    <p class="mt-1.5 hidden text-xs font-bold text-destructive" data-notice-schedule-error></p>
                 </div>
             </div>
             <div class="flex flex-wrap items-center justify-between gap-3">

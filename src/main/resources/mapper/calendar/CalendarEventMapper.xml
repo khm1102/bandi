@@ -51,7 +51,7 @@
         SELECT <include refid="calendarEventColumns"/>
         FROM calendar_event
         WHERE start_dttm &lt; #{rangeEnd}
-          AND end_dttm &gt;= #{rangeStart}
+          AND end_dttm &gt; #{rangeStart}
           AND <include refid="notDeleted"/>
         <if test="teamId != null">
           AND (team_id = #{teamId} OR team_id IS NULL)

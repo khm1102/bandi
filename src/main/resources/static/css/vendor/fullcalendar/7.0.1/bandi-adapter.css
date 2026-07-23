@@ -1,0 +1,77 @@
+/* bandi 디자인 토큰과 FullCalendar 7.0.1 classic theme의 연결 계층. */
+[data-calendar-shell] {
+    --fc-classic-primary: var(--primary-strong);
+    --fc-classic-primary-foreground: var(--destructive-foreground);
+    --fc-classic-event: var(--primary-strong);
+    --fc-classic-event-contrast: var(--destructive-foreground);
+    --fc-classic-background: var(--card);
+    --fc-classic-faint: var(--secondary);
+    --fc-classic-muted: var(--muted);
+    --fc-classic-strong: var(--border);
+    --fc-classic-foreground: var(--foreground);
+    --fc-classic-faint-foreground: var(--muted-foreground);
+    --fc-classic-muted-foreground: var(--muted-foreground);
+    --fc-classic-border: var(--border);
+    --fc-classic-strong-border: var(--input);
+    --fc-classic-highlight: var(--accent);
+    --fc-classic-today: var(--accent);
+    min-height: 32rem;
+}
+
+[data-calendar-shell] button:focus-visible,
+[data-calendar-shell] a:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+}
+
+[data-calendar-shell] .bandi-calendar-event-content {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.25rem;
+    overflow: hidden;
+}
+
+[data-calendar-shell] .bandi-calendar-event-team,
+[data-calendar-shell] .bandi-calendar-event-title {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+[data-calendar-shell] .bandi-calendar-event-place {
+    overflow: hidden;
+    color: inherit;
+    font-size: 0.75rem;
+    opacity: 0.78;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+[data-calendar-shell] .bandi-calendar-event-team {
+    flex: 0 1 auto;
+    font-weight: 700;
+    opacity: 0.82;
+}
+
+[data-calendar-shell] .bandi-calendar-event-title {
+    flex: 1 1 auto;
+    font-weight: 700;
+}
+
+@media (max-width: 767px) {
+    [data-calendar-shell] {
+        min-height: 24rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [data-calendar-shell] *,
+    [data-calendar-shell] *::before,
+    [data-calendar-shell] *::after {
+        scroll-behavior: auto;
+        transition-duration: 0.01ms;
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
+    }
+}
