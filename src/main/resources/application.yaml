@@ -39,6 +39,8 @@ bandi:
     max-upload-bytes: ${FILE_STORAGE_MAX_UPLOAD_BYTES:524288000}
   profile-photo-retirement:
     mode: ${PROFILE_PHOTO_RETIREMENT_MODE:DISABLED}
+  resource-link-preview-retirement:
+    mode: ${RESOURCE_LINK_PREVIEW_RETIREMENT_MODE:DISABLED}
   school-sso:
     login-page-url: "https://ksc.tukorea.ac.kr/sso/login_stand.jsp"
     login-process-url: "https://ksc.tukorea.ac.kr/sso/login_proc.jsp?returnurl=null"

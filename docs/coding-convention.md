@@ -800,12 +800,13 @@ src/main/webapp/WEB-INF
 
 ### 12.3 출력/보안 규칙
 - **JSP EL `${}`는 자동 이스케이프가 없다** (Thymeleaf `th:text`와 정반대 — 전환 시 최다 실수 지점). **사용자 유래 데이터 출력은 반드시 `<c:out value="${...}"/>`** 를 거친다. HTML 속성 값 내부도 동일하다.
-- `<c:out escapeXml="false">` 등 **원문 HTML 출력 금지.** 단, 내부 공지 Markdown은
+- `<c:out escapeXml="false">` 등 **원문 HTML 출력 금지.** 단, 내부 공지와 자료실 Markdown은
   `domain.notice.service.MarkdownRenderer`가 allowlist sanitizer를 통과시켜 만든
   `SafeMarkdownHtml`만 `<t:markdown>` 태그로 출력할 수 있다. 이 태그는 일반 문자열을
-  받지 않으며, 다른 JSP·태그·JavaScript에는 이 예외를 확대하지 않는다. 공지 본문 이미지는
-  `attachment://{storedFileId}` 내부 참조를 서버에서 인증 inline URL로 변환하며, HTTPS 외부
-  URL만 직접 렌더링할 수 있다. HTTP/data URL·원시 HTML 이미지와 일반 문자열 HTML의 출력
+  받지 않으며, 다른 JSP·태그·JavaScript에는 이 예외를 확대하지 않는다. 공지와 자료실 본문
+  이미지는 `attachment://{storedFileId}` 내부 참조를 서버에서 인증 inline URL로 변환한다.
+  공지만 HTTPS 외부 URL을 직접 렌더링할 수 있고, 자료실은 외부 URL을 서버 수집 링크 카드
+  또는 일반 링크로만 표시한다. HTTP/data URL·원시 HTML 이미지와 일반 문자열 HTML의 출력
   예외는 허용하지 않는다.
 - 인라인 `<script>` 블록에 EL로 서버 데이터를 직접 조립하지 않는다. 서버 데이터 → JS 전달은 **`data-*` 속성 + `<c:out>`** 으로 마크업에 싣고, JS에서 `dataset`으로 읽는다.
 - 폼은 `<form:form>` 사용 시 CSRF hidden 필드가 자동 삽입된다(`CsrfRequestDataValueProcessor`). **JS fetch로 POST할 때는** layout의 `<meta name="_csrf">`를 헤더로 전달한다. ([13.4] 참조)

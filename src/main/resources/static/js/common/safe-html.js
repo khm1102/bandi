@@ -15,6 +15,7 @@ function isSafeExternalImageUrl(source) {
 function isSafeImageSource(source) {
     return source.startsWith('/api/internal-notices/')
         || source.startsWith('/api/internal-notice-management/')
+        || source.startsWith('/api/resources/')
         || isSafeExternalImageUrl(source);
 }
 

@@ -35,7 +35,7 @@ Controller → Service → Mapper → Model
 | `member` | 멤버 사전 등록, 학교 SSO 연결, 내 프로필, 팀·기수·역할·상태와 이력 |
 | `calendar` | 전체·팀 일정 관리 |
 | `notice` | 내부 공지, 읽음 상태 및 첨부 연결 |
-| `resource` | 전체·팀 자료와 파일 리비전 |
+| `resource` | 공용 Markdown 자료, 현재 첨부와 서버 수집 링크 카드 |
 | `activity` | 팀 활동 기록·검토 이력과 저장·검수형 HWPX 활동 내역서 생성 |
 | `asset` | 소품·장비 품목, 개별 장비, 상태 이력과 사진 연결 |
 | `file` | 파일 메타데이터와 로컬 파일 저장·전송, 프로필 사진 파기 재시도 |
@@ -46,7 +46,7 @@ Controller → Service → Mapper → Model
 
 - 페이지 조회는 JSP SSR Controller를 사용한다.
 - 부분 갱신과 상태 변경은 `/api/**`에서 세션 인증과 CSRF 보호를 적용한다.
-- 공지·공지 관리·자료실·자료 관리·멤버·팀 멤버 목록은 공통 `PageResponse<T>`로 응답한다.
+- 공지·공지 관리·자료실·멤버·팀 멤버 목록은 공통 `PageResponse<T>`로 응답한다.
   API의 `page`는 0부터 시작하고 `pageSize`는 최대 100이며, 제품 화면은 20건으로 고정한다.
   목록과 `COUNT(*)` 쿼리는 검색·권한·소프트 삭제 조건을 같은 SQL 조각으로 공유한다.
 - Swagger 계약은 `global.swagger` 인터페이스에만 둔다.
@@ -70,6 +70,11 @@ Controller → Service → Mapper → Model
   `MarkdownRenderer`는 검증된 ID를 해당 공지의 인증 inline URL로만 바꾼다. 작성 중인
   새 이미지는 업로더 전용 임시 미리보기 URL을 사용한다. 외부 이미지는 HTTPS URL만 직접
   렌더링하며 HTTP·data URL·원시 HTML 이미지는 렌더링하지 않는다.
+- 자료실은 모든 활성 멤버가 작성·열람하고, 작성자와 `ADMIN`만 수정·소프트 삭제한다.
+  자료 Markdown은 내부 첨부 이미지 참조만 렌더링하며 외부 이미지·iframe은 차단한다.
+  단독 HTTPS URL의 Open Graph 메타데이터는 생성·수정 시 서버가 HTTPS 공개 대상만
+  SSRF 방어 규칙으로 수집해 private 파일과 함께 스냅샷한다. 열람 화면은 이 스냅샷만
+  전송하며 외부 URL을 직접 임베드하지 않는다.
 - 캘린더 API는 KST `LocalDateTime`과 기존 `/api/calendar-events` 계약을 유지한다.
   일정 기간은 `endDttm > startDttm`이며, 조회 범위와의 겹침은 반개구간
   `startDttm < rangeEnd && endDttm > rangeStart`로 판정한다. 종일 일정의 종료값은

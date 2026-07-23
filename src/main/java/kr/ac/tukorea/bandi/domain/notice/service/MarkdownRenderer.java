@@ -52,8 +52,18 @@ public class MarkdownRenderer {
     }
 
     public SafeMarkdownHtml render(String markdown, Map<Long, String> imageUrls) {
+        return render(markdown, imageUrls, true);
+    }
+
+    public SafeMarkdownHtml renderInternalImagesOnly(String markdown,
+                                                     Map<Long, String> imageUrls) {
+        return render(markdown, imageUrls, false);
+    }
+
+    private SafeMarkdownHtml render(String markdown, Map<Long, String> imageUrls,
+                                    boolean allowExternalImages) {
         Node document = parser.parse(removeRawHtml(markdown));
-        replaceUnsafeImages(document, imageUrls);
+        replaceUnsafeImages(document, imageUrls, allowExternalImages);
         return new SafeMarkdownHtml(POLICY.sanitize(renderer.render(document)));
     }
 
@@ -68,11 +78,12 @@ public class MarkdownRenderer {
         return Set.copyOf(references);
     }
 
-    private void replaceUnsafeImages(Node document, Map<Long, String> imageUrls) {
+    private void replaceUnsafeImages(Node document, Map<Long, String> imageUrls,
+                                     boolean allowExternalImages) {
         visitImages(document, image -> {
             Long storedFileId = extractStoredFileId(image.getDestination());
             if (storedFileId == null) {
-                if (!isSafeExternalImageUrl(image.getDestination())) {
+                if (!allowExternalImages || !isSafeExternalImageUrl(image.getDestination())) {
                     image.unlink();
                 }
                 return;
@@ -96,7 +107,8 @@ public class MarkdownRenderer {
 
     private boolean isSafeInlineImageUrl(String imageUrl) {
         return imageUrl != null && (imageUrl.startsWith("/api/internal-notices/")
-                || imageUrl.startsWith("/api/internal-notice-management/"));
+                || imageUrl.startsWith("/api/internal-notice-management/")
+                || imageUrl.startsWith("/api/resources/"));
     }
 
     private boolean isSafeExternalImageUrl(String imageUrl) {

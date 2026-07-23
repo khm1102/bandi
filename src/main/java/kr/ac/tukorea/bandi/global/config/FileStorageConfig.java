@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 @EnableConfigurationProperties({FileStorageProperties.class,
-        ProfilePhotoRetirementProperties.class})
+        ProfilePhotoRetirementProperties.class,
+        ResourceLinkPreviewRetirementProperties.class})
 public class FileStorageConfig {
 }
