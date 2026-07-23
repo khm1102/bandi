@@ -48,6 +48,48 @@ class TukoreaSsoHtmlParserTest {
     }
 
     @Test
+    void 무관한_name_변수보다_프로필_환영_문구의_이름을_우선한다() {
+        // given
+        String html = """
+                <script>var name = "메뉴";</script>
+                <script>
+                  var loginId = "2025591010";
+                  var name = "다른 사용자";
+                  var groupName = "재학생";
+                </script>
+                <h3>김현민 님 환영합니다!</h3>
+                <div class="profile_02"><p>AI소프트웨어학과(학생)</p></div>
+                """;
+
+        // when
+        SchoolIdentity identity = parser.extractIdentity(html);
+
+        // then
+        assertThat(identity.studentNo()).isEqualTo("2025591010");
+        assertThat(identity.name()).isEqualTo("김현민");
+    }
+
+    @Test
+    void 신원_script_블록_밖의_name_변수는_사용하지_않는다() {
+        // given
+        String html = """
+                <script>var name = "메뉴";</script>
+                <script>
+                  var loginId = "2025591010";
+                  var name = "김현민";
+                  var groupName = "재학생";
+                </script>
+                <div class="profile_02"><p>AI소프트웨어학과(학생)</p></div>
+                """;
+
+        // when
+        SchoolIdentity identity = parser.extractIdentity(html);
+
+        // then
+        assertThat(identity.name()).isEqualTo("김현민");
+    }
+
+    @Test
     void 필수_신원_필드가_사라지면_학교_화면_변경으로_분류한다() {
         String html = "<script>var loginId = \"2021184000\"; var name = \"김하늘\";</script>";
 
