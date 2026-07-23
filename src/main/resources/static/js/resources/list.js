@@ -48,16 +48,13 @@ function appendCard(item) {
 
     if (item.coverStoredFileId) {
         const cover = lookup('[data-resource-cover]', card);
-        const fallback = lookup('[data-resource-cover-fallback]', card);
         cover.src = item.coverImageSource === 'LINK_PREVIEW'
             ? `/api/resources/${item.resourceId}/link-previews/${item.coverStoredFileId}/inline`
             : `/api/resources/${item.resourceId}/files/${item.coverStoredFileId}/inline`;
         cover.alt = `${item.title} 대표 이미지`;
         cover.classList.remove('hidden');
-        fallback.classList.add('hidden');
         cover.addEventListener('error', () => {
             cover.classList.add('hidden');
-            fallback.classList.remove('hidden');
         }, {once: true});
     }
     list.append(card);
