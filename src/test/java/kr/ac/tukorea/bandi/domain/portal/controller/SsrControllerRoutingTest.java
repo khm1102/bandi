@@ -5,6 +5,10 @@ import kr.ac.tukorea.bandi.domain.asset.controller.AssetController;
 import kr.ac.tukorea.bandi.domain.calendar.controller.CalendarController;
 import kr.ac.tukorea.bandi.domain.dashboard.controller.DashboardController;
 import kr.ac.tukorea.bandi.domain.member.controller.MemberController;
+import kr.ac.tukorea.bandi.domain.notice.controller.NoticeController;
+import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeDetailResponse;
+import kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeTargetScope;
+import kr.ac.tukorea.bandi.domain.notice.service.InternalNoticeService;
 import kr.ac.tukorea.bandi.domain.resource.controller.ResourceController;
 import kr.ac.tukorea.bandi.global.security.LoginPrincipal;
 import kr.ac.tukorea.bandi.global.security.LoginViewModelAdvice;
@@ -19,10 +23,13 @@ import org.springframework.context.annotation.Import;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Map;
+import java.util.List;
 
+import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -30,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest({DashboardController.class, CalendarController.class,
         ResourceController.class, ActivityController.class, AssetController.class,
-        MemberController.class})
+        MemberController.class, NoticeController.class})
 @AutoConfigureMockMvc(addFilters = false)
 @Import(LoginViewModelAdvice.class)
 @ActiveProfiles("test")
@@ -44,7 +51,12 @@ class SsrControllerRoutingTest {
             "props", "props/list",
             "members", "members/list",
             "profile", "members/profile",
-            "team-members", "members/team-members");
+            "team-members", "members/team-members",
+            "notices", "notice/list",
+            "notices/write", "notice/form");
+
+    @MockitoBean
+    private InternalNoticeService internalNoticeService;
 
     private final MockMvc mockMvc;
 
@@ -60,7 +72,7 @@ class SsrControllerRoutingTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"dashboard", "calendar", "resources", "activity",
-            "props", "members", "profile", "team-members"})
+            "props", "members", "profile", "team-members", "notices", "notices/write"})
     void 유지되는_내부_화면이_렌더링된다(String page) throws Exception {
         LoginPrincipal principal = new LoginPrincipal(1L, "ADMIN");
         SecurityContextHolder.getContext().setAuthentication(
@@ -73,14 +85,38 @@ class SsrControllerRoutingTest {
                 .andExpect(model().attribute("role", "admin"));
     }
 
+    @Test
+    void 공지_상세_화면이_읽음_기록과_함께_렌더링된다() throws Exception {
+        authenticate();
+        given(internalNoticeService.lookupReadable(1L, 10L)).willReturn(noticeDetail());
+
+        mockMvc.perform(get("/notices/10"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("notice/detail"))
+                .andExpect(model().attributeExists("notice"));
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"schedule", "community", "dues", "attendance",
             "production", "checklist", "performance-management",
             "performance-content-management", "reservations", "showops",
             "reserve", "reserve/lookup", "performances/house-boy", "style-guide",
-            "notices", "notices/1", "notice-management", "notice-management/write"})
+            "notice-management", "notice-management/write"})
     void 폐기된_화면은_라우팅하지_않는다(String page) throws Exception {
         mockMvc.perform(get("/" + page))
                 .andExpect(status().isNotFound());
+    }
+
+    private void authenticate() {
+        LoginPrincipal principal = new LoginPrincipal(1L, "ADMIN");
+        SecurityContextHolder.getContext().setAuthentication(
+                UsernamePasswordAuthenticationToken.authenticated(principal,
+                        null, principal.authorities()));
+    }
+
+    private InternalNoticeDetailResponse noticeDetail() {
+        return new InternalNoticeDetailResponse(10L, InternalNoticeTargetScope.ALL,
+                null, null, "공지", null, false,
+                null, null, "관리자", null, List.of());
     }
 }

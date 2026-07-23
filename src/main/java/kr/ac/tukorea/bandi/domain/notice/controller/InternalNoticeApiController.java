@@ -26,9 +26,10 @@ public class InternalNoticeApiController implements InternalNoticeApiDocs {
 
     @Override
     public ResponseEntity<List<InternalNoticeSummaryResponse>> search(
-            @LoginMember Long memberId, String keyword, int page, int pageSize) {
+            @LoginMember Long memberId, String keyword, String readFilter,
+            String targetScope, int page, int pageSize) {
         return ResponseEntity.ok(internalNoticeService.searchReadable(memberId,
-                new InternalNoticeSearchParam(keyword, page, pageSize)));
+                new InternalNoticeSearchParam(keyword, readFilter, targetScope, page, pageSize)));
     }
 
     @Override
@@ -46,11 +47,27 @@ public class InternalNoticeApiController implements InternalNoticeApiDocs {
                 internalNoticeId, storedFileId));
     }
 
+    @Override
+    public ResponseEntity<Resource> inline(@LoginMember Long memberId,
+                                           Long internalNoticeId, Long storedFileId) {
+        return inline(internalNoticeService.openAttachmentInline(memberId,
+                internalNoticeId, storedFileId));
+    }
+
     private ResponseEntity<Resource> attachment(FileDownloadResponse file) {
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(file.contentType()))
                 .contentLength(file.sizeBytes())
                 .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
+                        .filename(file.originalName(), StandardCharsets.UTF_8).build().toString())
+                .body(file.resource());
+    }
+
+    private ResponseEntity<Resource> inline(FileDownloadResponse file) {
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(file.contentType()))
+                .contentLength(file.sizeBytes())
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.inline()
                         .filename(file.originalName(), StandardCharsets.UTF_8).build().toString())
                 .body(file.resource());
     }

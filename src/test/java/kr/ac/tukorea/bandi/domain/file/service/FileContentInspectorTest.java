@@ -127,6 +127,23 @@ class FileContentInspectorTest {
                 .isInstanceOf(FileTooLargeException.class);
     }
 
+    @Test
+    void 공지_본문_이미지는_JPG_PNG_WebP만_10MiB_이하로_허용한다() {
+        FileContentInspector noticeInspector = new FileContentInspector(new FileStorageProperties(
+                Path.of(System.getProperty("java.io.tmpdir")), 11L * 1024 * 1024));
+        byte[] content = png();
+
+        FileInspection inspection = noticeInspector.inspectNoticeInlineImage("poster.png",
+                content.length, source(content));
+
+        assertThat(inspection.contentType()).isEqualTo("image/png");
+        assertThatThrownBy(() -> noticeInspector.inspectNoticeInlineImage("animation.gif",
+                content.length, source(content))).isInstanceOf(InvalidFileException.class);
+        assertThatThrownBy(() -> noticeInspector.inspectNoticeInlineImage("large.png",
+                10L * 1024 * 1024 + 1, source(new byte[]{1})))
+                .isInstanceOf(FileTooLargeException.class);
+    }
+
     private FileContentSource source(byte[] content) {
         return () -> new ByteArrayInputStream(content);
     }

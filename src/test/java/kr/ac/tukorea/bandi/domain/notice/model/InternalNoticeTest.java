@@ -104,9 +104,14 @@ class InternalNoticeTest {
     }
 
     @Test
-    void 보관한_공지는_수정하거나_다시_게시할_수_없다() {
+    void 종료하거나_보관한_공지는_수정하거나_다시_게시할_수_없다() {
+        InternalNotice closed = teamDraft().publish(null, null, ACTOR_ID, NOW)
+                .close(EDITOR_ID);
         InternalNotice archived = teamDraft().archive(EDITOR_ID);
 
+        assertThatThrownBy(() -> closed.edit(InternalNoticeTargetScope.TEAM,
+                TEAM_ID, "수정", "수정 본문", false, EDITOR_ID))
+                .isInstanceOf(InvalidInternalNoticeStateException.class);
         assertThatThrownBy(() -> archived.edit(InternalNoticeTargetScope.TEAM,
                 TEAM_ID, "수정", "수정 본문", false, EDITOR_ID))
                 .isInstanceOf(InvalidInternalNoticeStateException.class);

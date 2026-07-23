@@ -45,6 +45,11 @@
 
 내부 공지와 자료의 공개 범위는 전체 또는 팀 단위로 관리한다.
 
+`internal_notice.body`는 Markdown 원문이다. 렌더된 HTML·조회수는 저장하지 않으며,
+공지 상세를 열 때 `internal_notice_read`를 upsert해 멤버별 읽음 상태만 보관한다.
+`internal_notice_attachment`는 현재 연결만 보관한다. 수정에서 분리된 private 파일은
+파일 feature의 미연결 파일 정리 대상으로 남긴다.
+
 ## 4. 소품·장비
 
 | 테이블 | 책임 |

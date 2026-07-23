@@ -67,7 +67,7 @@ class SecurityConfigTest {
     void 폐기된_공개_경로는_로그인으로_보내지_않는다() throws Exception {
         for (String path : new String[]{"/performances/show", "/reserve/test",
                 "/api/public-performances/test", "/api/public-policies/test",
-                "/api/public-reservations/test", "/notices/test",
+                "/api/public-reservations/test",
                 "/api/public-notices/test"}) {
             mockMvc.perform(get(path)).andExpect(status().isNotFound());
         }
@@ -156,6 +156,19 @@ class SecurityConfigTest {
     }
 
     @Test
+    void 공지_관리_API는_팀장과_운영진만_접근한다() throws Exception {
+        mockMvc.perform(get("/api/internal-notice-management/test")
+                        .with(user("member").roles("MEMBER")))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/internal-notice-management/test")
+                        .with(user("leader").roles("LEADER")))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/internal-notice-management/test")
+                        .with(user("leader").roles("LEADER")).with(csrf()))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void 로그아웃은_POST_CSRF로_세션을_무효화한다() throws Exception {
         HttpSession session = mockMvc.perform(get("/dashboard")
                         .with(user("member").roles("MEMBER")))
@@ -179,7 +192,8 @@ class SecurityTestController {
             "/dispatch-target", "/api/test", "/api/members/me",
             "/api/members/reference/teams",
             "/profile", "/team-members", "/api/members/me/profile",
-            "/api/members/1/profile-photo", "/api/members/team-members"})
+            "/api/members/1/profile-photo", "/api/members/team-members",
+            "/api/internal-notice-management/test"})
     ResponseEntity<Void> page() {
         return ResponseEntity.ok().build();
     }
@@ -191,6 +205,11 @@ class SecurityTestController {
 
     @PostMapping({"/api/files/private", "/api/files/1/public-promotions"})
     ResponseEntity<Void> fileChange() {
+        return ResponseEntity.ok().build();
+    }
+
+    @PostMapping("/api/internal-notice-management/test")
+    ResponseEntity<Void> manageNotice() {
         return ResponseEntity.ok().build();
     }
 

@@ -61,7 +61,7 @@ class InternalNoticeReadServiceTest {
     @BeforeEach
     void setUp() {
         internalNoticeService = new InternalNoticeService(internalNoticeMapper,
-                memberService, fileService, CLOCK);
+                memberService, fileService, new MarkdownRenderer(), CLOCK);
     }
 
     @Test
@@ -160,6 +160,19 @@ class InternalNoticeReadServiceTest {
                 .isInstanceOf(InternalNoticeNotFoundException.class);
 
         verify(fileService, never()).openPrivateDownload(any(), any());
+    }
+
+    @Test
+    void 읽을_수_있는_공지의_이미지_첨부만_inline으로_조회한다() {
+        given(memberService.lookupAccessContext(MEMBER_ID)).willReturn(memberContext());
+        given(internalNoticeMapper.existsReadableAttachment(
+                NOTICE_ID, FILE_ID, NOW, STAGE_TEAM_ID, false)).willReturn(true);
+        given(fileService.openPrivateNoticeInlineImage(FILE_ID, FileAccessDecision.GRANTED))
+                .willReturn(download());
+
+        var result = internalNoticeService.openAttachmentInline(MEMBER_ID, NOTICE_ID, FILE_ID);
+
+        assertThat(result.contentType()).isEqualTo("image/png");
     }
 
     @Test

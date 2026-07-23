@@ -37,6 +37,7 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Mockito.never;
@@ -66,7 +67,8 @@ class InternalNoticeManagementServiceTest {
     @BeforeEach
     void setUp() {
         internalNoticeService = new InternalNoticeService(internalNoticeMapper,
-                memberService, fileService, Clock.fixed(FIXED_INSTANT, SEOUL));
+                memberService, fileService, new MarkdownRenderer(),
+                Clock.fixed(FIXED_INSTANT, SEOUL));
     }
 
     @Test
@@ -167,20 +169,25 @@ class InternalNoticeManagementServiceTest {
     }
 
     @Test
-    void 소속_팀_공지_수정은_본문과_첨부를_함께_교체한다() {
+    void 소속_팀_공지_수정은_기존_첨부를_유지하고_새_첨부만_검증한다() {
         given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(leaderContext());
         given(internalNoticeMapper.lookupByIdForUpdate(NOTICE_ID))
                 .willReturn(Optional.of(persistedDraft(
                         InternalNoticeTargetScope.TEAM, STAGE_TEAM_ID)));
+        given(internalNoticeMapper.searchAttachmentFileIds(NOTICE_ID))
+                .willReturn(List.of(FILE_ID));
         InternalNoticeUpdateParam param = new InternalNoticeUpdateParam(NOTICE_ID,
                 InternalNoticeTargetScope.TEAM, STAGE_TEAM_ID, "수정 공지", "수정 본문",
-                true, List.of(FILE_ID));
+                true, List.of(FILE_ID, FILE_ID + 1));
 
         internalNoticeService.update(ACTOR_ID, param);
 
         verify(internalNoticeMapper).update(any());
-        verify(internalNoticeMapper).removeAttachments(NOTICE_ID);
+        verify(internalNoticeMapper).removeAttachmentsExcept(eq(NOTICE_ID),
+                eq(List.of(FILE_ID, FILE_ID + 1)));
         verify(internalNoticeMapper).insertAttachment(any());
+        verify(fileService).validatePrivateReadyOwnedBy(FILE_ID + 1, ACTOR_ID);
+        verify(fileService, never()).validatePrivateReadyOwnedBy(FILE_ID, ACTOR_ID);
     }
 
     @Test
@@ -192,6 +199,19 @@ class InternalNoticeManagementServiceTest {
                         List.of(FILE_ID, FILE_ID))))
                 .isInstanceOf(InvalidInternalNoticeException.class);
         verify(fileService, never()).lookupPrivateReady(any());
+    }
+
+    @Test
+    void 본문_이미지는_반드시_첨부_목록에_포함되어야_한다() {
+        given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(adminContext());
+
+        assertThatThrownBy(() -> internalNoticeService.createDraft(ACTOR_ID,
+                new InternalNoticeWriteParam(InternalNoticeTargetScope.ALL, null,
+                        "공지 제목", "![포스터](attachment://" + FILE_ID + ")", false,
+                        List.of())))
+                .isInstanceOf(InvalidInternalNoticeException.class);
+
+        verify(internalNoticeMapper, never()).insert(any());
     }
 
     @Test

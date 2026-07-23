@@ -51,6 +51,17 @@ Controller → Service → Mapper → Model
 - `/profile`과 `/api/members/me/**`는 로그인 멤버가 사용한다. `/team-members`와
   `/api/members/team-members`는 `LEADER`·`ADMIN`만 URL 단계에서 허용하고,
   팀·대상 범위는 `MemberService`가 다시 검사한다.
+- `/notices`는 인증 멤버의 내부 공지 목록·상세 화면이며, `/notices/write`와
+  `/notices/{id}/edit`는 `LEADER`·`ADMIN`만 URL 단계에서 허용한다. 실제 공지 대상
+  범위와 상태 전이는 `InternalNoticeService`가 다시 검사한다.
+- 공지 Markdown은 `notice.MarkdownRenderer`가 GFM을 렌더링하고 allowlist sanitizer를
+  거친 `SafeMarkdownHtml` 값만 만든다. JSP는 전용 `<t:markdown>` 태그만 이 값을
+  원문 출력할 수 있으며, 일반 JSP/JS의 HTML 출력 금지 규칙은 그대로 유지한다.
+- 공지 Markdown의 이미지는 `attachment://{storedFileId}`만 원문에 저장한다. 저장 시
+  `InternalNoticeService`가 첨부 연결·이미지 MIME·10MiB 제한을 검증하고,
+  `MarkdownRenderer`는 검증된 ID를 해당 공지의 인증 inline URL로만 바꾼다. 작성 중인
+  새 이미지는 업로더 전용 임시 미리보기 URL을 사용하며 외부 URL·원시 HTML 이미지는
+  렌더링하지 않는다.
 
 ## 5. 후속 범위
 

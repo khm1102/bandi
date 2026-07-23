@@ -60,5 +60,8 @@ public interface InternalNoticeMapper {
 
     int removeAttachments(Long internalNoticeId);
 
+    int removeAttachmentsExcept(@Param("internalNoticeId") Long internalNoticeId,
+                                @Param("storedFileIds") List<Long> storedFileIds);
+
     List<Long> searchAttachmentFileIds(Long internalNoticeId);
 }

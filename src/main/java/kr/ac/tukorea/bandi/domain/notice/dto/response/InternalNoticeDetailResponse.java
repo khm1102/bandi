@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.domain.notice.dto.response;
 
 import kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeTargetScope;
+import kr.ac.tukorea.bandi.domain.notice.service.SafeMarkdownHtml;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -11,7 +12,7 @@ public record InternalNoticeDetailResponse(
         Long teamId,
         String teamName,
         String title,
-        String body,
+        SafeMarkdownHtml bodyHtml,
         boolean important,
         LocalDateTime publishStartDttm,
         LocalDateTime publishEndDttm,
@@ -22,10 +23,11 @@ public record InternalNoticeDetailResponse(
 
     public static InternalNoticeDetailResponse of(
             InternalNoticeContentResponse content,
+            SafeMarkdownHtml bodyHtml,
             List<InternalNoticeAttachmentResponse> attachments) {
         return new InternalNoticeDetailResponse(content.internalNoticeId(),
                 content.targetScope(), content.teamId(), content.teamName(), content.title(),
-                content.body(), content.important(), content.publishStartDttm(),
+                bodyHtml, content.important(), content.publishStartDttm(),
                 content.publishEndDttm(), content.publishedByName(), content.updatedDttm(),
                 List.copyOf(attachments));
     }

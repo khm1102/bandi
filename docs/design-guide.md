@@ -77,6 +77,7 @@
 | `<t:button>` | `type`, `href`, `variant`(primary·outline·dark·danger), `size`(default·compact), `action`, `pageAction`, `openModal`, `confirm`, `confirmAction`, `cssClass` | 기본 높이 44px. `href` 지정 시 같은 외형의 링크로 렌더링. 공통 이벤트 규약과 버튼 위계를 한 곳에서 관리 |
 | `<t:dataTable>` | `caption`*, `cssClass`, body=`thead`·`tbody` | 가로 스크롤과 접근성 caption, `th`·`td`·`tr` 기본 스타일을 관리. 셀별 정렬·강조·상태색만 페이지에 작성 |
 | `<t:filterChip>` | `group`*, `value`*, `label`*, `active`(Boolean), `count`, `dot`(Boolean) | 필터 그룹·값, `aria-pressed`, 활성·비활성 스타일을 관리. JS에서는 `activateFilterChip(button)` 사용 |
+| `<t:markdown>` | `html`* (`SafeMarkdownHtml`) | 서버 sanitizer를 통과한 내부 공지 Markdown HTML만 출력. 일반 문자열·사용자 입력은 전달 금지 |
 
 (*=필수) select·라디오 등은 첫 실사용 때 formField에 확장하거나 레시피로 추가한다.
 
@@ -114,6 +115,26 @@
 **칩(필터)** — `<t:filterChip group="자료유형" value="all" label="전체" active="true" count="24"/>`처럼 사용한다. 같은 `group`의 칩은 공통 JS `activateFilterChip(button)`으로 단일 활성 상태를 유지한다.
 
 **공지 배너** — `flex items-start gap-3 rounded-lg border bg-accent/50 px-4 py-3.5` + 의미 있는 리드 아이콘과 제목. 굵은 한쪽 색상선은 사용하지 않는다
+
+**내부 공지 게시판** — `/notices`는 중요 공지 우선 목록, 읽음·대상 범위 필터, 검색과
+페이지 단위 더 보기를 사용한다. 상세는 제목·대상·게시 및 마지막 수정 시각·작성자·본문·
+첨부만 보여 주며 조회수 지표를 넣지 않는다. 작성과 수정은 모달이 아니라 전용 페이지로
+연다. 제목 바로 아래에는 게시 대상을 한 줄로 두며, 팀 대상은 `내 팀` 같은 내부 용어가
+아니라 로그인 멤버의 실제 팀명으로 표시한다. 본문은 전체 폭으로 우선 작성하고, 작성과
+미리보기는 탭으로 전환하며 동시에 좁게 나누지 않는다. 첨부는 본문 바로 아래에 둔다.
+중요 여부·예약 게시 같은 보조 동작도 게시 대상과 같은 제목 아래 행에서 바로 선택하게
+하며 별도의 게시 설정 섹션이나 드롭다운을 만들지 않는다. 중복된 상단 게시 버튼은 두지
+않고 하단의 하나의 액션 바에서 초안 저장·게시를 처리한다.
+
+**Markdown** — 미리보기와 상세 모두 서버가 정화한 결과를 안전 DOM 마운터 또는
+`<t:markdown>`으로만 렌더링한다. 원시 HTML·외부 이미지는 지원하지 않는다. 본문 이미지는
+`attachment://{storedFileId}` 내부 참조만 사용하며, 이미지 도구 모음으로 올린 JPEG·PNG·WebP
+10MiB 이하 파일을 같은 첨부 목록에 표시한다. 새 글의 미리보기는 업로더 전용 URL을,
+기존 글은 공지 첨부 권한을 통과한 inline URL을 사용한다. 링크는 새 창에서 열 때
+`noopener noreferrer`를 함께 적용한다.
+렌더링된 본문은 공지 전용 `markdown-content` 스타일을 사용해 제목 1~6, 문단, 목록,
+인용, 코드, 표와 이미지의 위계를 미리보기와 상세에서 동일하게 유지한다. Tailwind
+Typography 플러그인의 `prose` 클래스가 존재한다고 가정하지 않는다.
 
 **입력(formField 밖에서 쓸 때)** — `h-10 w-full rounded-md border border-input bg-card px-3 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20`
 

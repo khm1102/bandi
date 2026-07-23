@@ -26,6 +26,8 @@ public interface InternalNoticeApiDocs {
     ResponseEntity<List<InternalNoticeSummaryResponse>> search(
             @Parameter(hidden = true) @LoginMember Long memberId,
             @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "ALL") String readFilter,
+            @RequestParam(required = false) String targetScope,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int pageSize);
 
@@ -38,6 +40,13 @@ public interface InternalNoticeApiDocs {
     @Operation(summary = "공지 첨부파일 다운로드")
     @GetMapping("/{internalNoticeId}/attachments/{storedFileId}/download")
     ResponseEntity<Resource> download(
+            @Parameter(hidden = true) @LoginMember Long memberId,
+            @PathVariable Long internalNoticeId,
+            @PathVariable Long storedFileId);
+
+    @Operation(summary = "공지 본문 내부 이미지 조회")
+    @GetMapping("/{internalNoticeId}/attachments/{storedFileId}/inline")
+    ResponseEntity<Resource> inline(
             @Parameter(hidden = true) @LoginMember Long memberId,
             @PathVariable Long internalNoticeId,
             @PathVariable Long storedFileId);

@@ -8,7 +8,7 @@ public enum InternalNoticeStatus {
     ARCHIVED;
 
     public boolean canEdit() {
-        return this != ARCHIVED;
+        return this == DRAFT || this == SCHEDULED || this == PUBLISHED;
     }
 
     public boolean canPublish() {

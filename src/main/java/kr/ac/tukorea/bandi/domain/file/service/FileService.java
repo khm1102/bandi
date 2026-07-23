@@ -12,10 +12,15 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.Set;
 
 @Slf4j
 @Service
 public class FileService {
+
+    private static final long NOTICE_INLINE_IMAGE_MAX_BYTES = 10L * 1024 * 1024;
+    private static final Set<String> NOTICE_INLINE_IMAGE_CONTENT_TYPES = Set.of(
+            "image/jpeg", "image/png", "image/webp");
 
     private final FileContentInspector inspector;
     private final StorageKeyGenerator keyGenerator;
@@ -47,6 +52,15 @@ public class FileService {
         StoredFile pending = StoredFile.pendingProfileImage(param.originalName(), storageKey,
                 inspection.contentType(), inspection.sizeBytes(), inspection.sha256Hash(),
                 param.uploadedByMemberId());
+        return uploadPrivate(param, inspection, pending);
+    }
+
+    public Long uploadNoticeInlineImage(FileUploadParam param) {
+        FileInspection inspection = inspector.inspectNoticeInlineImage(
+                param.originalName(), param.sizeBytes(), param.contentSource());
+        StoredFile pending = StoredFile.pending(param.originalName(), StorageScope.PRIVATE,
+                keyGenerator.generate("notice"), inspection.contentType(), inspection.sizeBytes(),
+                inspection.sha256Hash(), param.uploadedByMemberId());
         return uploadPrivate(param, inspection, pending);
     }
 
@@ -100,6 +114,40 @@ public class FileService {
         if (!file.isUploadedBy(memberId)) {
             throw new FileAccessDeniedException();
         }
+    }
+
+    public FileReferenceResponse lookupPrivateNoticeInlineImage(Long storedFileId) {
+        StoredFile file = lookupPrivateStoredFile(storedFileId);
+        validateNoticeInlineImage(file);
+        return FileReferenceResponse.from(file);
+    }
+
+    public void validatePrivateNoticeInlineImageOwnedBy(Long storedFileId, Long memberId) {
+        StoredFile file = lookupPrivateStoredFile(storedFileId);
+        if (!file.isUploadedBy(memberId)) {
+            throw new FileAccessDeniedException();
+        }
+        validateNoticeInlineImage(file);
+    }
+
+    public FileDownloadResponse openPrivateNoticeInlineImage(Long storedFileId,
+                                                              FileAccessDecision accessDecision) {
+        if (accessDecision != FileAccessDecision.GRANTED) {
+            throw new FileAccessDeniedException();
+        }
+        StoredFile file = lookupPrivateStoredFile(storedFileId);
+        validateNoticeInlineImage(file);
+        return download(file, StorageScope.PRIVATE);
+    }
+
+    public FileDownloadResponse openPrivateNoticeInlineImageOwnedBy(Long storedFileId,
+                                                                     Long memberId) {
+        StoredFile file = lookupPrivateStoredFile(storedFileId);
+        if (!file.isUploadedBy(memberId)) {
+            throw new FileAccessDeniedException();
+        }
+        validateNoticeInlineImage(file);
+        return download(file, StorageScope.PRIVATE);
     }
 
     public void validateProfileImageReadyOwnedBy(Long storedFileId, Long memberId) {
@@ -178,6 +226,13 @@ public class FileService {
         file.validatePrivateDownload();
         file.validateGeneralPurpose();
         return file;
+    }
+
+    private void validateNoticeInlineImage(StoredFile file) {
+        if (file.getSizeBytes() > NOTICE_INLINE_IMAGE_MAX_BYTES
+                || !NOTICE_INLINE_IMAGE_CONTENT_TYPES.contains(file.getContentType())) {
+            throw new InvalidFileException("invalid-notice-inline-image");
+        }
     }
 
     private FileDownloadResponse download(StoredFile file, StorageScope scope) {
