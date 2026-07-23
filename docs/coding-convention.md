@@ -1089,10 +1089,11 @@ docker compose up -d      # MySQL 8.x (포트/계정/DB명 팀 고정)
 - MySQL 컨테이너에 `--character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci` 고정
 - 테스트도 동일 컨테이너의 별도 스키마(`bandi_test`)를 사용하고 `application-test.yaml`(포트 3307)로 연결한다. H2 호환 모드는 MySQL 전용 SQL(Flyway)과 어긋나므로 쓰지 않는다.
 - 파일 저장 루트는 `FILE_STORAGE_ROOT`로 주입한다. 운영 기본값은 `/data/bandi`이며, 배포 전에 영구 볼륨을 마운트하고 실행 계정에 읽기·쓰기 권한을 부여한다. 애플리케이션은 루트가 디렉터리가 아니거나 쓸 수 없으면 기동하지 않아야 한다.
-- 다운로드 응답을 만들기 위해 요청 범위에서만 생성하는 문서(HWPX 등)는 영구 파일이
-  아니다. 요구사항이 비저장을 명시하면 `FileService`, `stored_file`, 로컬 저장 루트를
-  사용하지 않고 메모리 또는 자동 정리되는 요청 임시 자원에서 생성한 뒤 `Cache-Control:
-  no-store`로 직접 응답한다. 입력 원문·사진·생성 문서를 로그나 브라우저 저장소에 남기지 않는다.
+- 다운로드 응답을 만들기 위해 요청 범위에서만 생성하는 문서(HWPX 등)는 요구사항의
+  보존 정책을 따른다. 비저장 문서는 `FileService`, `stored_file`, 로컬 저장 루트를 사용하지
+  않고 요청 범위에서 생성한다. 검수·수정처럼 영속 워크플로가 있는 문서는 `FileService`로
+  저장하고 업무 테이블과 명시적으로 연결한다. 두 경우 모두 입력 원문·사진·생성 문서를
+  로그나 승인되지 않은 브라우저 저장소에 남기지 않는다.
 
 ### 17.4 시간대
 - DB 연결: `serverTimezone=Asia/Seoul`, JVM 기본 시간대 `Asia/Seoul` 통일 (국내 단일 서비스이므로 KST 단순화 우선)

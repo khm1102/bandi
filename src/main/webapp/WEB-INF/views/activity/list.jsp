@@ -130,9 +130,9 @@
             <p class="mt-4 whitespace-pre-wrap text-sm leading-6" data-activity-detail-body></p>
 
             <section class="mt-5 border-t pt-4">
-                <div class="flex items-center gap-2"><h4 class="text-sm font-extrabold">증빙 사진</h4><span class="text-xs text-muted-foreground" data-activity-file-count></span></div>
+                <div class="flex items-center gap-2"><h4 class="text-sm font-extrabold">증빙 및 문서</h4><span class="text-xs text-muted-foreground" data-activity-file-count></span></div>
                 <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2" data-activity-detail-files></div>
-                <p class="mt-3 hidden text-xs text-muted-foreground" data-activity-file-empty>등록된 현재 사진이 없습니다.</p>
+                <p class="mt-3 hidden text-xs text-muted-foreground" data-activity-file-empty>등록된 증빙이나 문서가 없습니다.</p>
             </section>
 
             <section class="mt-5 hidden border-t pt-4" data-activity-review-section>

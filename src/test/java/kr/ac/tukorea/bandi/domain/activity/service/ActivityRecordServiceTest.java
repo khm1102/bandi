@@ -149,6 +149,34 @@ class ActivityRecordServiceTest {
     }
 
     @Test
+    void 서버가_생성한_HWPX를_문서_파일로_연결한다() {
+        given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(memberContext());
+        given(activityRecordMapper.lookupByIdForUpdate(RECORD_ID))
+                .willReturn(Optional.of(draft(ACTOR_ID)));
+        given(fileService.lookupPrivateReady(FILE_ID)).willReturn(
+                new FileReferenceResponse(FILE_ID, "activity.hwpx",
+                        "application/hwp+zip", 2048L, ACTOR_ID));
+        given(activityRecordMapper.existsCurrentStoredFile(RECORD_ID, FILE_ID))
+                .willReturn(false);
+        given(activityRecordMapper.lookupNextDisplayOrder(
+                RECORD_ID, ActivityFileRole.DOCUMENT)).willReturn(0);
+
+        activityRecordService.attachGeneratedFile(ACTOR_ID, RECORD_ID, FILE_ID,
+                ActivityFileRole.DOCUMENT);
+
+        verify(activityRecordMapper).insertFile(any());
+    }
+
+    @Test
+    void 일반_파일_연결_API로_DOCUMENT_역할을_추가하지_못한다() {
+        assertThatThrownBy(() -> activityRecordService.addFile(ACTOR_ID,
+                new ActivityFileAddParam(RECORD_ID, FILE_ID,
+                        ActivityFileRole.DOCUMENT)))
+                .isInstanceOf(InvalidActivityRecordException.class);
+        verify(activityRecordMapper, never()).insertFile(any());
+    }
+
+    @Test
     void 이미지가_아니거나_현재_중복인_파일은_추가하지_않는다() {
         given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(memberContext());
         given(activityRecordMapper.lookupByIdForUpdate(RECORD_ID))
@@ -511,7 +539,7 @@ class ActivityRecordServiceTest {
         return new ActivityRecordManageContentResponse(RECORD_ID, STAGE_TEAM_ID,
                 "무대팀", NOW.minusHours(2), "1막 연습", "런스루", 8,
                 ActivityRecordStatus.DRAFT, creatorId, "작성자", "작성자",
-                null, null, NOW);
+                null, null, NOW, false);
     }
 
     private ActivityRecordContentResponse approvedContent() {

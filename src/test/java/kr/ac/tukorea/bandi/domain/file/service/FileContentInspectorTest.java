@@ -48,6 +48,24 @@ class FileContentInspectorTest {
     }
 
     @Test
+    void HWPX는_미디어_타입과_필수_문서_구조를_확인한다() throws IOException {
+        byte[] content = hwpxFile(true);
+
+        FileInspection inspection = inspector.inspect("activity.hwpx", content.length,
+                source(content));
+
+        assertThat(inspection.contentType()).isEqualTo("application/hwp+zip");
+    }
+
+    @Test
+    void 필수_구조가_없는_ZIP을_HWPX로_위장하면_거부한다() throws IOException {
+        byte[] content = hwpxFile(false);
+
+        assertThatThrownBy(() -> inspector.inspect("fake.hwpx", content.length,
+                source(content))).isInstanceOf(InvalidFileException.class);
+    }
+
+    @Test
     void 확장자와_실제_시그니처가_다르면_거부한다() {
         byte[] content = png();
 
@@ -161,6 +179,24 @@ class FileContentInspectorTest {
             zip.putNextEntry(new ZipEntry(documentEntry));
             zip.write("document".getBytes(StandardCharsets.UTF_8));
             zip.closeEntry();
+        }
+        return output.toByteArray();
+    }
+
+    private byte[] hwpxFile(boolean includeSection) throws IOException {
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        try (ZipOutputStream zip = new ZipOutputStream(output)) {
+            zip.putNextEntry(new ZipEntry("mimetype"));
+            zip.write("application/hwp+zip".getBytes(StandardCharsets.UTF_8));
+            zip.closeEntry();
+            zip.putNextEntry(new ZipEntry("Contents/content.hpf"));
+            zip.write("content".getBytes(StandardCharsets.UTF_8));
+            zip.closeEntry();
+            if (includeSection) {
+                zip.putNextEntry(new ZipEntry("Contents/section0.xml"));
+                zip.write("<section/>".getBytes(StandardCharsets.UTF_8));
+                zip.closeEntry();
+            }
         }
         return output.toByteArray();
     }

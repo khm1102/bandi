@@ -45,16 +45,20 @@ public class ActivityRecordApiController implements ActivityRecordApiDocs {
     public ResponseEntity<Resource> download(@LoginMember Long memberId,
                                              Long activityRecordId,
                                              Long storedFileId) {
-        return inline(activityRecordService.openApprovedDownload(memberId,
+        return download(activityRecordService.openApprovedDownload(memberId,
                 activityRecordId, storedFileId));
     }
 
-    private ResponseEntity<Resource> inline(FileDownloadResponse file) {
+    private ResponseEntity<Resource> download(FileDownloadResponse file) {
+        ContentDisposition disposition = "application/hwp+zip".equals(file.contentType())
+                ? ContentDisposition.attachment().filename(file.originalName(),
+                        StandardCharsets.UTF_8).build()
+                : ContentDisposition.inline().filename(file.originalName(),
+                        StandardCharsets.UTF_8).build();
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(file.contentType()))
                 .contentLength(file.sizeBytes())
-                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.inline()
-                        .filename(file.originalName(), StandardCharsets.UTF_8).build().toString())
+                .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
                 .body(file.resource());
     }
 }

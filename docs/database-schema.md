@@ -35,8 +35,7 @@
 
 `club_officer.position_code`는 현재 `PRESIDENT`만 허용하며 직책별 한 명만 존재한다.
 활동 내역서 생성은 이 테이블이 참조하는 활성 멤버 이름을 매 요청마다 조회한다.
-HWPX 생성 입력·사진·결과 파일은 DB에 저장하지 않으므로 별도 문서 테이블이나
-`stored_file` 연결을 만들지 않는다.
+HWPX 문서를 임시 저장할 때 현재 회장 이름으로 결과 파일을 생성한다.
 
 ## 3. 일정과 콘텐츠
 
@@ -48,6 +47,8 @@ HWPX 생성 입력·사진·결과 파일은 DB에 저장하지 않으므로 별
 | `resource`, `resource_file` | 자료와 리비전별 파일 연결 |
 | `activity_record`, `activity_record_file` | 활동 기록과 증빙 파일 |
 | `activity_record_revision`, `activity_review_history` | 활동 기록 수정·검토 이력 |
+| `activity_report_document` | HWPX 활동 내역서의 대표자·장소와 활동 기록 연결 |
+| `activity_report_participant` | HWPX에 반영할 참여자 1~14명의 입력 스냅샷 |
 
 내부 공지와 자료의 공개 범위는 전체 또는 팀 단위로 관리한다.
 
@@ -70,6 +71,13 @@ HWPX 생성 입력·사진·결과 파일은 DB에 저장하지 않으므로 별
 `color_code`는 `NAVY`, `MINT`, `BLUE`, `PLUM`, `AMBER`, `ROSE` 중 하나를 저장하며,
 기존·미지정 일정의 기본값은 `NAVY`다. 색상은 일정의 보조 구분 정보이므로 팀 범위와
 제목을 함께 표시한다.
+
+HWPX 활동 내역서는 `activity_record`를 검수 상태의 정본으로 사용한다. 사진은
+`activity_record_file.file_role_code = 'EVIDENCE'`, 생성 문서는 `DOCUMENT`로 연결하며
+두 바이너리 모두 `stored_file` 메타데이터와 로컬 private 저장소에 보관한다. 대표자·장소와
+참여자 입력은 문서 재생성을 위해 별도 테이블에 저장한다. `임시 저장`은 `DRAFT`,
+`검수 요청`은 기존 활동 기록의 `SUBMITTED` 전이를 사용하고 운영진 검토·수정 요청·승인은
+기존 활동 기록 검수 흐름을 그대로 따른다.
 
 ## 4. 소품·장비
 

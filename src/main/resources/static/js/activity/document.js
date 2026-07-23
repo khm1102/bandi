@@ -1,4 +1,4 @@
-import {get, getBlob, postBlob} from '../common/api.js';
+import {get, getBlob, post, put} from '../common/api.js';
 import {
     initializeDateTimeFields,
     readDateTimeValue,
@@ -27,8 +27,11 @@ const successState = document.querySelector('[data-success-state]');
 
 let photo = null;
 let photoPreviewUrl = '';
-let lastDownload = null;
+let savedRecordId = null;
+let savedDocumentFileId = null;
 let lastDownloadFilename = '';
+let hasStoredPhoto = false;
+let submitted = false;
 let dirty = false;
 let searchTimer = 0;
 let searchGeneration = 0;
@@ -77,7 +80,7 @@ function updateParticipantState() {
     show(participantEmpty, count === 0);
 }
 
-function addParticipant(values = {}) {
+function addParticipant(values = {}, options = {}) {
     const count = participantList.querySelectorAll('[data-participant-row]').length;
     if (count >= MAX_PARTICIPANTS) {
         setFieldError('participants', '참여 인원은 최대 14명까지 입력할 수 있습니다.');
@@ -90,8 +93,12 @@ function addParticipant(values = {}) {
     participantList.appendChild(row);
     setFieldError('participants');
     updateParticipantState();
-    dirty = true;
-    row.querySelector('[data-participant-field="name"]')?.focus();
+    if (options.markDirty !== false) {
+        dirty = true;
+    }
+    if (options.focus !== false) {
+        row.querySelector('[data-participant-field="name"]')?.focus();
+    }
 }
 
 function removeParticipant(button) {
@@ -115,8 +122,11 @@ function collectParticipants() {
 }
 
 function validatePhoto(file) {
-    if (!file) {
+    if (!file && !hasStoredPhoto) {
         return '활동 사진을 선택해 주세요.';
+    }
+    if (!file) {
+        return '';
     }
     if (!['image/jpeg', 'image/png'].includes(file.type)) {
         return 'JPG 또는 PNG 사진만 사용할 수 있습니다.';
@@ -142,11 +152,14 @@ function setPhoto(file) {
     }
     revokePhotoPreview();
     photo = file;
+    hasStoredPhoto = false;
     photoPreviewUrl = URL.createObjectURL(file);
     photoPreview.src = photoPreviewUrl;
     photoName.textContent = file.name;
     show(photoPreview, true);
     show(photoActions, true, 'flex');
+    photoActions.querySelector('[data-page-action="photo-remove"]')
+            ?.classList.remove('hidden');
     setFieldError('photo');
     dirty = true;
 }
@@ -154,6 +167,7 @@ function setPhoto(file) {
 function clearPhoto() {
     revokePhotoPreview();
     photo = null;
+    hasStoredPhoto = false;
     photoInput.value = '';
     photoPreview.removeAttribute('src');
     photoName.textContent = '';
@@ -307,17 +321,30 @@ function downloadResult(result, fallbackName) {
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-function setGenerating(generating) {
+function setGenerating(generating, submitting = false) {
     form.querySelectorAll('button, input, textarea').forEach((control) => {
         control.disabled = generating;
     });
-    const button = form.querySelector('[data-page-action="generate"]');
-    if (button) {
-        button.textContent = generating ? 'HWPX 만드는 중…' : 'HWPX 내역서 만들기';
+    const draftButton = form.querySelector('[data-page-action="save-draft"]');
+    const submitButton = form.querySelector('[data-page-action="save-submit"]');
+    draftButton.textContent = generating && !submitting ? '저장하는 중…' : '임시 저장';
+    submitButton.textContent = generating && submitting
+        ? '저장하고 요청하는 중…' : '저장 후 검수 요청';
+    if (!generating && submitted) {
+        lockSubmittedForm();
     }
 }
 
-async function generateDocument() {
+function lockSubmittedForm() {
+    show(document.querySelector('[data-save-actions]'), false);
+    form.querySelectorAll('button, input, textarea, select').forEach((control) => {
+        if (!control.closest('[data-success-state]')) {
+            control.disabled = true;
+        }
+    });
+}
+
+async function saveDocument(submitAfterSave) {
     if (form.dataset.presidentConfigured !== 'true') {
         formError.textContent = '현재 회장이 등록되지 않아 문서를 만들 수 없습니다.';
         show(formError, true);
@@ -331,14 +358,43 @@ async function generateDocument() {
     body.append('request', new Blob([JSON.stringify(request)], {
         type: 'application/json',
     }));
-    body.append('photo', photo, photo.name);
-    setGenerating(true);
+    if (photo) {
+        body.append('photo', photo, photo.name);
+    }
+    setGenerating(true, submitAfterSave);
     try {
-        const result = await postBlob('/api/activity-report-documents', body);
-        lastDownload = result.blob;
-        lastDownloadFilename = filenameOrFallback(result,
-                `${request.activityAt.slice(0, 10)}_반디_동아리_활동_내역서.hwpx`);
-        downloadResult(result, lastDownloadFilename);
+        const result = savedRecordId
+            ? await put(`/api/activity-report-documents/${savedRecordId}`, body)
+            : await post('/api/activity-report-documents', body);
+        savedRecordId = result.activityRecordId;
+        savedDocumentFileId = result.documentStoredFileId;
+        hasStoredPhoto = true;
+        photo = null;
+        photoInput.value = '';
+        lastDownloadFilename = result.filename
+            || `${request.activityAt.slice(0, 10)}_반디_동아리_활동_내역서.hwpx`;
+        dirty = false;
+        window.history.replaceState({}, '', `/activity-documents?activityRecordId=`
+                + encodeURIComponent(savedRecordId));
+        if (submitAfterSave) {
+            try {
+                await submitSavedDocument();
+            } catch (error) {
+                document.querySelector('[data-success-title]').textContent =
+                    '임시 저장은 완료했지만 검수를 요청하지 못했어요.';
+                document.querySelector('[data-success-message]').textContent =
+                    '입력값과 파일은 보존되어 있습니다. 잠시 후 검수 요청을 다시 눌러 주세요.';
+                show(document.querySelector('[data-page-action="submit-saved"]'), true);
+                formError.textContent = error.message || '검수를 요청하지 못했습니다.';
+                show(formError, true);
+            }
+        } else {
+            document.querySelector('[data-success-title]').textContent =
+                '활동 내역서를 임시 저장했어요.';
+            document.querySelector('[data-success-message]').textContent =
+                '입력값·사진·HWPX가 활동 기록에 저장됐습니다.';
+            show(document.querySelector('[data-page-action="submit-saved"]'), true);
+        }
         show(successState, true);
         successState.scrollIntoView({behavior: 'smooth', block: 'nearest'});
     } catch (error) {
@@ -349,11 +405,25 @@ async function generateDocument() {
                 setFieldError(field, fieldError.message);
             }
         });
-        formError.textContent = error.message || '활동 내역서를 만들지 못했습니다. 입력 내용은 그대로 유지됩니다.';
+        formError.textContent = error.message || '활동 내역서를 저장하지 못했습니다. 입력 내용은 그대로 유지됩니다.';
         show(formError, true);
     } finally {
         setGenerating(false);
     }
+}
+
+async function submitSavedDocument() {
+    if (!savedRecordId) {
+        return;
+    }
+    await post(`/api/activity-report-documents/${savedRecordId}/submit`, {});
+    document.querySelector('[data-success-title]').textContent =
+        '운영진에게 검수를 요청했어요.';
+    document.querySelector('[data-success-message]').textContent =
+        '활동 기록에서 처리 상태를 확인할 수 있습니다.';
+    show(document.querySelector('[data-page-action="submit-saved"]'), false);
+    submitted = true;
+    lockSubmittedForm();
 }
 
 async function downloadBlank() {
@@ -369,6 +439,9 @@ async function downloadBlank() {
 
 function resetForm() {
     form.reset();
+    form.querySelectorAll('button, input, textarea, select').forEach((control) => {
+        control.disabled = false;
+    });
     participantList.replaceChildren();
     clearPhoto();
     setDateTimeValue('activityAt', localDateTimeValue());
@@ -376,16 +449,18 @@ function resetForm() {
     updateParticipantState();
     clearErrors();
     show(successState, false);
-    lastDownload = null;
+    show(document.querySelector('[data-save-actions]'), true, 'flex');
+    savedRecordId = null;
+    savedDocumentFileId = null;
+    hasStoredPhoto = false;
+    submitted = false;
     lastDownloadFilename = '';
     dirty = false;
+    window.history.replaceState({}, '', '/activity-documents');
     document.getElementById('representative').focus();
 }
 
-form?.addEventListener('submit', (event) => {
-    event.preventDefault();
-    generateDocument();
-});
+form?.addEventListener('submit', (event) => event.preventDefault());
 form?.addEventListener('input', () => {
     dirty = true;
 });
@@ -393,6 +468,10 @@ document.addEventListener('click', (event) => {
     const action = event.target.closest('[data-page-action]')?.dataset.pageAction;
     if (action === 'download-blank') {
         downloadBlank();
+    } else if (action === 'save-draft') {
+        saveDocument(false);
+    } else if (action === 'save-submit') {
+        saveDocument(true);
     } else if (action === 'photo-select') {
         photoInput.click();
     } else if (action === 'photo-remove') {
@@ -401,9 +480,20 @@ document.addEventListener('click', (event) => {
         addParticipant();
     } else if (action === 'participant-remove') {
         removeParticipant(event.target.closest('[data-page-action]'));
-    } else if (action === 'download-again' && lastDownload) {
-        downloadResult({blob: lastDownload, filename: ''},
-                lastDownloadFilename || '반디_동아리_활동_내역서.hwpx');
+    } else if (action === 'download-again' && savedRecordId && savedDocumentFileId) {
+        getBlob(`/api/activity-management/${savedRecordId}/files/`
+                + `${savedDocumentFileId}/download`).then((result) => {
+            downloadResult(result, lastDownloadFilename
+                    || '반디_동아리_활동_내역서.hwpx');
+        }).catch((error) => {
+            formError.textContent = error.message || 'HWPX를 내려받지 못했습니다.';
+            show(formError, true);
+        });
+    } else if (action === 'submit-saved') {
+        submitSavedDocument().catch((error) => {
+            formError.textContent = error.message || '검수를 요청하지 못했습니다.';
+            show(formError, true);
+        });
     } else if (action === 'reset-form') {
         resetForm();
     }
@@ -448,5 +538,61 @@ function localDateTimeValue(date = new Date()) {
             + `T${pad(rounded.getHours())}:${pad(rounded.getMinutes())}`;
 }
 
-setDateTimeValue('activityAt', localDateTimeValue());
-updateParticipantState();
+async function loadSavedDraft() {
+    const rawId = new URLSearchParams(window.location.search).get('activityRecordId');
+    if (!rawId || !/^\d+$/.test(rawId)) {
+        setDateTimeValue('activityAt', localDateTimeValue());
+        updateParticipantState();
+        return;
+    }
+    try {
+        const draft = await get(`/api/activity-report-documents/${rawId}`);
+        savedRecordId = draft.activityRecordId;
+        savedDocumentFileId = draft.documentStoredFileId;
+        lastDownloadFilename = draft.documentOriginalName;
+        document.getElementById('representative').value = draft.representative;
+        document.getElementById('location').value = draft.location;
+        setDateTimeValue('activityAt', draft.activityAt?.slice(0, 16) || '');
+        contentInput.value = draft.content || '';
+        contentCount.textContent = `${contentInput.value.length} / 300자`;
+        participantList.replaceChildren();
+        (draft.participants || []).forEach((participant) => addParticipant(
+                participant, {focus: false, markDirty: false}));
+        hasStoredPhoto = true;
+        photoName.textContent = draft.photoOriginalName || '저장된 활동 사진';
+        photoPreview.src = `/api/activity-management/${savedRecordId}/files/`
+                + `${draft.photoStoredFileId}/download`;
+        show(photoPreview, true);
+        show(photoActions, true, 'flex');
+        const removeButton = photoActions.querySelector('[data-page-action="photo-remove"]');
+        if (removeButton) {
+            removeButton.classList.add('hidden');
+        }
+        updateParticipantState();
+        if (['DRAFT', 'REVISION_REQUESTED'].includes(draft.status)) {
+            document.querySelector('[data-success-title]').textContent =
+                draft.status === 'REVISION_REQUESTED'
+                    ? '수정 요청된 활동 내역서를 불러왔어요.'
+                    : '임시 저장된 활동 내역서를 불러왔어요.';
+            document.querySelector('[data-success-message]').textContent =
+                '내용을 수정해 다시 저장하거나 현재 문서를 검수 요청할 수 있습니다.';
+            show(document.querySelector('[data-page-action="submit-saved"]'), true);
+            show(successState, true);
+        } else {
+            submitted = true;
+            lockSubmittedForm();
+            document.querySelector('[data-success-title]').textContent =
+                '현재 상태에서는 문서를 수정할 수 없습니다.';
+            document.querySelector('[data-success-message]').textContent =
+                '활동 기록에서 검수 상태와 운영진 의견을 확인해 주세요.';
+            show(document.querySelector('[data-page-action="submit-saved"]'), false);
+            show(successState, true);
+        }
+        dirty = false;
+    } catch (error) {
+        formError.textContent = error.message || '저장한 활동 내역서를 불러오지 못했습니다.';
+        show(formError, true);
+    }
+}
+
+loadSavedDraft();

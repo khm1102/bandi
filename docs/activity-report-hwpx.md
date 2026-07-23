@@ -4,7 +4,9 @@
 
 - 화면: `/activity-documents`
 - 빈 양식: `GET /api/activity-report-documents/blank`
-- 완성본: `POST /api/activity-report-documents`
+- 임시 저장: `POST /api/activity-report-documents`
+- 저장 초안 조회·수정: `GET|PUT /api/activity-report-documents/{activityRecordId}`
+- 검수 요청: `POST /api/activity-report-documents/{activityRecordId}/submit`
 - 런타임 정본: `src/main/resources/templates/hwpx/bandi-activity-report-template.hwpx`
 - 정본 생성 스크립트: `scripts/sanitize_activity_report_template.py`
 
@@ -14,11 +16,18 @@ HWPX는 OWPML 기반 ZIP/XML 문서 형식이다. 구현과 정본 검증은
 원본에서 개인정보, 예시 사진, 미리보기와 작성자 메타데이터를 제거한 런타임 정본만
 애플리케이션 자원에 둔다.
 
-## 2. 개인정보와 저장 정책
+## 2. 저장과 검수 정책
 
-대표자, 장소, 일시, 활동 내용, 참여자와 사진은 HWPX 생성 요청 중에만 처리한다.
-DB, `stored_file`, `FILE_STORAGE_ROOT`, 세션, 로그, 브라우저 저장소에 남기지 않는다.
-응답에는 `Cache-Control: no-store`를 사용한다.
+임시 저장하면 대표자·장소·참여자는 `activity_report_document`와
+`activity_report_participant`에 보관하고, 일시·내용·인원수·상태는 `activity_record`에
+보관한다. 정규화한 사진과 생성 HWPX는 `stored_file` 및 로컬 private 저장소에 저장하고
+각각 `EVIDENCE`, `DOCUMENT` 역할로 활동 기록에 연결한다. 세션·로그·브라우저 저장소에는
+입력값과 파일을 남기지 않는다.
+
+사용자는 임시 저장한 기록을 수정해 HWPX를 다시 생성할 수 있다. `검수 요청`을 실행하면
+기존 활동 기록과 같은 `SUBMITTED` 상태가 되며 운영진은 활동 기록 관리 화면에서 사진과
+HWPX를 확인해 승인하거나 수정 요청한다. 빈 양식 다운로드만 요청 범위에서 생성하고
+`Cache-Control: no-store`로 전송한다.
 
 사진은 JPEG·PNG, 최대 10MiB만 허용한다. 디코딩 전 최대 40MP와 한 변 12,000px를
 검사하고, EXIF 방향을 적용한 뒤 메타데이터를 제거한다. 결과 이미지는 1600×1200 흰

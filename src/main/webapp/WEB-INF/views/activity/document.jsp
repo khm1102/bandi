@@ -23,8 +23,8 @@
             <div class="flex items-start gap-3">
                 <span class="mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-sm" aria-hidden="true">i</span>
                 <div>
-                    <p class="text-sm font-extrabold">입력 내용과 사진은 저장하지 않습니다.</p>
-                    <p class="mt-1 text-xs leading-5 text-muted-foreground">파일을 만드는 동안에만 사용하며, 새로고침하거나 페이지를 나가면 복구할 수 없습니다.</p>
+                    <p class="text-sm font-extrabold">입력 내용과 문서는 안전하게 저장됩니다.</p>
+                    <p class="mt-1 text-xs leading-5 text-muted-foreground">임시 저장하면 입력값·사진·HWPX가 활동 기록에 보관되고, 검수 요청 후 운영진이 확인할 수 있습니다.</p>
                     <c:choose>
                         <c:when test="${presidentConfigured}">
                             <p class="mt-2 text-xs font-bold">문서 확인: 반디 회장 <c:out value="${presidentName}"/></p>
@@ -113,14 +113,16 @@
 
             <div class="border-t py-6">
                 <p class="hidden rounded-md border border-destructive bg-destructive-soft px-4 py-3 text-sm text-destructive" data-form-error role="alert"></p>
-                <div class="mt-4 flex justify-end">
-                    <t:button type="submit" cssClass="w-full md:w-auto" pageAction="generate" >HWPX 내역서 만들기</t:button>
+                <div class="mt-4 flex flex-col justify-end gap-2 sm:flex-row" data-save-actions>
+                    <t:button type="button" variant="outline" cssClass="w-full sm:w-auto" pageAction="save-draft">임시 저장</t:button>
+                    <t:button type="button" cssClass="w-full sm:w-auto" pageAction="save-submit">저장 후 검수 요청</t:button>
                 </div>
                 <div class="mt-4 hidden rounded-lg border bg-card px-4 py-4" data-success-state role="status">
-                    <p class="text-sm font-extrabold">활동 내역서 파일을 만들었어요.</p>
-                    <p class="mt-1 text-xs text-muted-foreground">입력값은 현재 화면에만 남아 있습니다. 파일을 확인한 뒤 제출해 주세요.</p>
+                    <p class="text-sm font-extrabold" data-success-title>활동 내역서를 임시 저장했어요.</p>
+                    <p class="mt-1 text-xs text-muted-foreground" data-success-message>입력값·사진·HWPX가 활동 기록에 저장됐습니다.</p>
                     <div class="mt-3 flex flex-col gap-2 sm:flex-row">
-                        <t:button variant="outline" pageAction="download-again">다시 다운로드</t:button>
+                        <t:button variant="outline" pageAction="download-again">HWPX 다운로드</t:button>
+                        <t:button pageAction="submit-saved" cssClass="" >검수 요청</t:button>
                         <t:button variant="outline" pageAction="reset-form">새로 작성</t:button>
                     </div>
                 </div>

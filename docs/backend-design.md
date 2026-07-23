@@ -36,7 +36,7 @@ Controller → Service → Mapper → Model
 | `calendar` | 전체·팀 일정 관리 |
 | `notice` | 내부 공지, 읽음 상태 및 첨부 연결 |
 | `resource` | 전체·팀 자료와 파일 리비전 |
-| `activity` | 팀 활동 기록·검토 이력과 비저장 HWPX 활동 내역서 생성 |
+| `activity` | 팀 활동 기록·검토 이력과 저장·검수형 HWPX 활동 내역서 생성 |
 | `asset` | 소품·장비 품목, 개별 장비, 상태 이력과 사진 연결 |
 | `file` | 파일 메타데이터와 로컬 파일 저장·전송, 프로필 사진 파기 재시도 |
 | `dashboard` | 각 feature의 읽기 전용 요약 |
@@ -74,8 +74,12 @@ Controller → Service → Mapper → Model
   (`NAVY`, `MINT`, `BLUE`, `PLUM`, `AMBER`, `ROSE`)이며, 생략한 이전 API 클라이언트는
   생성 시 `NAVY`, 수정 시 기존 값을 사용한다.
 - `/activity-documents`와 `/api/activity-report-documents/**`는 모든 인증 멤버에게
-  활동 내역서 HWPX 생성과 빈 양식 다운로드를 제공한다. 생성 입력 JSON과 사진은 요청
-  동안만 메모리에서 처리하며 `FileService`, `stored_file`, 활동 기록 테이블을 호출하지 않는다.
+  활동 내역서 HWPX 임시 저장·수정·검수 요청과 빈 양식 다운로드를 제공한다. 입력 JSON은
+  재생성용 문서 테이블에 저장하고, 정규화한 사진과 생성 HWPX는 `FileService`를 통해
+  private 파일로 보관한 뒤 `activity_record_file`의 `EVIDENCE`, `DOCUMENT` 역할로 연결한다.
+- 임시 저장은 `activity_record`의 `DRAFT` 상태를 만들며 검수 요청은 기존 `SUBMITTED`
+  전이를 사용한다. 운영진은 기존 활동 기록 관리 API에서 입력 요약과 사진·HWPX를 확인하고
+  승인 또는 수정 요청한다. 수정 가능한 상태에서는 HWPX와 선택적으로 사진을 교체한다.
 - HWPX 엔진은 개인정보가 제거된 런타임 정본을 복사하고 namespace-aware XML DOM으로
   이름이 지정된 표 셀만 수정한다. 외부 DTD·스키마·엔티티는 비활성화하고, 사용자 문자열은
   text node로 삽입한다. 사진은 JPEG·PNG만 허용하며 EXIF 방향 적용과 메타데이터 제거 후
