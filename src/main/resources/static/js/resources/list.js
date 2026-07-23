@@ -1,6 +1,6 @@
 import {get, post, put} from '../common/api.js';
-import {lookup, element} from '../common/dom.js';
-import {activateFilterChip, bindPageActions} from '../common/view.js';
+import {bindPageActions, element, lookup} from '../common/dom.js';
+import {activateFilterChip} from '../common/view.js';
 import {openModal, closeModal} from '../common/modal.js';
 import {showToast} from '../common/toast.js';
 

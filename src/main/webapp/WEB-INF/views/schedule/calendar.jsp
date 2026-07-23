@@ -103,29 +103,46 @@
                         <label class="${label}" for="ceTitle">일정명 <span class="text-accent-foreground">*</span></label>
                         <input class="${input}" id="ceTitle" type="text" maxlength="150" required placeholder="예) 전체 연습">
                     </div>
-                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <div>
-                            <label class="${label}" for="ceTeam">일정 범위</label>
-                            <select class="${input}" id="ceTeam"></select>
+                    <fieldset class="border-y py-4">
+                        <legend class="sr-only">일정 기본 설정</legend>
+                        <div class="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
+                            <div>
+                                <label class="${label}" for="ceTeam">일정 범위</label>
+                                <select class="${input}" id="ceTeam"></select>
+                            </div>
+                            <label class="flex min-h-11 items-center gap-3 self-end rounded-md border bg-card px-3 text-sm font-bold">
+                                <input id="ceAllDay" type="checkbox" class="size-4 rounded border-input">
+                                종일 일정
+                            </label>
                         </div>
-                        <label class="flex min-h-11 items-center gap-3 self-end rounded-md border bg-card px-3 text-sm font-bold">
-                            <input id="ceAllDay" type="checkbox" class="size-4 rounded border-input">
-                            종일 일정
-                        </label>
-                    </div>
-                    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <t:dateTimeField id="ceStart" label="시작" required="true" minuteStep="30"/>
-                        <t:dateTimeField id="ceEnd" label="종료" required="true" minuteStep="30"/>
-                    </div>
+                    </fieldset>
+                    <section aria-labelledby="calendarTimeHeading">
+                        <div class="mb-3 flex items-center justify-between gap-3">
+                            <h3 id="calendarTimeHeading" class="text-sm font-extrabold">일정 시간</h3>
+                            <p class="text-xs text-muted-foreground">30분 단위</p>
+                        </div>
+                        <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+                            <t:dateTimeField id="ceStart" label="시작" required="true" minuteStep="30"/>
+                            <t:dateTimeField id="ceEnd" label="종료" required="true" minuteStep="30"/>
+                        </div>
+                    </section>
                     <p class="hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-xs text-destructive md:-mt-2" data-calendar-period-error role="alert"></p>
-                    <div>
-                        <label class="${label}" for="ceLoc">장소</label>
-                        <input class="${input}" id="ceLoc" type="text" maxlength="200" placeholder="정해지지 않았다면 비워 두세요">
-                    </div>
-                    <div>
-                        <label class="${label}" for="ceDescription">설명</label>
-                        <textarea class="min-h-28 w-full resize-y rounded-md border border-input bg-card px-3 py-2.5 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20" id="ceDescription" placeholder="준비물이나 진행 내용을 입력하세요"></textarea>
-                    </div>
+                    <details class="rounded-md border bg-secondary/40" data-calendar-extra-details>
+                        <summary class="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 text-sm font-bold">
+                            장소와 설명 추가
+                            <span class="text-xs font-medium text-muted-foreground">선택</span>
+                        </summary>
+                        <div class="space-y-4 border-t px-3 py-4">
+                            <div>
+                                <label class="${label}" for="ceLoc">장소</label>
+                                <input class="${input}" id="ceLoc" type="text" maxlength="200" placeholder="정해지지 않았다면 비워 두세요">
+                            </div>
+                            <div>
+                                <label class="${label}" for="ceDescription">설명</label>
+                                <textarea class="min-h-28 w-full resize-y rounded-md border border-input bg-card px-3 py-2.5 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20" id="ceDescription" placeholder="준비물이나 진행 내용을 입력하세요"></textarea>
+                            </div>
+                        </div>
+                    </details>
                     <p class="hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-sm text-destructive" data-calendar-form-error role="alert"></p>
                 </div>
             </jsp:body>

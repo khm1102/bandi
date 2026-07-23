@@ -26,8 +26,9 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.util.Map;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -93,7 +94,9 @@ class SsrControllerRoutingTest {
         mockMvc.perform(get("/notices/10"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("notice/detail"))
-                .andExpect(model().attributeExists("notice"));
+                .andExpect(model().attributeExists("notice"))
+                .andExpect(model().attribute("noticePublishedAt", "2026.07.23 16:30"))
+                .andExpect(model().attribute("noticeUpdatedAt", "2026.07.23 17:10"));
     }
 
     @ParameterizedTest
@@ -117,6 +120,7 @@ class SsrControllerRoutingTest {
     private InternalNoticeDetailResponse noticeDetail() {
         return new InternalNoticeDetailResponse(10L, InternalNoticeTargetScope.ALL,
                 null, null, "공지", null, false,
-                null, null, "관리자", null, List.of());
+                LocalDateTime.of(2026, 7, 23, 16, 30), null, "관리자",
+                LocalDateTime.of(2026, 7, 23, 17, 10), List.of());
     }
 }

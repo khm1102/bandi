@@ -314,7 +314,6 @@ function createCalendar() {
         return;
     }
     state.calendar = new FULL_CALENDAR.Calendar(lookup('[data-calendar-root]'), {
-        themeSystem: 'classic',
         locale: 'ko',
         initialView: initialView(),
         headerToolbar: false,
@@ -423,6 +422,7 @@ function fillCreateForm(startDate, endDate, allDay) {
     }
     document.getElementById('ceLoc').value = '';
     document.getElementById('ceDescription').value = '';
+    lookup('[data-calendar-extra-details]').open = false;
     setInlineError(formError);
     setInlineError(periodError);
 }
@@ -479,6 +479,7 @@ function fillEditForm(eventData) {
     }
     document.getElementById('ceLoc').value = eventData.place || '';
     document.getElementById('ceDescription').value = eventData.description || '';
+    lookup('[data-calendar-extra-details]').open = Boolean(eventData.place || eventData.description);
     setInlineError(formError);
     setInlineError(periodError);
 }
