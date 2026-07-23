@@ -178,7 +178,16 @@ function populateSelect(select, values, valueKey, labelBuilder) {
 }
 
 async function loadReferences() {
-    members = canAdmin ? await get('/api/members') : [];
+    members = [];
+    if (canAdmin) {
+        let page = 0;
+        let response;
+        do {
+            response = await get('/api/members', {status: 'ACTIVE', page, pageSize: 100});
+            members.push(...response.items);
+            page += 1;
+        } while (response.hasNext);
+    }
     const ownerSelect = document.getElementById('assetOwnerMember');
     if (ownerSelect) {
         populateSelect(ownerSelect, members, 'memberId', (member) => member.name);
