@@ -3,6 +3,7 @@ package kr.ac.tukorea.bandi.domain.calendar.controller;
 import kr.ac.tukorea.bandi.domain.calendar.dto.request.CalendarEventCreateParam;
 import kr.ac.tukorea.bandi.domain.calendar.dto.request.CalendarEventSearchCondition;
 import kr.ac.tukorea.bandi.domain.calendar.dto.request.CalendarEventUpdateParam;
+import kr.ac.tukorea.bandi.domain.calendar.model.CalendarEventColor;
 import kr.ac.tukorea.bandi.domain.calendar.service.CalendarService;
 import kr.ac.tukorea.bandi.global.config.SecurityWebMvcConfig;
 import kr.ac.tukorea.bandi.global.exception.ApiExceptionHandler;
@@ -96,7 +97,7 @@ class CalendarApiControllerTest {
 
         verify(calendarService).create(ACTOR_ID,
                 new CalendarEventCreateParam(3L, "전체 연습", "대본 리딩",
-                        START, END, false, "소극장"));
+                        START, END, false, "소극장", CalendarEventColor.MINT));
     }
 
     @Test
@@ -111,7 +112,7 @@ class CalendarApiControllerTest {
 
         verify(calendarService).update(ACTOR_ID,
                 new CalendarEventUpdateParam(EVENT_ID, 3L, "전체 연습",
-                        "대본 리딩", START, END, false, "소극장"));
+                        "대본 리딩", START, END, false, "소극장", CalendarEventColor.MINT));
         verify(calendarService).delete(ACTOR_ID, EVENT_ID);
     }
 
@@ -138,6 +139,14 @@ class CalendarApiControllerTest {
                                 """.formatted("가".repeat(151))))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("C001"));
+    }
+
+    @Test
+    void 허용하지_않은_표시_색상은_등록할_수_없다() throws Exception {
+        mockMvc.perform(post("/api/calendar-events")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body().replace("\"MINT\"", "\"RAINBOW\"")))
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -179,7 +188,8 @@ class CalendarApiControllerTest {
                   "startDttm": "2026-08-01T10:00:00",
                   "endDttm": "2026-08-01T12:00:00",
                   "allDay": false,
-                  "place": "소극장"
+                  "place": "소극장",
+                  "colorCode": "MINT"
                 }
                 """;
     }

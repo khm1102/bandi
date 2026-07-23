@@ -8,6 +8,7 @@ import kr.ac.tukorea.bandi.domain.calendar.exception.CalendarAccessDeniedExcepti
 import kr.ac.tukorea.bandi.domain.calendar.exception.CalendarEventNotFoundException;
 import kr.ac.tukorea.bandi.domain.calendar.mapper.CalendarEventMapper;
 import kr.ac.tukorea.bandi.domain.calendar.model.CalendarEvent;
+import kr.ac.tukorea.bandi.domain.calendar.model.CalendarEventColor;
 import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
 import lombok.RequiredArgsConstructor;
@@ -48,7 +49,8 @@ public class CalendarService {
 
         CalendarEvent event = CalendarEvent.create(param.teamId(), param.title(),
                 param.description(), param.startDttm(), param.endDttm(), param.allDay(),
-                param.place(), actorMemberId);
+                param.place(), param.colorCode() == null ? CalendarEventColor.NAVY : param.colorCode(),
+                actorMemberId);
         calendarEventMapper.insert(event);
         return event.getCalendarEventId();
     }
@@ -66,7 +68,8 @@ public class CalendarService {
 
         CalendarEvent changed = original.change(param.teamId(), param.title(),
                 param.description(), param.startDttm(), param.endDttm(), param.allDay(),
-                param.place(), actorMemberId);
+                param.place(), param.colorCode() == null ? original.getColorCode() : param.colorCode(),
+                actorMemberId);
         calendarEventMapper.update(changed);
     }
 

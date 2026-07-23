@@ -1,5 +1,11 @@
 /* bandi 디자인 토큰과 FullCalendar 7.0.1 classic theme의 연결 계층. */
 [data-calendar-shell] {
+    --calendar-event-navy: #0b1f33;
+    --calendar-event-mint: #0b715f;
+    --calendar-event-blue: #315f8f;
+    --calendar-event-plum: #704983;
+    --calendar-event-amber: #80530a;
+    --calendar-event-rose: #a63c4d;
     --fc-classic-primary: var(--primary-strong);
     --fc-classic-primary-foreground: var(--destructive-foreground);
     --fc-classic-event: var(--primary-strong);

@@ -214,8 +214,12 @@ async function loadReferences() {
 }
 
 function eventColor(eventData) {
-    return eventData.teamId ? 'var(--primary-strong)' : 'var(--sidebar)';
+    return `var(--calendar-event-${String(eventData.colorCode || 'NAVY').toLowerCase()})`;
 }
+
+const colorLabels = Object.freeze({
+    NAVY: '네이비', MINT: '민트', BLUE: '파랑', PLUM: '보라', AMBER: '주황', ROSE: '장미',
+});
 
 function toFullCalendarEvent(eventData) {
     return {
@@ -390,6 +394,7 @@ function openDetail(eventData, trigger) {
     lookup('[data-calendar-detail-title]').textContent = eventData.title;
     lookup('[data-calendar-detail-period]').textContent = formatPeriod(eventData);
     lookup('[data-calendar-detail-place]').textContent = eventData.place || '장소가 정해지지 않았어요.';
+    lookup('[data-calendar-detail-color]').textContent = colorLabels[eventData.colorCode] || '네이비';
     lookup('[data-calendar-detail-description]').textContent = eventData.description || '추가 설명이 없어요.';
     lookup('[data-calendar-detail-updated]').textContent = formatDateTime(eventData.updatedDttm);
     lookup('[data-page-action="calendar-edit"]').classList.toggle('hidden', !canEdit(eventData));
@@ -411,6 +416,7 @@ function fillCreateForm(startDate, endDate, allDay) {
     document.getElementById('calendarEventModalTitle').textContent = '일정 등록';
     document.getElementById('ceTitle').value = '';
     document.getElementById('ceTeam').value = defaultTeamId();
+    document.getElementById('ceColor').value = 'NAVY';
     document.getElementById('ceAllDay').checked = allDay;
     configureDateMode(allDay);
     if (allDay) {
@@ -467,6 +473,7 @@ function fillEditForm(eventData) {
     document.getElementById('calendarEventModalTitle').textContent = '일정 수정';
     document.getElementById('ceTitle').value = eventData.title;
     document.getElementById('ceTeam').value = eventData.teamId || '';
+    document.getElementById('ceColor').value = eventData.colorCode || 'NAVY';
     document.getElementById('ceAllDay').checked = eventData.allDay;
     configureDateMode(eventData.allDay);
     if (eventData.allDay) {
@@ -552,6 +559,7 @@ function formRequest() {
         endDttm: period.endDttm,
         allDay,
         place: readValue('ceLoc') || null,
+        colorCode: readValue('ceColor'),
         rawStart: startValue,
         rawEnd: endValue,
     };

@@ -85,6 +85,7 @@
                 <dl class="mt-6 divide-y border-y">
                     <div class="grid gap-1 py-4 md:grid-cols-4 md:gap-4"><dt class="text-sm font-bold text-muted-foreground">일시</dt><dd class="text-sm font-semibold md:col-span-3" data-calendar-detail-period></dd></div>
                     <div class="grid gap-1 py-4 md:grid-cols-4 md:gap-4"><dt class="text-sm font-bold text-muted-foreground">장소</dt><dd class="text-sm md:col-span-3" data-calendar-detail-place></dd></div>
+                    <div class="grid gap-1 py-4 md:grid-cols-4 md:gap-4"><dt class="text-sm font-bold text-muted-foreground">표시 색상</dt><dd class="text-sm md:col-span-3" data-calendar-detail-color></dd></div>
                     <div class="grid gap-1 py-4 md:grid-cols-4 md:gap-4"><dt class="text-sm font-bold text-muted-foreground">설명</dt><dd class="whitespace-pre-wrap text-sm leading-6 md:col-span-3" data-calendar-detail-description></dd></div>
                     <div class="grid gap-1 py-4 md:grid-cols-4 md:gap-4"><dt class="text-sm font-bold text-muted-foreground">마지막 수정</dt><dd class="text-sm md:col-span-3" data-calendar-detail-updated></dd></div>
                 </dl>
@@ -110,10 +111,23 @@
                                 <label class="${label}" for="ceTeam">일정 범위</label>
                                 <select class="${input}" id="ceTeam"></select>
                             </div>
-                            <label class="flex min-h-11 items-center gap-3 self-end rounded-md border bg-card px-3 text-sm font-bold">
-                                <input id="ceAllDay" type="checkbox" class="size-4 rounded border-input">
-                                종일 일정
-                            </label>
+                            <div class="flex flex-wrap items-end gap-3">
+                                <div class="min-w-32">
+                                    <label class="${label}" for="ceColor">표시 색상</label>
+                                    <select class="${input}" id="ceColor">
+                                        <option value="NAVY">네이비</option>
+                                        <option value="MINT">민트</option>
+                                        <option value="BLUE">파랑</option>
+                                        <option value="PLUM">보라</option>
+                                        <option value="AMBER">주황</option>
+                                        <option value="ROSE">장미</option>
+                                    </select>
+                                </div>
+                                <label class="flex min-h-11 items-center gap-3 self-end rounded-md border bg-card px-3 text-sm font-bold">
+                                    <input id="ceAllDay" type="checkbox" class="size-4 rounded border-input">
+                                    종일 일정
+                                </label>
+                            </div>
                         </div>
                     </fieldset>
                     <section aria-labelledby="calendarTimeHeading">

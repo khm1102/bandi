@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
+import kr.ac.tukorea.bandi.domain.calendar.model.CalendarEventColor;
 
 import java.time.LocalDateTime;
 
@@ -14,11 +15,12 @@ public record CalendarEventUpdateRequest(
         @NotNull LocalDateTime startDttm,
         @NotNull LocalDateTime endDttm,
         boolean allDay,
-        @Size(max = 200) String place
+        @Size(max = 200) String place,
+        CalendarEventColor colorCode
 ) {
 
     public CalendarEventUpdateParam toParam(Long calendarEventId) {
         return new CalendarEventUpdateParam(calendarEventId, teamId, title,
-                description, startDttm, endDttm, allDay, place);
+                description, startDttm, endDttm, allDay, place, colorCode);
     }
 }

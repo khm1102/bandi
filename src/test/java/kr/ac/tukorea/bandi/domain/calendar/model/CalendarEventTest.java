@@ -33,6 +33,29 @@ class CalendarEventTest {
     }
 
     @Test
+    void 선택한_표시_색상으로_일정을_생성한다() {
+        CalendarEvent event = CalendarEvent.create(4L, "무대 연습", "전체 장면 연습",
+                START, END, false, "학생회관 소극장", CalendarEventColor.MINT, 1L);
+
+        assertThat(event.getColorCode()).isEqualTo(CalendarEventColor.MINT);
+    }
+
+    @Test
+    void 표시_색상이_없으면_네이비를_기본값으로_사용한다() {
+        CalendarEvent event = CalendarEvent.create(4L, "무대 연습", "전체 장면 연습",
+                START, END, false, "학생회관 소극장", 1L);
+
+        assertThat(event.getColorCode()).isEqualTo(CalendarEventColor.NAVY);
+    }
+
+    @Test
+    void 표시_색상은_필수다() {
+        assertThatThrownBy(() -> CalendarEvent.create(4L, "무대 연습", "전체 장면 연습",
+                START, END, false, "학생회관 소극장", null, 1L))
+                .isInstanceOf(InvalidCalendarEventException.class);
+    }
+
+    @Test
     void 종료가_시작보다_빠른_일정은_생성할_수_없다() {
         assertThatThrownBy(() -> CalendarEvent.create(4L, "무대 연습", "전체 장면 연습",
                 END, START, false, "학생회관 소극장", 1L))
@@ -106,6 +129,14 @@ class CalendarEventTest {
         assertThat(changed.getCreatedByMemberId()).isEqualTo(1L);
         assertThat(changed.getUpdatedByMemberId()).isEqualTo(2L);
         assertThat(changed.getTeamId()).isEqualTo(5L);
+    }
+
+    @Test
+    void 수정할_표시_색상을_선택할_수_있다() {
+        CalendarEvent changed = persisted().change(4L, "무대 연습", "전체 장면 연습",
+                START, END, false, "학생회관 소극장", CalendarEventColor.PLUM, 2L);
+
+        assertThat(changed.getColorCode()).isEqualTo(CalendarEventColor.PLUM);
     }
 
     private CalendarEvent persisted() {

@@ -65,7 +65,9 @@ Controller → Service → Mapper → Model
 - 캘린더 API는 KST `LocalDateTime`과 기존 `/api/calendar-events` 계약을 유지한다.
   일정 기간은 `endDttm > startDttm`이며, 조회 범위와의 겹침은 반개구간
   `startDttm < rangeEnd && endDttm > rangeStart`로 판정한다. 종일 일정의 종료값은
-  사용자가 선택한 마지막 날 다음 날 00:00이다.
+  사용자가 선택한 마지막 날 다음 날 00:00이다. `colorCode`는 제한된 일정 표시 팔레트
+  (`NAVY`, `MINT`, `BLUE`, `PLUM`, `AMBER`, `ROSE`)이며, 생략한 이전 API 클라이언트는
+  생성 시 `NAVY`, 수정 시 기존 값을 사용한다.
 
 ## 5. 후속 범위
 
