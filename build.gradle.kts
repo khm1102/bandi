@@ -32,6 +32,7 @@ dependencies {
     implementation("org.commonmark:commonmark:0.22.0")
     implementation("org.commonmark:commonmark-ext-gfm-tables:0.22.0")
     implementation("com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20260313.1")
+    implementation("org.jsoup:jsoup:1.21.2")
     implementation("jakarta.servlet.jsp.jstl:jakarta.servlet.jsp.jstl-api")
     implementation("org.glassfish.web:jakarta.servlet.jsp.jstl")
     providedRuntime("org.springframework.boot:spring-boot-starter-tomcat")

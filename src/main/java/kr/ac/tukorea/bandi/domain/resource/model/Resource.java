@@ -1,7 +1,6 @@
 package kr.ac.tukorea.bandi.domain.resource.model;
 
 import kr.ac.tukorea.bandi.domain.resource.exception.InvalidResourceException;
-import kr.ac.tukorea.bandi.domain.resource.exception.InvalidResourceStateException;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -9,38 +8,25 @@ import java.time.LocalDateTime;
 @Getter
 public class Resource {
 
-    private static final int MAX_CATEGORY_LENGTH = 30;
     private static final int MAX_TITLE_LENGTH = 200;
 
-    private Long resourceId;
-    private final ResourceTargetScope targetScope;
-    private final Long teamId;
-    private final String categoryCode;
+    private final Long resourceId;
     private final String title;
-    private final String description;
-    private final ResourceStatus status;
-    private final boolean pinned;
+    private final String bodyMarkdown;
     private final Long createdByMemberId;
     private final Long updatedByMemberId;
     private final LocalDateTime createdDttm;
     private final LocalDateTime updatedDttm;
     private final LocalDateTime deletedDttm;
 
-    public Resource(Long resourceId, ResourceTargetScope targetScope, Long teamId,
-                    String categoryCode, String title, String description,
-                    ResourceStatus status, boolean pinned, Long createdByMemberId,
-                    Long updatedByMemberId, LocalDateTime createdDttm,
-                    LocalDateTime updatedDttm, LocalDateTime deletedDttm) {
-        validate(targetScope, teamId, categoryCode, title, description, status,
-                createdByMemberId, updatedByMemberId);
+    public Resource(Long resourceId, String title, String bodyMarkdown,
+                    Long createdByMemberId, Long updatedByMemberId,
+                    LocalDateTime createdDttm, LocalDateTime updatedDttm,
+                    LocalDateTime deletedDttm) {
+        validate(title, bodyMarkdown, createdByMemberId, updatedByMemberId);
         this.resourceId = resourceId;
-        this.targetScope = targetScope;
-        this.teamId = teamId;
-        this.categoryCode = categoryCode.strip();
         this.title = title.strip();
-        this.description = description.strip();
-        this.status = status;
-        this.pinned = pinned;
+        this.bodyMarkdown = bodyMarkdown.strip();
         this.createdByMemberId = createdByMemberId;
         this.updatedByMemberId = updatedByMemberId;
         this.createdDttm = createdDttm;
@@ -48,72 +34,30 @@ public class Resource {
         this.deletedDttm = deletedDttm;
     }
 
-    public static Resource draft(ResourceTargetScope targetScope, Long teamId,
-                                 String categoryCode, String title, String description,
-                                 boolean pinned, Long actorMemberId) {
-        return new Resource(null, targetScope, teamId, categoryCode, title, description,
-                ResourceStatus.DRAFT, pinned, actorMemberId, actorMemberId,
+    public static Resource create(String title, String bodyMarkdown, Long actorMemberId) {
+        return new Resource(null, title, bodyMarkdown, actorMemberId, actorMemberId,
                 null, null, null);
     }
 
-    public Resource edit(ResourceTargetScope newTargetScope, Long newTeamId,
-                         String newCategoryCode, String newTitle,
-                         String newDescription, boolean newPinned,
-                         Long actorMemberId) {
-        if (!status.canEdit()) {
-            throw new InvalidResourceStateException(status);
-        }
-        return copy(newTargetScope, newTeamId, newCategoryCode, newTitle,
-                newDescription, status, newPinned, actorMemberId);
-    }
-
-    public Resource publish(Long actorMemberId) {
-        if (!status.canPublish()) {
-            throw new InvalidResourceStateException(status);
-        }
-        return copy(targetScope, teamId, categoryCode, title, description,
-                ResourceStatus.PUBLISHED, pinned, actorMemberId);
-    }
-
-    public Resource archive(Long actorMemberId) {
-        if (!status.canArchive()) {
-            throw new InvalidResourceStateException(status);
-        }
-        return copy(targetScope, teamId, categoryCode, title, description,
-                ResourceStatus.ARCHIVED, pinned, actorMemberId);
-    }
-
-    public boolean isReadable() {
-        return status.isReadable();
-    }
-
-    private Resource copy(ResourceTargetScope newTargetScope, Long newTeamId,
-                          String newCategoryCode, String newTitle,
-                          String newDescription, ResourceStatus newStatus,
-                          boolean newPinned, Long actorMemberId) {
-        return new Resource(resourceId, newTargetScope, newTeamId, newCategoryCode,
-                newTitle, newDescription, newStatus, newPinned, createdByMemberId,
+    public Resource edit(String newTitle, String newBodyMarkdown, Long actorMemberId) {
+        return new Resource(resourceId, newTitle, newBodyMarkdown, createdByMemberId,
                 actorMemberId, createdDttm, updatedDttm, deletedDttm);
     }
 
-    private void validate(ResourceTargetScope scope, Long targetTeamId,
-                          String category, String resourceTitle,
-                          String resourceDescription, ResourceStatus resourceStatus,
-                          Long creatorId, Long updaterId) {
-        if (scope == null || !scope.matchesTeam(targetTeamId)) {
-            throw new InvalidResourceException("target");
-        }
-        validateText(category, MAX_CATEGORY_LENGTH, "category");
-        validateText(resourceTitle, MAX_TITLE_LENGTH, "title");
-        validateText(resourceDescription, Integer.MAX_VALUE, "description");
-        if (resourceStatus == null || creatorId == null || updaterId == null) {
-            throw new InvalidResourceException("state-actor");
-        }
+    public boolean isCreatedBy(Long memberId) {
+        return createdByMemberId.equals(memberId);
     }
 
-    private void validateText(String value, int maxLength, String field) {
-        if (value == null || value.isBlank() || value.length() > maxLength) {
-            throw new InvalidResourceException(field);
+    private void validate(String resourceTitle, String markdown, Long creatorId, Long updaterId) {
+        if (resourceTitle == null || resourceTitle.isBlank()
+                || resourceTitle.strip().length() > MAX_TITLE_LENGTH) {
+            throw new InvalidResourceException("title");
+        }
+        if (markdown == null || markdown.isBlank()) {
+            throw new InvalidResourceException("body");
+        }
+        if (creatorId == null || updaterId == null) {
+            throw new InvalidResourceException("actor");
         }
     }
 }

@@ -44,13 +44,16 @@ HWPX 문서를 임시 저장할 때 현재 회장 이름으로 결과 파일을 
 | `calendar_event` | 전체·팀 일정 |
 | `internal_notice`, `internal_notice_attachment` | 내부 공지와 첨부 |
 | `internal_notice_read` | 멤버별 공지 읽음 상태 |
-| `resource`, `resource_file` | 자료와 리비전별 파일 연결 |
+| `resource`, `resource_file` | 공용 자료 Markdown 원문과 현재 첨부 파일 연결 |
+| `resource_link_preview` | 자료 본문의 HTTPS URL Open Graph 스냅샷 |
+| `resource_link_preview_retirement_manifest` | 더 이상 쓰이지 않는 링크 카드 대표 이미지 파기 재시도 |
 | `activity_record`, `activity_record_file` | 활동 기록과 증빙 파일 |
 | `activity_record_revision`, `activity_review_history` | 활동 기록 수정·검토 이력 |
 | `activity_report_document` | HWPX 활동 내역서의 대표자·장소와 활동 기록 연결 |
 | `activity_report_participant` | HWPX에 반영할 참여자 1~14명의 입력 스냅샷 |
 
-내부 공지와 자료의 공개 범위는 전체 또는 팀 단위로 관리한다.
+내부 공지만 전체 또는 팀 단위의 공개 범위를 관리한다. 자료실은 활성 멤버 전체가 열람하는
+공용 게시판이며 `resource.created_by_member_id`의 작성자와 `ADMIN`만 수정·소프트 삭제할 수 있다.
 
 `internal_notice.body`는 Markdown 원문이다. 렌더된 HTML·조회수는 저장하지 않으며,
 공지 상세를 열 때 `internal_notice_read`를 upsert해 멤버별 읽음 상태만 보관한다.
@@ -63,6 +66,14 @@ HWPX 문서를 임시 저장할 때 현재 회장 이름으로 결과 파일을 
 `DRAFT` 삭제는 `deleted_dttm`을 기록하는 소프트 삭제이며 첨부 연결과 파일 메타데이터는
 미연결 파일 정리 정책이 마련될 때까지 유지한다. 모든 공지 조회는 `deleted_dttm IS NULL`을
 강제한다.
+
+`resource.body_markdown`은 Markdown 원문만 저장하며 렌더된 HTML은 저장하지 않는다.
+`resource_file`은 현재 첨부 관계와 표시 순서만 관리한다. 단독 줄의 HTTPS URL은
+`resource_link_preview`에 정규화 URL, 제목·설명 스냅샷과 선택 대표 이미지 파일을 저장한다.
+대표 이미지는 private 로컬 저장소에 두며, 더 이상 참조되지 않으면
+`resource_link_preview_retirement_manifest`를 통해 파일 객체와 `stored_file` 메타데이터를
+재시도 가능하게 파기한다. 재시도는 `RESOURCE_LINK_PREVIEW_RETIREMENT_MODE=APPLY` 기동에서만
+수행한다.
 
 `calendar_event`의 유효 기간은 `end_dttm > start_dttm`이며, 기간 조회는
 `start_dttm < rangeEnd AND end_dttm > rangeStart`의 반개구간으로 겹침을 판정한다.
@@ -95,6 +106,7 @@ HWPX 활동 내역서는 `activity_record`를 검수 상태의 정본으로 사�
 | --- | --- |
 | `stored_file` | 파일명, MIME, 크기, SHA-256, 저장 키, 저장 상태, 파일 목적 |
 | `member_profile_photo_retirement_manifest` | 교체·삭제된 내부 프로필 사진의 물리 파일·메타데이터 파기 재시도 |
+| `resource_link_preview_retirement_manifest` | 자료 링크 카드 대표 이미지의 물리 파일·메타데이터 파기 재시도 |
 | `audit_log` | 주요 운영 변경의 처리자, 대상, 시각과 사유 |
 | `SPRING_SESSION`, `SPRING_SESSION_ATTRIBUTES` | JDBC 세션 |
 

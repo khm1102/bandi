@@ -7,7 +7,6 @@ public record ResourceFileResponse(
         String originalName,
         String contentType,
         long sizeBytes,
-        int revisionNo,
         int displayOrder,
         Long uploadedByMemberId,
         String uploadedByName,

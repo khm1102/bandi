@@ -54,6 +54,7 @@ class SsrControllerRoutingTest {
             Map.entry("dashboard", "dashboard/index"),
             Map.entry("calendar", "schedule/calendar"),
             Map.entry("resources", "resources/list"),
+            Map.entry("resources/write", "resources/form"),
             Map.entry("activity", "activity/list"),
             Map.entry("props", "props/list"),
             Map.entry("members", "members/list"),
@@ -83,7 +84,7 @@ class SsrControllerRoutingTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"dashboard", "calendar", "resources", "activity",
-            "props", "members", "profile", "team-members", "notices", "notices/write",
+            "resources/write", "props", "members", "profile", "team-members", "notices", "notices/write",
             "notices/manage"})
     void 유지되는_내부_화면이_렌더링된다(String page) throws Exception {
         LoginPrincipal principal = new LoginPrincipal(1L, "ADMIN");
@@ -118,6 +119,18 @@ class SsrControllerRoutingTest {
                 .andExpect(view().name("notice/form"))
                 .andExpect(model().attribute("noticeId", 10L))
                 .andExpect(model().attributeDoesNotExist("notice"));
+    }
+
+    @Test
+    void 자료_상세와_수정_화면이_렌더링된다() throws Exception {
+        authenticate();
+
+        mockMvc.perform(get("/resources/10"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("resources/detail"));
+        mockMvc.perform(get("/resources/10/edit"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("resources/form"));
     }
 
     @Test
