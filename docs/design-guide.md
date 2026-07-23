@@ -132,6 +132,9 @@
 10MiB 이하 파일을 같은 첨부 목록에 표시한다. 새 글의 미리보기는 업로더 전용 URL을,
 기존 글은 공지 첨부 권한을 통과한 inline URL을 사용한다. 링크는 새 창에서 열 때
 `noopener noreferrer`를 함께 적용한다.
+렌더링된 본문은 공지 전용 `markdown-content` 스타일을 사용해 제목 1~6, 문단, 목록,
+인용, 코드, 표와 이미지의 위계를 미리보기와 상세에서 동일하게 유지한다. Tailwind
+Typography 플러그인의 `prose` 클래스가 존재한다고 가정하지 않는다.
 
 **입력(formField 밖에서 쓸 때)** — `h-10 w-full rounded-md border border-input bg-card px-3 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20`
 

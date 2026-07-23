@@ -2,6 +2,10 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
 <t:layout title="${empty notice ? '공지 작성' : '공지 수정'}" active="notices" role="${role}" scriptPath="notice/form">
+    <jsp:attribute name="css">
+        <link rel="stylesheet" href="<c:url value='/css/notice/markdown.css'/>">
+    </jsp:attribute>
+    <jsp:body>
     <t:pageHead title="${empty notice ? '공지 작성' : '공지 수정'}" description="동아리 멤버에게 전달할 내용을 작성하세요.">
         <t:button variant="outline" href="/notices">목록으로</t:button>
     </t:pageHead>
@@ -69,7 +73,7 @@
                     <h3 class="text-sm font-extrabold">미리보기</h3>
                     <span class="text-xs text-muted-foreground" aria-live="polite" data-preview-status></span>
                 </div>
-                <div class="prose prose-slate mt-5 max-w-none text-sm leading-7" data-notice-preview><p class="text-muted-foreground">내용을 입력하면 여기에 미리보기가 표시돼요.</p></div>
+                <div class="markdown-content mt-5" data-notice-preview><p class="text-muted-foreground">내용을 입력하면 여기에 미리보기가 표시돼요.</p></div>
             </div>
 
             <div class="border-x border-b px-4 py-3 sm:flex sm:items-center sm:justify-between sm:gap-4">
@@ -95,4 +99,5 @@
             <t:button type="submit" pageAction="publish-notice">공지 게시</t:button>
         </div>
     </form>
+    </jsp:body>
 </t:layout>
