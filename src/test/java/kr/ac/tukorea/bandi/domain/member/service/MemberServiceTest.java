@@ -431,7 +431,7 @@ class MemberServiceTest {
         @Test
         void 기수를_변경하면_현재_기수와_변경_이력이_함께_저장된다() {
             // given
-            givenActiveAdmin();
+            givenActiveAdminForCohortChange();
             given(memberMapper.lookupByIdForUpdate(TARGET_ID))
                     .willReturn(Optional.of(member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
             given(cohortMapper.lookupById(NEW_COHORT_ID))
@@ -457,7 +457,7 @@ class MemberServiceTest {
         @Test
         void 비활성_기수로는_변경할_수_없다() {
             // given
-            givenActiveAdmin();
+            givenActiveAdminForCohortChange();
             given(memberMapper.lookupByIdForUpdate(TARGET_ID))
                     .willReturn(Optional.of(member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
             given(cohortMapper.lookupById(NEW_COHORT_ID))
@@ -468,6 +468,44 @@ class MemberServiceTest {
             assertThatThrownBy(() -> memberService.changeCohort(ADMIN_ID,
                     new CohortChangeParam(TARGET_ID, NEW_COHORT_ID, REASON)))
                     .isInstanceOf(InactiveCohortException.class);
+            verify(memberMapper, never()).updateCohort(any(), any());
+        }
+
+        @Test
+        void 팀장은_자기_팀_멤버의_기수를_변경할_수_있다() {
+            // given
+            given(memberMapper.lookupByIdForUpdate(ADMIN_ID)).willReturn(Optional.of(
+                    member(ADMIN_ID, ACTOR_TEAM_ID, ClubRole.LEADER, MemberStatus.ACTIVE)));
+            given(memberMapper.lookupByIdForUpdate(TARGET_ID)).willReturn(Optional.of(
+                    member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
+            given(cohortMapper.lookupById(NEW_COHORT_ID)).willReturn(Optional.of(
+                    new Cohort(NEW_COHORT_ID, "27-1기", (short) 2027,
+                            CohortTerm.FIRST, true)));
+
+            // when
+            memberService.changeCohort(ADMIN_ID,
+                    new CohortChangeParam(TARGET_ID, NEW_COHORT_ID, REASON));
+
+            // then
+            verify(memberMapper).updateCohort(TARGET_ID, NEW_COHORT_ID);
+            verify(memberHistoryMapper).insertCohortHistory(any(MemberCohortHistory.class));
+            verify(auditService).record(ADMIN_ID,
+                    AuditAction.MEMBER_COHORT_CHANGED,
+                    AuditTargetType.MEMBER, TARGET_ID, "멤버 기수 변경");
+        }
+
+        @Test
+        void 팀장은_다른_팀_멤버의_기수를_변경할_수_없다() {
+            // given
+            given(memberMapper.lookupByIdForUpdate(ADMIN_ID)).willReturn(Optional.of(
+                    member(ADMIN_ID, STAGE_TEAM_ID, ClubRole.LEADER, MemberStatus.ACTIVE)));
+            given(memberMapper.lookupByIdForUpdate(TARGET_ID)).willReturn(Optional.of(
+                    member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
+
+            // when & then
+            assertThatThrownBy(() -> memberService.changeCohort(ADMIN_ID,
+                    new CohortChangeParam(TARGET_ID, NEW_COHORT_ID, REASON)))
+                    .isInstanceOf(MemberManagementForbiddenException.class);
             verify(memberMapper, never()).updateCohort(any(), any());
         }
     }
@@ -621,9 +659,12 @@ class MemberServiceTest {
         }
 
         @Test
-        void 활성_ADMIN이_아니면_기수를_변경할_수_없다() {
+        void 일반_멤버는_기수를_변경할_수_없다() {
             // given
-            givenNonAdminActor();
+            given(memberMapper.lookupByIdForUpdate(ADMIN_ID)).willReturn(Optional.of(
+                    member(ADMIN_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
+            given(memberMapper.lookupByIdForUpdate(TARGET_ID)).willReturn(Optional.of(
+                    member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
 
             // when & then
             assertThatThrownBy(() -> memberService.changeCohort(ADMIN_ID,
@@ -655,6 +696,11 @@ class MemberServiceTest {
                     .isInstanceOf(MemberManagementForbiddenException.class);
             verify(memberMapper, never()).updateStatus(any(), any());
         }
+    }
+
+    private void givenActiveAdminForCohortChange() {
+        given(memberMapper.lookupByIdForUpdate(ADMIN_ID)).willReturn(Optional.of(
+                member(ADMIN_ID, ACTOR_TEAM_ID, ClubRole.ADMIN, MemberStatus.ACTIVE)));
     }
 
     @Nested

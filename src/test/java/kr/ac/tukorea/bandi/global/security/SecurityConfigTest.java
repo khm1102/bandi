@@ -20,6 +20,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -138,6 +139,24 @@ class SecurityConfigTest {
     }
 
     @Test
+    void 기수_변경은_팀장과_운영진만_요청할_수_있다() throws Exception {
+        mockMvc.perform(get("/api/members/reference/cohorts")
+                        .with(user("member").roles("MEMBER")))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(patch("/api/members/1/cohort")
+                        .with(user("member").roles("MEMBER")).with(csrf()))
+                .andExpect(status().isForbidden());
+        for (String role : new String[]{"LEADER", "ADMIN"}) {
+            mockMvc.perform(get("/api/members/reference/cohorts")
+                            .with(user("tester").roles(role)))
+                    .andExpect(status().isOk());
+            mockMvc.perform(patch("/api/members/1/cohort")
+                            .with(user("tester").roles(role)).with(csrf()))
+                    .andExpect(status().isOk());
+        }
+    }
+
+    @Test
     void 활동_내역서_화면과_생성_API는_모든_로그인_멤버가_사용한다()
             throws Exception {
         mockMvc.perform(get("/activity-documents"))
@@ -234,6 +253,7 @@ class SecurityTestController {
     @GetMapping({"/dashboard", "/members/test",
             "/dispatch-target", "/api/test", "/api/members/me",
             "/api/members/reference/teams",
+            "/api/members/reference/cohorts",
             "/profile", "/team-members", "/api/members/me/profile",
             "/api/members/1/profile-photo", "/api/members/team-members",
             "/api/internal-notice-management/test", "/notices/manage",
@@ -245,6 +265,11 @@ class SecurityTestController {
 
     @PostMapping("/api/test")
     ResponseEntity<Void> change() {
+        return ResponseEntity.ok().build();
+    }
+
+    @org.springframework.web.bind.annotation.PatchMapping("/api/members/1/cohort")
+    ResponseEntity<Void> changeCohort() {
         return ResponseEntity.ok().build();
     }
 

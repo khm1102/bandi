@@ -219,8 +219,13 @@ public class MemberService {
     @Transactional
     public void changeCohort(Long actorMemberId, CohortChangeParam param) {
         validateReason(param.reason());
-        validateActiveAdmin(actorMemberId);
-        Member member = lockMember(param.memberId());
+        Member actor = lockMember(actorMemberId);
+        Member member = Objects.equals(actorMemberId, param.memberId())
+                ? actor : lockMember(param.memberId());
+        MemberAccessContext access = MemberAccessContext.from(actor);
+        if (!access.canManageTeam(member.getTeamId())) {
+            throw new MemberManagementForbiddenException(actorMemberId);
+        }
         member.validateCohortChangeTo(param.newCohortId());
         findAssignableCohort(param.newCohortId());
 

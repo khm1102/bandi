@@ -9,7 +9,9 @@ const searchInput = lookup('[data-team-members-search]');
 const pagination = lookup('[data-pagination]');
 let members = [];
 let teams = [];
+let cohorts = [];
 let selectedMember = null;
+let selectedChangeType = null;
 let requestGeneration = 0;
 
 function messageFrom(error) {
@@ -78,33 +80,57 @@ function renderMembers(filtered) {
         const role = member.role === 'LEADER' ? '팀장' : member.role === 'ADMIN' ? '운영진' : '일반 부원';
         lookup('[data-team-member-meta]', row).textContent = `${member.studentNo} · ${role}`;
         lookup('[data-team-member-team]', row).textContent = member.teamName;
-        lookup('[data-team-member-change-open]', row).addEventListener('click', () => selectMember(member.memberId));
+        lookup('[data-team-member-cohort]', row).textContent = member.cohortName;
+        row.querySelectorAll('[data-team-member-change-open]').forEach((button) => {
+            button.addEventListener('click', () => selectMember(member.memberId,
+                    button.dataset.teamMemberChangeType));
+        });
         list.appendChild(row);
     });
 }
 
-function renderTeamOptions() {
-    const select = lookup('[data-team-member-team-select]');
+function renderChangeOptions() {
+    const select = lookup('[data-team-member-change-select]');
     select.replaceChildren();
-    teams.forEach((team) => {
-        const option = element('option', '', team.name);
-        option.value = String(team.teamId);
-        option.selected = team.teamId === selectedMember.teamId;
+    const isTeamChange = selectedChangeType === 'team';
+    const currentId = isTeamChange ? selectedMember.teamId : selectedMember.cohortId;
+    const items = isTeamChange ? teams : cohorts;
+    items.filter((item) => item[isTeamChange ? 'teamId' : 'cohortId'] !== currentId)
+            .forEach((item) => {
+                const option = element('option', '', item.name);
+                option.value = String(item[isTeamChange ? 'teamId' : 'cohortId']);
+                select.appendChild(option);
+            });
+    const submit = lookup('[data-team-member-change-submit]');
+    submit.disabled = select.options.length === 0;
+    if (select.options.length === 0) {
+        const option = element('option', '', '변경 가능한 값이 없습니다');
+        option.value = '';
+        option.disabled = true;
+        option.selected = true;
         select.appendChild(option);
-    });
+    }
 }
 
-function selectMember(memberId) {
+function selectMember(memberId, changeType) {
     selectedMember = members.find((member) => member.memberId === memberId);
     if (!selectedMember) {
         return;
     }
+    selectedChangeType = changeType;
+    const isTeamChange = selectedChangeType === 'team';
     lookup('[data-team-member-change-section]').classList.remove('hidden');
     lookup('[data-team-member-change-summary]').textContent =
-            `${selectedMember.name} · 현재 ${selectedMember.teamName}`;
+            `${selectedMember.name} · ${selectedMember.teamName} · ${selectedMember.cohortName}`;
+    lookup('[data-team-member-change-title]').textContent =
+            `선택한 멤버의 ${isTeamChange ? '소속 팀' : '기수'} 변경`;
+    lookup('[data-team-member-change-label]').textContent =
+            `새 ${isTeamChange ? '소속 팀' : '기수'}`;
+    lookup('[data-team-member-change-submit]').textContent =
+            `${isTeamChange ? '소속 팀' : '기수'} 변경`;
     lookup('[data-team-member-reason]').value = '';
     lookup('[data-team-member-change-error]').classList.add('hidden');
-    renderTeamOptions();
+    renderChangeOptions();
     lookup('[data-team-member-change-section]').scrollIntoView({block: 'nearest'});
 }
 
@@ -174,26 +200,29 @@ async function loadMembers(focus = false) {
     }
 }
 
-async function changeTeam(event) {
+async function changeMember(event) {
     event.preventDefault();
-    if (!selectedMember) {
+    if (!selectedMember || !selectedChangeType) {
         return;
     }
     const error = lookup('[data-team-member-change-error]');
-    const newTeamId = Number(readValue('teamMemberTeam'));
+    const newValue = Number(readValue('teamMemberChangeValue'));
     const reason = readValue('teamMemberReason');
     const submit = lookup('[data-team-member-change-submit]');
-    if (!reason) {
-        error.textContent = '변경 사유를 입력해 주세요.';
+    if (!newValue || !reason) {
+        error.textContent = '변경 값과 사유를 모두 입력해 주세요.';
         error.classList.remove('hidden');
         return;
     }
     submit.disabled = true;
     error.classList.add('hidden');
     try {
-        await patch(`/api/members/${selectedMember.memberId}/team`, {newTeamId, reason});
-        showToast(`${selectedMember.name}님의 소속 팀을 변경했어요.`);
+        const isTeamChange = selectedChangeType === 'team';
+        await patch(`/api/members/${selectedMember.memberId}/${selectedChangeType}`,
+                isTeamChange ? {newTeamId: newValue, reason} : {newCohortId: newValue, reason});
+        showToast(`${selectedMember.name}님의 ${isTeamChange ? '소속 팀' : '기수'}를 변경했어요.`);
         selectedMember = null;
+        selectedChangeType = null;
         lookup('[data-team-member-change-section]').classList.add('hidden');
         await loadMembers();
     } catch (requestError) {
@@ -205,7 +234,10 @@ async function changeTeam(event) {
 }
 
 async function initialize() {
-    teams = await get('/api/members/reference/teams');
+    [teams, cohorts] = await Promise.all([
+        get('/api/members/reference/teams'),
+        get('/api/members/reference/cohorts'),
+    ]);
     const teamFilter = lookup('[data-team-members-filter="team"]', root);
     if (teamFilter) {
         teams.forEach((team) => {
@@ -229,9 +261,10 @@ lookup('[data-team-members-reset]').addEventListener('click', () => {
     loadMembers();
 });
 window.addEventListener('popstate', () => loadMembers(true));
-lookup('[data-team-member-change-form]').addEventListener('submit', changeTeam);
+lookup('[data-team-member-change-form]').addEventListener('submit', changeMember);
 lookup('[data-team-member-change-cancel]').addEventListener('click', () => {
     selectedMember = null;
+    selectedChangeType = null;
     lookup('[data-team-member-change-section]').classList.add('hidden');
 });
 

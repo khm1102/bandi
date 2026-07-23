@@ -143,7 +143,7 @@ class MemberApiControllerTest {
         given(memberProfileService.searchTeamMembers(any(), any())).willReturn(
                 kr.ac.tukorea.bandi.global.response.PageResponse.of(List.of(
                         new TeamMemberResponse(MEMBER_ID, "이서준", "2020184000",
-                                2L, "무대팀", ClubRole.MEMBER,
+                                2L, "무대팀", 3L, "26-2기", ClubRole.MEMBER,
                                 MemberStatus.ACTIVE, false)), 0, 20, 1));
 
         mockMvc.perform(get("/api/members/me/profile"))
@@ -153,7 +153,9 @@ class MemberApiControllerTest {
         mockMvc.perform(get("/api/members/team-members"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.items[0].name").value("이서준"))
-                .andExpect(jsonPath("$.items[0].teamId").value(2));
+                .andExpect(jsonPath("$.items[0].teamId").value(2))
+                .andExpect(jsonPath("$.items[0].cohortId").value(3))
+                .andExpect(jsonPath("$.items[0].cohortName").value("26-2기"));
 
         verify(memberProfileService).lookupProfile(ACTOR_ID);
         verify(memberProfileService).searchTeamMembers(ACTOR_ID,

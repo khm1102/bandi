@@ -53,7 +53,8 @@ Controller → Service → Mapper → Model
 - 파일은 Spring Boot가 권한을 확인한 뒤 직접 스트리밍한다.
 - `/profile`과 `/api/members/me/**`는 로그인 멤버가 사용한다. `/team-members`와
   `/api/members/team-members`는 `LEADER`·`ADMIN`만 URL 단계에서 허용하고,
-  팀·대상 범위는 `MemberService`가 다시 검사한다.
+  팀·대상 범위는 `MemberService`가 다시 검사한다. `PATCH /api/members/{memberId}/cohort`도
+  `LEADER`·`ADMIN`만 URL 단계에서 허용하며, 팀장은 현재 소속 팀 멤버만 변경할 수 있다.
 - `/notices`는 인증 멤버의 내부 공지 목록·상세 화면이며, `/notices/write`와
   `/notices/{id}/edit`, `/notices/manage`, `/notices/manage/{id}`는 `LEADER`·`ADMIN`만
   URL 단계에서 허용한다. 일반 상세의 `canManage`도 실제 공지 대상과 로그인 멤버의 팀

@@ -54,9 +54,12 @@ public class MemberProfileService {
         MemberPageSearchCondition condition = MemberPageSearchCondition.forTeam(param, teamId);
         Map<Long, String> teamNames = teamMapper.searchAll().stream()
                 .collect(Collectors.toMap(Team::getTeamId, Team::getName));
+        Map<Long, String> cohortNames = cohortMapper.searchAll().stream()
+                .collect(Collectors.toMap(Cohort::getCohortId, Cohort::getName));
         List<TeamMemberResponse> items = memberMapper.searchPage(condition).stream()
                 .map(member -> TeamMemberResponse.from(member,
-                        teamNames.getOrDefault(member.getTeamId(), "알 수 없는 팀")))
+                        teamNames.getOrDefault(member.getTeamId(), "알 수 없는 팀"),
+                        cohortNames.getOrDefault(member.getCohortId(), "미분류")))
                 .toList();
         return PageResponse.of(items, param.page(), param.pageSize(),
                 memberMapper.countByPageCondition(condition));
