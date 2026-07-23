@@ -1,5 +1,7 @@
 package kr.ac.tukorea.bandi.domain.notice.controller;
 
+import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeDetailResponse;
+import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeDetailViewResponse;
 import kr.ac.tukorea.bandi.domain.notice.service.InternalNoticeService;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import lombok.RequiredArgsConstructor;
@@ -8,7 +10,6 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 @Controller
@@ -33,22 +34,18 @@ public class NoticeController {
     @GetMapping("/notices/{internalNoticeId}")
     public String detail(@LoginMember Long memberId, @PathVariable Long internalNoticeId,
                          Model model) {
-        var notice = internalNoticeService.lookupReadable(memberId, internalNoticeId);
-        model.addAttribute("notice", notice);
-        model.addAttribute("noticePublishedAt", formatDateTime(notice.publishStartDttm()));
-        model.addAttribute("noticeUpdatedAt", formatDateTime(notice.updatedDttm()));
+        InternalNoticeDetailResponse notice = internalNoticeService.lookupReadable(memberId,
+                internalNoticeId);
+        model.addAttribute("notice", InternalNoticeDetailViewResponse.from(notice,
+                DISPLAY_DATE_TIME_FORMATTER));
         return "notice/detail";
     }
 
     @GetMapping("/notices/{internalNoticeId}/edit")
     public String edit(@LoginMember Long memberId, @PathVariable Long internalNoticeId,
                        Model model) {
-        model.addAttribute("notice", internalNoticeService.lookupManageable(memberId,
-                internalNoticeId));
+        internalNoticeService.lookupManageable(memberId, internalNoticeId);
+        model.addAttribute("noticeId", internalNoticeId);
         return "notice/form";
-    }
-
-    private String formatDateTime(LocalDateTime value) {
-        return value == null ? "" : DISPLAY_DATE_TIME_FORMATTER.format(value);
     }
 }

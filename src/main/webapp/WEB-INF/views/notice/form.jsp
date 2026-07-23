@@ -1,7 +1,7 @@
 <%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" trimDirectiveWhitespaces="true" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
-<t:layout title="${empty notice ? '공지 작성' : '공지 수정'}" active="notices" role="${role}" scriptPath="notice/form">
+<t:layout title="${empty noticeId ? '공지 작성' : '공지 수정'}" active="notices" role="${role}" scriptPath="notice/form">
     <jsp:attribute name="css">
         <link rel="stylesheet" href="<c:url value='/css/notice/markdown.css'/>">
         <link rel="stylesheet" href="<c:url value='/css/vendor/vanilla-calendar-pro/3.1.0/layout.css'/>">
@@ -12,12 +12,12 @@
         <script src="<c:url value='/js/vendor/vanilla-calendar-pro/3.1.0/vanilla-calendar-pro.js'/>"></script>
     </jsp:attribute>
     <jsp:body>
-    <t:pageHead title="${empty notice ? '공지 작성' : '공지 수정'}" description="동아리 멤버에게 전달할 내용을 작성하세요.">
+    <t:pageHead title="${empty noticeId ? '공지 작성' : '공지 수정'}" description="동아리 멤버에게 전달할 내용을 작성하세요.">
         <t:button variant="outline" href="/notices">목록으로</t:button>
     </t:pageHead>
 
     <form id="noticeForm" class="mx-auto max-w-5xl space-y-7" data-notice-form
-          data-notice-id="<c:out value='${notice.internalNoticeId}'/>" novalidate>
+          data-notice-id="<c:out value='${noticeId}'/>" novalidate>
         <section class="space-y-5" aria-labelledby="noticeBodyHeading">
             <div>
                 <label class="mb-2 block text-sm font-extrabold" for="noticeTitle">제목</label>
