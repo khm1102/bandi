@@ -19,7 +19,7 @@
 <div class="min-h-screen lg:flex">
     <header class="sticky top-0 z-30 flex h-14 items-center border-b bg-card px-4 lg:hidden">
         <a href="<c:url value='/dashboard'/>" class="flex min-h-11 items-center gap-2.5 font-black">
-            <span class="flex size-8 items-center justify-center rounded-md bg-primary text-sm font-black text-primary-foreground">B</span>
+            <img src="<c:url value='/images/bandi-icon.png'/>" class="h-8 w-auto rounded-md object-contain" alt="반디">
             <span>반디</span>
         </a>
         <button type="button" class="ml-auto flex size-11 items-center justify-center rounded-md border bg-card text-foreground"
