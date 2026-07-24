@@ -1,8 +1,8 @@
 # 테스트 서버 배포
 
 이 문서는 팀 공유용 테스트 서버에 Bandi를 배포하는 절차다. 구성은 Docker Compose의
-`app`, `mysql`, `cloudflared` 세 서비스다. 외부 공개는 Cloudflare Tunnel만 사용하며,
-애플리케이션과 MySQL 포트는 호스트에 노출하지 않는다.
+`app`, `mysql` 두 서비스다. Cloudflare Tunnel은 중앙 인프라에서 별도로 운영하며, Bandi
+Compose와 GitHub Actions 배포가 Tunnel 컨테이너·토큰을 관리하지 않는다.
 
 ## 1. 서버 준비
 
@@ -23,21 +23,14 @@ sudo chown <runner-user>:<runner-user> /etc/bandi/.env.test
 sudo chmod 600 /etc/bandi/.env.test
 ```
 
-테스트 서버에서는 DB 비밀번호를 팀 공통 테스트 값으로 사용할 수 있다. 다만
-`CLOUDFLARE_TUNNEL_TOKEN`은 Cloudflare Dashboard에서 생성한 실제 토큰을 `.env.test`에만
-입력하고 Git에 커밋하지 않는다.
+테스트 서버에서는 DB 비밀번호를 팀 공통 테스트 값으로 사용할 수 있다. 환경 파일에는 DB와
+파일 저장 경로 값만 두며, Cloudflare Tunnel 토큰을 넣거나 Git에 커밋하지 않는다.
 
-## 2. Cloudflare Tunnel 설정
+## 2. 외부 Cloudflare Tunnel
 
-Cloudflare Dashboard에서 Tunnel을 만들고 Public Hostname을 다음처럼 연결한다.
-
-```text
-bandi.khm1102.com -> http://app:8080
-```
-
-Compose의 `cloudflared`는 토큰으로 Cloudflare에 outbound 연결한다. 서버 방화벽에서 앱
-`8080`과 MySQL `3306`을 열 필요가 없다. 팀원만 사용하는 서버라면 Cloudflare Access에서
-팀원 계정만 허용한다.
+Cloudflare Tunnel의 실행·토큰·Public Hostname은 중앙 인프라에서 별도로 관리한다. 해당 Tunnel은
+기존에 설정한 origin으로 Bandi 앱에 연결해야 하며, 이 저장소의 환경 파일·Compose·GitHub Actions에는
+Tunnel token을 저장하지 않는다.
 
 ## 3. 기동과 확인
 
@@ -47,9 +40,8 @@ docker compose --env-file /etc/bandi/.env.test -f docker-compose.test.yaml ps
 docker compose --env-file /etc/bandi/.env.test -f docker-compose.test.yaml logs -f app
 ```
 
-앱은 `prod` 프로필로 실행되고 Flyway가 `bandi` 스키마를 자동 적용한다. Cloudflare에서
-HTTPS를 종료하므로 외부 사용자는 `https://bandi.khm1102.com`으로만 접속한다. Compose는
-`SERVER_FORWARD_HEADERS_STRATEGY=framework`를 주입해 프록시의 HTTPS 헤더를 처리한다.
+앱은 `prod` 프로필로 실행되고 Flyway가 `bandi` 스키마를 자동 적용한다. 외부 Tunnel이 HTTPS를
+종료하는 환경을 위해 Compose는 `SERVER_FORWARD_HEADERS_STRATEGY=framework`를 주입한다.
 
 ## 4. 데이터 보존과 백업
 
@@ -80,14 +72,14 @@ GitHub Actions의 `Verify and deploy test` 워크플로에서 `deploy`를 선택
 변경 후에도 MySQL volume과 `/data/bandi` bind mount는 유지된다. Flyway는 새 마이그레이션만
 적용하며, 적용된 마이그레이션 파일을 수정하지 않는다.
 
-자동 배포는 `app`, `cloudflared` 서비스만 `--no-deps`로 다시 만든다. 이미 운영 중인 `mysql`
+자동 배포는 `app` 서비스만 `--no-deps`로 다시 만든다. 이미 운영 중인 `mysql`
 컨테이너와 `bandi-test-mysql-data` named volume에는 `down -v`, `rm`, `volume prune`, 초기화 명령을
 실행하지 않는다. 데이터 삭제가 필요한 경우에는 별도 백업·승인 절차로만 수행한다.
 
 ## 6. GitHub Actions 셀프 호스티드 러너
 
 PR 검증은 GitHub 호스티드 러너에서 실행한다. 테스트 서버의 셀프 호스티드 러너는 `dev` 푸시와
-명시적 수동 재배포에서만 실행하므로, PR 코드가 서버의 Docker 권한·Cloudflare 토큰·파일 볼륨에
+명시적 수동 재배포에서만 실행하므로, PR 코드가 서버의 Docker 권한·외부 Tunnel 설정·파일 볼륨에
 접근하지 못한다.
 
 ### 6.1 서버 준비
@@ -104,6 +96,11 @@ sudo install -d -o 10001 -g 10001 -m 750 /data/bandi
 
 `docker` 그룹 권한을 적용한 뒤에는 해당 계정으로 새 로그인 세션을 연다. 러너는 root로 실행하지
 않으며, `sudo` 권한을 부여하지 않는다.
+
+컨테이너로 러너를 실행한다면 runner 사용자에게 Docker CLI·Compose plugin과 호스트 Docker socket
+접근을 제공해야 한다. `/etc/bandi/.env.test`는 읽기 전용으로 마운트하고, 컨테이너 안의 runner
+사용자가 읽을 수 있도록 권한을 맞춘다. Docker socket 접근은 사실상 높은 권한이므로 이 러너에는
+신뢰된 `dev` 배포 workflow만 배정한다.
 
 ### 6.2 러너 등록
 
@@ -128,9 +125,9 @@ sudo ./svc.sh start
 - `push → dev`: 검증 성공 뒤 `bandi-test` 셀프 호스티드 러너가 Docker Compose를 재배포한다.
 - 수동 실행: Actions 화면에서 `deploy`를 체크한 경우에만 재배포한다.
 - 배포는 `bandi-test-deploy` 동시성 그룹으로 직렬화한다. 이전 배포를 취소하지 않는다.
-- 배포는 `app`, `cloudflared`만 다시 만들며, 기존 MySQL 컨테이너·named volume을 재생성하거나
+- 배포는 `app`만 다시 만들며, 기존 MySQL 컨테이너·named volume을 재생성하거나
   삭제하지 않는다.
-- 배포 시 `/etc/bandi/.env.test`의 존재·권한, Compose 설정, app·mysql·cloudflared 기동과 파일
+- 배포 시 `/etc/bandi/.env.test`의 존재·권한, Compose 설정, app·mysql 기동과 파일
   저장 경로 쓰기 가능 여부를 확인한다. 실패하면 서비스 상태와 최근 로그가 작업 로그에 남는다.
 
 `dev` 보호 규칙에는 `Verify build and test` 상태 검사를 병합 필수로 추가한다. 직접 `dev` 푸시는
