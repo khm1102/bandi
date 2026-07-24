@@ -12,7 +12,6 @@ import kr.ac.tukorea.bandi.domain.member.mapper.TeamMapper;
 import kr.ac.tukorea.bandi.domain.member.model.AcademicStatus;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
-import kr.ac.tukorea.bandi.domain.member.model.CohortTerm;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
 import kr.ac.tukorea.bandi.domain.member.model.MemberStatus;
 import kr.ac.tukorea.bandi.domain.member.model.SsoLinkStatus;
@@ -71,6 +70,7 @@ class MemberProfileServiceTest {
         assertThat(result.teamId()).isEqualTo(TEAM_ID);
         assertThat(result.teamName()).isEqualTo("무대팀");
         assertThat(result.cohortName()).isEqualTo("26-2기");
+        assertThat(result.phoneNumber()).isEqualTo("01012345678");
         assertThat(result.hasProfilePhoto()).isFalse();
     }
 
@@ -122,6 +122,7 @@ class MemberProfileServiceTest {
         given(memberMapper.countByPageCondition(org.mockito.ArgumentMatchers.any()))
                 .willReturn(1L);
         given(teamMapper.searchAll()).willReturn(List.of(team(TEAM_ID, "무대팀")));
+        given(cohortMapper.searchAll()).willReturn(List.of(cohort()));
 
         var result = profileService.searchTeamMembers(MEMBER_ID,
                 new kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchParam(
@@ -133,6 +134,19 @@ class MemberProfileServiceTest {
                 kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchCondition.class);
         verify(memberMapper).searchPage(captor.capture());
         assertThat(captor.getValue().teamId()).isEqualTo(TEAM_ID);
+        assertThat(result.items()).extracting(item -> item.phoneNumber())
+                .containsExactly("01012345678");
+    }
+
+    @Test
+    void ADMIN은_팀_멤버_목록을_조회할_수_없다() {
+        given(memberMapper.lookupById(MEMBER_ID)).willReturn(Optional.of(
+                member(MEMBER_ID, TEAM_ID, ClubRole.ADMIN, null)));
+
+        assertThatThrownBy(() -> profileService.searchTeamMembers(MEMBER_ID,
+                new kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchParam(
+                        null, null, null, null, null, null, 0, 20)))
+                .isInstanceOf(MemberManagementForbiddenException.class);
     }
 
     @Test
@@ -147,7 +161,7 @@ class MemberProfileServiceTest {
     }
 
     private Member member(Long memberId, Long teamId, ClubRole role, Long photoFileId) {
-        return new Member(memberId, "2025591010", "김현민", "컴퓨터공학부",
+        return new Member(memberId, "2025591010", "김현민", "컴퓨터공학부", "01012345678",
                 AcademicStatus.ENROLLED, null, teamId, COHORT_ID, role,
                 MemberStatus.ACTIVE, SsoLinkStatus.LINKED, null, null, null, photoFileId);
     }
@@ -157,7 +171,7 @@ class MemberProfileServiceTest {
     }
 
     private Cohort cohort() {
-        return new Cohort(COHORT_ID, "26-2기", (short) 2026, CohortTerm.SECOND, true);
+        return new Cohort(COHORT_ID, "26-2기", true);
     }
 
     private StoredFile profileFile(Long storedFileId) {

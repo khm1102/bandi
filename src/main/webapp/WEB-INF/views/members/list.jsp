@@ -6,6 +6,7 @@
 <c:set var="label" value="mb-1.5 block text-xs font-extrabold text-muted-foreground"/>
 <t:layout title="멤버·권한" active="members" role="${role}" scriptPath="members/list">
     <t:pageHead title="멤버 · 권한 설정" description="운영진이 학번과 이름을 사전 등록하고 학교 SSO 연결, 단일 소속 팀과 역할을 관리합니다">
+        <button type="button" class="min-h-11 rounded-md border bg-card px-4 text-sm font-bold transition-colors hover:bg-secondary" data-page-action="cohort-add-open">기수 관리</button>
         <t:button openModal="memberModal">+ 멤버 사전 등록</t:button>
     </t:pageHead>
 
@@ -38,10 +39,10 @@
     <div class="rounded-lg border bg-card">
         <p class="border-b px-4 py-2 text-xs text-muted-foreground md:hidden">표를 좌우로 밀어 권한과 관리 항목을 확인하세요.</p>
         <t:dataTable caption="멤버와 권한 목록" cssClass="min-w-max">
-            <thead><tr><th class="min-w-40">이름</th><th>학번</th><th>기수</th><th>소속 팀</th><th>활동 상태</th><th>SSO 연결</th><th>역할</th><th class="text-right">권한 변경</th><th class="text-right">관리</th></tr></thead>
+            <thead><tr><th class="min-w-40">이름</th><th>학번</th><th>휴대폰</th><th>기수</th><th>소속 팀</th><th>활동 상태</th><th>SSO 연결</th><th>역할</th><th class="text-right">권한 변경</th><th class="text-right">관리</th></tr></thead>
             <tbody data-member-list>
             <tr data-member-state>
-                <td colspan="9" class="px-5 py-11 text-center">
+                <td colspan="10" class="px-5 py-11 text-center">
                     <b class="block text-sm font-extrabold" data-member-state-title>멤버 목록을 불러오는 중입니다</b>
                     <p class="mt-1 text-xs text-muted-foreground" data-member-state-message>잠시만 기다려 주세요.</p>
                     <button type="button" class="mx-auto mt-4 hidden min-h-11 rounded-md border bg-card px-4 text-xs font-bold" data-member-retry>다시 시도</button>
@@ -56,6 +57,7 @@
         <tr>
             <td class="min-w-40 whitespace-nowrap"><span class="flex items-center gap-2"><span data-member-avatar class="flex size-7 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-foreground"></span><b data-member-name></b></span></td>
             <td class="whitespace-nowrap" data-member-student-no></td>
+            <td class="whitespace-nowrap tabular-nums" data-member-phone></td>
             <td class="whitespace-nowrap" data-member-cohort></td>
             <td class="whitespace-nowrap" data-member-team></td>
             <td class="whitespace-nowrap" data-member-status></td>
@@ -78,6 +80,16 @@
                 <div><label class="${label}" for="mbCohort">기수 <span class="text-accent-foreground">*</span></label><select class="${input}" id="mbCohort"><option value="">기수를 선택해 주세요</option></select></div>
                 <p class="hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-xs text-destructive" data-member-form-error role="alert"></p>
             </div>
+        </jsp:body>
+    </t:modal>
+
+    <t:modal id="cohortModal" title="기수 관리" description="기수 이름을 추가하면 멤버 등록과 기수 변경에서 바로 선택할 수 있어요.">
+        <jsp:attribute name="footer"><t:button variant="outline" action="close-modal">취소</t:button><t:button pageAction="cohort-add">기수 추가</t:button></jsp:attribute>
+        <jsp:body>
+            <label class="${label}" for="cohortName">새 기수 이름 <span class="text-accent-foreground">*</span></label>
+            <input class="${input}" id="cohortName" type="text" maxlength="30" placeholder="예) 1-2">
+            <p class="mt-2 text-xs leading-5 text-muted-foreground">기수는 삭제하지 않고 추가만 할 수 있어요. 등록된 멤버와 변경 이력은 그대로 유지됩니다.</p>
+            <p class="mt-3 hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-xs text-destructive" data-cohort-form-error role="alert"></p>
         </jsp:body>
     </t:modal>
 

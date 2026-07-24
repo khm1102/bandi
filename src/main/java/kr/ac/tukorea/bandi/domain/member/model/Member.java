@@ -16,6 +16,7 @@ public class Member {
     private final String studentNo;
     private final String name;
     private final String department;
+    private final String phoneNumber;
     private final AcademicStatus academicStatus;
     private final LocalDateTime academicStatusVerifiedDttm;
     private final Long teamId;
@@ -28,7 +29,7 @@ public class Member {
     private final Long registeredByMemberId;
     private final Long profilePhotoFileId;
 
-    public Member(Long memberId, String studentNo, String name, String department,
+    public Member(Long memberId, String studentNo, String name, String department, String phoneNumber,
                   AcademicStatus academicStatus, LocalDateTime academicStatusVerifiedDttm,
                   Long teamId, Long cohortId, ClubRole role, MemberStatus status,
                   SsoLinkStatus ssoLinkStatus, LocalDateTime ssoLinkedDttm,
@@ -38,6 +39,7 @@ public class Member {
         this.studentNo = studentNo;
         this.name = name;
         this.department = department;
+        this.phoneNumber = phoneNumber;
         this.academicStatus = academicStatus;
         this.academicStatusVerifiedDttm = academicStatusVerifiedDttm;
         this.teamId = teamId;
@@ -55,8 +57,20 @@ public class Member {
                   AcademicStatus academicStatus, LocalDateTime academicStatusVerifiedDttm,
                   Long teamId, Long cohortId, ClubRole role, MemberStatus status,
                   SsoLinkStatus ssoLinkStatus, LocalDateTime ssoLinkedDttm,
+                  LocalDateTime lastLoginDttm, Long registeredByMemberId,
+                  Long profilePhotoFileId) {
+        this(memberId, studentNo, name, department, null, academicStatus,
+                academicStatusVerifiedDttm, teamId, cohortId, role, status,
+                ssoLinkStatus, ssoLinkedDttm, lastLoginDttm, registeredByMemberId,
+                profilePhotoFileId);
+    }
+
+    public Member(Long memberId, String studentNo, String name, String department,
+                  AcademicStatus academicStatus, LocalDateTime academicStatusVerifiedDttm,
+                  Long teamId, Long cohortId, ClubRole role, MemberStatus status,
+                  SsoLinkStatus ssoLinkStatus, LocalDateTime ssoLinkedDttm,
                   LocalDateTime lastLoginDttm, Long registeredByMemberId) {
-        this(memberId, studentNo, name, department, academicStatus,
+        this(memberId, studentNo, name, department, null, academicStatus,
                 academicStatusVerifiedDttm, teamId, cohortId, role, status,
                 ssoLinkStatus, ssoLinkedDttm, lastLoginDttm, registeredByMemberId, null);
     }
@@ -67,7 +81,7 @@ public class Member {
      */
     public static Member preRegister(String studentNo, String name, Long teamId, Long cohortId,
                                      ClubRole role, Long registeredByMemberId) {
-        return new Member(null, studentNo, name, null, null, null,
+        return new Member(null, studentNo, name, null, null, null, null,
                 teamId, cohortId, role, MemberStatus.PRE_REGISTERED,
                 SsoLinkStatus.WAITING, null, null, registeredByMemberId, null);
     }

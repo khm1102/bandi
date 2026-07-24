@@ -16,6 +16,7 @@ import kr.ac.tukorea.bandi.domain.member.mapper.CohortMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.MemberMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.TeamMapper;
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
+import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
 import kr.ac.tukorea.bandi.domain.member.model.Team;
 import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
@@ -47,16 +48,18 @@ public class MemberProfileService {
             Long actorMemberId, MemberPageSearchParam param) {
         Member actor = findMember(actorMemberId);
         MemberAccessContext access = MemberAccessContext.from(actor);
-        if (!access.canManageGlobal() && !access.canManageTeam(actor.getTeamId())) {
+        if (actor.getRole() != ClubRole.LEADER || !access.canManageTeam(actor.getTeamId())) {
             throw new MemberManagementForbiddenException(actorMemberId);
         }
-        Long teamId = access.canManageGlobal() ? param.teamId() : actor.getTeamId();
-        MemberPageSearchCondition condition = MemberPageSearchCondition.forTeam(param, teamId);
+        MemberPageSearchCondition condition = MemberPageSearchCondition.forTeam(param, actor.getTeamId());
         Map<Long, String> teamNames = teamMapper.searchAll().stream()
                 .collect(Collectors.toMap(Team::getTeamId, Team::getName));
+        Map<Long, String> cohortNames = cohortMapper.searchAll().stream()
+                .collect(Collectors.toMap(Cohort::getCohortId, Cohort::getName));
         List<TeamMemberResponse> items = memberMapper.searchPage(condition).stream()
                 .map(member -> TeamMemberResponse.from(member,
-                        teamNames.getOrDefault(member.getTeamId(), "알 수 없는 팀")))
+                        teamNames.getOrDefault(member.getTeamId(), "알 수 없는 팀"),
+                        cohortNames.getOrDefault(member.getCohortId(), "미분류")))
                 .toList();
         return PageResponse.of(items, param.page(), param.pageSize(),
                 memberMapper.countByPageCondition(condition));

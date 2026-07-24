@@ -7,6 +7,7 @@ import kr.ac.tukorea.bandi.domain.member.dto.request.RoleChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.StatusChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.TeamChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberHistoryResponse;
+import kr.ac.tukorea.bandi.domain.member.dto.response.CohortResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberProfileResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberStatsResponse;
@@ -218,6 +219,34 @@ class MemberApiControllerTest {
         verify(memberService).preRegister(ACTOR_ID,
                 new MemberPreRegisterParam("2026184000", "김하늘", 2L,
                         3L));
+    }
+
+    @Test
+    void 관리자가_기수를_추가하고_생성_위치를_반환한다() throws Exception {
+        given(memberService.createCohort(ACTOR_ID, "1-2"))
+                .willReturn(new CohortResponse(4L, "1-2", true));
+
+        mockMvc.perform(post("/api/members/cohorts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": " 1-2 "}
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location",
+                        "/api/members/reference/cohorts/4"))
+                .andExpect(jsonPath("$.name").value("1-2"))
+                .andExpect(jsonPath("$.active").value(true));
+
+        verify(memberService).createCohort(ACTOR_ID, "1-2");
+    }
+
+    @Test
+    void 빈_기수명은_C001을_반환한다() throws Exception {
+        mockMvc.perform(post("/api/members/cohorts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\": \" \"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("C001"));
     }
 
     @Test

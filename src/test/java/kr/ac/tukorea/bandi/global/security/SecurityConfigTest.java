@@ -21,6 +21,7 @@ import static org.springframework.security.test.web.servlet.request.SecurityMock
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
@@ -176,7 +177,7 @@ class SecurityConfigTest {
     }
 
     @Test
-    void 프로필은_로그인_멤버가_보고_수정하며_팀_멤버_관리는_팀장_이상만_한다()
+    void 프로필은_로그인_멤버가_보고_수정하며_팀_멤버_관리는_팀장만_한다()
             throws Exception {
         mockMvc.perform(get("/profile").with(user("member").roles("MEMBER")))
                 .andExpect(status().isOk());
@@ -191,8 +192,32 @@ class SecurityConfigTest {
                 .andExpect(status().isOk());
         mockMvc.perform(get("/team-members").with(user("member").roles("MEMBER")))
                 .andExpect(status().isForbidden());
+        mockMvc.perform(get("/team-members").with(user("admin").roles("ADMIN")))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(get("/api/members/team-members")
+                        .with(user("admin").roles("ADMIN")))
+                .andExpect(status().isForbidden());
         mockMvc.perform(get("/api/members/team-members").with(user("member").roles("LEADER")))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    void 기수_추가는_관리자만_가능하고_기수_변경은_팀장과_관리자가_요청할_수_있다()
+            throws Exception {
+        mockMvc.perform(post("/api/members/cohorts")
+                        .with(user("leader").roles("LEADER")).with(csrf()))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/members/cohorts")
+                        .with(user("admin").roles("ADMIN")).with(csrf()))
+                .andExpect(status().isOk());
+        mockMvc.perform(patch("/api/members/1/cohort")
+                        .with(user("member").roles("MEMBER")).with(csrf()))
+                .andExpect(status().isForbidden());
+        for (String role : new String[]{"LEADER", "ADMIN"}) {
+            mockMvc.perform(patch("/api/members/1/cohort")
+                            .with(user("operator").roles(role)).with(csrf()))
+                    .andExpect(status().isOk());
+        }
     }
 
     @Test
@@ -267,6 +292,7 @@ class SecurityTestController {
     @GetMapping({"/dashboard", "/members/test",
             "/dispatch-target", "/api/test", "/api/members/me",
             "/api/members/reference/teams",
+            "/api/members/reference/cohorts",
             "/profile", "/team-members", "/api/members/me/profile",
             "/api/members/1/profile-photo", "/api/members/team-members",
             "/api/internal-notice-management/test", "/notices/manage",
@@ -277,7 +303,8 @@ class SecurityTestController {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping({"/api/test", "/api/internal-notices/1/share-link"})
+    @PostMapping({"/api/test", "/api/internal-notices/1/share-link",
+            "/api/members/cohorts"})
     ResponseEntity<Void> change() {
         return ResponseEntity.ok().build();
     }
@@ -304,6 +331,11 @@ class SecurityTestController {
 
     @PutMapping("/api/members/me/profile-photo")
     ResponseEntity<Void> updateProfilePhoto() {
+        return ResponseEntity.ok().build();
+    }
+
+    @org.springframework.web.bind.annotation.PatchMapping("/api/members/1/cohort")
+    ResponseEntity<Void> updateCohort() {
         return ResponseEntity.ok().build();
     }
 }

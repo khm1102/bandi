@@ -32,7 +32,7 @@ Controller → Service → Mapper → Model
 
 | feature | 책임 |
 | --- | --- |
-| `member` | 멤버 사전 등록, 학교 SSO 연결, 내 프로필, 팀·기수·역할·상태와 이력 |
+| `member` | 멤버 사전 등록, 학교 SSO 연결·휴대폰 동기화, 내 프로필, 팀·기수·역할·상태와 이력 |
 | `calendar` | 전체·팀 일정 관리 |
 | `notice` | 내부 공지, 읽음 상태 및 첨부 연결 |
 | `resource` | 공용 Markdown 자료, 현재 첨부와 서버 수집 링크 카드 |
@@ -52,8 +52,9 @@ Controller → Service → Mapper → Model
 - Swagger 계약은 `global.swagger` 인터페이스에만 둔다.
 - 파일은 Spring Boot가 권한을 확인한 뒤 직접 스트리밍한다.
 - `/profile`과 `/api/members/me/**`는 로그인 멤버가 사용한다. `/team-members`와
-  `/api/members/team-members`는 `LEADER`·`ADMIN`만 URL 단계에서 허용하고,
-  팀·대상 범위는 `MemberService`가 다시 검사한다.
+  `/api/members/team-members`는 `LEADER`만 URL 단계에서 허용하고, 현재 소속 팀 범위는
+  `MemberProfileService`가 다시 검사한다. `ADMIN`의 전체 멤버·팀·기수 관리는 `/members`에
+  집중한다.
 - `/notices`는 인증 멤버의 내부 공지 목록·상세 화면이며, `/notices/write`와
   `/notices/{id}/edit`, `/notices/manage`, `/notices/manage/{id}`는 `LEADER`·`ADMIN`만
   URL 단계에서 허용한다. 일반 상세의 `canManage`도 실제 공지 대상과 로그인 멤버의 팀

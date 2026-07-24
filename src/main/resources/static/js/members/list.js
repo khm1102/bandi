@@ -7,6 +7,8 @@ import {badge, closeActionModal} from '../common/view.js';
 
 const ACTIONS = Object.freeze({
     ADD_MEMBER: 'member-add',
+    OPEN_COHORT_MODAL: 'cohort-add-open',
+    ADD_COHORT: 'cohort-add',
     SAVE_ROLE: 'member-role-save',
     MANAGE_OPEN: 'member-manage-open',
     SAVE_CHANGE: 'member-change-save',
@@ -126,6 +128,7 @@ function appendMemberRow(member) {
             Array.from(member.name)[0] || '?';
     lookup('[data-member-name]', row).textContent = member.name;
     lookup('[data-member-student-no]', row).textContent = member.studentNo;
+    lookup('[data-member-phone]', row).textContent = member.phoneNumber || '—';
     lookup('[data-member-cohort]', row).appendChild(badge(
             cohortsById.get(member.cohortId)?.name || '미분류', 'info'));
     lookup('[data-member-team]', row).textContent =
@@ -314,7 +317,7 @@ function appendFilterOptions(selector, items, idKey) {
     });
 }
 
-async function initialize() {
+async function refreshReferences() {
     const [nextTeams, nextCohorts, stats] = await Promise.all([
         get('/api/members/reference/teams'),
         get('/api/members/reference/cohorts'),
@@ -326,9 +329,18 @@ async function initialize() {
     cohortsById = new Map(cohorts.map((cohort) => [cohort.cohortId, cohort]));
     setSelectOptions('mbTeam', teams, 'teamId');
     setSelectOptions('mbCohort', cohorts, 'cohortId');
+    ['team', 'cohort'].forEach((filter) => {
+        const select = lookup(`[data-member-filter="${filter}"]`);
+        const placeholder = select.firstElementChild;
+        select.replaceChildren(placeholder);
+    });
     appendFilterOptions('[data-member-filter="team"]', teams, 'teamId');
     appendFilterOptions('[data-member-filter="cohort"]', cohorts, 'cohortId');
     renderStats(stats);
+}
+
+async function initialize() {
+    await refreshReferences();
     await loadMembers();
 }
 
@@ -356,6 +368,30 @@ async function addMember(trigger) {
         await loadMembers();
     } catch (error) {
         setInlineError('[data-member-form-error]', errorMessage(error));
+    } finally {
+        trigger.disabled = false;
+    }
+}
+
+function openCohortModal(trigger) {
+    document.getElementById('cohortName').value = '';
+    setInlineError('[data-cohort-form-error]', '');
+    openModal('cohortModal', trigger);
+    document.getElementById('cohortName').focus();
+}
+
+async function addCohort(trigger) {
+    const name = readValue('cohortName');
+    setInlineError('[data-cohort-form-error]', '');
+    trigger.disabled = true;
+    try {
+        const cohort = await post('/api/members/cohorts', {name});
+        closeActionModal(trigger);
+        await refreshReferences();
+        await loadMembers();
+        showToast(`${cohort.name} 기수를 추가했어요.`);
+    } catch (error) {
+        setInlineError('[data-cohort-form-error]', errorMessage(error));
     } finally {
         trigger.disabled = false;
     }
@@ -591,6 +627,8 @@ document.getElementById('memberChangeType')
 
 bindPageActions({
     [ACTIONS.ADD_MEMBER]: addMember,
+    [ACTIONS.OPEN_COHORT_MODAL]: openCohortModal,
+    [ACTIONS.ADD_COHORT]: addCohort,
     [ACTIONS.SAVE_ROLE]: saveRole,
     [ACTIONS.MANAGE_OPEN]: prepareMemberChange,
     [ACTIONS.SAVE_CHANGE]: saveMemberChange,

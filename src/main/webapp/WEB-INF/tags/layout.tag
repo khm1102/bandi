@@ -14,7 +14,7 @@
 <t:head title="${title}"/>
 <jsp:invoke fragment="css"/>
 </head>
-<body>
+<body data-user-role="<c:out value='${empty role ? "member" : role}'/>">
 <a href="#mainContent" class="fixed left-4 top-4 z-50 -translate-y-24 rounded-md bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-transform focus:translate-y-0">본문으로 바로가기</a>
 <div class="min-h-screen lg:flex">
     <header class="sticky top-0 z-30 flex h-14 items-center border-b bg-card px-4 lg:hidden">

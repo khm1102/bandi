@@ -5,7 +5,6 @@ import kr.ac.tukorea.bandi.domain.member.mapper.MemberMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.TeamMapper;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
-import kr.ac.tukorea.bandi.domain.member.model.CohortTerm;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
 import kr.ac.tukorea.bandi.domain.member.model.MemberStatus;
 import kr.ac.tukorea.bandi.domain.member.model.SsoLinkStatus;
@@ -45,8 +44,7 @@ class ResourceMapperTest {
     @BeforeEach
     void setUp() {
         Team team = teamMapper.searchAll().get(0);
-        Cohort cohort = new Cohort(null, "26-자료공유", (short) 2026,
-                CohortTerm.SECOND, true);
+        Cohort cohort = new Cohort(null, "26-자료공유", true);
         cohortMapper.insert(cohort);
         Member member = new Member(null, "2026000100", "자료작성자", null, null, null,
                 team.getTeamId(), cohort.getCohortId(), ClubRole.MEMBER,

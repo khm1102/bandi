@@ -11,7 +11,6 @@ import kr.ac.tukorea.bandi.domain.member.mapper.TeamMapper;
 import kr.ac.tukorea.bandi.domain.member.model.AcademicStatus;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
-import kr.ac.tukorea.bandi.domain.member.model.CohortTerm;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
 import kr.ac.tukorea.bandi.domain.member.model.MemberStatus;
 import kr.ac.tukorea.bandi.domain.member.model.SsoLinkStatus;
@@ -83,11 +82,11 @@ class MemberServiceTransactionTest {
         actorTeamId = teams.get(2).getTeamId();
         stageTeamId = teams.get(3).getTeamId();
 
-        Cohort cohort = new Cohort(null, "트랜잭션검증기수", (short) 2999, CohortTerm.FIRST, true);
+        Cohort cohort = new Cohort(null, "트랜잭션검증기수", true);
         cohortMapper.insert(cohort);
         cohortId = cohort.getCohortId();
 
-        Cohort newCohort = new Cohort(null, "트랜잭션검증새기수", (short) 2998, CohortTerm.SECOND, true);
+        Cohort newCohort = new Cohort(null, "트랜잭션검증새기수", true);
         cohortMapper.insert(newCohort);
         newCohortId = newCohort.getCohortId();
 

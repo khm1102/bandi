@@ -8,7 +8,6 @@ import kr.ac.tukorea.bandi.domain.member.mapper.MemberMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.TeamMapper;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
-import kr.ac.tukorea.bandi.domain.member.model.CohortTerm;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
 import kr.ac.tukorea.bandi.domain.member.model.MemberStatus;
 import kr.ac.tukorea.bandi.domain.member.model.SsoLinkStatus;
@@ -61,7 +60,7 @@ class CalendarEventMapperTest {
         operatorTeamId = teams.stream().filter(team -> team.getName().equals("오퍼팀"))
                 .findFirst().orElseThrow().getTeamId();
 
-        Cohort cohort = new Cohort(null, "26-2기", (short) 2026, CohortTerm.SECOND, true);
+        Cohort cohort = new Cohort(null, "26-2기", true);
         cohortMapper.insert(cohort);
         Member actor = new Member(null, "2021184000", "김하늘", null, null, null,
                 stageTeamId, cohort.getCohortId(), ClubRole.ADMIN, MemberStatus.ACTIVE,

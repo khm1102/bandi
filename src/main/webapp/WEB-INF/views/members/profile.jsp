@@ -53,6 +53,7 @@
             <p class="mt-1 text-sm leading-6 text-muted-foreground">학교에서 확인한 정보예요. 직접 수정할 수 없고 다음 로그인 때 갱신돼요.</p>
             <dl class="mt-4 grid gap-x-8 border-y sm:grid-cols-2">
                 <div class="grid grid-cols-[7rem_1fr] gap-3 py-3 text-sm"><dt class="font-bold text-muted-foreground">학과</dt><dd data-profile-department>—</dd></div>
+                <div class="grid grid-cols-[7rem_1fr] gap-3 py-3 text-sm"><dt class="font-bold text-muted-foreground">휴대폰</dt><dd class="tabular-nums" data-profile-phone-number>—</dd></div>
                 <div class="grid grid-cols-[7rem_1fr] gap-3 py-3 text-sm"><dt class="font-bold text-muted-foreground">학적</dt><dd data-profile-academic-status>—</dd></div>
                 <div class="grid grid-cols-[7rem_1fr] gap-3 py-3 text-sm"><dt class="font-bold text-muted-foreground">SSO 연결</dt><dd data-profile-sso-status>—</dd></div>
                 <div class="grid grid-cols-[7rem_1fr] gap-3 py-3 text-sm"><dt class="font-bold text-muted-foreground">마지막 확인</dt><dd class="tabular-nums" data-profile-verified-at>—</dd></div>

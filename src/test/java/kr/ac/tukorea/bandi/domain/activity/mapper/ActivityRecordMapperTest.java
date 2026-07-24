@@ -18,7 +18,6 @@ import kr.ac.tukorea.bandi.domain.member.mapper.MemberMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.TeamMapper;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
-import kr.ac.tukorea.bandi.domain.member.model.CohortTerm;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
 import kr.ac.tukorea.bandi.domain.member.model.MemberStatus;
 import kr.ac.tukorea.bandi.domain.member.model.SsoLinkStatus;
@@ -72,8 +71,7 @@ class ActivityRecordMapperTest {
         List<Team> teams = teamMapper.searchAll();
         stageTeamId = teamId(teams, "무대팀");
         operatorTeamId = teamId(teams, "오퍼팀");
-        Cohort cohort = new Cohort(null, "26-활동", (short) 2026,
-                CohortTerm.SECOND, true);
+        Cohort cohort = new Cohort(null, "26-활동", true);
         cohortMapper.insert(cohort);
         adminId = insertMember("2026000201", "운영진", stageTeamId,
                 cohort.getCohortId(), ClubRole.ADMIN);

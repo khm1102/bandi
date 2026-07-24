@@ -1,5 +1,6 @@
 import {ApiError, get, patch} from '../common/api.js';
 import {debounce, element, lookup, readValue} from '../common/dom.js';
+import {closeModal, openModal} from '../common/modal.js';
 import {renderPagination, readPageFromUrl, setUrlPage, writeUrl, normalizePage} from '../common/pagination.js';
 import {showToast} from '../common/toast.js';
 
@@ -7,9 +8,23 @@ const PAGE_SIZE = 20;
 const root = lookup('[data-team-members-root]');
 const searchInput = lookup('[data-team-members-search]');
 const pagination = lookup('[data-pagination]');
+const changeModal = lookup('#teamMemberChangeModal');
+const changeForm = lookup('[data-team-member-change-form]');
+const changeTeamSelect = lookup('[data-team-member-team-select]');
+const changeReason = lookup('[data-team-member-reason]');
+const changeError = lookup('[data-team-member-change-error]');
+const changeSubmit = lookup('[data-team-member-change-submit]');
+const cohortModal = lookup('#teamMemberCohortModal');
+const cohortForm = lookup('[data-team-member-cohort-form]');
+const cohortSelect = lookup('[data-team-member-cohort-select]');
+const cohortReason = lookup('[data-team-member-cohort-reason]');
+const cohortError = lookup('[data-team-member-cohort-error]');
+const cohortSubmit = lookup('[data-team-member-cohort-submit]');
 let members = [];
 let teams = [];
-let selectedMember = null;
+let cohorts = [];
+let selectedTeamMember = null;
+let selectedCohortMember = null;
 let requestGeneration = 0;
 
 function messageFrom(error) {
@@ -77,35 +92,110 @@ function renderMembers(filtered) {
         lookup('[data-team-member-name]', row).textContent = member.name;
         const role = member.role === 'LEADER' ? '팀장' : member.role === 'ADMIN' ? '운영진' : '일반 부원';
         lookup('[data-team-member-meta]', row).textContent = `${member.studentNo} · ${role}`;
+        lookup('[data-team-member-phone]', row).textContent = member.phoneNumber
+            ? `휴대폰 ${member.phoneNumber}` : '휴대폰 정보 없음';
         lookup('[data-team-member-team]', row).textContent = member.teamName;
-        lookup('[data-team-member-change-open]', row).addEventListener('click', () => selectMember(member.memberId));
+        lookup('[data-team-member-cohort]', row).textContent = member.cohortName || '미분류';
+        lookup('[data-team-member-change-open]', row).addEventListener('click', (event) => {
+            selectTeamMember(member.memberId, event.currentTarget);
+        });
+        lookup('[data-team-member-cohort-open]', row).addEventListener('click', (event) => {
+            selectCohortMember(member.memberId, event.currentTarget);
+        });
         list.appendChild(row);
     });
 }
 
 function renderTeamOptions() {
-    const select = lookup('[data-team-member-team-select]');
-    select.replaceChildren();
+    changeTeamSelect.replaceChildren();
     teams.forEach((team) => {
         const option = element('option', '', team.name);
         option.value = String(team.teamId);
-        option.selected = team.teamId === selectedMember.teamId;
-        select.appendChild(option);
+        option.selected = team.teamId === selectedTeamMember.teamId;
+        changeTeamSelect.appendChild(option);
     });
 }
 
-function selectMember(memberId) {
-    selectedMember = members.find((member) => member.memberId === memberId);
-    if (!selectedMember) {
+function renderCohortOptions() {
+    cohortSelect.replaceChildren();
+    cohorts.forEach((cohort) => {
+        const option = element('option', '', cohort.name);
+        option.value = String(cohort.cohortId);
+        option.selected = cohort.cohortId === selectedCohortMember.cohortId;
+        cohortSelect.appendChild(option);
+    });
+}
+
+function clearChangeError() {
+    changeError.classList.add('hidden');
+    changeError.textContent = '';
+    changeTeamSelect.removeAttribute('aria-invalid');
+    changeReason.removeAttribute('aria-invalid');
+}
+
+function selectTeamMember(memberId, trigger) {
+    selectedTeamMember = members.find((member) => member.memberId === memberId);
+    if (!selectedTeamMember) {
         return;
     }
-    lookup('[data-team-member-change-section]').classList.remove('hidden');
     lookup('[data-team-member-change-summary]').textContent =
-            `${selectedMember.name} · 현재 ${selectedMember.teamName}`;
-    lookup('[data-team-member-reason]').value = '';
-    lookup('[data-team-member-change-error]').classList.add('hidden');
+            `${selectedTeamMember.name} · 현재 ${selectedTeamMember.teamName}`;
+    changeReason.value = '';
+    clearChangeError();
     renderTeamOptions();
-    lookup('[data-team-member-change-section]').scrollIntoView({block: 'nearest'});
+    openModal('teamMemberChangeModal', trigger);
+    changeTeamSelect.focus();
+}
+
+function selectCohortMember(memberId, trigger) {
+    selectedCohortMember = members.find((member) => member.memberId === memberId);
+    if (!selectedCohortMember) {
+        return;
+    }
+    lookup('[data-team-member-cohort-summary]').textContent =
+            `${selectedCohortMember.name} · 현재 ${selectedCohortMember.cohortName || '미분류'}`;
+    cohortReason.value = '';
+    clearCohortError();
+    renderCohortOptions();
+    openModal('teamMemberCohortModal', trigger);
+    cohortSelect.focus();
+}
+
+function clearSelectedTeamMember() {
+    selectedTeamMember = null;
+    changeReason.value = '';
+    clearChangeError();
+}
+
+function clearSelectedCohortMember() {
+    selectedCohortMember = null;
+    cohortReason.value = '';
+    clearCohortError();
+}
+
+function clearCohortError() {
+    cohortError.classList.add('hidden');
+    cohortError.textContent = '';
+    cohortSelect.removeAttribute('aria-invalid');
+    cohortReason.removeAttribute('aria-invalid');
+}
+
+function focusMemberChangeButton(memberId) {
+    const row = Array.from(lookup('[data-team-members-list]').querySelectorAll('[data-team-member-row]'))
+            .find((candidate) => candidate.dataset.memberId === String(memberId));
+    if (!row) {
+        return;
+    }
+    lookup('[data-team-member-change-open]', row).focus({preventScroll: true});
+}
+
+function focusMemberCohortButton(memberId) {
+    const row = Array.from(lookup('[data-team-members-list]').querySelectorAll('[data-team-member-row]'))
+            .find((candidate) => candidate.dataset.memberId === String(memberId));
+    if (!row) {
+        return;
+    }
+    lookup('[data-team-member-cohort-open]', row).focus({preventScroll: true});
 }
 
 function replaceFilters(changes) {
@@ -176,44 +266,73 @@ async function loadMembers(focus = false) {
 
 async function changeTeam(event) {
     event.preventDefault();
-    if (!selectedMember) {
+    if (!selectedTeamMember) {
         return;
     }
-    const error = lookup('[data-team-member-change-error]');
+    const changedMember = selectedTeamMember;
     const newTeamId = Number(readValue('teamMemberTeam'));
     const reason = readValue('teamMemberReason');
-    const submit = lookup('[data-team-member-change-submit]');
     if (!reason) {
-        error.textContent = '변경 사유를 입력해 주세요.';
-        error.classList.remove('hidden');
+        changeError.textContent = '변경 사유를 입력해 주세요.';
+        changeError.classList.remove('hidden');
+        changeReason.setAttribute('aria-invalid', 'true');
+        changeReason.focus();
         return;
     }
-    submit.disabled = true;
-    error.classList.add('hidden');
+    changeSubmit.disabled = true;
+    clearChangeError();
     try {
-        await patch(`/api/members/${selectedMember.memberId}/team`, {newTeamId, reason});
-        showToast(`${selectedMember.name}님의 소속 팀을 변경했어요.`);
-        selectedMember = null;
-        lookup('[data-team-member-change-section]').classList.add('hidden');
+        await patch(`/api/members/${changedMember.memberId}/team`, {newTeamId, reason});
+        showToast(`${changedMember.name}님의 소속 팀을 변경했어요.`);
+        closeModal(changeModal);
+        clearSelectedTeamMember();
         await loadMembers();
+        focusMemberChangeButton(changedMember.memberId);
     } catch (requestError) {
-        error.textContent = messageFrom(requestError);
-        error.classList.remove('hidden');
+        changeError.textContent = messageFrom(requestError);
+        changeError.classList.remove('hidden');
     } finally {
-        submit.disabled = false;
+        changeSubmit.disabled = false;
+    }
+}
+
+async function changeCohort(event) {
+    event.preventDefault();
+    if (!selectedCohortMember) {
+        return;
+    }
+    const changedMember = selectedCohortMember;
+    const newCohortId = Number(readValue('teamMemberCohort'));
+    const reason = readValue('teamMemberCohortReason');
+    if (!reason) {
+        cohortError.textContent = '변경 사유를 입력해 주세요.';
+        cohortError.classList.remove('hidden');
+        cohortReason.setAttribute('aria-invalid', 'true');
+        cohortReason.focus();
+        return;
+    }
+    cohortSubmit.disabled = true;
+    clearCohortError();
+    try {
+        await patch(`/api/members/${changedMember.memberId}/cohort`, {newCohortId, reason});
+        showToast(`${changedMember.name}님의 기수를 변경했어요.`);
+        closeModal(cohortModal);
+        clearSelectedCohortMember();
+        await loadMembers();
+        focusMemberCohortButton(changedMember.memberId);
+    } catch (requestError) {
+        cohortError.textContent = messageFrom(requestError);
+        cohortError.classList.remove('hidden');
+    } finally {
+        cohortSubmit.disabled = false;
     }
 }
 
 async function initialize() {
-    teams = await get('/api/members/reference/teams');
-    const teamFilter = lookup('[data-team-members-filter="team"]', root);
-    if (teamFilter) {
-        teams.forEach((team) => {
-            const option = element('option', '', team.name);
-            option.value = String(team.teamId);
-            teamFilter.appendChild(option);
-        });
-    }
+    [teams, cohorts] = await Promise.all([
+        get('/api/members/reference/teams'),
+        get('/api/members/reference/cohorts'),
+    ]);
     await loadMembers();
 }
 
@@ -229,10 +348,33 @@ lookup('[data-team-members-reset]').addEventListener('click', () => {
     loadMembers();
 });
 window.addEventListener('popstate', () => loadMembers(true));
-lookup('[data-team-member-change-form]').addEventListener('submit', changeTeam);
+changeForm.addEventListener('submit', changeTeam);
+cohortForm.addEventListener('submit', changeCohort);
 lookup('[data-team-member-change-cancel]').addEventListener('click', () => {
-    selectedMember = null;
-    lookup('[data-team-member-change-section]').classList.add('hidden');
+    closeModal(changeModal);
+    clearSelectedTeamMember();
 });
+lookup('[data-team-member-cohort-cancel]').addEventListener('click', () => {
+    closeModal(cohortModal);
+    clearSelectedCohortMember();
+});
+changeModal.addEventListener('click', (event) => {
+    if (event.target === changeModal || event.target.closest('[data-action="close-modal"]')) {
+        clearSelectedTeamMember();
+    }
+});
+cohortModal.addEventListener('click', (event) => {
+    if (event.target === cohortModal || event.target.closest('[data-action="close-modal"]')) {
+        clearSelectedCohortMember();
+    }
+});
+document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !changeModal.classList.contains('hidden')) {
+        clearSelectedTeamMember();
+    }
+    if (event.key === 'Escape' && !cohortModal.classList.contains('hidden')) {
+        clearSelectedCohortMember();
+    }
+}, true);
 
 initialize().catch((error) => setState('팀 멤버 관리 화면을 준비하지 못했어요.', messageFrom(error), true));

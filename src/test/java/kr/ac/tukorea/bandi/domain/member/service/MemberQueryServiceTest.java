@@ -15,7 +15,6 @@ import kr.ac.tukorea.bandi.domain.member.mapper.TeamMapper;
 import kr.ac.tukorea.bandi.domain.member.model.AcademicStatus;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
-import kr.ac.tukorea.bandi.domain.member.model.CohortTerm;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
 import kr.ac.tukorea.bandi.domain.member.model.MemberCohortHistory;
 import kr.ac.tukorea.bandi.domain.member.model.MemberRoleHistory;
@@ -154,10 +153,8 @@ class MemberQueryServiceTest {
     @Test
     void 활성_기수만_조회한다() {
         given(cohortMapper.searchAll()).willReturn(List.of(
-                new Cohort(1L, "26-2기", (short) 2026,
-                        CohortTerm.SECOND, true),
-                new Cohort(2L, "25-1기", (short) 2025,
-                        CohortTerm.FIRST, false)));
+                new Cohort(1L, "26-2기", true),
+                new Cohort(2L, "25-1기", false)));
 
         List<CohortResponse> result = memberService.searchCohorts(true);
 
