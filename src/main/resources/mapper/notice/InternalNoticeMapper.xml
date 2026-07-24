@@ -86,6 +86,7 @@
             <arg column="is_important" javaType="_boolean"/>
             <arg column="publish_start_dttm" javaType="java.time.LocalDateTime"/>
             <arg column="publish_end_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="created_by_member_id" javaType="java.lang.Long"/>
             <arg column="created_by_name" javaType="java.lang.String"/>
             <arg column="published_by_name" javaType="java.lang.String"/>
             <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
@@ -169,6 +170,35 @@
         FOR UPDATE
     </select>
 
+    <select id="lookupShareTokenForUpdate" resultType="string">
+        SELECT share_token
+        FROM internal_notice
+        WHERE internal_notice_id = #{internalNoticeId}
+          AND deleted_dttm IS NULL
+        FOR UPDATE
+    </select>
+
+    <select id="lookupPublicShare"
+            resultType="kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticePublicShareResponse">
+        SELECT internal_notice_id, title
+        FROM internal_notice
+        WHERE share_token = #{shareToken}
+          AND deleted_dttm IS NULL
+          AND status_code = 'PUBLISHED'
+          AND publish_start_dttm &lt;= #{currentDttm}
+          AND (publish_end_dttm IS NULL OR publish_end_dttm &gt; #{currentDttm})
+    </select>
+
+    <select id="existsShareToken" resultType="boolean">
+        SELECT EXISTS (
+            SELECT 1
+            FROM internal_notice
+            WHERE internal_notice_id = #{internalNoticeId}
+              AND share_token IS NOT NULL
+              AND deleted_dttm IS NULL
+        )
+    </select>
+
     <select id="searchManageable" resultMap="manageSummaryResultMap">
         SELECT n.internal_notice_id, n.target_scope_code, n.team_id,
                t.name AS team_name, n.title, n.status_code, n.is_important,
@@ -237,6 +267,7 @@
         SELECT n.internal_notice_id, n.target_scope_code, n.team_id,
                t.name AS team_name, n.title, n.body, n.is_important,
                n.publish_start_dttm, n.publish_end_dttm,
+               n.created_by_member_id,
                creator.name AS created_by_name,
                publisher.name AS published_by_name, n.updated_dttm
         FROM internal_notice n
@@ -297,6 +328,13 @@
             publish_end_dttm = #{publishEndDttm},
             updated_by_member_id = #{updatedByMemberId},
             published_by_member_id = #{publishedByMemberId}
+        WHERE internal_notice_id = #{internalNoticeId}
+          AND deleted_dttm IS NULL
+    </update>
+
+    <update id="updateShareToken">
+        UPDATE internal_notice
+        SET share_token = #{shareToken}
         WHERE internal_notice_id = #{internalNoticeId}
           AND deleted_dttm IS NULL
     </update>

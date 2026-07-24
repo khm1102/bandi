@@ -32,6 +32,9 @@
     <sql id="visible">deleted_dttm IS NULL</sql>
     <select id="lookupById" resultMap="resource">SELECT resource_id,title,body_markdown,created_by_member_id,updated_by_member_id,created_dttm,updated_dttm,deleted_dttm FROM resource WHERE resource_id=#{resourceId} AND <include refid="visible"/></select>
     <select id="lookupByIdForUpdate" resultMap="resource">SELECT resource_id,title,body_markdown,created_by_member_id,updated_by_member_id,created_dttm,updated_dttm,deleted_dttm FROM resource WHERE resource_id=#{resourceId} AND <include refid="visible"/> FOR UPDATE</select>
+    <select id="lookupShareTokenForUpdate" resultType="string">SELECT share_token FROM resource WHERE resource_id=#{resourceId} AND <include refid="visible"/> FOR UPDATE</select>
+    <select id="lookupPublicShare" resultType="kr.ac.tukorea.bandi.domain.resource.dto.response.ResourcePublicShareResponse">SELECT resource_id,title FROM resource WHERE share_token=#{shareToken} AND <include refid="visible"/></select>
+    <select id="existsShareToken" resultType="boolean">SELECT EXISTS(SELECT 1 FROM resource WHERE resource_id=#{resourceId} AND share_token IS NOT NULL AND <include refid="visible"/>)</select>
     <select id="search" resultType="kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceSummaryResponse">
         SELECT r.resource_id,r.title,r.body_markdown,creator.name AS created_by_name,r.updated_dttm,
                (SELECT COUNT(*) FROM resource_file rf WHERE rf.resource_id=r.resource_id) AS attachment_count,
@@ -51,6 +54,7 @@
     <select id="existsPreviewImage" resultType="boolean">SELECT EXISTS(SELECT 1 FROM resource_link_preview lp JOIN resource r ON r.resource_id=lp.resource_id WHERE lp.resource_id=#{resourceId} AND lp.preview_image_file_id=#{storedFileId} AND r.deleted_dttm IS NULL)</select>
     <insert id="insert" useGeneratedKeys="true" keyProperty="resourceId">INSERT INTO resource(title,body_markdown,created_by_member_id,updated_by_member_id) VALUES(#{title},#{bodyMarkdown},#{createdByMemberId},#{updatedByMemberId})</insert>
     <update id="update">UPDATE resource SET title=#{title},body_markdown=#{bodyMarkdown},updated_by_member_id=#{updatedByMemberId} WHERE resource_id=#{resourceId} AND deleted_dttm IS NULL</update>
+    <update id="updateShareToken">UPDATE resource SET share_token=#{shareToken} WHERE resource_id=#{resourceId} AND deleted_dttm IS NULL</update>
     <update id="delete">UPDATE resource SET deleted_dttm=CURRENT_TIMESTAMP(6) WHERE resource_id=#{resourceId} AND deleted_dttm IS NULL</update>
     <delete id="removeFiles">DELETE FROM resource_file WHERE resource_id=#{resourceId}</delete>
     <insert id="insertFile">INSERT INTO resource_file(resource_id,stored_file_id,display_order,uploaded_by_member_id) VALUES(#{resourceId},#{storedFileId},#{displayOrder},#{uploadedByMemberId})</insert>

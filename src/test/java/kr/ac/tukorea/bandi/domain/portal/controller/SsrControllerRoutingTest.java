@@ -168,7 +168,7 @@ class SsrControllerRoutingTest {
         return new InternalNoticeDetailResponse(10L, InternalNoticeTargetScope.ALL,
                 null, null, "공지", null, false,
                 LocalDateTime.of(2026, 7, 23, 16, 30), null, "작성자", "관리자",
-                LocalDateTime.of(2026, 7, 23, 17, 10), true, List.of());
+                LocalDateTime.of(2026, 7, 23, 17, 10), true, false, false, List.of());
     }
 
     private InternalNoticeManageDetailResponse manageNoticeDetail() {

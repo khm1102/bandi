@@ -1,12 +1,20 @@
 <%@ tag description="공통 head — 메타/폰트/토큰/Tailwind 매핑 (공유 자원, 22.5)" pageEncoding="UTF-8" trimDirectiveWhitespaces="true" %>
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ attribute name="title" required="true" %>
+<%@ attribute name="description" %>
+<%@ attribute name="robots" %>
+<%@ attribute name="openGraphTitle" %>
+<%@ attribute name="openGraphDescription" %>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="_csrf" content="${_csrf.token}">
 <meta name="_csrf_header" content="${_csrf.headerName}">
 <meta name="theme-color" content="#0b1f33">
 <title><c:out value="${title}"/> - bandi</title>
+<c:if test="${not empty description}"><meta name="description" content="<c:out value='${description}'/>"></c:if>
+<c:if test="${not empty robots}"><meta name="robots" content="<c:out value='${robots}'/>"></c:if>
+<c:if test="${not empty openGraphTitle}"><meta property="og:title" content="<c:out value='${openGraphTitle}'/>"></c:if>
+<c:if test="${not empty openGraphDescription}"><meta property="og:description" content="<c:out value='${openGraphDescription}'/>"></c:if>
 <link rel="icon" href="<c:url value='/images/favicon.svg'/>" type="image/svg+xml" sizes="any">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

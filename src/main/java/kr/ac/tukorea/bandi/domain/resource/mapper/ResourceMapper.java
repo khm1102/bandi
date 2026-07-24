@@ -3,6 +3,7 @@ package kr.ac.tukorea.bandi.domain.resource.mapper;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceFileLinkResponse;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceLinkPreviewResponse;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceSummaryResponse;
+import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourcePublicShareResponse;
 import kr.ac.tukorea.bandi.domain.resource.model.Resource;
 import kr.ac.tukorea.bandi.domain.resource.model.ResourceFile;
 import org.apache.ibatis.annotations.Param;
@@ -49,6 +50,15 @@ public interface ResourceMapper {
     int removeLinkPreviews(Long resourceId);
 
     int insertLinkPreview(ResourceLinkPreviewRow preview);
+
+    Optional<String> lookupShareTokenForUpdate(Long resourceId);
+
+    Optional<ResourcePublicShareResponse> lookupPublicShare(String shareToken);
+
+    boolean existsShareToken(Long resourceId);
+
+    int updateShareToken(@Param("resourceId") Long resourceId,
+                         @Param("shareToken") String shareToken);
 
     record ResourceDetailRow(Long resourceId, String title, String bodyMarkdown,
                              String createdByName, String updatedByName,

@@ -21,6 +21,8 @@ public final class InternalNoticeDetailViewResponse {
     private final String publishedAt;
     private final String updatedAt;
     private final boolean canManage;
+    private final boolean canIssuePublicShare;
+    private final boolean shareEnabled;
     private final List<Attachment> attachments;
 
     private InternalNoticeDetailViewResponse(Long internalNoticeId, boolean teamNotice,
@@ -28,7 +30,8 @@ public final class InternalNoticeDetailViewResponse {
                                              SafeMarkdownHtml bodyHtml, boolean important,
                                              String createdByName, String publishedByName,
                                              String publishedAt, String updatedAt,
-                                             boolean canManage, List<Attachment> attachments) {
+                                             boolean canManage, boolean canIssuePublicShare,
+                                             boolean shareEnabled, List<Attachment> attachments) {
         this.internalNoticeId = internalNoticeId;
         this.teamNotice = teamNotice;
         this.teamName = teamName;
@@ -40,6 +43,8 @@ public final class InternalNoticeDetailViewResponse {
         this.publishedAt = publishedAt;
         this.updatedAt = updatedAt;
         this.canManage = canManage;
+        this.canIssuePublicShare = canIssuePublicShare;
+        this.shareEnabled = shareEnabled;
         this.attachments = List.copyOf(attachments);
     }
 
@@ -51,7 +56,7 @@ public final class InternalNoticeDetailViewResponse {
                 response.publishedByName(),
                 dateTimeFormatter.format(response.publishStartDttm()),
                 response.updatedDttm() == null ? "" : dateTimeFormatter.format(response.updatedDttm()),
-                response.canManage(),
+                response.canManage(), response.canIssuePublicShare(), response.shareEnabled(),
                 response.attachments().stream().map(Attachment::from).toList());
     }
 

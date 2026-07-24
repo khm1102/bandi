@@ -9,6 +9,7 @@ import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceDetailResponse;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceIdentifierResponse;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceSummaryResponse;
 import kr.ac.tukorea.bandi.global.response.PageResponse;
+import kr.ac.tukorea.bandi.global.response.ShareLinkResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
@@ -39,6 +40,18 @@ public interface ResourceApiDocs {
     @Operation(summary = "자료 상세 조회")
     @GetMapping("/{resourceId}")
     ResponseEntity<ResourceDetailResponse> lookup(
+            @Parameter(hidden = true) @LoginMember Long memberId,
+            @PathVariable Long resourceId);
+
+    @Operation(summary = "자료 제목 공개 공유 링크 발급")
+    @PostMapping("/{resourceId}/share-link")
+    ResponseEntity<ShareLinkResponse> issueShareLink(
+            @Parameter(hidden = true) @LoginMember Long memberId,
+            @PathVariable Long resourceId);
+
+    @Operation(summary = "자료 제목 공개 공유 링크 중단")
+    @DeleteMapping("/{resourceId}/share-link")
+    ResponseEntity<Void> revokeShareLink(
             @Parameter(hidden = true) @LoginMember Long memberId,
             @PathVariable Long resourceId);
 

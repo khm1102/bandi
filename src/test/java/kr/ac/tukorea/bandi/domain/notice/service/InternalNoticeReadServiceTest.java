@@ -273,7 +273,7 @@ class InternalNoticeReadServiceTest {
                                                    Long teamId) {
         return new InternalNoticeContentResponse(NOTICE_ID, scope, teamId, "무대팀",
                 "공지 제목", "공지 본문", true, NOW.minusHours(1), NOW.plusDays(1),
-                "김현민", "이서준", NOW.minusHours(1));
+                MEMBER_ID, "김현민", "이서준", NOW.minusHours(1));
     }
 
     private InternalNotice notice(InternalNoticeTargetScope scope, Long teamId) {

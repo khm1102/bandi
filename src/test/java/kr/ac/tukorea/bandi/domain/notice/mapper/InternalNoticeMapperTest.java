@@ -206,6 +206,32 @@ class InternalNoticeMapperTest {
     }
 
     @Test
+    void 게시_중인_공지의_공유_토큰만_공개_조회하고_중단하면_즉시_숨긴다() {
+        InternalNotice notice = draft(InternalNoticeTargetScope.ALL, null, "공유 공지")
+                .publish(NOW.minusHours(1), NOW.plusDays(1), adminMemberId, NOW);
+        internalNoticeMapper.insert(notice);
+        String shareToken = "A0a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6q7R8s9T0";
+
+        internalNoticeMapper.updateShareToken(notice.getInternalNoticeId(), shareToken);
+
+        assertThat(internalNoticeMapper.lookupShareTokenForUpdate(
+                notice.getInternalNoticeId())).contains(shareToken);
+        assertThat(internalNoticeMapper.lookupPublicShare(shareToken, NOW))
+                .isPresent()
+                .get()
+                .extracting("title")
+                .isEqualTo("공유 공지");
+        assertThat(internalNoticeMapper.lookupReadableContent(notice.getInternalNoticeId(),
+                NOW, stageTeamId, false)).isPresent().get()
+                .extracting("createdByMemberId")
+                .isEqualTo(adminMemberId);
+
+        internalNoticeMapper.updateShareToken(notice.getInternalNoticeId(), null);
+
+        assertThat(internalNoticeMapper.lookupPublicShare(shareToken, NOW)).isEmpty();
+    }
+
+    @Test
     void 팀_공지_읽음_현황은_해당_팀의_활성_멤버만_포함한다() {
         InternalNotice notice = publish(draft(InternalNoticeTargetScope.TEAM,
                 stageTeamId, "무대 읽음"));

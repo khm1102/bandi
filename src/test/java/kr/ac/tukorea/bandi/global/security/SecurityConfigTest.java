@@ -50,6 +50,21 @@ class SecurityConfigTest {
     }
 
     @Test
+    void 공개_공유_페이지는_비로그인도_열고_공유_API는_인증과_CSRF를_요구한다()
+            throws Exception {
+        mockMvc.perform(get("/share/test"))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/internal-notices/1/share-link").with(csrf()))
+                .andExpect(status().isUnauthorized());
+        mockMvc.perform(post("/api/internal-notices/1/share-link")
+                        .with(user("member").roles("MEMBER")))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(post("/api/internal-notices/1/share-link")
+                        .with(user("member").roles("MEMBER")).with(csrf()))
+                .andExpect(status().isOk());
+    }
+
+    @Test
     void 일반_멤버와_팀장은_관리자_화면에_접근할_수_없다() throws Exception {
         for (String role : new String[]{"MEMBER", "LEADER"}) {
             mockMvc.perform(get("/members/test").with(user("tester").roles(role)))
@@ -238,12 +253,12 @@ class SecurityTestController {
             "/api/members/1/profile-photo", "/api/members/team-members",
             "/api/internal-notice-management/test", "/notices/manage",
             "/notices/manage/1", "/activity-documents",
-            "/api/activity-report-documents/blank"})
+            "/api/activity-report-documents/blank", "/share/test"})
     ResponseEntity<Void> page() {
         return ResponseEntity.ok().build();
     }
 
-    @PostMapping("/api/test")
+    @PostMapping({"/api/test", "/api/internal-notices/1/share-link"})
     ResponseEntity<Void> change() {
         return ResponseEntity.ok().build();
     }

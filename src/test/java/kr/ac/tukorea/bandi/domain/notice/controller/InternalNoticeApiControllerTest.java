@@ -178,6 +178,22 @@ class InternalNoticeApiControllerTest {
     }
 
     @Test
+    void 공지_작성자_또는_관리자는_제목_공개_공유_링크를_발급하고_중단한다()
+            throws Exception {
+        given(internalNoticeService.issuePublicShare(ACTOR_ID, NOTICE_ID))
+                .willReturn("share-token");
+
+        mockMvc.perform(post("/api/internal-notices/{noticeId}/share-link", NOTICE_ID))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.shareUrl").value(
+                        "http://localhost/share/notices/share-token"));
+        mockMvc.perform(delete("/api/internal-notices/{noticeId}/share-link", NOTICE_ID))
+                .andExpect(status().isNoContent());
+
+        verify(internalNoticeService).revokePublicShare(ACTOR_ID, NOTICE_ID);
+    }
+
+    @Test
     void 관리_상세의_첨부파일을_직접_전송한다() throws Exception {
         given(internalNoticeService.openManageableAttachmentDownload(
                 ACTOR_ID, NOTICE_ID, FILE_ID)).willReturn(
