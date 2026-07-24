@@ -4,12 +4,16 @@
 <%@ attribute name="title" required="true" %>
 <%@ attribute name="active" %>
 <%@ attribute name="scriptPath" %>
+<%@ attribute name="description" %>
+<%@ attribute name="robots" %>
+<%@ attribute name="openGraphTitle" %>
+<%@ attribute name="openGraphDescription" %>
 <%@ attribute name="css" fragment="true" %>
 <%@ attribute name="script" fragment="true" %>
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-<t:head title="${title}"/>
+<t:head title="${title}" description="${description}" robots="${robots}" openGraphTitle="${openGraphTitle}" openGraphDescription="${openGraphDescription}"/>
 <jsp:invoke fragment="css"/>
 </head>
 <body class="flex min-h-screen flex-col">

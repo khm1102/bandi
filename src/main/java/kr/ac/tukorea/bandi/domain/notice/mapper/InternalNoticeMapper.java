@@ -5,6 +5,7 @@ import kr.ac.tukorea.bandi.domain.notice.dto.request.InternalNoticeReadableSearc
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeContentResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeManageContentResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeManageSummaryResponse;
+import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticePublicShareResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeReadStatusResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeSummaryResponse;
 import kr.ac.tukorea.bandi.domain.notice.model.InternalNotice;
@@ -74,4 +75,15 @@ public interface InternalNoticeMapper {
                                 @Param("storedFileIds") List<Long> storedFileIds);
 
     List<Long> searchAttachmentFileIds(Long internalNoticeId);
+
+    Optional<String> lookupShareTokenForUpdate(Long internalNoticeId);
+
+    Optional<InternalNoticePublicShareResponse> lookupPublicShare(
+            @Param("shareToken") String shareToken,
+            @Param("currentDttm") LocalDateTime currentDttm);
+
+    boolean existsShareToken(Long internalNoticeId);
+
+    int updateShareToken(@Param("internalNoticeId") Long internalNoticeId,
+                         @Param("shareToken") String shareToken);
 }

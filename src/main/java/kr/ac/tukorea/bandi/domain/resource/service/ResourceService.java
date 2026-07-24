@@ -11,14 +11,16 @@ import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceDetailResponse;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceFileLinkResponse;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceFileResponse;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceSummaryResponse;
+import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourcePublicShareResponse;
 import kr.ac.tukorea.bandi.domain.resource.exception.ResourceAccessDeniedException;
 import kr.ac.tukorea.bandi.domain.resource.exception.ResourceNotFoundException;
 import kr.ac.tukorea.bandi.domain.resource.mapper.ResourceMapper;
 import kr.ac.tukorea.bandi.domain.resource.model.Resource;
 import kr.ac.tukorea.bandi.domain.resource.model.ResourceFile;
+import kr.ac.tukorea.bandi.domain.share.service.ShareTokenGenerator;
 import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
 import kr.ac.tukorea.bandi.global.response.PageResponse;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,7 +30,6 @@ import java.util.List;
 import java.util.Set;
 
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ResourceService {
     private final ResourceMapper resourceMapper;
@@ -37,6 +38,30 @@ public class ResourceService {
     private final MarkdownRenderer markdownRenderer;
     private final ResourceLinkPreviewFetcher linkPreviewFetcher;
     private final ResourceLinkPreviewRetirementService linkPreviewRetirementService;
+    private final ShareTokenGenerator shareTokenGenerator;
+
+    @Autowired
+    public ResourceService(ResourceMapper resourceMapper, MemberService memberService,
+                           FileService fileService, MarkdownRenderer markdownRenderer,
+                           ResourceLinkPreviewFetcher linkPreviewFetcher,
+                           ResourceLinkPreviewRetirementService linkPreviewRetirementService,
+                           ShareTokenGenerator shareTokenGenerator) {
+        this.resourceMapper = resourceMapper;
+        this.memberService = memberService;
+        this.fileService = fileService;
+        this.markdownRenderer = markdownRenderer;
+        this.linkPreviewFetcher = linkPreviewFetcher;
+        this.linkPreviewRetirementService = linkPreviewRetirementService;
+        this.shareTokenGenerator = shareTokenGenerator;
+    }
+
+    ResourceService(ResourceMapper resourceMapper, MemberService memberService,
+                    FileService fileService, MarkdownRenderer markdownRenderer,
+                    ResourceLinkPreviewFetcher linkPreviewFetcher,
+                    ResourceLinkPreviewRetirementService linkPreviewRetirementService) {
+        this(resourceMapper, memberService, fileService, markdownRenderer,
+                linkPreviewFetcher, linkPreviewRetirementService, new ShareTokenGenerator());
+    }
 
     public PageResponse<ResourceSummaryResponse> search(Long memberId, String keyword, int page, int pageSize) {
         requireReadable(memberId);
@@ -51,7 +76,30 @@ public class ResourceService {
                 .collect(java.util.stream.Collectors.toMap(ResourceFileResponse::storedFileId,
                         file -> "/api/resources/" + resourceId + "/files/" + file.storedFileId() + "/inline"));
         return new ResourceDetailResponse(row.resourceId(), row.title(), row.createdByName(), row.updatedByName(), row.createdDttm(), row.updatedDttm(), row.bodyMarkdown(),
-                markdownRenderer.renderInternalImagesOnly(row.bodyMarkdown(), imageUrls), files, resourceMapper.searchLinkPreviews(resourceId), canManage(memberId, row.createdByMemberId()));
+                markdownRenderer.renderInternalImagesOnly(row.bodyMarkdown(), imageUrls), files, resourceMapper.searchLinkPreviews(resourceId), canManage(memberId, row.createdByMemberId()),
+                canManage(memberId, row.createdByMemberId()), resourceMapper.existsShareToken(resourceId));
+    }
+
+    @Transactional
+    public String issuePublicShare(Long memberId, Long resourceId) {
+        requireReadable(memberId);
+        Resource resource = lock(resourceId);
+        requireManager(memberId, resource);
+        return resourceMapper.lookupShareTokenForUpdate(resourceId)
+                .orElseGet(() -> createPublicShareToken(resourceId));
+    }
+
+    @Transactional
+    public void revokePublicShare(Long memberId, Long resourceId) {
+        requireReadable(memberId);
+        Resource resource = lock(resourceId);
+        requireManager(memberId, resource);
+        resourceMapper.updateShareToken(resourceId, null);
+    }
+
+    public ResourcePublicShareResponse lookupPublicShare(String shareToken) {
+        return resourceMapper.lookupPublicShare(shareToken)
+                .orElseThrow(() -> new ResourceNotFoundException(null));
     }
 
     public kr.ac.tukorea.bandi.domain.notice.service.SafeMarkdownHtml preview(Long memberId, String bodyMarkdown) {
@@ -163,4 +211,5 @@ public class ResourceService {
     private void requireReadable(Long memberId) { if (!memberService.lookupAccessContext(memberId).canReadInternal()) { throw new ResourceAccessDeniedException(); } }
     private boolean canManage(Long memberId, Long creatorId) { MemberAccessContext access = memberService.lookupAccessContext(memberId); return creatorId.equals(memberId) || access.canManageGlobal(); }
     private void requireManager(Long memberId, Resource resource) { if (!canManage(memberId, resource.getCreatedByMemberId())) { throw new ResourceAccessDeniedException(); } }
+    private String createPublicShareToken(Long resourceId) { String token = shareTokenGenerator.generate(); resourceMapper.updateShareToken(resourceId, token); return token; }
 }

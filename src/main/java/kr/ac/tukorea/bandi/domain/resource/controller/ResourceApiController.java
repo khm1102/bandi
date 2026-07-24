@@ -7,6 +7,7 @@ import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceSummaryResponse;
 import kr.ac.tukorea.bandi.domain.resource.service.ResourceService;
 import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
 import kr.ac.tukorea.bandi.global.response.PageResponse;
+import kr.ac.tukorea.bandi.global.response.ShareLinkResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import kr.ac.tukorea.bandi.global.swagger.ResourceApiDocs;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -47,6 +49,22 @@ public class ResourceApiController implements ResourceApiDocs {
     public ResponseEntity<ResourceDetailResponse> lookup(
             @LoginMember Long memberId, @PathVariable Long resourceId) {
         return ResponseEntity.ok(resourceService.lookup(memberId, resourceId));
+    }
+
+    @Override
+    public ResponseEntity<ShareLinkResponse> issueShareLink(
+            @LoginMember Long memberId, Long resourceId) {
+        String token = resourceService.issuePublicShare(memberId, resourceId);
+        return ResponseEntity.ok(new ShareLinkResponse(ServletUriComponentsBuilder
+                .fromCurrentContextPath().path("/share/resources/{shareToken}")
+                .buildAndExpand(token).toUriString()));
+    }
+
+    @Override
+    public ResponseEntity<Void> revokeShareLink(@LoginMember Long memberId,
+                                                 Long resourceId) {
+        resourceService.revokePublicShare(memberId, resourceId);
+        return ResponseEntity.noContent().build();
     }
 
     @Override

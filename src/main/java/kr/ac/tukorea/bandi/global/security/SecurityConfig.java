@@ -12,6 +12,8 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
+import org.springframework.security.web.savedrequest.RequestCache;
 
 @Configuration
 @EnableWebSecurity
@@ -27,6 +29,7 @@ public class SecurityConfig {
             throws Exception {
         PathPatternRequestMatcher apiRequestMatcher =
                 PathPatternRequestMatcher.withDefaults().matcher("/api/**");
+        RequestCache requestCache = requestCache();
         http.authenticationProvider(authenticationProvider);
         http.authorizeHttpRequests(authorize -> authorize
                 .dispatcherTypeMatchers(DispatcherType.FORWARD,
@@ -35,6 +38,7 @@ public class SecurityConfig {
                         .atCommonLocations()).permitAll()
                 .requestMatchers("/", "/login", "/error", "/performances/**", "/reserve/**", "/docs/**",
                         "/api-docs/**", "/swagger-ui/**").permitAll()
+                .requestMatchers("/share/**").permitAll()
                 .requestMatchers("/api/public-notices/**").permitAll()
                 .requestMatchers("/api/public-performances/**",
                         "/api/public-policies/**",
@@ -68,12 +72,13 @@ public class SecurityConfig {
                         new NegatedRequestMatcher(apiRequestMatcher))
                 .defaultAccessDeniedHandlerFor(apiSecurityFailureHandler,
                         apiRequestMatcher));
+        http.requestCache(cache -> cache.requestCache(requestCache));
         http.formLogin(form -> form
                 .loginPage("/login")
                 .loginProcessingUrl("/login")
                 .usernameParameter("studentNo")
                 .passwordParameter("password")
-                .defaultSuccessUrl("/dashboard", true)
+                .successHandler(new SafeSavedRequestAuthenticationSuccessHandler(requestCache))
                 .failureHandler(loginFailureHandler)
                 .permitAll());
         http.logout(logout -> logout
@@ -84,5 +89,17 @@ public class SecurityConfig {
                 .deleteCookies("SESSION", "JSESSIONID")
                 .permitAll());
         return http.build();
+    }
+
+    private RequestCache requestCache() {
+        HttpSessionRequestCache requestCache = new HttpSessionRequestCache();
+        requestCache.setRequestMatcher(request -> {
+            if (!HttpMethod.GET.matches(request.getMethod())) {
+                return false;
+            }
+            String path = request.getRequestURI().substring(request.getContextPath().length());
+            return !path.equals("/login") && !path.equals("/logout");
+        });
+        return requestCache;
     }
 }

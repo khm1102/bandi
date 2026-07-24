@@ -21,6 +21,7 @@ import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeDetailRespon
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeManageContentResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeManageDetailResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeManageSummaryResponse;
+import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticePublicShareResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeReadStatusResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeSummaryResponse;
 import kr.ac.tukorea.bandi.domain.notice.exception.InternalNoticeAccessDeniedException;
@@ -30,7 +31,8 @@ import kr.ac.tukorea.bandi.domain.notice.mapper.InternalNoticeMapper;
 import kr.ac.tukorea.bandi.domain.notice.model.InternalNotice;
 import kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeAttachment;
 import kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeTargetScope;
-import lombok.RequiredArgsConstructor;
+import kr.ac.tukorea.bandi.domain.share.service.ShareTokenGenerator;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,7 +45,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class InternalNoticeService {
 
@@ -56,6 +57,29 @@ public class InternalNoticeService {
     private final FileService fileService;
     private final MarkdownRenderer markdownRenderer;
     private final Clock clock;
+    private final ShareTokenGenerator shareTokenGenerator;
+
+    @Autowired
+    public InternalNoticeService(InternalNoticeMapper internalNoticeMapper,
+                                 MemberService memberService,
+                                 FileService fileService,
+                                 MarkdownRenderer markdownRenderer,
+                                 Clock clock,
+                                 ShareTokenGenerator shareTokenGenerator) {
+        this.internalNoticeMapper = internalNoticeMapper;
+        this.memberService = memberService;
+        this.fileService = fileService;
+        this.markdownRenderer = markdownRenderer;
+        this.clock = clock;
+        this.shareTokenGenerator = shareTokenGenerator;
+    }
+
+    InternalNoticeService(InternalNoticeMapper internalNoticeMapper,
+                          MemberService memberService, FileService fileService,
+                          MarkdownRenderer markdownRenderer, Clock clock) {
+        this(internalNoticeMapper, memberService, fileService, markdownRenderer, clock,
+                new ShareTokenGenerator());
+    }
 
     @Transactional
     public Long createDraft(Long actorMemberId, InternalNoticeWriteParam param) {
@@ -188,7 +212,34 @@ public class InternalNoticeService {
         List<InternalNoticeAttachmentResponse> attachments = lookupAttachments(internalNoticeId);
         return InternalNoticeDetailResponse.of(content,
                 renderReadableMarkdown(content.body(), internalNoticeId, attachments),
-                canManage(access, content.targetScope(), content.teamId()), attachments);
+                canManage(access, content.targetScope(), content.teamId()),
+                canIssuePublicShare(access, content),
+                internalNoticeMapper.existsShareToken(internalNoticeId), attachments);
+    }
+
+    @Transactional
+    public String issuePublicShare(Long actorMemberId, Long internalNoticeId) {
+        MemberAccessContext access = readableAccess(actorMemberId);
+        InternalNotice notice = lock(internalNoticeId);
+        requirePublicShareIssuer(access, notice, actorMemberId);
+        if (!notice.isPubliclyVisible(LocalDateTime.now(clock))) {
+            throw new InvalidInternalNoticeException("share-status");
+        }
+        return internalNoticeMapper.lookupShareTokenForUpdate(internalNoticeId)
+                .orElseGet(() -> createPublicShareToken(internalNoticeId));
+    }
+
+    @Transactional
+    public void revokePublicShare(Long actorMemberId, Long internalNoticeId) {
+        MemberAccessContext access = readableAccess(actorMemberId);
+        InternalNotice notice = lock(internalNoticeId);
+        requirePublicShareIssuer(access, notice, actorMemberId);
+        internalNoticeMapper.updateShareToken(internalNoticeId, null);
+    }
+
+    public InternalNoticePublicShareResponse lookupPublicShare(String shareToken) {
+        return internalNoticeMapper.lookupPublicShare(shareToken, LocalDateTime.now(clock))
+                .orElseThrow(() -> new InternalNoticeNotFoundException(null));
     }
 
     public FileDownloadResponse openAttachmentDownload(Long memberId, Long internalNoticeId,
@@ -313,6 +364,28 @@ public class InternalNoticeService {
         return scope == InternalNoticeTargetScope.ALL
                 ? access.canManageGlobal()
                 : access.canManageTeam(teamId);
+    }
+
+    private boolean canIssuePublicShare(MemberAccessContext access,
+                                        InternalNoticeContentResponse content) {
+        return content.createdByMemberId().equals(access.memberId())
+                || access.canManageGlobal()
+                || canManage(access, content.targetScope(), content.teamId());
+    }
+
+    private void requirePublicShareIssuer(MemberAccessContext access,
+                                          InternalNotice notice, Long actorMemberId) {
+        if (notice.getCreatedByMemberId().equals(actorMemberId)
+                || canManage(access, notice.getTargetScope(), notice.getTeamId())) {
+            return;
+        }
+        throw new InternalNoticeAccessDeniedException();
+    }
+
+    private String createPublicShareToken(Long internalNoticeId) {
+        String token = shareTokenGenerator.generate();
+        internalNoticeMapper.updateShareToken(internalNoticeId, token);
+        return token;
     }
 
     private void validateActiveTarget(InternalNoticeTargetScope scope, Long teamId) {

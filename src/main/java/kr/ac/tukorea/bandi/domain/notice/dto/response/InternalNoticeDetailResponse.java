@@ -20,6 +20,8 @@ public record InternalNoticeDetailResponse(
         String publishedByName,
         LocalDateTime updatedDttm,
         boolean canManage,
+        boolean canIssuePublicShare,
+        boolean shareEnabled,
         List<InternalNoticeAttachmentResponse> attachments
 ) {
 
@@ -27,12 +29,15 @@ public record InternalNoticeDetailResponse(
             InternalNoticeContentResponse content,
             SafeMarkdownHtml bodyHtml,
             boolean canManage,
+            boolean canIssuePublicShare,
+            boolean shareEnabled,
             List<InternalNoticeAttachmentResponse> attachments) {
         return new InternalNoticeDetailResponse(content.internalNoticeId(),
                 content.targetScope(), content.teamId(), content.teamName(), content.title(),
                 bodyHtml, content.important(), content.publishStartDttm(),
                 content.publishEndDttm(), content.createdByName(),
                 content.publishedByName(), content.updatedDttm(), canManage,
+                canIssuePublicShare, shareEnabled,
                 List.copyOf(attachments));
     }
 }

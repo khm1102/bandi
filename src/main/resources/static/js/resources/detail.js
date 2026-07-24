@@ -1,5 +1,6 @@
 import {del, get} from '../common/api.js';
 import {mountSafeHtml} from '../common/safe-html.js';
+import {initializeShareActions} from '../common/share.js';
 
 const resourceId = Number(window.location.pathname.match(/^\/resources\/(\d+)$/)?.[1]);
 const root = document.querySelector('[data-resource-detail]');
@@ -87,6 +88,17 @@ function render(resource) {
             }
         });
     }
+    const shareButton = document.querySelector('[data-share-button]');
+    shareButton.classList.remove('hidden');
+    shareButton.dataset.shareCanIssue = String(resource.canIssuePublicShare);
+    shareButton.dataset.shareEnabled = String(resource.shareEnabled);
+    shareButton.dataset.shareTitle = resource.title;
+    shareButton.dataset.shareInternalUrl = `/resources/${resource.resourceId}`;
+    shareButton.dataset.shareIssueUrl = `/api/resources/${resource.resourceId}/share-link`;
+    const revokeButton = document.querySelector('[data-share-revoke]');
+    revokeButton.dataset.shareRevokeUrl = `/api/resources/${resource.resourceId}/share-link`;
+    revokeButton.classList.toggle('hidden', !resource.canIssuePublicShare || !resource.shareEnabled);
+    initializeShareActions(root);
 }
 
 get(`/api/resources/${resourceId}`).then(render).catch((error) => {

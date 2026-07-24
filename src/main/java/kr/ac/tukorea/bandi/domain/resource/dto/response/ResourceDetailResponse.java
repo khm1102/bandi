@@ -16,6 +16,8 @@ public record ResourceDetailResponse(
         SafeMarkdownHtml bodyHtml,
         List<ResourceFileResponse> files,
         List<ResourceLinkPreviewResponse> linkPreviews,
-        boolean canManage
+        boolean canManage,
+        boolean canIssuePublicShare,
+        boolean shareEnabled
 ) {
 }

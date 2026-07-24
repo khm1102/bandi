@@ -6,6 +6,7 @@ import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeSummaryRespo
 import kr.ac.tukorea.bandi.domain.notice.service.InternalNoticeService;
 import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
 import kr.ac.tukorea.bandi.global.response.PageResponse;
+import kr.ac.tukorea.bandi.global.response.ShareLinkResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import kr.ac.tukorea.bandi.global.swagger.InternalNoticeApiDocs;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.nio.charset.StandardCharsets;
 @RestController
@@ -36,6 +38,22 @@ public class InternalNoticeApiController implements InternalNoticeApiDocs {
             @LoginMember Long memberId, Long internalNoticeId) {
         return ResponseEntity.ok(internalNoticeService.lookupReadable(memberId,
                 internalNoticeId));
+    }
+
+    @Override
+    public ResponseEntity<ShareLinkResponse> issueShareLink(@LoginMember Long memberId,
+                                                            Long internalNoticeId) {
+        String token = internalNoticeService.issuePublicShare(memberId, internalNoticeId);
+        return ResponseEntity.ok(new ShareLinkResponse(ServletUriComponentsBuilder
+                .fromCurrentContextPath().path("/share/notices/{shareToken}")
+                .buildAndExpand(token).toUriString()));
+    }
+
+    @Override
+    public ResponseEntity<Void> revokeShareLink(@LoginMember Long memberId,
+                                                 Long internalNoticeId) {
+        internalNoticeService.revokePublicShare(memberId, internalNoticeId);
+        return ResponseEntity.noContent().build();
     }
 
     @Override

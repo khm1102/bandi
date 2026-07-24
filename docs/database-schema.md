@@ -42,9 +42,9 @@ HWPX 문서를 임시 저장할 때 현재 회장 이름으로 결과 파일을 
 | 테이블 | 책임 |
 | --- | --- |
 | `calendar_event` | 전체·팀 일정 |
-| `internal_notice`, `internal_notice_attachment` | 내부 공지와 첨부 |
+| `internal_notice`, `internal_notice_attachment` | 내부 공지와 첨부, 선택적 제목 공개 공유 토큰 |
 | `internal_notice_read` | 멤버별 공지 읽음 상태 |
-| `resource`, `resource_file` | 공용 자료 Markdown 원문과 현재 첨부 파일 연결 |
+| `resource`, `resource_file` | 공용 자료 Markdown 원문과 현재 첨부 파일 연결, 선택적 제목 공개 공유 토큰 |
 | `resource_link_preview` | 자료 본문의 HTTPS URL Open Graph 스냅샷 |
 | `resource_link_preview_retirement_manifest` | 더 이상 쓰이지 않는 링크 카드 대표 이미지 파기 재시도 |
 | `activity_record`, `activity_record_file` | 활동 기록과 증빙 파일 |
@@ -66,6 +66,12 @@ HWPX 문서를 임시 저장할 때 현재 회장 이름으로 결과 파일을 
 `DRAFT` 삭제는 `deleted_dttm`을 기록하는 소프트 삭제이며 첨부 연결과 파일 메타데이터는
 미연결 파일 정리 정책이 마련될 때까지 유지한다. 모든 공지 조회는 `deleted_dttm IS NULL`을
 강제한다.
+
+`internal_notice.share_token`과 `resource.share_token`은 각각 nullable unique `VARCHAR(43)`다.
+256비트 난수를 Base64URL로 인코딩한 값만 저장하며, 일반 상세·목록 API에는 반환하지 않는다.
+공지 토큰은 현재 `PUBLISHED` 상태·게시 기간 안에서만, 자료 토큰은 소프트 삭제 전까지만 유효하다.
+공유 중단은 토큰을 `NULL`로 갱신해 기존 주소를 즉시 404로 만들며, 재발급은 새 토큰으로 이전
+주소를 무효화한다.
 
 `resource.body_markdown`은 Markdown 원문만 저장하며 렌더된 HTML은 저장하지 않는다.
 `resource_file`은 현재 첨부 관계와 표시 순서만 관리한다. 단독 줄의 HTTPS URL은

@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeDetailResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeSummaryResponse;
 import kr.ac.tukorea.bandi.global.response.PageResponse;
+import kr.ac.tukorea.bandi.global.response.ShareLinkResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
 import java.util.List;
 
@@ -35,6 +38,18 @@ public interface InternalNoticeApiDocs {
     @Operation(summary = "공지 상세 조회 및 읽음 기록")
     @GetMapping("/{internalNoticeId}")
     ResponseEntity<InternalNoticeDetailResponse> lookup(
+            @Parameter(hidden = true) @LoginMember Long memberId,
+            @PathVariable Long internalNoticeId);
+
+    @Operation(summary = "공지 제목 공개 공유 링크 발급")
+    @PostMapping("/{internalNoticeId}/share-link")
+    ResponseEntity<ShareLinkResponse> issueShareLink(
+            @Parameter(hidden = true) @LoginMember Long memberId,
+            @PathVariable Long internalNoticeId);
+
+    @Operation(summary = "공지 제목 공개 공유 링크 중단")
+    @DeleteMapping("/{internalNoticeId}/share-link")
+    ResponseEntity<Void> revokeShareLink(
             @Parameter(hidden = true) @LoginMember Long memberId,
             @PathVariable Long internalNoticeId);
 

@@ -62,6 +62,14 @@ Controller → Service → Mapper → Model
   `DELETE /api/internal-notice-management/{id}`를 제공한다. 보관은 종료 공지만, 초안 복귀는
   예약·보관 공지만, 소프트 삭제는 초안만 허용한다. 초안 복귀 시 게시 정보와 이전 읽음
   기록을 같은 트랜잭션에서 초기화한다.
+- 공지·자료 상세 응답은 `canIssuePublicShare`, `shareEnabled`만 제공한다. 토큰은 응답에
+  노출하지 않으며, 각각 `POST`·`DELETE /api/internal-notices/{id}/share-link`,
+  `/api/resources/{id}/share-link`에서 작성자·관리 권한을 Service가 재검증해 발급·중단한다.
+  `/share/notices/{token}`, `/share/resources/{token}`은 비로그인에게 제목과 로그인 안내만
+  반환하고 `no-store`, `noindex, noarchive`를 적용한다. 로그인 사용자는 원래 상세로 리다이렉트해
+  기존 접근 검사를 다시 거친다.
+- 로그인 성공은 저장된 동일 출처 GET 요청만 복귀 대상으로 사용한다. `/login`, `/logout`,
+  비GET·외부 출처 요청은 저장하거나 복귀하지 않고 `/dashboard`로 보낸다.
 - 공지 Markdown은 `notice.MarkdownRenderer`가 GFM을 렌더링하고 allowlist sanitizer를
   거친 `SafeMarkdownHtml` 값만 만든다. JSP는 전용 `<t:markdown>` 태그만 이 값을
   원문 출력할 수 있으며, 일반 JSP/JS의 HTML 출력 금지 규칙은 그대로 유지한다.
