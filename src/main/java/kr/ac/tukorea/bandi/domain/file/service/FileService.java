@@ -12,10 +12,17 @@ import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.Set;
 
 @Slf4j
 @Service
 public class FileService {
+
+    private static final long NOTICE_INLINE_IMAGE_MAX_BYTES = 10L * 1024 * 1024;
+    private static final Set<String> NOTICE_INLINE_IMAGE_CONTENT_TYPES = Set.of(
+            "image/jpeg", "image/png", "image/webp");
+    private static final Set<String> ASSET_IMAGE_CONTENT_TYPES = Set.of(
+            "image/jpeg", "image/png", "image/webp");
 
     private final FileContentInspector inspector;
     private final StorageKeyGenerator keyGenerator;
@@ -34,17 +41,41 @@ public class FileService {
     public Long uploadPrivate(FileUploadParam param) {
         FileInspection inspection = inspector.inspect(
                 param.originalName(), param.sizeBytes(), param.contentSource());
-        String storageKey = keyGenerator.generate(param.domain());
+        return uploadPrivate(param, inspection, StoredFile.pending(
+                param.originalName(), StorageScope.PRIVATE,
+                keyGenerator.generate(param.domain()), inspection.contentType(),
+                inspection.sizeBytes(), inspection.sha256Hash(), param.uploadedByMemberId()))
+                .getStoredFileId();
+    }
+
+    public Long uploadProfileImage(FileUploadParam param) {
+        FileInspection inspection = inspector.inspectProfileImage(
+                param.originalName(), param.sizeBytes(), param.contentSource());
+        String storageKey = keyGenerator.generate("member-profile");
+        StoredFile pending = StoredFile.pendingProfileImage(param.originalName(), storageKey,
+                inspection.contentType(), inspection.sizeBytes(), inspection.sha256Hash(),
+                param.uploadedByMemberId());
+        return uploadPrivate(param, inspection, pending).getStoredFileId();
+    }
+
+    public FileReferenceResponse uploadNoticeInlineImage(FileUploadParam param) {
+        FileInspection inspection = inspector.inspectNoticeInlineImage(
+                param.originalName(), param.sizeBytes(), param.contentSource());
         StoredFile pending = StoredFile.pending(param.originalName(), StorageScope.PRIVATE,
-                storageKey, inspection.contentType(), inspection.sizeBytes(),
+                keyGenerator.generate("notice"), inspection.contentType(), inspection.sizeBytes(),
                 inspection.sha256Hash(), param.uploadedByMemberId());
+        return FileReferenceResponse.from(uploadPrivate(param, inspection, pending));
+    }
+
+    private StoredFile uploadPrivate(FileUploadParam param, FileInspection inspection,
+                                     StoredFile pending) {
+        String storageKey = pending.getStorageKey();
         StoredFile created = metadataService.createPending(pending);
 
         try {
             String etag = objectStorage.upload(StorageScope.PRIVATE, storageKey,
                     inspection.contentType(), inspection.sizeBytes(), param.contentSource());
-            StoredFile ready = metadataService.markReady(created.getStoredFileId(), etag);
-            return ready.getStoredFileId();
+            return metadataService.markReady(created.getStoredFileId(), etag);
         } catch (RuntimeException exception) {
             compensateFailure(created.getStoredFileId(), StorageScope.PRIVATE, storageKey);
             throw exception;
@@ -57,6 +88,12 @@ public class FileService {
         }
         StoredFile file = metadataService.lookup(storedFileId);
         file.validatePrivateDownload();
+        return download(file, StorageScope.PRIVATE);
+    }
+
+    public FileDownloadResponse openProfileImageDownload(Long storedFileId) {
+        StoredFile file = metadataService.lookup(storedFileId);
+        file.validateProfileImage();
         return download(file, StorageScope.PRIVATE);
     }
 
@@ -74,11 +111,77 @@ public class FileService {
         return FileReferenceResponse.from(lookupPrivateStoredFile(storedFileId));
     }
 
+    public FileReferenceResponse lookupPrivateReadyForUpdate(Long storedFileId) {
+        return FileReferenceResponse.from(validatePrivateStoredFile(
+                metadataService.lookupForUpdate(storedFileId)));
+    }
+
     public void validatePrivateReadyOwnedBy(Long storedFileId, Long memberId) {
         StoredFile file = lookupPrivateStoredFile(storedFileId);
         if (!file.isUploadedBy(memberId)) {
             throw new FileAccessDeniedException();
         }
+    }
+
+    public void validatePrivateImageReadyOwnedBy(Long storedFileId, Long memberId) {
+        StoredFile file = lookupPrivateStoredFile(storedFileId);
+        if (!file.isUploadedBy(memberId)) {
+            throw new FileAccessDeniedException();
+        }
+        if (!ASSET_IMAGE_CONTENT_TYPES.contains(file.getContentType())) {
+            throw new InvalidFileException("contentType");
+        }
+    }
+
+    public FileReferenceResponse lookupPrivateNoticeInlineImage(Long storedFileId) {
+        StoredFile file = lookupPrivateStoredFile(storedFileId);
+        validateNoticeInlineImage(file);
+        return FileReferenceResponse.from(file);
+    }
+
+    public void validatePrivateNoticeInlineImageOwnedBy(Long storedFileId, Long memberId) {
+        StoredFile file = lookupPrivateStoredFile(storedFileId);
+        if (!file.isUploadedBy(memberId)) {
+            throw new FileAccessDeniedException();
+        }
+        validateNoticeInlineImage(file);
+    }
+
+    public FileDownloadResponse openPrivateNoticeInlineImage(Long storedFileId,
+                                                              FileAccessDecision accessDecision) {
+        if (accessDecision != FileAccessDecision.GRANTED) {
+            throw new FileAccessDeniedException();
+        }
+        StoredFile file = lookupPrivateStoredFile(storedFileId);
+        validateNoticeInlineImage(file);
+        return download(file, StorageScope.PRIVATE);
+    }
+
+    public FileDownloadResponse openPrivateNoticeInlineImageOwnedBy(Long storedFileId,
+                                                                     Long memberId) {
+        StoredFile file = lookupPrivateStoredFile(storedFileId);
+        if (!file.isUploadedBy(memberId)) {
+            throw new FileAccessDeniedException();
+        }
+        validateNoticeInlineImage(file);
+        return download(file, StorageScope.PRIVATE);
+    }
+
+    public void validateProfileImageReadyOwnedBy(Long storedFileId, Long memberId) {
+        StoredFile file = metadataService.lookup(storedFileId);
+        file.validateProfileImage();
+        if (!file.isUploadedBy(memberId)) {
+            throw new FileAccessDeniedException();
+        }
+    }
+
+    public StoredFile lookupProfileImageReadyOwnedBy(Long storedFileId, Long memberId) {
+        StoredFile file = metadataService.lookup(storedFileId);
+        file.validateProfileImage();
+        if (!file.isUploadedBy(memberId)) {
+            throw new FileAccessDeniedException();
+        }
+        return file;
     }
 
     public void validatePublicReady(Long storedFileId) {
@@ -136,9 +239,20 @@ public class FileService {
     }
 
     private StoredFile lookupPrivateStoredFile(Long storedFileId) {
-        StoredFile file = metadataService.lookup(storedFileId);
+        return validatePrivateStoredFile(metadataService.lookup(storedFileId));
+    }
+
+    private StoredFile validatePrivateStoredFile(StoredFile file) {
         file.validatePrivateDownload();
+        file.validateGeneralPurpose();
         return file;
+    }
+
+    private void validateNoticeInlineImage(StoredFile file) {
+        if (file.getSizeBytes() > NOTICE_INLINE_IMAGE_MAX_BYTES
+                || !NOTICE_INLINE_IMAGE_CONTENT_TYPES.contains(file.getContentType())) {
+            throw new InvalidFileException("invalid-notice-inline-image");
+        }
     }
 
     private FileDownloadResponse download(StoredFile file, StorageScope scope) {

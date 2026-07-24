@@ -1,7 +1,9 @@
 package kr.ac.tukorea.bandi.domain.member.controller;
 
 import kr.ac.tukorea.bandi.domain.member.dto.request.CohortChangeRequest;
+import kr.ac.tukorea.bandi.domain.member.dto.request.CohortCreateRequest;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPreRegisterRequest;
+import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchFilter;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchCondition;
 import kr.ac.tukorea.bandi.domain.member.dto.request.RoleChangeRequest;
@@ -10,13 +12,25 @@ import kr.ac.tukorea.bandi.domain.member.dto.request.TeamChangeRequest;
 import kr.ac.tukorea.bandi.domain.member.dto.response.CohortResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberCreatedResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberHistoryResponse;
+import kr.ac.tukorea.bandi.domain.member.dto.response.MemberProfileResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberResponse;
+import kr.ac.tukorea.bandi.domain.member.dto.response.MemberStatsResponse;
+import kr.ac.tukorea.bandi.domain.member.dto.response.TeamMemberResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.TeamResponse;
+import kr.ac.tukorea.bandi.domain.member.service.MemberProfileService;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
+import kr.ac.tukorea.bandi.domain.file.service.FileUploadParam;
+import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import kr.ac.tukorea.bandi.global.swagger.MemberApiDocs;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.core.io.Resource;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URI;
@@ -27,6 +41,7 @@ import java.util.List;
 public class MemberApiController implements MemberApiDocs {
 
     private final MemberService memberService;
+    private final MemberProfileService memberProfileService;
 
     @Override
     public ResponseEntity<MemberResponse> lookupLoginMember(
@@ -35,13 +50,65 @@ public class MemberApiController implements MemberApiDocs {
     }
 
     @Override
-    public ResponseEntity<List<MemberResponse>> searchMembers(
+    public ResponseEntity<MemberProfileResponse> lookupLoginMemberProfile(
+            @LoginMember Long memberId) {
+        return ResponseEntity.ok(memberProfileService.lookupProfile(memberId));
+    }
+
+    @Override
+    public ResponseEntity<MemberProfileResponse> uploadLoginMemberProfilePhoto(
+            @LoginMember Long memberId, MultipartFile file) {
+        MemberProfileResponse response = memberProfileService.uploadProfilePhoto(memberId,
+                new FileUploadParam("member-profile", file.getOriginalFilename(), file.getSize(),
+                        file::getInputStream, memberId));
+        return ResponseEntity.ok(response);
+    }
+
+    @Override
+    public ResponseEntity<Void> deleteLoginMemberProfilePhoto(
+            @LoginMember Long memberId) {
+        memberProfileService.deleteProfilePhoto(memberId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public ResponseEntity<Resource> openProfilePhoto(
+            @LoginMember Long requesterMemberId, Long memberId) {
+        FileDownloadResponse download = memberProfileService.openProfilePhoto(
+                requesterMemberId, memberId);
+        return ResponseEntity.ok()
+                .contentType(MediaType.parseMediaType(download.contentType()))
+                .contentLength(download.sizeBytes())
+                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.inline()
+                        .filename(download.originalName()).build().toString())
+                .body(download.resource());
+    }
+
+    @Override
+    public ResponseEntity<PageResponse<TeamMemberResponse>> searchTeamMembers(
+            @LoginMember Long memberId, String keyword, Long teamId,
+            MemberSearchFilter filter, int page, int pageSize) {
+        return ResponseEntity.ok(memberProfileService.searchTeamMembers(memberId,
+                new MemberPageSearchParam(keyword, teamId, null, filter.status(),
+                        null, null, page, pageSize)));
+    }
+
+    @Override
+    public ResponseEntity<PageResponse<MemberResponse>> searchMembers(
             String keyword,
             Long teamId,
-            MemberSearchFilter filter) {
-        return ResponseEntity.ok(memberService.searchMembers(
-                new MemberSearchCondition(keyword, teamId, filter.status(),
-                        filter.role(), filter.ssoLinkStatus())));
+            Long cohortId,
+            MemberSearchFilter filter,
+            int page,
+            int pageSize) {
+        return ResponseEntity.ok(memberService.searchMemberPage(
+                new MemberPageSearchParam(keyword, teamId, cohortId, filter.status(),
+                        filter.role(), filter.ssoLinkStatus(), page, pageSize)));
+    }
+
+    @Override
+    public ResponseEntity<MemberStatsResponse> lookupMemberStats() {
+        return ResponseEntity.ok(memberService.lookupMemberStats());
     }
 
     @Override
@@ -64,6 +131,15 @@ public class MemberApiController implements MemberApiDocs {
                 request.toParam());
         return ResponseEntity.created(URI.create("/api/members/" + memberId))
                 .body(new MemberCreatedResponse(memberId));
+    }
+
+    @Override
+    public ResponseEntity<CohortResponse> createCohort(
+            @LoginMember Long actorMemberId, CohortCreateRequest request) {
+        CohortResponse response = memberService.createCohort(actorMemberId,
+                request.normalizedName());
+        return ResponseEntity.created(URI.create("/api/members/reference/cohorts/"
+                + response.cohortId())).body(response);
     }
 
     @Override

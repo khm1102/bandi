@@ -21,6 +21,7 @@ import static org.hamcrest.Matchers.instanceOf;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.authenticated;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -55,10 +56,27 @@ class AuthenticationControllerTest {
                         instanceOf(SchoolLoginForm.class)));
     }
 
+    @Test
+    void 비로그인_사용자가_기본_주소로_접근하면_로그인_화면으로_이동한다()
+            throws Exception {
+        mockMvc.perform(get("/"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login"));
+    }
+
+    @Test
+    void 로그인_사용자가_기본_주소로_접근하면_대시보드로_이동한다()
+            throws Exception {
+        mockMvc.perform(get("/").with(user("member").roles("MEMBER")))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/dashboard"));
+    }
+
     @ParameterizedTest
     @CsvSource({
             "school-unavailable, 학교 로그인 서비스 장애",
             "bad-credentials, 학교 계정 확인 필요",
+            "login-rate-limited, 로그인 잠시 제한",
             "member-not-registered, 멤버 사전 등록 필요",
             "link-pending, 학교 계정 연결 대기",
             "academic-restricted, 학적 상태 확인 필요",

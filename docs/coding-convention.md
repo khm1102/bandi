@@ -545,7 +545,7 @@ public enum ErrorCode {
 }
 ```
 
-- 코드 접두사는 feature별 고정: `C` 공통, `A` auth, `M` member, `CA` calendar, `FI` file, `PN` public notice, `NI` internal notice, `RS` resource, `AR` activity record, `AS` asset... 새 feature 추가 시 이 문서에 접두사를 등록한다.
+- 코드 접두사는 feature별 고정: `C` 공통, `A` auth, `M` member, `CA` calendar, `FI` file, `NI` internal notice, `RS` resource, `AR` activity record, `AS` asset... 새 feature 추가 시 이 문서에 접두사를 등록한다.
 - `message`는 **사용자에게 그대로 보여줄 문장**으로 작성한다. 내부 사정("DB 커넥션 실패")을 노출하지 않는다.
 
 ```java
@@ -792,11 +792,22 @@ src/main/webapp/WEB-INF
 ```
 
 - 반복되는 UI 블록(페이지네이션, 카드, 폼 필드)은 **태그 파일**로 추출하고, 파라미터는 `<%@ attribute %>`로 명시한다: `<%@ attribute name="page" required="true" type="..." %>`
+- 증가하는 목록 API는 `PageResponse<T>`의 `items`, `page`, `pageSize`, `totalElements`,
+  `totalPages`, `hasPrevious`, `hasNext` 계약을 사용한다. API 페이지는 0부터, 화면 URL의
+  `page`는 1부터 시작한다. 목록과 count Mapper는 권한·삭제·필터 조건을 같은 `<sql>`로
+  공유한다.
 - `<jsp:include>`는 태그 파일로 표현할 수 없는 경우에만 예외적으로 사용한다. **(SHOULD)**
 
 ### 12.3 출력/보안 규칙
 - **JSP EL `${}`는 자동 이스케이프가 없다** (Thymeleaf `th:text`와 정반대 — 전환 시 최다 실수 지점). **사용자 유래 데이터 출력은 반드시 `<c:out value="${...}"/>`** 를 거친다. HTML 속성 값 내부도 동일하다.
-- `<c:out escapeXml="false">` 등 **원문 HTML 출력 금지.** 서버에서 검증된 HTML 렌더링이 정말 필요해지면 그때 화이트리스트 sanitizer와 함께 예외 승인.
+- `<c:out escapeXml="false">` 등 **원문 HTML 출력 금지.** 단, 내부 공지와 자료실 Markdown은
+  `domain.notice.service.MarkdownRenderer`가 allowlist sanitizer를 통과시켜 만든
+  `SafeMarkdownHtml`만 `<t:markdown>` 태그로 출력할 수 있다. 이 태그는 일반 문자열을
+  받지 않으며, 다른 JSP·태그·JavaScript에는 이 예외를 확대하지 않는다. 공지와 자료실 본문
+  이미지는 `attachment://{storedFileId}` 내부 참조를 서버에서 인증 inline URL로 변환한다.
+  공지만 HTTPS 외부 URL을 직접 렌더링할 수 있고, 자료실은 외부 URL을 서버 수집 링크 카드
+  또는 일반 링크로만 표시한다. HTTP/data URL·원시 HTML 이미지와 일반 문자열 HTML의 출력
+  예외는 허용하지 않는다.
 - 인라인 `<script>` 블록에 EL로 서버 데이터를 직접 조립하지 않는다. 서버 데이터 → JS 전달은 **`data-*` 속성 + `<c:out>`** 으로 마크업에 싣고, JS에서 `dataset`으로 읽는다.
 - 폼은 `<form:form>` 사용 시 CSRF hidden 필드가 자동 삽입된다(`CsrfRequestDataValueProcessor`). **JS fetch로 POST할 때는** layout의 `<meta name="_csrf">`를 헤더로 전달한다. ([13.4] 참조)
 - 인증/인가 분기는 `<sec:authorize access="...">`를 사용하고, 컨트롤러/서비스 레벨 인가와 항상 이중으로 건다 (뷰 숨김은 보안이 아님).
@@ -1083,6 +1094,11 @@ docker compose up -d      # MySQL 8.x (포트/계정/DB명 팀 고정)
 - MySQL 컨테이너에 `--character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci` 고정
 - 테스트도 동일 컨테이너의 별도 스키마(`bandi_test`)를 사용하고 `application-test.yaml`(포트 3307)로 연결한다. H2 호환 모드는 MySQL 전용 SQL(Flyway)과 어긋나므로 쓰지 않는다.
 - 파일 저장 루트는 `FILE_STORAGE_ROOT`로 주입한다. 운영 기본값은 `/data/bandi`이며, 배포 전에 영구 볼륨을 마운트하고 실행 계정에 읽기·쓰기 권한을 부여한다. 애플리케이션은 루트가 디렉터리가 아니거나 쓸 수 없으면 기동하지 않아야 한다.
+- 다운로드 응답을 만들기 위해 요청 범위에서만 생성하는 문서(HWPX 등)는 요구사항의
+  보존 정책을 따른다. 비저장 문서는 `FileService`, `stored_file`, 로컬 저장 루트를 사용하지
+  않고 요청 범위에서 생성한다. 검수·수정처럼 영속 워크플로가 있는 문서는 `FileService`로
+  저장하고 업무 테이블과 명시적으로 연결한다. 두 경우 모두 입력 원문·사진·생성 문서를
+  로그나 승인되지 않은 브라우저 저장소에 남기지 않는다.
 
 ### 17.4 시간대
 - DB 연결: `serverTimezone=Asia/Seoul`, JVM 기본 시간대 `Asia/Seoul` 통일 (국내 단일 서비스이므로 KST 단순화 우선)
@@ -1283,7 +1299,7 @@ spring:
 ### 20.4 디버그 로깅 규칙
 - **개발 진단용 정보는 전부 `debug`로 남긴다.** prod에서는 앱 로거가 INFO라 debug는 출력되지 않으므로, "개발 끝났으니 로그 지우기"를 하지 않는다 — 지우지 말고 debug로 남겨두는 것이 규칙이다.
 - debug로 남길 것: 분기 판단 근거(어떤 조건으로 이 흐름을 탔는지), 외부 연동 요청/응답 요약, 배치성 처리의 중간 카운트
-- `info`는 비즈니스 이벤트(멤버 등록, 공시 게시, 자료 등록)만. 디버깅 정보를 info로 올리지 않는다 — prod 로그가 오염된다.
+- `info`는 비즈니스 이벤트(멤버 등록, 공지 게시, 자료 등록)만. 디버깅 정보를 info로 올리지 않는다 — prod 로그가 오염된다.
 - 로그 인자에 비싼 연산(대형 객체 직렬화, 컬렉션 정렬 등)이 들어가면 supplier 또는 `log.isDebugEnabled()` 가드를 쓴다. 단순 값 전달은 플레이스홀더면 충분하므로 가드 불필요.
 - 임시 확인용 `log.info("여기 옴")`, `System.out` 류는 커밋 금지. 리뷰에서 발견 시 반려.
 

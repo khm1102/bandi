@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 public record MemberSchoolConnection(
         Long memberId,
         String department,
+        String phoneNumber,
         AcademicStatus academicStatus,
         LocalDateTime academicStatusVerifiedDttm,
         MemberStatus memberStatus,
@@ -14,6 +15,18 @@ public record MemberSchoolConnection(
         LocalDateTime lastLoginDttm,
         SchoolConnectionOutcome outcome
 ) {
+
+    public MemberSchoolConnection(Long memberId, String department,
+                                  AcademicStatus academicStatus,
+                                  LocalDateTime academicStatusVerifiedDttm,
+                                  MemberStatus memberStatus,
+                                  SsoLinkStatus ssoLinkStatus,
+                                  LocalDateTime ssoLinkedDttm,
+                                  LocalDateTime lastLoginDttm,
+                                  SchoolConnectionOutcome outcome) {
+        this(memberId, department, null, academicStatus, academicStatusVerifiedDttm,
+                memberStatus, ssoLinkStatus, ssoLinkedDttm, lastLoginDttm, outcome);
+    }
 
     public boolean changesMemberStatusFrom(Member member) {
         return memberStatus != member.getStatus();
@@ -34,7 +47,8 @@ public record MemberSchoolConnection(
             LocalDateTime lastLoginDttm,
             SchoolConnectionOutcome outcome
     ) {
-        return new MemberSchoolConnection(member.getMemberId(), identity.department(), identity.academicStatus(),
-                verifiedAt, memberStatus, ssoLinkStatus, ssoLinkedDttm, lastLoginDttm, outcome);
+        return new MemberSchoolConnection(member.getMemberId(), identity.department(), identity.phoneNumber(),
+                identity.academicStatus(), verifiedAt, memberStatus, ssoLinkStatus,
+                ssoLinkedDttm, lastLoginDttm, outcome);
     }
 }

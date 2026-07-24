@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.domain.calendar.dto.response;
 
 import kr.ac.tukorea.bandi.domain.calendar.model.CalendarEvent;
+import kr.ac.tukorea.bandi.domain.calendar.model.CalendarEventColor;
 
 import java.time.LocalDateTime;
 
@@ -13,6 +14,7 @@ public record CalendarEventResponse(
         LocalDateTime endDttm,
         boolean allDay,
         String place,
+        CalendarEventColor colorCode,
         Long createdByMemberId,
         Long updatedByMemberId,
         LocalDateTime updatedDttm
@@ -22,6 +24,7 @@ public record CalendarEventResponse(
         return new CalendarEventResponse(event.getCalendarEventId(), event.getTeamId(),
                 event.getTitle(), event.getDescription(), event.getStartDttm(),
                 event.getEndDttm(), event.isAllDay(), event.getPlace(),
+                event.getColorCode(),
                 event.getCreatedByMemberId(), event.getUpdatedByMemberId(),
                 event.getUpdatedDttm());
     }

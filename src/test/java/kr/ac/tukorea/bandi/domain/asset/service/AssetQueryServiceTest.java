@@ -10,6 +10,8 @@ import kr.ac.tukorea.bandi.domain.asset.model.AssetTrackingType;
 import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
 import kr.ac.tukorea.bandi.domain.file.service.FileService;
+import kr.ac.tukorea.bandi.domain.audit.service.AuditService;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,13 +34,15 @@ class AssetQueryServiceTest {
     private MemberService memberService;
     @Mock
     private FileService fileService;
+    @Mock
+    private AuditService auditService;
 
     private AssetService assetService;
 
     @BeforeEach
     void setUp() {
         assetService = new AssetService(assetMapper, memberService, fileService,
-                Clock.systemUTC());
+                auditService, Clock.systemUTC());
         given(memberService.lookupAccessContext(1L)).willReturn(
                 new MemberAccessContext(1L, 2L, false, false, true));
     }
@@ -49,11 +53,12 @@ class AssetQueryServiceTest {
                 "EQUIPMENT", AssetTrackingType.QUANTITY,
                 AssetStatus.AVAILABLE);
         given(assetMapper.searchItems(condition)).willReturn(List.of(item()));
+        given(assetMapper.countItems(condition)).willReturn(1L);
 
-        List<AssetItemResponse> result = assetService.searchItems(1L,
+        PageResponse<AssetItemResponse> result = assetService.searchItems(1L,
                 condition);
 
-        assertThat(result).extracting(AssetItemResponse::name)
+        assertThat(result.items()).extracting(AssetItemResponse::name)
                 .containsExactly("케이블");
         verify(assetMapper).searchItems(condition);
     }

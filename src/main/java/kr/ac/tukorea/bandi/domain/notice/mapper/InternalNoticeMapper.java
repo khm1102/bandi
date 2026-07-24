@@ -5,6 +5,7 @@ import kr.ac.tukorea.bandi.domain.notice.dto.request.InternalNoticeReadableSearc
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeContentResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeManageContentResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeManageSummaryResponse;
+import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticePublicShareResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeReadStatusResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeSummaryResponse;
 import kr.ac.tukorea.bandi.domain.notice.model.InternalNotice;
@@ -25,10 +26,14 @@ public interface InternalNoticeMapper {
     List<InternalNoticeManageSummaryResponse> searchManageable(
             InternalNoticeManageSearchCondition condition);
 
+    long countManageable(InternalNoticeManageSearchCondition condition);
+
     Optional<InternalNoticeManageContentResponse> lookupManageContent(Long internalNoticeId);
 
     List<InternalNoticeSummaryResponse> searchReadable(
             InternalNoticeReadableSearchCondition condition);
+
+    long countReadable(InternalNoticeReadableSearchCondition condition);
 
     Optional<InternalNoticeContentResponse> lookupReadableContent(
             @Param("internalNoticeId") Long internalNoticeId,
@@ -47,6 +52,8 @@ public interface InternalNoticeMapper {
                    @Param("memberId") Long memberId,
                    @Param("readDttm") LocalDateTime readDttm);
 
+    int removeReads(Long internalNoticeId);
+
     List<InternalNoticeReadStatusResponse> searchReadStatuses(
             @Param("internalNoticeId") Long internalNoticeId,
             @Param("targetScope") InternalNoticeTargetScope targetScope,
@@ -56,9 +63,27 @@ public interface InternalNoticeMapper {
 
     int update(InternalNotice internalNotice);
 
+    int delete(@Param("internalNoticeId") Long internalNoticeId,
+               @Param("actorMemberId") Long actorMemberId,
+               @Param("deletedDttm") LocalDateTime deletedDttm);
+
     int insertAttachment(InternalNoticeAttachment attachment);
 
     int removeAttachments(Long internalNoticeId);
 
+    int removeAttachmentsExcept(@Param("internalNoticeId") Long internalNoticeId,
+                                @Param("storedFileIds") List<Long> storedFileIds);
+
     List<Long> searchAttachmentFileIds(Long internalNoticeId);
+
+    Optional<String> lookupShareTokenForUpdate(Long internalNoticeId);
+
+    Optional<InternalNoticePublicShareResponse> lookupPublicShare(
+            @Param("shareToken") String shareToken,
+            @Param("currentDttm") LocalDateTime currentDttm);
+
+    boolean existsShareToken(Long internalNoticeId);
+
+    int updateShareToken(@Param("internalNoticeId") Long internalNoticeId,
+                         @Param("shareToken") String shareToken);
 }

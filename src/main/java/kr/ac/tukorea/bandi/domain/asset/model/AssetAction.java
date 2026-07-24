@@ -9,5 +9,7 @@ public enum AssetAction {
     REPAIR,
     DAMAGE,
     LOST,
-    DISPOSE
+    DISPOSE,
+    DELETE,
+    RESTORE
 }

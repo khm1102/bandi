@@ -8,6 +8,7 @@ import kr.ac.tukorea.bandi.domain.file.exception.InvalidFileStateException;
 import kr.ac.tukorea.bandi.domain.file.exception.InvalidFileException;
 import kr.ac.tukorea.bandi.domain.file.model.StorageScope;
 import kr.ac.tukorea.bandi.domain.file.model.StoredFile;
+import kr.ac.tukorea.bandi.domain.file.model.FilePurpose;
 import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -97,6 +98,67 @@ class FileServiceTest {
     }
 
     @Test
+    void 프로필_사진은_전용_목적과_경로로_저장한다() {
+        FileUploadParam param = new FileUploadParam("ignored", "me.png", CONTENT.length,
+                () -> new ByteArrayInputStream(CONTENT), MEMBER_ID);
+        StoredFile pending = StoredFile.pendingProfileImage("me.png", PRIVATE_KEY,
+                "image/png", CONTENT.length, "abc123", MEMBER_ID);
+        assignId(pending, PRIVATE_FILE_ID);
+        StoredFile ready = StoredFile.pendingProfileImage("me.png", PRIVATE_KEY,
+                "image/png", CONTENT.length, "abc123", MEMBER_ID);
+        ready.markReady("etag-1");
+        assignId(ready, PRIVATE_FILE_ID);
+        given(inspector.inspectProfileImage(param.originalName(), param.sizeBytes(),
+                param.contentSource())).willReturn(new FileInspection("image/png", CONTENT.length, "abc123"));
+        given(keyGenerator.generate("member-profile")).willReturn(PRIVATE_KEY);
+        given(metadataService.createPending(any())).willReturn(pending);
+        given(objectStorage.upload(StorageScope.PRIVATE, PRIVATE_KEY, "image/png",
+                CONTENT.length, param.contentSource())).willReturn("etag-1");
+        given(metadataService.markReady(PRIVATE_FILE_ID, "etag-1")).willReturn(ready);
+
+        fileService.uploadProfileImage(param);
+
+        ArgumentCaptor<StoredFile> captor = ArgumentCaptor.forClass(StoredFile.class);
+        verify(metadataService).createPending(captor.capture());
+        assertThat(captor.getValue().getPurpose()).isEqualTo(FilePurpose.PROFILE_IMAGE);
+    }
+
+    @Test
+    void 공지_본문_이미지는_전용_검사와_notice_경로로_저장한다() {
+        FileUploadParam param = uploadParam();
+        FileInspection inspection = new FileInspection("image/png", CONTENT.length, "abc123");
+        StoredFile pending = pendingPrivate(PRIVATE_KEY);
+        assignId(pending, PRIVATE_FILE_ID);
+        StoredFile ready = readyPrivate(PRIVATE_KEY);
+        assignId(ready, PRIVATE_FILE_ID);
+        given(inspector.inspectNoticeInlineImage(param.originalName(), param.sizeBytes(),
+                param.contentSource())).willReturn(inspection);
+        given(keyGenerator.generate("notice")).willReturn(PRIVATE_KEY);
+        given(metadataService.createPending(any())).willReturn(pending);
+        given(objectStorage.upload(StorageScope.PRIVATE, PRIVATE_KEY, "image/png",
+                CONTENT.length, param.contentSource())).willReturn("etag-1");
+        given(metadataService.markReady(PRIVATE_FILE_ID, "etag-1")).willReturn(ready);
+
+        fileService.uploadNoticeInlineImage(param);
+
+        verify(inspector).inspectNoticeInlineImage(param.originalName(), param.sizeBytes(),
+                param.contentSource());
+        verify(keyGenerator).generate("notice");
+    }
+
+    @Test
+    void 본문_이미지가_아닌_비공개_파일은_inline_조회할_수_없다() {
+        StoredFile source = StoredFile.pending("animation.gif", StorageScope.PRIVATE,
+                PRIVATE_KEY, "image/gif", CONTENT.length, "abc123", MEMBER_ID);
+        source.markReady("etag-1");
+        assignId(source, PRIVATE_FILE_ID);
+        given(metadataService.lookup(PRIVATE_FILE_ID)).willReturn(source);
+
+        assertThatThrownBy(() -> fileService.lookupPrivateNoticeInlineImage(PRIVATE_FILE_ID))
+                .isInstanceOf(InvalidFileException.class);
+    }
+
+    @Test
     void READY_전환이_실패하면_업로드된_객체를_삭제하고_FAILED로_전환한다() {
         FileUploadParam param = uploadParam();
         StoredFile pending = pendingPrivate(PRIVATE_KEY);
@@ -177,6 +239,32 @@ class FileServiceTest {
         assertThatThrownBy(() -> fileService.validatePrivateReadyOwnedBy(
                 PRIVATE_FILE_ID, MEMBER_ID + 1))
                 .isInstanceOf(FileAccessDeniedException.class);
+    }
+
+    @Test
+    void 이미지가_아닌_비공개_파일은_소품_사진으로_연결할_수_없다() {
+        StoredFile source = StoredFile.pending("manual.pdf", StorageScope.PRIVATE,
+                PRIVATE_KEY, "application/pdf", CONTENT.length, "abc123", MEMBER_ID);
+        source.markReady("etag-1");
+        assignId(source, PRIVATE_FILE_ID);
+        given(metadataService.lookup(PRIVATE_FILE_ID)).willReturn(source);
+
+        assertThatThrownBy(() -> fileService.validatePrivateImageReadyOwnedBy(
+                PRIVATE_FILE_ID, MEMBER_ID))
+                .isInstanceOf(InvalidFileException.class);
+    }
+
+    @Test
+    void 지원하지_않는_이미지_형식은_소품_사진으로_연결할_수_없다() {
+        StoredFile source = StoredFile.pending("animated.gif", StorageScope.PRIVATE,
+                PRIVATE_KEY, "image/gif", CONTENT.length, "abc123", MEMBER_ID);
+        source.markReady("etag-1");
+        assignId(source, PRIVATE_FILE_ID);
+        given(metadataService.lookup(PRIVATE_FILE_ID)).willReturn(source);
+
+        assertThatThrownBy(() -> fileService.validatePrivateImageReadyOwnedBy(
+                PRIVATE_FILE_ID, MEMBER_ID))
+                .isInstanceOf(InvalidFileException.class);
     }
 
     @Test

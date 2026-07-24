@@ -16,6 +16,7 @@ import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetItemResponse;
 import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetUnitResponse;
 import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetHistoryResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 import org.springframework.core.io.Resource;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
@@ -28,6 +29,7 @@ import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.DeleteMapping;
 
 import java.util.List;
 
@@ -38,11 +40,20 @@ public interface AssetApiDocs {
 
     @Operation(summary = "소품·장비 품목 검색")
     @GetMapping
-    ResponseEntity<List<AssetItemResponse>> searchItems(
+    ResponseEntity<PageResponse<AssetItemResponse>> searchItems(
             @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String categoryCode,
-            @ParameterObject @ModelAttribute AssetSearchFilter filter);
+            @ParameterObject @ModelAttribute AssetSearchFilter filter,
+            @RequestParam(defaultValue = "false") boolean deleted,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int pageSize);
+
+    @Operation(summary = "소품·장비 품목 상세 조회")
+    @GetMapping("/{assetItemId}")
+    ResponseEntity<AssetItemResponse> lookupItem(
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
+            @PathVariable Long assetItemId);
 
     @Operation(summary = "개별 장비 목록 조회")
     @GetMapping("/{assetItemId}/units")
@@ -74,6 +85,18 @@ public interface AssetApiDocs {
             @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @PathVariable Long assetItemId,
             @Valid @RequestBody AssetItemUpdateRequest request);
+
+    @Operation(summary = "소품·장비 품목 삭제")
+    @DeleteMapping("/{assetItemId}")
+    ResponseEntity<Void> deleteItem(
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
+            @PathVariable Long assetItemId);
+
+    @Operation(summary = "삭제된 소품·장비 품목 복구")
+    @PostMapping("/{assetItemId}/restore")
+    ResponseEntity<Void> restoreItem(
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
+            @PathVariable Long assetItemId);
 
     @Operation(summary = "소품·장비 품목 상태 변경")
     @PatchMapping("/{assetItemId}/status")

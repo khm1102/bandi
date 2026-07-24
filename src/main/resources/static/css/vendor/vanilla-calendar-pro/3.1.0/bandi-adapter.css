@@ -1,0 +1,40 @@
+/* bandi 디자인 토큰과 Vanilla Calendar Pro 3.1.0 light theme의 연결 계층. */
+[data-vc-theme=light].vc {
+    border: 1px solid var(--border);
+    background-color: var(--popover);
+    color: var(--popover-foreground);
+}
+
+[data-vc-theme=light].vc [tabindex="0"]:focus-visible,
+[data-vc-theme=light].vc button:focus-visible,
+[data-vc-theme=light].vc:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+}
+
+[data-vc-theme=light] .vc-months__month[data-vc-months-month-selected],
+[data-vc-theme=light] .vc-years__year[data-vc-years-year-selected],
+[data-vc-theme=light] .vc-date[data-vc-date-selected] .vc-date__btn {
+    background-color: var(--primary-strong);
+    color: var(--destructive-foreground);
+}
+
+[data-vc-theme=light] .vc-date[data-vc-date-today] .vc-date__btn {
+    background-color: var(--accent);
+    color: var(--accent-foreground);
+}
+
+@media (hover: hover) and (pointer: fine) {
+    [data-vc-theme=light] .vc-date__btn:hover,
+    [data-vc-theme=light] .vc-months__month:hover,
+    [data-vc-theme=light] .vc-years__year:hover {
+        background-color: var(--secondary);
+    }
+
+    [data-vc-theme=light] .vc-date[data-vc-date-selected] .vc-date__btn:hover,
+    [data-vc-theme=light] .vc-months__month[data-vc-months-month-selected]:hover,
+    [data-vc-theme=light] .vc-years__year[data-vc-years-year-selected]:hover {
+        background-color: var(--primary-strong);
+        color: var(--destructive-foreground);
+    }
+}

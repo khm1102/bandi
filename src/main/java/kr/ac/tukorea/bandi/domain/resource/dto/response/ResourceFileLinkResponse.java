@@ -4,7 +4,6 @@ import java.time.LocalDateTime;
 
 public record ResourceFileLinkResponse(
         Long storedFileId,
-        int revisionNo,
         int displayOrder,
         Long uploadedByMemberId,
         String uploadedByName,

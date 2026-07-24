@@ -21,8 +21,10 @@ public class FileContentInspector {
     private static final int BUFFER_SIZE = 8192;
     private static final int SIGNATURE_SIZE = 16;
     private static final int MAX_OFFICE_ENTRY_COUNT = 4096;
+    private static final long PROFILE_IMAGE_MAX_BYTES = 5L * 1024 * 1024;
+    private static final long NOTICE_INLINE_IMAGE_MAX_BYTES = 10L * 1024 * 1024;
     private static final Set<String> ALLOWED_EXTENSIONS = Set.of(
-            "jpg", "jpeg", "png", "webp", "pdf", "docx", "xlsx", "mp4");
+            "jpg", "jpeg", "png", "webp", "pdf", "docx", "xlsx", "hwpx", "mp4");
 
     private final long maxUploadBytes;
 
@@ -44,6 +46,40 @@ public class FileContentInspector {
 
         String detectedType = detectContentType(extension, buffer.signature(), source);
         return new FileInspection(detectedType, buffer.sizeBytes(), buffer.sha256Hash());
+    }
+
+    public FileInspection inspectProfileImage(String originalName, long declaredSize,
+                                              FileContentSource source) {
+        String extension = validateNameAndExtractExtension(originalName);
+        if (!Set.of("jpg", "jpeg", "png", "webp").contains(extension)) {
+            throw new InvalidFileException("unsupported-profile-image-extension");
+        }
+        if (declaredSize > PROFILE_IMAGE_MAX_BYTES) {
+            throw new FileTooLargeException();
+        }
+        FileInspection inspection = inspect(originalName, declaredSize, source);
+        if (inspection.sizeBytes() > PROFILE_IMAGE_MAX_BYTES
+                || !inspection.contentType().startsWith("image/")) {
+            throw new InvalidFileException("invalid-profile-image");
+        }
+        return inspection;
+    }
+
+    public FileInspection inspectNoticeInlineImage(String originalName, long declaredSize,
+                                                   FileContentSource source) {
+        String extension = validateNameAndExtractExtension(originalName);
+        if (!Set.of("jpg", "jpeg", "png", "webp").contains(extension)) {
+            throw new InvalidFileException("unsupported-notice-image-extension");
+        }
+        if (declaredSize > NOTICE_INLINE_IMAGE_MAX_BYTES) {
+            throw new FileTooLargeException();
+        }
+        FileInspection inspection = inspect(originalName, declaredSize, source);
+        if (inspection.sizeBytes() > NOTICE_INLINE_IMAGE_MAX_BYTES
+                || !inspection.contentType().startsWith("image/")) {
+            throw new InvalidFileException("invalid-notice-inline-image");
+        }
+        return inspection;
     }
 
     private String validateNameAndExtractExtension(String originalName) {
@@ -115,6 +151,7 @@ public class FileContentInspector {
             case "mp4" -> requireMp4(signature);
             case "docx" -> requireOfficeDocument(source, true);
             case "xlsx" -> requireOfficeDocument(source, false);
+            case "hwpx" -> requireHwpx(source);
             default -> throw new InvalidFileException("unsupported-extension");
         };
     }
@@ -169,6 +206,36 @@ public class FileContentInspector {
         return word
                 ? "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    }
+
+    private String requireHwpx(FileContentSource source) {
+        boolean validMimetype = false;
+        boolean contentManifest = false;
+        boolean section = false;
+        int entryCount = 0;
+        try (ZipInputStream zip = new ZipInputStream(source.openStream())) {
+            ZipEntry entry;
+            while ((entry = zip.getNextEntry()) != null) {
+                entryCount++;
+                if (entryCount > MAX_OFFICE_ENTRY_COUNT) {
+                    throw new InvalidFileException("too-many-office-entries");
+                }
+                String name = entry.getName();
+                if ("mimetype".equals(name)) {
+                    String value = new String(zip.readNBytes(64),
+                            java.nio.charset.StandardCharsets.US_ASCII).trim();
+                    validMimetype = "application/hwp+zip".equals(value);
+                }
+                contentManifest |= "Contents/content.hpf".equals(name);
+                section |= name.startsWith("Contents/section") && name.endsWith(".xml");
+            }
+        } catch (IOException exception) {
+            throw new InvalidFileException("invalid-hwpx-file");
+        }
+        if (!validMimetype || !contentManifest || !section) {
+            throw new InvalidFileException("invalid-hwpx-file");
+        }
+        return "application/hwp+zip";
     }
 
     private boolean matchesAscii(byte[] bytes, int offset, String expected) {

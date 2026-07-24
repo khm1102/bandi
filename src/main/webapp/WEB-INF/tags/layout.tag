@@ -8,19 +8,18 @@
 <%@ attribute name="scriptPath" %>
 <%@ attribute name="css" fragment="true" %>
 <%@ attribute name="script" fragment="true" %>
-<c:set var="navRole" value="${empty role ? 'admin' : role}"/>
 <!DOCTYPE html>
 <html lang="ko">
 <head>
 <t:head title="${title}"/>
 <jsp:invoke fragment="css"/>
 </head>
-<body data-user-role="${navRole}">
+<body data-user-role="<c:out value='${empty role ? "member" : role}'/>">
 <a href="#mainContent" class="fixed left-4 top-4 z-50 -translate-y-24 rounded-md bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-transform focus:translate-y-0">본문으로 바로가기</a>
-<div class="min-h-screen lg:flex">
+<div class="min-h-dvh lg:flex">
     <header class="sticky top-0 z-30 flex h-14 items-center border-b bg-card px-4 lg:hidden">
         <a href="<c:url value='/dashboard'/>" class="flex min-h-11 items-center gap-2.5 font-black">
-            <span class="flex size-8 items-center justify-center rounded-md bg-primary text-sm font-black text-primary-foreground">B</span>
+            <img src="<c:url value='/images/bandi-icon.png'/>" class="h-8 w-auto rounded-md object-contain" alt="반디">
             <span>반디</span>
         </a>
         <button type="button" class="ml-auto flex size-11 items-center justify-center rounded-md border bg-card text-foreground"
@@ -29,14 +28,16 @@
         </button>
     </header>
     <button type="button" class="fixed inset-0 z-30 hidden bg-sidebar/60 lg:hidden" data-navigation-backdrop aria-label="메뉴 닫기"></button>
-    <t:sidebar active="${active}" role="${navRole}"/>
+    <t:sidebar active="${active}"/>
 
     <div class="min-w-0 flex-1">
         <header class="sticky top-14 z-20 hidden min-h-12 items-center gap-3 border-b bg-card/95 px-4 py-2.5 backdrop-blur md:flex md:px-6 lg:top-0 lg:px-7">
             <p class="hidden text-xs font-semibold text-muted-foreground md:block">반디 / <b class="font-extrabold text-foreground"><c:out value="${empty crumb ? title : crumb}"/></b></p>
         </header>
-        <main id="mainContent" class="mx-auto max-w-6xl p-4 md:p-6 lg:p-7" tabindex="-1">
-            <jsp:doBody/>
+        <main id="mainContent" class="w-full p-4 md:p-6 lg:p-7" tabindex="-1">
+            <div class="mx-auto w-full max-w-screen-2xl">
+                <jsp:doBody/>
+            </div>
         </main>
     </div>
 </div>

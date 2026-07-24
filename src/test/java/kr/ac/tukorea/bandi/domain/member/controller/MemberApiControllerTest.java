@@ -7,12 +7,17 @@ import kr.ac.tukorea.bandi.domain.member.dto.request.RoleChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.StatusChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.TeamChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberHistoryResponse;
+import kr.ac.tukorea.bandi.domain.member.dto.response.CohortResponse;
+import kr.ac.tukorea.bandi.domain.member.dto.response.MemberProfileResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberResponse;
+import kr.ac.tukorea.bandi.domain.member.dto.response.MemberStatsResponse;
+import kr.ac.tukorea.bandi.domain.member.dto.response.TeamMemberResponse;
 import kr.ac.tukorea.bandi.domain.member.model.AcademicStatus;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.MemberStatus;
 import kr.ac.tukorea.bandi.domain.member.model.SsoLinkStatus;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
+import kr.ac.tukorea.bandi.domain.member.service.MemberProfileService;
 import kr.ac.tukorea.bandi.global.config.SecurityWebMvcConfig;
 import kr.ac.tukorea.bandi.global.exception.ApiExceptionHandler;
 import kr.ac.tukorea.bandi.global.security.LoginMemberArgumentResolver;
@@ -29,8 +34,10 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.mock.web.MockMultipartFile;
 
 import java.util.List;
+import java.time.LocalDateTime;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
@@ -38,6 +45,8 @@ import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -55,6 +64,8 @@ class MemberApiControllerTest {
 
     @MockitoBean
     private MemberService memberService;
+    @MockitoBean
+    private MemberProfileService memberProfileService;
 
     @Autowired
     MemberApiControllerTest(MockMvc mockMvc) {
@@ -76,7 +87,9 @@ class MemberApiControllerTest {
 
     @Test
     void 멤버_목록_검색_조건을_Service에_전달한다() throws Exception {
-        given(memberService.searchMembers(any())).willReturn(List.of(member()));
+        given(memberService.searchMemberPage(any())).willReturn(
+                kr.ac.tukorea.bandi.global.response.PageResponse.of(
+                        List.of(member()), 0, 20, 1));
 
         mockMvc.perform(get("/api/members")
                         .param("keyword", "서준")
@@ -85,13 +98,33 @@ class MemberApiControllerTest {
                         .param("role", "MEMBER")
                         .param("ssoLinkStatus", "LINKED"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].memberId").value(MEMBER_ID))
-                .andExpect(jsonPath("$[0].studentNo")
+                .andExpect(jsonPath("$.items[0].memberId").value(MEMBER_ID))
+                .andExpect(jsonPath("$.items[0].studentNo")
                         .value("2020184000"));
 
-        verify(memberService).searchMembers(new MemberSearchCondition(
-                "서준", 2L, MemberStatus.ACTIVE, ClubRole.MEMBER,
-                SsoLinkStatus.LINKED));
+        verify(memberService).searchMemberPage(
+                new kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchParam(
+                        "서준", 2L, null, MemberStatus.ACTIVE, ClubRole.MEMBER,
+                        SsoLinkStatus.LINKED, 0, 20));
+    }
+
+    @Test
+    void 페이지_크기가_100을_초과하면_잘못된_요청을_반환한다() throws Exception {
+        mockMvc.perform(get("/api/members").param("pageSize", "101"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("C001"));
+    }
+
+    @Test
+    void 현재_페이지와_분리된_전체_멤버_통계를_조회한다() throws Exception {
+        given(memberService.lookupMemberStats())
+                .willReturn(new MemberStatsResponse(42, 3, 5));
+
+        mockMvc.perform(get("/api/members/stats"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.activeMemberCount").value(42))
+                .andExpect(jsonPath("$.activeCohortCount").value(3))
+                .andExpect(jsonPath("$.ssoVerificationRequiredCount").value(5));
     }
 
     @Test
@@ -103,6 +136,50 @@ class MemberApiControllerTest {
                 .andExpect(jsonPath("$.name").value("이서준"));
 
         verify(memberService).lookupMember(ACTOR_ID);
+    }
+
+    @Test
+    void 로그인_멤버가_프로필과_팀_멤버를_조회한다() throws Exception {
+        given(memberProfileService.lookupProfile(ACTOR_ID)).willReturn(profile());
+        given(memberProfileService.searchTeamMembers(any(), any())).willReturn(
+                kr.ac.tukorea.bandi.global.response.PageResponse.of(List.of(
+                        new TeamMemberResponse(MEMBER_ID, "이서준", "2020184000",
+                                2L, "무대팀", ClubRole.MEMBER,
+                                MemberStatus.ACTIVE, false)), 0, 20, 1));
+
+        mockMvc.perform(get("/api/members/me/profile"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.teamId").value(2))
+                .andExpect(jsonPath("$.teamName").value("무대팀"));
+        mockMvc.perform(get("/api/members/team-members"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items[0].name").value("이서준"))
+                .andExpect(jsonPath("$.items[0].teamId").value(2));
+
+        verify(memberProfileService).lookupProfile(ACTOR_ID);
+        verify(memberProfileService).searchTeamMembers(ACTOR_ID,
+                new kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchParam(
+                        null, null, null, null, null, null, 0, 20));
+    }
+
+    @Test
+    void 로그인_멤버가_프로필_사진을_업로드하고_삭제한다() throws Exception {
+        MockMultipartFile file = new MockMultipartFile("file", "me.png",
+                "image/png", new byte[]{1, 2, 3, 4});
+        given(memberProfileService.uploadProfilePhoto(any(), any())).willReturn(profile());
+
+        mockMvc.perform(multipart("/api/members/me/profile-photo")
+                        .file(file)
+                        .with(request -> {
+                            request.setMethod("PUT");
+                            return request;
+                        }))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.name").value("이서준"));
+        mockMvc.perform(delete("/api/members/me/profile-photo"))
+                .andExpect(status().isNoContent());
+
+        verify(memberProfileService).deleteProfilePhoto(ACTOR_ID);
     }
 
     @Test
@@ -142,6 +219,34 @@ class MemberApiControllerTest {
         verify(memberService).preRegister(ACTOR_ID,
                 new MemberPreRegisterParam("2026184000", "김하늘", 2L,
                         3L));
+    }
+
+    @Test
+    void 관리자가_기수를_추가하고_생성_위치를_반환한다() throws Exception {
+        given(memberService.createCohort(ACTOR_ID, "1-2"))
+                .willReturn(new CohortResponse(4L, "1-2", true));
+
+        mockMvc.perform(post("/api/members/cohorts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"name": " 1-2 "}
+                                """))
+                .andExpect(status().isCreated())
+                .andExpect(header().string("Location",
+                        "/api/members/reference/cohorts/4"))
+                .andExpect(jsonPath("$.name").value("1-2"))
+                .andExpect(jsonPath("$.active").value(true));
+
+        verify(memberService).createCohort(ACTOR_ID, "1-2");
+    }
+
+    @Test
+    void 빈_기수명은_C001을_반환한다() throws Exception {
+        mockMvc.perform(post("/api/members/cohorts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\": \" \"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("C001"));
     }
 
     @Test
@@ -229,5 +334,12 @@ class MemberApiControllerTest {
                 "컴퓨터공학부", AcademicStatus.ENROLLED, null, 2L, 3L,
                 ClubRole.MEMBER, MemberStatus.ACTIVE, SsoLinkStatus.LINKED,
                 null, null, ACTOR_ID);
+    }
+
+    private MemberProfileResponse profile() {
+        return new MemberProfileResponse(ACTOR_ID, "2020184000", "이서준", 2L, "무대팀",
+                "26-2기", ClubRole.MEMBER, MemberStatus.ACTIVE, "컴퓨터공학부",
+                AcademicStatus.ENROLLED, LocalDateTime.now(), SsoLinkStatus.LINKED,
+                LocalDateTime.now(), LocalDateTime.now(), false);
     }
 }

@@ -61,18 +61,20 @@ class InternalNoticeReadServiceTest {
     @BeforeEach
     void setUp() {
         internalNoticeService = new InternalNoticeService(internalNoticeMapper,
-                memberService, fileService, CLOCK);
+                memberService, fileService, new MarkdownRenderer(), CLOCK);
     }
 
     @Test
     void 활성_MEMBER는_전체와_소속_팀_공지를_조회한다() {
         given(memberService.lookupAccessContext(MEMBER_ID)).willReturn(memberContext());
         given(internalNoticeMapper.searchReadable(any())).willReturn(List.of(summary()));
+        given(internalNoticeMapper.countReadable(any())).willReturn(1L);
 
-        List<InternalNoticeSummaryResponse> result = internalNoticeService.searchReadable(
+        var result = internalNoticeService.searchReadable(
                 MEMBER_ID, new InternalNoticeSearchParam("안내", 0, 20));
 
-        assertThat(result).hasSize(1);
+        assertThat(result.items()).hasSize(1);
+        assertThat(result.totalElements()).isEqualTo(1);
         ArgumentCaptor<InternalNoticeReadableSearchCondition> captor =
                 ArgumentCaptor.forClass(InternalNoticeReadableSearchCondition.class);
         verify(internalNoticeMapper).searchReadable(captor.capture());
@@ -85,6 +87,7 @@ class InternalNoticeReadServiceTest {
     void 활성_ADMIN은_모든_팀_공지를_조회한다() {
         given(memberService.lookupAccessContext(MEMBER_ID)).willReturn(adminContext());
         given(internalNoticeMapper.searchReadable(any())).willReturn(List.of());
+        given(internalNoticeMapper.countReadable(any())).willReturn(0L);
 
         internalNoticeService.searchReadable(MEMBER_ID,
                 new InternalNoticeSearchParam(null, 0, 20));
@@ -120,7 +123,34 @@ class InternalNoticeReadServiceTest {
                 MEMBER_ID, NOTICE_ID);
 
         assertThat(result.internalNoticeId()).isEqualTo(NOTICE_ID);
+        assertThat(result.createdByName()).isEqualTo("김현민");
+        assertThat(result.canManage()).isFalse();
         verify(internalNoticeMapper).upsertRead(NOTICE_ID, MEMBER_ID, NOW);
+    }
+
+    @Test
+    void 상세의_관리_버튼은_실제_대상_관리_범위로_판정한다() {
+        given(memberService.lookupAccessContext(MEMBER_ID)).willReturn(leaderContext());
+        given(internalNoticeMapper.lookupReadableContent(
+                NOTICE_ID, NOW, STAGE_TEAM_ID, false))
+                .willReturn(Optional.of(content(InternalNoticeTargetScope.TEAM,
+                        STAGE_TEAM_ID)));
+        given(internalNoticeMapper.searchAttachmentFileIds(NOTICE_ID))
+                .willReturn(List.of());
+
+        InternalNoticeDetailResponse teamNotice = internalNoticeService.lookupReadable(
+                MEMBER_ID, NOTICE_ID);
+
+        assertThat(teamNotice.canManage()).isTrue();
+
+        given(internalNoticeMapper.lookupReadableContent(
+                NOTICE_ID, NOW, STAGE_TEAM_ID, false))
+                .willReturn(Optional.of(content(InternalNoticeTargetScope.ALL, null)));
+
+        InternalNoticeDetailResponse globalNotice = internalNoticeService.lookupReadable(
+                MEMBER_ID, NOTICE_ID);
+
+        assertThat(globalNotice.canManage()).isFalse();
     }
 
     @Test
@@ -160,6 +190,19 @@ class InternalNoticeReadServiceTest {
                 .isInstanceOf(InternalNoticeNotFoundException.class);
 
         verify(fileService, never()).openPrivateDownload(any(), any());
+    }
+
+    @Test
+    void 읽을_수_있는_공지의_이미지_첨부만_inline으로_조회한다() {
+        given(memberService.lookupAccessContext(MEMBER_ID)).willReturn(memberContext());
+        given(internalNoticeMapper.existsReadableAttachment(
+                NOTICE_ID, FILE_ID, NOW, STAGE_TEAM_ID, false)).willReturn(true);
+        given(fileService.openPrivateNoticeInlineImage(FILE_ID, FileAccessDecision.GRANTED))
+                .willReturn(download());
+
+        var result = internalNoticeService.openAttachmentInline(MEMBER_ID, NOTICE_ID, FILE_ID);
+
+        assertThat(result.contentType()).isEqualTo("image/png");
     }
 
     @Test
@@ -223,14 +266,14 @@ class InternalNoticeReadServiceTest {
     private InternalNoticeSummaryResponse summary() {
         return new InternalNoticeSummaryResponse(NOTICE_ID,
                 InternalNoticeTargetScope.TEAM, STAGE_TEAM_ID, "무대팀", "공지 제목",
-                true, NOW.minusHours(1), NOW.plusDays(1), false);
+                "이서준", true, NOW.minusHours(1), NOW.plusDays(1), false);
     }
 
     private InternalNoticeContentResponse content(InternalNoticeTargetScope scope,
                                                    Long teamId) {
         return new InternalNoticeContentResponse(NOTICE_ID, scope, teamId, "무대팀",
                 "공지 제목", "공지 본문", true, NOW.minusHours(1), NOW.plusDays(1),
-                "이서준", NOW.minusHours(1));
+                MEMBER_ID, "김현민", "이서준", NOW.minusHours(1));
     }
 
     private InternalNotice notice(InternalNoticeTargetScope scope, Long teamId) {

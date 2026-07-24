@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import kr.ac.tukorea.bandi.domain.member.dto.request.CohortChangeRequest;
+import kr.ac.tukorea.bandi.domain.member.dto.request.CohortCreateRequest;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPreRegisterRequest;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchFilter;
 import kr.ac.tukorea.bandi.domain.member.dto.request.RoleChangeRequest;
@@ -14,21 +15,30 @@ import kr.ac.tukorea.bandi.domain.member.dto.request.TeamChangeRequest;
 import kr.ac.tukorea.bandi.domain.member.dto.response.CohortResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberCreatedResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberHistoryResponse;
+import kr.ac.tukorea.bandi.domain.member.dto.response.MemberProfileResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberResponse;
+import kr.ac.tukorea.bandi.domain.member.dto.response.MemberStatsResponse;
+import kr.ac.tukorea.bandi.domain.member.dto.response.TeamMemberResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.TeamResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
+import org.springframework.core.io.Resource;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
+import org.springframework.web.multipart.MultipartFile;
 
 @RequestMapping("/api/members")
 @Tag(name = ApiTag.MEMBER, description = "멤버 등록·조회·조직·권한 관리 API")
@@ -40,12 +50,51 @@ public interface MemberApiDocs {
     ResponseEntity<MemberResponse> lookupLoginMember(
             @Parameter(hidden = true) @LoginMember Long memberId);
 
-    @Operation(summary = "멤버 목록 조회")
-    @GetMapping
-    ResponseEntity<List<MemberResponse>> searchMembers(
+    @Operation(summary = "내 프로필 조회")
+    @GetMapping("/me/profile")
+    ResponseEntity<MemberProfileResponse> lookupLoginMemberProfile(
+            @Parameter(hidden = true) @LoginMember Long memberId);
+
+    @Operation(summary = "내 프로필 사진 업로드 또는 교체")
+    @PutMapping(value = "/me/profile-photo", consumes = "multipart/form-data")
+    ResponseEntity<MemberProfileResponse> uploadLoginMemberProfilePhoto(
+            @Parameter(hidden = true) @LoginMember Long memberId,
+            @RequestPart("file") MultipartFile file);
+
+    @Operation(summary = "내 프로필 사진 삭제")
+    @DeleteMapping("/me/profile-photo")
+    ResponseEntity<Void> deleteLoginMemberProfilePhoto(
+            @Parameter(hidden = true) @LoginMember Long memberId);
+
+    @Operation(summary = "내부 프로필 사진 조회")
+    @GetMapping("/{memberId}/profile-photo")
+    ResponseEntity<Resource> openProfilePhoto(
+            @Parameter(hidden = true) @LoginMember Long requesterMemberId,
+            @PathVariable Long memberId);
+
+    @Operation(summary = "팀 멤버 목록 조회")
+    @GetMapping("/team-members")
+    ResponseEntity<PageResponse<TeamMemberResponse>> searchTeamMembers(
+            @Parameter(hidden = true) @LoginMember Long memberId,
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Long teamId,
-            @ParameterObject @ModelAttribute MemberSearchFilter filter);
+            @ParameterObject @ModelAttribute MemberSearchFilter filter,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int pageSize);
+
+    @Operation(summary = "멤버 목록 조회")
+    @GetMapping
+    ResponseEntity<PageResponse<MemberResponse>> searchMembers(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Long teamId,
+            @RequestParam(required = false) Long cohortId,
+            @ParameterObject @ModelAttribute MemberSearchFilter filter,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int pageSize);
+
+    @Operation(summary = "멤버 운영 통계 조회")
+    @GetMapping("/stats")
+    ResponseEntity<MemberStatsResponse> lookupMemberStats();
 
     @Operation(summary = "멤버 상세 조회")
     @GetMapping("/{memberId}")
@@ -63,6 +112,12 @@ public interface MemberApiDocs {
     ResponseEntity<MemberCreatedResponse> preRegister(
             @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @Valid @RequestBody MemberPreRegisterRequest request);
+
+    @Operation(summary = "기수 추가")
+    @PostMapping("/cohorts")
+    ResponseEntity<CohortResponse> createCohort(
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
+            @Valid @RequestBody CohortCreateRequest request);
 
     @Operation(summary = "멤버 팀 변경")
     @PatchMapping("/{memberId}/team")

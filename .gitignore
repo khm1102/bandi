@@ -41,6 +41,7 @@ out/
 
 ### Env ###
 .env
+.env.test
 
 ### Logs ###
 logs/
@@ -61,3 +62,6 @@ skills-lock.json
 ### Local Prototypes ###
 /testweb/
 .omc
+
+### Local Reference Forms ###
+/docs/*활동*내역서*양식.hwpx

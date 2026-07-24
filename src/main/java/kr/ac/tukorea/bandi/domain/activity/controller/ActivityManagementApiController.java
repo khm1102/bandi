@@ -4,9 +4,9 @@ import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityFileAddRequest;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityFileReplaceRequest;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityManageFilter;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityManageSearchParam;
+import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordListSearchParam;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordCreateRequest;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordUpdateRequest;
-import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRevisionRequest;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivitySubmitRequest;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordCreatedResponse;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordManageDetailResponse;
@@ -14,6 +14,7 @@ import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordSummaryRes
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivitySubmissionResponse;
 import kr.ac.tukorea.bandi.domain.activity.service.ActivityRecordService;
 import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import kr.ac.tukorea.bandi.global.swagger.ActivityManagementApiDocs;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,12 @@ import java.util.List;
 public class ActivityManagementApiController implements ActivityManagementApiDocs {
 
     private final ActivityRecordService activityRecordService;
+
+    @Override
+    public ResponseEntity<PageResponse<ActivityRecordSummaryResponse>> searchMine(
+            Long actorMemberId, ActivityRecordListSearchParam param) {
+        return ResponseEntity.ok(activityRecordService.searchMine(actorMemberId, param));
+    }
 
     @Override
     public ResponseEntity<List<ActivityRecordSummaryResponse>> search(
@@ -55,7 +62,7 @@ public class ActivityManagementApiController implements ActivityManagementApiDoc
     public ResponseEntity<Resource> download(@LoginMember Long actorMemberId,
                                              Long activityRecordId,
                                              Long storedFileId) {
-        return inline(activityRecordService.openManageableDownload(
+        return download(activityRecordService.openManageableDownload(
                 actorMemberId, activityRecordId, storedFileId));
     }
 
@@ -103,35 +110,16 @@ public class ActivityManagementApiController implements ActivityManagementApiDoc
         return ResponseEntity.ok(new ActivitySubmissionResponse(revisionNo));
     }
 
-    @Override
-    public ResponseEntity<Void> approve(@LoginMember Long actorMemberId,
-                                        Long activityRecordId) {
-        activityRecordService.approve(actorMemberId, activityRecordId);
-        return ResponseEntity.noContent().build();
-    }
-
-    @Override
-    public ResponseEntity<Void> requestRevision(@LoginMember Long actorMemberId,
-                                                Long activityRecordId,
-                                                ActivityRevisionRequest request) {
-        activityRecordService.requestRevision(actorMemberId, activityRecordId,
-                request.comment());
-        return ResponseEntity.noContent().build();
-    }
-
-    @Override
-    public ResponseEntity<Void> archive(@LoginMember Long actorMemberId,
-                                        Long activityRecordId) {
-        activityRecordService.archive(actorMemberId, activityRecordId);
-        return ResponseEntity.noContent().build();
-    }
-
-    private ResponseEntity<Resource> inline(FileDownloadResponse file) {
+    private ResponseEntity<Resource> download(FileDownloadResponse file) {
+        ContentDisposition disposition = "application/hwp+zip".equals(file.contentType())
+                ? ContentDisposition.attachment().filename(file.originalName(),
+                        StandardCharsets.UTF_8).build()
+                : ContentDisposition.inline().filename(file.originalName(),
+                        StandardCharsets.UTF_8).build();
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(file.contentType()))
                 .contentLength(file.sizeBytes())
-                .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.inline()
-                        .filename(file.originalName(), StandardCharsets.UTF_8).build().toString())
+                .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
                 .body(file.resource());
     }
 }

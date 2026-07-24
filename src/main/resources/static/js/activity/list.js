@@ -1,9 +1,15 @@
 import {ApiError, get, post, put} from '../common/api.js';
+import {
+    initializeDateTimeFields,
+    readDateTimeValue,
+    setDateTimeValue,
+} from '../common/date-time-field.js';
 import {all, bindPageActions, element, lookup, readValue} from '../common/dom.js';
 import {closeModal, openModal} from '../common/modal.js';
 import {currentUserRole} from '../common/session.js';
 import {showToast} from '../common/toast.js';
 import {activateFilterChip, badge, closeActionModal} from '../common/view.js';
+import {normalizePage, readPageFromUrl, renderPagination, setUrlPage, writeUrl} from '../common/pagination.js';
 
 const ACTIONS = Object.freeze({
     RETRY: 'activity-retry',
@@ -13,17 +19,14 @@ const ACTIONS = Object.freeze({
     SAVE: 'activity-save',
     SAVE_SUBMIT: 'activity-save-submit',
     SUBMIT: 'activity-submit',
-    APPROVE: 'activity-approve',
-    REVISION_OPEN: 'activity-revision-open',
-    REVISION: 'activity-revision',
-    ARCHIVE: 'activity-archive',
     FILE_REPLACE: 'activity-file-replace',
 });
 
 const STATUS_META = Object.freeze({
     DRAFT: ['작성 중', 'neutral'],
     SUBMITTED: ['검수 대기', 'info'],
-    APPROVED: ['승인', 'success'],
+    TEAM_APPROVED: ['팀장 승인', 'info'],
+    APPROVED: ['최종 승인', 'success'],
     REVISION_REQUESTED: ['보완 요청', 'warning'],
     ARCHIVED: ['보관', 'neutral'],
 });
@@ -31,10 +34,9 @@ const STATUS_META = Object.freeze({
 const FILE_ROLE_META = Object.freeze({
     EVIDENCE: ['인증', 'accent'],
     ADDITIONAL: ['추가', 'neutral'],
+    DOCUMENT: ['HWPX', 'info'],
 });
 
-const canReview = currentUserRole === 'admin' || currentUserRole === 'leader';
-let currentView = 'manageable';
 let activeStatus = 'ALL';
 let records = [];
 let teams = [];
@@ -71,6 +73,7 @@ function toDateTimeInput(value) {
 }
 
 function localInputValue(date) {
+    date.setMinutes(Math.round(date.getMinutes() / 5) * 5, 0, 0);
     const offset = date.getTimezoneOffset() * 60000;
     return new Date(date.getTime() - offset).toISOString().slice(0, 16);
 }
@@ -107,9 +110,8 @@ function setListState(title, message, retry = false) {
     lookup('[data-activity-retry]', state).classList.toggle('hidden', !retry);
 }
 
-function imageUrl(recordId, storedFileId, manageable = currentView === 'manageable') {
-    const base = manageable ? '/api/activity-management' : '/api/activity-records';
-    return `${base}/${recordId}/files/${storedFileId}/download`;
+function imageUrl(recordId, storedFileId) {
+    return `/api/activity-management/${recordId}/files/${storedFileId}/download`;
 }
 
 function configureImage(image, fallback, src, alt) {
@@ -154,9 +156,8 @@ function renderRecords() {
     const list = lookup('[data-activity-list]');
     list.replaceChildren();
     if (records.length === 0) {
-        setListState('표시할 활동 기록이 없습니다', currentView === 'manageable'
-            ? '새 활동 기록을 작성하거나 다른 조건을 선택해 보세요.'
-            : '아직 승인된 활동 기록이 없습니다.');
+        setListState('표시할 활동 기록이 없습니다',
+                '새 활동 기록을 작성하거나 다른 조건을 선택해 보세요.');
         return;
     }
     records.forEach((record) => list.appendChild(createActivityCard(record)));
@@ -165,31 +166,48 @@ function renderRecords() {
     list.classList.add('grid');
 }
 
-function selectedTeamId() {
-    const value = readValue('activityTeamFilter');
-    return value ? Number(value) : null;
-}
-
 async function loadRecords() {
     setListState('활동 기록을 불러오는 중입니다', '잠시만 기다려 주세요.');
-    const query = {teamId: selectedTeamId(), pageSize: 100};
-    if (currentView === 'manageable' && activeStatus !== 'ALL') {
+    const params = new URLSearchParams(window.location.search);
+    activeStatus = params.get('status') || 'ALL';
+    const activeFilter = lookup(`[data-filter-group="activity-status"][data-filter-value="${activeStatus}"]`);
+    if (activeFilter) {
+        activateFilterChip(activeFilter);
+    }
+    const requestedPage = readPageFromUrl(params);
+    const query = {page: requestedPage, pageSize: 20};
+    if (activeStatus !== 'ALL') {
         query.status = activeStatus;
     }
     try {
-        records = await get(currentView === 'manageable'
-            ? '/api/activity-management' : '/api/activity-records', query);
+        const response = await get('/api/activity-management/mine', query);
+        const normalizedPage = normalizePage(response, requestedPage);
+        if (normalizedPage !== requestedPage) {
+            setUrlPage(params, normalizedPage);
+            writeUrl(params, false);
+            await loadRecords();
+            return;
+        }
+        records = response.items;
         renderRecords();
+        if (response.totalElements > 0) {
+            renderPagination(lookup('[data-pagination]'), response, (page) => {
+                setUrlPage(params, page);
+                writeUrl(params, true);
+                loadRecords();
+            });
+        } else {
+            lookup('[data-pagination]').classList.add('hidden');
+        }
     } catch (error) {
         setListState('활동 기록을 불러오지 못했습니다', errorMessage(error), true);
     }
 }
 
 function renderTeamOptions() {
-    const filters = [document.getElementById('activityTeamFilter'),
-        document.getElementById('activityTeam')];
-    filters.forEach((select, index) => {
-        select.replaceChildren(element('option', '', index === 0 ? '전체 팀' : '팀을 선택해 주세요'));
+    const filters = [document.getElementById('activityTeam')].filter(Boolean);
+    filters.forEach((select) => {
+        select.replaceChildren(element('option', '', '팀을 선택해 주세요'));
         select.firstElementChild.value = '';
         teams.forEach((team) => {
             const option = element('option', '', team.name);
@@ -212,26 +230,6 @@ async function initializeReferences() {
     renderTeamOptions();
 }
 
-function activateView(button) {
-    currentView = button.dataset.activityView;
-    all('[data-activity-view]').forEach((tab) => {
-        const selected = tab === button;
-        tab.setAttribute('aria-selected', String(selected));
-        tab.classList.toggle('border', selected);
-        tab.classList.toggle('bg-card', selected);
-        tab.classList.toggle('text-foreground', selected);
-        tab.classList.toggle('text-muted-foreground', !selected);
-    });
-    const manageable = currentView === 'manageable';
-    lookup('[data-activity-status-filters]').classList.toggle('hidden', !manageable);
-    setText('[data-activity-section-title]', manageable
-        ? '작성·검수 기록' : '승인된 전체 기록');
-    setText('[data-activity-section-description]', manageable
-        ? '내가 작성했거나 현재 권한으로 관리할 수 있는 기록입니다.'
-        : '운영 검수가 끝난 모든 팀의 활동 기록입니다.');
-    return loadRecords();
-}
-
 function resetActivityForm() {
     editingDetail = null;
     pendingRecordId = null;
@@ -240,14 +238,13 @@ function resetActivityForm() {
     document.getElementById('activityTeam').value = currentUserRole === 'admin'
         ? '' : loginMember?.teamId || '';
     document.getElementById('activityTitle').value = '';
-    document.getElementById('activityDttm').value = localInputValue(new Date());
+    setDateTimeValue('activityDttm', localInputValue(new Date()));
     document.getElementById('activityParticipantCount').value = '1';
     document.getElementById('activityBody').value = '';
     document.getElementById('activityEvidence').value = '';
     document.getElementById('activityAdditional').value = '';
     document.getElementById('activityChangeReason').value = '';
     lookup('[data-activity-change-reason-field]').classList.add('hidden');
-    lookup('[data-evidence-required]').classList.remove('hidden');
     setText('#activityModalTitle', '활동 기록 작성');
     setError('[data-activity-form-error]', '');
 }
@@ -258,6 +255,7 @@ function openCreateModal(trigger) {
         return;
     }
     resetActivityForm();
+    closeModal(document.getElementById('activityChoiceModal'));
     openModal('activityModal', trigger);
 }
 
@@ -269,13 +267,12 @@ function populateEditForm(detail) {
     document.getElementById('activityTeam').disabled = true;
     document.getElementById('activityTeam').value = detail.teamId;
     document.getElementById('activityTitle').value = detail.title;
-    document.getElementById('activityDttm').value = toDateTimeInput(detail.activityDttm);
+    setDateTimeValue('activityDttm', toDateTimeInput(detail.activityDttm));
     document.getElementById('activityParticipantCount').value = detail.participantCount;
     document.getElementById('activityBody').value = detail.body;
     document.getElementById('activityEvidence').value = '';
     document.getElementById('activityAdditional').value = '';
     document.getElementById('activityChangeReason').value = '';
-    lookup('[data-evidence-required]').classList.add('hidden');
     lookup('[data-activity-change-reason-field]').classList.toggle('hidden',
             detail.status !== 'REVISION_REQUESTED');
     setText('#activityModalTitle', detail.status === 'REVISION_REQUESTED'
@@ -287,6 +284,11 @@ function openEditModal(trigger) {
     if (!currentDetail) {
         return;
     }
+    if (currentDetail.reportDocument) {
+        window.location.href = `/activity-documents?activityRecordId=`
+                + `${currentDetail.activityRecordId}`;
+        return;
+    }
     populateEditForm(currentDetail);
     closeModal(document.getElementById('activityDetailModal'));
     openModal('activityModal', trigger);
@@ -295,8 +297,8 @@ function openEditModal(trigger) {
 function activityPayload() {
     return {
         teamId: Number(readValue('activityTeam')),
-        activityDttm: readValue('activityDttm')
-            ? `${readValue('activityDttm')}:00` : null,
+        activityDttm: readDateTimeValue('activityDttm')
+            ? `${readDateTimeValue('activityDttm')}:00` : null,
         title: readValue('activityTitle'),
         body: readValue('activityBody'),
         participantCount: Number(readValue('activityParticipantCount')),
@@ -308,10 +310,10 @@ function validateActivityForm(payload, submitAfterSave) {
             || !payload.body || payload.participantCount < 1) {
         return '담당 팀과 필수 활동 정보를 모두 입력해 주세요.';
     }
-    const evidence = document.getElementById('activityEvidence').files[0];
-    if (submitAfterSave && !pendingHasEvidence && !evidence) {
-        return '네이비즘 인증 사진을 선택해 주세요.';
+    if (Number(payload.activityDttm.slice(14, 16)) % 5 !== 0) {
+        return '활동 일시는 5분 단위로 입력해 주세요.';
     }
+    const evidence = document.getElementById('activityEvidence').files[0];
     const files = [evidence, ...document.getElementById('activityAdditional').files]
             .filter(Boolean);
     if (files.some((file) => !file.type.startsWith('image/'))) {
@@ -375,7 +377,7 @@ async function saveActivity(trigger, submitAfterSave) {
         editingDetail = null;
         pendingRecordId = null;
         pendingHasEvidence = false;
-        await activateView(lookup('[data-activity-view="manageable"]'));
+        await loadRecords();
     } catch (error) {
         const prefix = pendingRecordId && !editingDetail
             ? '초안은 저장됐습니다. 이어서 다시 시도해 주세요. ' : '';
@@ -392,26 +394,37 @@ function renderDetailFiles(detail, manageable) {
     const files = detail.currentFiles || detail.files || [];
     const container = lookup('[data-activity-detail-files]');
     container.replaceChildren();
-    setText('[data-activity-file-count]', `${files.length}장`);
+    setText('[data-activity-file-count]', `${files.length}개`);
     lookup('[data-activity-file-empty]').classList.toggle('hidden', files.length > 0);
     files.forEach((file) => {
         const figure = lookup('[data-activity-file-template]').content.firstElementChild.cloneNode(true);
         figure.dataset.activityRecordFileId = file.activityRecordFileId;
+        const fileUrl = imageUrl(detail.activityRecordId, file.storedFileId, manageable);
         const image = lookup('[data-activity-file-image]', figure);
-        image.src = imageUrl(detail.activityRecordId, file.storedFileId, manageable);
-        image.alt = `${detail.title} ${FILE_ROLE_META[file.fileRole]?.[0] || '활동'} 사진`;
-        image.addEventListener('error', () => {
-            image.replaceWith(element('span',
-                    'px-4 text-center text-xs font-bold text-muted-foreground',
-                    '사진을 불러오지 못했습니다'));
-        }, {once: true});
+        if (file.fileRole === 'DOCUMENT') {
+            const media = image.parentElement;
+            const link = element('a',
+                    'flex min-h-40 w-full items-center justify-center px-4 text-center text-sm font-extrabold text-info underline underline-offset-4',
+                    'HWPX 활동 내역서 다운로드');
+            link.href = fileUrl;
+            media.replaceChildren(link);
+        } else {
+            image.src = fileUrl;
+            image.alt = `${detail.title} ${FILE_ROLE_META[file.fileRole]?.[0] || '활동'} 사진`;
+            image.addEventListener('error', () => {
+                image.replaceWith(element('span',
+                        'px-4 text-center text-xs font-bold text-muted-foreground',
+                        '사진을 불러오지 못했습니다'));
+            }, {once: true});
+        }
         lookup('[data-activity-file-role]', figure).appendChild(fileRoleBadge(file.fileRole));
         setText('[data-activity-file-name]', file.originalName, figure);
         setText('[data-activity-file-meta]',
                 `${file.uploadedByName || '업로더 미상'} · ${formatDateTime(file.uploadedDttm)}`, figure);
         const replaceAction = lookup('[data-file-replace-action]', figure);
         replaceAction.classList.toggle('hidden',
-                !manageable || !['DRAFT', 'REVISION_REQUESTED'].includes(detail.status));
+                file.fileRole === 'DOCUMENT' || !manageable
+                || !['DRAFT', 'REVISION_REQUESTED'].includes(detail.status));
         container.appendChild(figure);
     });
 }
@@ -464,9 +477,11 @@ function renderDetailActions(detail, manageable) {
         && ['DRAFT', 'REVISION_REQUESTED'].includes(detail.status);
     showDetailAction('edit', editable);
     showDetailAction('submit', manageable && detail.status === 'DRAFT');
-    showDetailAction('approve', manageable && canReview && detail.status === 'SUBMITTED');
-    showDetailAction('revision', manageable && canReview && detail.status === 'SUBMITTED');
-    showDetailAction('archive', manageable && canReview && detail.status !== 'ARCHIVED');
+    const editButton = lookup('[data-detail-action="edit"] [data-page-action]');
+    if (editButton) {
+        editButton.textContent = detail.reportDocument
+            ? '활동 내역서 수정' : '수정·사진 추가';
+    }
 }
 
 function renderDetail(detail, manageable) {
@@ -492,11 +507,8 @@ async function openDetail(trigger) {
     }
     trigger.disabled = true;
     try {
-        const manageable = currentView === 'manageable';
-        const detail = await get(manageable
-            ? `/api/activity-management/${recordId}`
-            : `/api/activity-records/${recordId}`);
-        renderDetail(manageable ? detail : {...detail, status: 'APPROVED'}, manageable);
+        const detail = await get(`/api/activity-management/${recordId}`);
+        renderDetail(detail, true);
         openModal('activityDetailModal', trigger);
     } catch (error) {
         showToast(errorMessage(error));
@@ -516,68 +528,6 @@ async function submitCurrentDetail(trigger) {
         });
         closeActionModal(trigger);
         showToast('활동 기록을 제출했습니다.');
-        await loadRecords();
-    } catch (error) {
-        setError('[data-activity-detail-error]', errorMessage(error));
-    } finally {
-        trigger.disabled = false;
-    }
-}
-
-async function approveActivity(trigger) {
-    if (!currentDetail) {
-        return;
-    }
-    trigger.disabled = true;
-    try {
-        await post(`/api/activity-management/${currentDetail.activityRecordId}/approve`);
-        closeActionModal(trigger);
-        showToast('활동 기록을 승인했습니다.');
-        await loadRecords();
-    } catch (error) {
-        setError('[data-activity-detail-error]', errorMessage(error));
-    } finally {
-        trigger.disabled = false;
-    }
-}
-
-function openRevisionModal(trigger) {
-    document.getElementById('activityRevisionComment').value = '';
-    setError('[data-activity-revision-error]', '');
-    closeModal(document.getElementById('activityDetailModal'));
-    openModal('activityRevisionModal', trigger);
-}
-
-async function requestRevision(trigger) {
-    const comment = readValue('activityRevisionComment');
-    if (!comment) {
-        setError('[data-activity-revision-error]', '보완 의견을 입력해 주세요.');
-        return;
-    }
-    trigger.disabled = true;
-    try {
-        await post(`/api/activity-management/${currentDetail.activityRecordId}/revision-request`, {
-            comment,
-        });
-        closeActionModal(trigger);
-        showToast('보완 요청을 전달했습니다.');
-        await loadRecords();
-    } catch (error) {
-        setError('[data-activity-revision-error]', errorMessage(error));
-    } finally {
-        trigger.disabled = false;
-    }
-}
-
-async function archiveActivity(trigger) {
-    if (!currentDetail) {
-        return;
-    }
-    trigger.disabled = true;
-    try {
-        await post(`/api/activity-management/${currentDetail.activityRecordId}/archive`);
-        closeActionModal(trigger);
-        showToast('활동 기록을 보관했습니다.');
         await loadRecords();
     } catch (error) {
         setError('[data-activity-detail-error]', errorMessage(error));
@@ -623,19 +573,22 @@ async function replaceActivityFile(event) {
     }
 }
 
-all('[data-activity-view]').forEach((button) => {
-    button.addEventListener('click', () => activateView(button));
-});
-
 all('[data-filter-group="activity-status"]').forEach((button) => {
     button.addEventListener('click', () => {
         activateFilterChip(button);
         activeStatus = button.dataset.filterValue;
+        const params = new URLSearchParams(window.location.search);
+        if (activeStatus === 'ALL') {
+            params.delete('status');
+        } else {
+            params.set('status', activeStatus);
+        }
+        setUrlPage(params, 0);
+        writeUrl(params, false);
         loadRecords();
     });
 });
 
-document.getElementById('activityTeamFilter').addEventListener('change', loadRecords);
 document.getElementById('activityReplacementFile').addEventListener('change', replaceActivityFile);
 
 bindPageActions({
@@ -646,14 +599,12 @@ bindPageActions({
     [ACTIONS.SAVE]: (trigger) => saveActivity(trigger, false),
     [ACTIONS.SAVE_SUBMIT]: (trigger) => saveActivity(trigger, true),
     [ACTIONS.SUBMIT]: submitCurrentDetail,
-    [ACTIONS.APPROVE]: approveActivity,
-    [ACTIONS.REVISION_OPEN]: openRevisionModal,
-    [ACTIONS.REVISION]: requestRevision,
-    [ACTIONS.ARCHIVE]: archiveActivity,
     [ACTIONS.FILE_REPLACE]: selectReplacementFile,
 });
 
+initializeDateTimeFields();
 initializeReferences().catch((error) => {
     showToast(`기준 정보를 불러오지 못했습니다. ${errorMessage(error)}`);
 });
+window.addEventListener('popstate', loadRecords);
 loadRecords();

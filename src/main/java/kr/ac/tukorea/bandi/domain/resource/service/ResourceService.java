@@ -3,243 +3,213 @@ package kr.ac.tukorea.bandi.domain.resource.service;
 import kr.ac.tukorea.bandi.domain.file.dto.response.FileReferenceResponse;
 import kr.ac.tukorea.bandi.domain.file.service.FileAccessDecision;
 import kr.ac.tukorea.bandi.domain.file.service.FileService;
-import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
 import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
-import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceManageSearchCondition;
-import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceManageSearchParam;
-import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceReadableSearchCondition;
-import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceRevisionParam;
-import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceSearchParam;
-import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceUpdateParam;
-import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceWriteParam;
-import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceContentResponse;
+import kr.ac.tukorea.bandi.domain.notice.service.MarkdownRenderer;
+import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceWriteRequest;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceDetailResponse;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceFileLinkResponse;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceFileResponse;
-import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceManageContentResponse;
-import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceManageDetailResponse;
-import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceManageSummaryResponse;
-import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceRevisionResponse;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceSummaryResponse;
-import kr.ac.tukorea.bandi.domain.resource.exception.InvalidResourceException;
+import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourcePublicShareResponse;
 import kr.ac.tukorea.bandi.domain.resource.exception.ResourceAccessDeniedException;
 import kr.ac.tukorea.bandi.domain.resource.exception.ResourceNotFoundException;
 import kr.ac.tukorea.bandi.domain.resource.mapper.ResourceMapper;
 import kr.ac.tukorea.bandi.domain.resource.model.Resource;
 import kr.ac.tukorea.bandi.domain.resource.model.ResourceFile;
-import kr.ac.tukorea.bandi.domain.resource.model.ResourceTargetScope;
-import lombok.RequiredArgsConstructor;
+import kr.ac.tukorea.bandi.domain.share.service.ShareTokenGenerator;
+import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 @Service
-@RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ResourceService {
-
     private final ResourceMapper resourceMapper;
     private final MemberService memberService;
     private final FileService fileService;
+    private final MarkdownRenderer markdownRenderer;
+    private final ResourceLinkPreviewFetcher linkPreviewFetcher;
+    private final ResourceLinkPreviewRetirementService linkPreviewRetirementService;
+    private final ShareTokenGenerator shareTokenGenerator;
+
+    @Autowired
+    public ResourceService(ResourceMapper resourceMapper, MemberService memberService,
+                           FileService fileService, MarkdownRenderer markdownRenderer,
+                           ResourceLinkPreviewFetcher linkPreviewFetcher,
+                           ResourceLinkPreviewRetirementService linkPreviewRetirementService,
+                           ShareTokenGenerator shareTokenGenerator) {
+        this.resourceMapper = resourceMapper;
+        this.memberService = memberService;
+        this.fileService = fileService;
+        this.markdownRenderer = markdownRenderer;
+        this.linkPreviewFetcher = linkPreviewFetcher;
+        this.linkPreviewRetirementService = linkPreviewRetirementService;
+        this.shareTokenGenerator = shareTokenGenerator;
+    }
+
+    ResourceService(ResourceMapper resourceMapper, MemberService memberService,
+                    FileService fileService, MarkdownRenderer markdownRenderer,
+                    ResourceLinkPreviewFetcher linkPreviewFetcher,
+                    ResourceLinkPreviewRetirementService linkPreviewRetirementService) {
+        this(resourceMapper, memberService, fileService, markdownRenderer,
+                linkPreviewFetcher, linkPreviewRetirementService, new ShareTokenGenerator());
+    }
+
+    public PageResponse<ResourceSummaryResponse> search(Long memberId, String keyword, int page, int pageSize) {
+        requireReadable(memberId);
+        return PageResponse.of(resourceMapper.search(keyword, pageSize, (long) page * pageSize), page, pageSize, resourceMapper.count(keyword));
+    }
+
+    public ResourceDetailResponse lookup(Long memberId, Long resourceId) {
+        requireReadable(memberId);
+        ResourceMapper.ResourceDetailRow row = resourceMapper.lookupDetail(resourceId).orElseThrow(() -> new ResourceNotFoundException(resourceId));
+        List<ResourceFileResponse> files = resourceMapper.searchFiles(resourceId).stream().map(this::file).toList();
+        java.util.Map<Long, String> imageUrls = files.stream().filter(file -> file.contentType().startsWith("image/"))
+                .collect(java.util.stream.Collectors.toMap(ResourceFileResponse::storedFileId,
+                        file -> "/api/resources/" + resourceId + "/files/" + file.storedFileId() + "/inline"));
+        return new ResourceDetailResponse(row.resourceId(), row.title(), row.createdByName(), row.updatedByName(), row.createdDttm(), row.updatedDttm(), row.bodyMarkdown(),
+                markdownRenderer.renderInternalImagesOnly(row.bodyMarkdown(), imageUrls), files, resourceMapper.searchLinkPreviews(resourceId), canManage(memberId, row.createdByMemberId()),
+                canManage(memberId, row.createdByMemberId()), resourceMapper.existsShareToken(resourceId));
+    }
 
     @Transactional
-    public Long createDraft(Long actorMemberId, ResourceWriteParam param) {
-        MemberAccessContext access = memberService.lookupAccessContext(actorMemberId);
-        validateManagement(access, param.targetScope(), param.teamId());
-        validateActiveTarget(param.targetScope(), param.teamId());
-        validateFiles(param.storedFileIds(), actorMemberId, true);
-        Resource resource = Resource.draft(param.targetScope(), param.teamId(),
-                param.categoryCode(), param.title(), param.description(),
-                param.pinned(), actorMemberId);
+    public String issuePublicShare(Long memberId, Long resourceId) {
+        requireReadable(memberId);
+        Resource resource = lock(resourceId);
+        requireManager(memberId, resource);
+        return resourceMapper.lookupShareTokenForUpdate(resourceId)
+                .orElseGet(() -> createPublicShareToken(resourceId));
+    }
+
+    @Transactional
+    public void revokePublicShare(Long memberId, Long resourceId) {
+        requireReadable(memberId);
+        Resource resource = lock(resourceId);
+        requireManager(memberId, resource);
+        resourceMapper.updateShareToken(resourceId, null);
+    }
+
+    public ResourcePublicShareResponse lookupPublicShare(String shareToken) {
+        return resourceMapper.lookupPublicShare(shareToken)
+                .orElseThrow(() -> new ResourceNotFoundException(null));
+    }
+
+    public kr.ac.tukorea.bandi.domain.notice.service.SafeMarkdownHtml preview(Long memberId, String bodyMarkdown) {
+        requireReadable(memberId);
+        return markdownRenderer.renderInternalImagesOnly(bodyMarkdown == null ? "" : bodyMarkdown, java.util.Map.of());
+    }
+
+    @Transactional
+    public Long create(Long memberId, ResourceWriteRequest request) {
+        requireReadable(memberId);
+        validateFiles(null, request.attachmentFileIds(), request.bodyMarkdown(), memberId);
+        Resource resource = Resource.create(request.title(), request.bodyMarkdown(), memberId);
         resourceMapper.insert(resource);
-        if (!param.storedFileIds().isEmpty()) {
-            insertRevision(resource.getResourceId(), 1,
-                    param.storedFileIds(), actorMemberId);
-        }
+        replaceFiles(resource.getResourceId(), request.attachmentFileIds(), memberId);
+        replacePreviews(resource.getResourceId(), memberId, request.bodyMarkdown());
         return resource.getResourceId();
     }
 
     @Transactional
-    public void update(Long actorMemberId, ResourceUpdateParam param) {
-        MemberAccessContext access = memberService.lookupAccessContext(actorMemberId);
-        Resource original = lock(param.resourceId());
-        validateManagement(access, original.getTargetScope(), original.getTeamId());
-        validateManagement(access, param.targetScope(), param.teamId());
-        validateActiveTarget(param.targetScope(), param.teamId());
-        Resource changed = original.edit(param.targetScope(), param.teamId(),
-                param.categoryCode(), param.title(), param.description(),
-                param.pinned(), actorMemberId);
-        resourceMapper.update(changed);
-    }
-
-    @Transactional
-    public int replaceFiles(Long actorMemberId, ResourceRevisionParam param) {
-        MemberAccessContext access = memberService.lookupAccessContext(actorMemberId);
-        Resource resource = lock(param.resourceId());
-        validateManagement(access, resource.getTargetScope(), resource.getTeamId());
-        validateFiles(param.storedFileIds(), actorMemberId, false);
-        int currentRevision = resourceMapper.lookupMaxRevisionForUpdate(param.resourceId())
-                .orElse(0);
-        if (currentRevision == Integer.MAX_VALUE) {
-            throw new InvalidResourceException("revision-overflow");
-        }
-        int nextRevision = currentRevision + 1;
-        insertRevision(param.resourceId(), nextRevision,
-                param.storedFileIds(), actorMemberId);
-        return nextRevision;
-    }
-
-    @Transactional
-    public void publish(Long actorMemberId, Long resourceId) {
-        MemberAccessContext access = memberService.lookupAccessContext(actorMemberId);
+    public void update(Long memberId, Long resourceId, ResourceWriteRequest request) {
+        requireReadable(memberId);
         Resource resource = lock(resourceId);
-        validateManagement(access, resource.getTargetScope(), resource.getTeamId());
-        validateActiveTarget(resource.getTargetScope(), resource.getTeamId());
-        int currentRevision = resourceMapper.lookupMaxRevisionForUpdate(resourceId)
-                .orElseThrow(() -> new InvalidResourceException("files"));
-        if (!resourceMapper.existsFilesInRevision(resourceId, currentRevision)) {
-            throw new InvalidResourceException("files");
-        }
-        resourceMapper.update(resource.publish(actorMemberId));
+        requireManager(memberId, resource);
+        validateFiles(resourceId, request.attachmentFileIds(), request.bodyMarkdown(), memberId);
+        resourceMapper.update(resource.edit(request.title(), request.bodyMarkdown(), memberId));
+        resourceMapper.removeFiles(resourceId);
+        replaceFiles(resourceId, request.attachmentFileIds(), memberId);
+        replacePreviews(resourceId, memberId, request.bodyMarkdown());
     }
 
     @Transactional
-    public void archive(Long actorMemberId, Long resourceId) {
-        MemberAccessContext access = memberService.lookupAccessContext(actorMemberId);
+    public void delete(Long memberId, Long resourceId) {
+        requireReadable(memberId);
         Resource resource = lock(resourceId);
-        validateManagement(access, resource.getTargetScope(), resource.getTeamId());
-        resourceMapper.update(resource.archive(actorMemberId));
-    }
-
-    public List<ResourceManageSummaryResponse> searchManageable(
-            Long actorMemberId, ResourceManageSearchParam param) {
-        MemberAccessContext access = memberService.lookupAccessContext(actorMemberId);
-        ResourceManageSearchCondition condition;
-        if (access.canManageGlobal()) {
-            condition = ResourceManageSearchCondition.forAdmin(param);
-        } else if (access.canManageTeam(access.teamId())) {
-            condition = ResourceManageSearchCondition.forLeader(param, access.teamId());
-        } else {
-            throw new ResourceAccessDeniedException();
-        }
-        return resourceMapper.searchManageable(condition);
-    }
-
-    public ResourceManageDetailResponse lookupManageable(Long actorMemberId,
-                                                         Long resourceId) {
-        MemberAccessContext access = memberService.lookupAccessContext(actorMemberId);
-        ResourceManageContentResponse content = resourceMapper.lookupManageContent(resourceId)
-                .orElseThrow(() -> new ResourceNotFoundException(resourceId));
-        validateManagement(access, content.targetScope(), content.teamId());
-        List<ResourceRevisionResponse> revisions = groupRevisions(
-                resourceMapper.searchFileLinks(resourceId));
-        return ResourceManageDetailResponse.of(content, revisions);
-    }
-
-    public List<ResourceSummaryResponse> searchReadable(
-            Long memberId, ResourceSearchParam param) {
-        MemberAccessContext access = readableAccess(memberId);
-        return resourceMapper.searchReadable(ResourceReadableSearchCondition.from(
-                param, access.teamId(), access.canManageGlobal()));
-    }
-
-    public ResourceDetailResponse lookupReadable(Long memberId, Long resourceId) {
-        MemberAccessContext access = readableAccess(memberId);
-        ResourceContentResponse content = resourceMapper.lookupReadableContent(
-                        resourceId, access.teamId(), access.canManageGlobal())
-                .orElseThrow(() -> new ResourceNotFoundException(resourceId));
-        return ResourceDetailResponse.of(content,
-                toFiles(resourceMapper.searchCurrentFileLinks(resourceId)));
+        requireManager(memberId, resource);
+        retirePreviewImages(resourceId);
+        resourceMapper.delete(resourceId);
     }
 
     public FileDownloadResponse openDownload(Long memberId, Long resourceId, Long storedFileId) {
-        MemberAccessContext access = readableAccess(memberId);
-        boolean readable = resourceMapper.existsReadableCurrentFile(resourceId,
-                storedFileId, access.teamId(), access.canManageGlobal());
-        if (!readable) {
+        requireReadable(memberId);
+        if (!resourceMapper.existsFile(resourceId, storedFileId)) { throw new ResourceNotFoundException(resourceId); }
+        return fileService.openPrivateDownload(storedFileId, FileAccessDecision.GRANTED);
+    }
+
+    public FileDownloadResponse openPreviewImage(Long memberId, Long resourceId,
+                                                 Long storedFileId) {
+        requireReadable(memberId);
+        if (!resourceMapper.existsPreviewImage(resourceId, storedFileId)) {
             throw new ResourceNotFoundException(resourceId);
         }
-        return fileService.openPrivateDownload(
-                storedFileId, FileAccessDecision.GRANTED);
+        return fileService.openPrivateDownload(storedFileId, FileAccessDecision.GRANTED);
     }
 
-    private Resource lock(Long resourceId) {
-        return resourceMapper.lookupByIdForUpdate(resourceId)
-                .orElseThrow(() -> new ResourceNotFoundException(resourceId));
+    private void replacePreviews(Long resourceId, Long memberId, String markdown) {
+        retirePreviewImages(resourceId);
+        linkPreviewFetcher.fetchAll(resourceId, memberId, extractStandaloneUrls(markdown))
+                .values().forEach(resourceMapper::insertLinkPreview);
     }
 
-    private MemberAccessContext readableAccess(Long memberId) {
-        MemberAccessContext access = memberService.lookupAccessContext(memberId);
-        if (!access.canReadInternal()) {
-            throw new ResourceAccessDeniedException();
-        }
-        return access;
+    private void retirePreviewImages(Long resourceId) {
+        List<Long> previewImageFileIds = resourceMapper.searchPreviewImageFileIds(resourceId);
+        resourceMapper.removeLinkPreviews(resourceId);
+        previewImageFileIds.forEach(linkPreviewRetirementService::queue);
     }
-
-    private void validateManagement(MemberAccessContext access,
-                                    ResourceTargetScope scope, Long teamId) {
-        boolean allowed = scope == ResourceTargetScope.ALL
-                ? access.canManageGlobal()
-                : access.canManageTeam(teamId);
-        if (!allowed) {
-            throw new ResourceAccessDeniedException();
-        }
+    private Set<String> extractStandaloneUrls(String markdown) {
+        Set<String> urls = new java.util.LinkedHashSet<>();
+        for (String line : markdown.split("\\R")) { if (line.matches("https://[^\\s]+")) { urls.add(line.strip()); } }
+        return urls.stream().limit(5).collect(java.util.stream.Collectors.toCollection(java.util.LinkedHashSet::new));
     }
-
-    private void validateActiveTarget(ResourceTargetScope scope, Long teamId) {
-        if (scope == ResourceTargetScope.TEAM) {
-            memberService.validateActiveTeam(teamId);
+    private void replaceFiles(Long resourceId, List<Long> ids, Long memberId) {
+        for (int index = 0; index < ids.size(); index += 1) {
+            resourceMapper.insertFile(ResourceFile.attach(resourceId, ids.get(index), index,
+                    memberId));
         }
     }
 
-    private void validateFiles(List<Long> storedFileIds, Long actorMemberId,
-                               boolean allowEmpty) {
-        if ((!allowEmpty && storedFileIds.isEmpty())
-                || storedFileIds.stream().anyMatch(fileId -> fileId == null)
-                || new HashSet<>(storedFileIds).size() != storedFileIds.size()) {
-            throw new InvalidResourceException("files");
+    private void validateFiles(Long resourceId, List<Long> ids, String markdown,
+                               Long memberId) {
+        if (new HashSet<>(ids).size() != ids.size()) {
+            throw new kr.ac.tukorea.bandi.domain.resource.exception.InvalidResourceException("files");
         }
-        storedFileIds.forEach(storedFileId ->
-                fileService.validatePrivateReadyOwnedBy(storedFileId, actorMemberId));
-    }
-
-    private void insertRevision(Long resourceId, int revisionNo,
-                                List<Long> storedFileIds, Long actorMemberId) {
-        for (int index = 0; index < storedFileIds.size(); index++) {
-            ResourceFile resourceFile = ResourceFile.create(resourceId,
-                    storedFileIds.get(index), revisionNo, index, actorMemberId);
-            resourceMapper.insertFile(resourceFile);
+        Set<Long> existingFileIds = resourceId == null ? Set.of()
+                : resourceMapper.searchFiles(resourceId).stream()
+                .map(ResourceFileLinkResponse::storedFileId).collect(java.util.stream.Collectors.toSet());
+        HashMap<Long, FileReferenceResponse> files = new HashMap<>();
+        for (Long storedFileId : ids) {
+            if (!existingFileIds.contains(storedFileId)) {
+                fileService.validatePrivateReadyOwnedBy(storedFileId, memberId);
+            }
+            files.put(storedFileId, fileService.lookupPrivateReady(storedFileId));
         }
+        validateAttachmentImages(markdown, files);
     }
 
-    private List<ResourceFileResponse> toFiles(List<ResourceFileLinkResponse> links) {
-        return links.stream().map(this::toFile).toList();
+    private void validateAttachmentImages(String markdown,
+                                          java.util.Map<Long, FileReferenceResponse> files) {
+        markdownRenderer.extractAttachmentImageReferences(markdown).forEach(reference -> {
+            Long storedFileId = Long.valueOf(reference.substring("attachment://".length()));
+            FileReferenceResponse file = files.get(storedFileId);
+            if (file == null || file.contentType() == null
+                    || !file.contentType().startsWith("image/")) {
+                throw new kr.ac.tukorea.bandi.domain.resource.exception.InvalidResourceException("image");
+            }
+        });
     }
-
-    private ResourceFileResponse toFile(ResourceFileLinkResponse link) {
-        FileReferenceResponse file = fileService.lookupPrivateReady(link.storedFileId());
-        return new ResourceFileResponse(file.storedFileId(), file.originalName(),
-                file.contentType(), file.sizeBytes(), link.revisionNo(),
-                link.displayOrder(), link.uploadedByMemberId(),
-                link.uploadedByName(), link.uploadedDttm());
-    }
-
-    private List<ResourceRevisionResponse> groupRevisions(
-            List<ResourceFileLinkResponse> links) {
-        Map<Integer, List<ResourceFileResponse>> grouped = new LinkedHashMap<>();
-        for (ResourceFileLinkResponse link : links) {
-            grouped.computeIfAbsent(link.revisionNo(), key -> new ArrayList<>())
-                    .add(toFile(link));
-        }
-        return grouped.entrySet().stream()
-                .map(entry -> new ResourceRevisionResponse(
-                        entry.getKey(), entry.getValue()))
-                .toList();
-    }
+    private ResourceFileResponse file(ResourceFileLinkResponse link) { FileReferenceResponse file = fileService.lookupPrivateReady(link.storedFileId()); return new ResourceFileResponse(file.storedFileId(), file.originalName(), file.contentType(), file.sizeBytes(), link.displayOrder(), link.uploadedByMemberId(), link.uploadedByName(), link.uploadedDttm()); }
+    private Resource lock(Long id) { return resourceMapper.lookupByIdForUpdate(id).orElseThrow(() -> new ResourceNotFoundException(id)); }
+    private void requireReadable(Long memberId) { if (!memberService.lookupAccessContext(memberId).canReadInternal()) { throw new ResourceAccessDeniedException(); } }
+    private boolean canManage(Long memberId, Long creatorId) { MemberAccessContext access = memberService.lookupAccessContext(memberId); return creatorId.equals(memberId) || access.canManageGlobal(); }
+    private void requireManager(Long memberId, Resource resource) { if (!canManage(memberId, resource.getCreatedByMemberId())) { throw new ResourceAccessDeniedException(); } }
+    private String createPublicShareToken(Long resourceId) { String token = shareTokenGenerator.generate(); resourceMapper.updateShareToken(resourceId, token); return token; }
 }

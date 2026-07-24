@@ -16,6 +16,7 @@
             <arg column="student_no" javaType="java.lang.String"/>
             <arg column="name" javaType="java.lang.String"/>
             <arg column="department" javaType="java.lang.String"/>
+            <arg column="phone_number" javaType="java.lang.String"/>
             <arg column="academic_status_code" javaType="kr.ac.tukorea.bandi.domain.member.model.AcademicStatus"/>
             <arg column="academic_status_verified_dttm" javaType="java.time.LocalDateTime"/>
             <arg column="team_id" javaType="java.lang.Long"/>
@@ -26,13 +27,38 @@
             <arg column="sso_linked_dttm" javaType="java.time.LocalDateTime"/>
             <arg column="last_login_dttm" javaType="java.time.LocalDateTime"/>
             <arg column="registered_by_member_id" javaType="java.lang.Long"/>
+            <arg column="profile_photo_file_id" javaType="java.lang.Long"/>
         </constructor>
     </resultMap>
 
     <sql id="memberColumns">
-        member_id, student_no, name, department, academic_status_code, academic_status_verified_dttm,
+        member_id, student_no, name, department, phone_number, academic_status_code, academic_status_verified_dttm,
         team_id, cohort_id, role_code, member_status_code, sso_link_status_code,
-        sso_linked_dttm, last_login_dttm, registered_by_member_id
+        sso_linked_dttm, last_login_dttm, registered_by_member_id, profile_photo_file_id
+    </sql>
+
+    <sql id="memberPageCondition">
+        <where>
+            <if test="keyword != null">
+                AND (name LIKE CONCAT('%', #{keyword}, '%')
+                    OR student_no LIKE CONCAT('%', #{keyword}, '%'))
+            </if>
+            <if test="teamId != null">
+                AND team_id = #{teamId}
+            </if>
+            <if test="cohortId != null">
+                AND cohort_id = #{cohortId}
+            </if>
+            <if test="status != null">
+                AND member_status_code = #{status}
+            </if>
+            <if test="role != null">
+                AND role_code = #{role}
+            </if>
+            <if test="ssoLinkStatus != null">
+                AND sso_link_status_code = #{ssoLinkStatus}
+            </if>
+        </where>
     </sql>
 
     <select id="lookupById" resultMap="memberResultMap">
@@ -85,6 +111,43 @@
         ORDER BY name, member_id
     </select>
 
+    <select id="searchPage" resultMap="memberResultMap">
+        SELECT <include refid="memberColumns"/>
+        FROM member
+        <include refid="memberPageCondition"/>
+        ORDER BY name, member_id
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countByPageCondition" resultType="long">
+        SELECT COUNT(*)
+        FROM member
+        <include refid="memberPageCondition"/>
+    </select>
+
+    <select id="countActive" resultType="long">
+        SELECT COUNT(*)
+        FROM member
+        WHERE member_status_code = 'ACTIVE'
+    </select>
+
+    <select id="countSsoVerificationRequired" resultType="long">
+        SELECT COUNT(*)
+        FROM member
+        WHERE member_status_code = 'ACTIVE'
+          AND sso_link_status_code IN ('WAITING', 'REVIEW_REQUIRED')
+    </select>
+
+    <select id="searchActiveByKeyword" resultMap="memberResultMap">
+        SELECT <include refid="memberColumns"/>
+        FROM member
+        WHERE member_status_code = 'ACTIVE'
+          AND (name LIKE CONCAT('%', #{keyword}, '%')
+            OR student_no LIKE CONCAT('%', #{keyword}, '%'))
+        ORDER BY name, member_id
+        LIMIT #{limit}
+    </select>
+
     <!-- 마지막 운영진 보호 검증 전에 활성 운영진 행을 잠근다 (정본 5.4) -->
     <select id="searchActiveAdminIdsForUpdate" resultType="java.lang.Long">
         SELECT member_id
@@ -103,13 +166,13 @@
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="memberId">
         INSERT INTO member (
-            student_no, name, department, academic_status_code, academic_status_verified_dttm,
+            student_no, name, department, phone_number, academic_status_code, academic_status_verified_dttm,
             team_id, cohort_id, role_code, member_status_code, sso_link_status_code,
-            sso_linked_dttm, last_login_dttm, registered_by_member_id
+            sso_linked_dttm, last_login_dttm, registered_by_member_id, profile_photo_file_id
         ) VALUES (
-            #{studentNo}, #{name}, #{department}, #{academicStatus}, #{academicStatusVerifiedDttm},
+            #{studentNo}, #{name}, #{department}, #{phoneNumber}, #{academicStatus}, #{academicStatusVerifiedDttm},
             #{teamId}, #{cohortId}, #{role}, #{status}, #{ssoLinkStatus},
-            #{ssoLinkedDttm}, #{lastLoginDttm}, #{registeredByMemberId}
+            #{ssoLinkedDttm}, #{lastLoginDttm}, #{registeredByMemberId}, #{profilePhotoFileId}
         )
     </insert>
 
@@ -140,12 +203,21 @@
     <update id="updateSchoolConnection">
         UPDATE member
         SET department = #{department},
+            <if test="phoneNumber != null">
+                phone_number = #{phoneNumber},
+            </if>
             academic_status_code = #{academicStatus},
             academic_status_verified_dttm = #{academicStatusVerifiedDttm},
             member_status_code = #{memberStatus},
             sso_link_status_code = #{ssoLinkStatus},
             sso_linked_dttm = #{ssoLinkedDttm},
             last_login_dttm = #{lastLoginDttm}
+        WHERE member_id = #{memberId}
+    </update>
+
+    <update id="updateProfilePhoto">
+        UPDATE member
+        SET profile_photo_file_id = #{profilePhotoFileId}
         WHERE member_id = #{memberId}
     </update>
 </mapper>

@@ -17,4 +17,6 @@ public interface StoredFileMapper {
                     @Param("objectEtag") String objectEtag);
 
     int updateFailed(Long storedFileId);
+
+    int remove(Long storedFileId);
 }

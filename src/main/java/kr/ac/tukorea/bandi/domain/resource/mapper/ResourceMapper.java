@@ -1,12 +1,9 @@
 package kr.ac.tukorea.bandi.domain.resource.mapper;
 
-import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceManageSearchCondition;
-import kr.ac.tukorea.bandi.domain.resource.dto.request.ResourceReadableSearchCondition;
-import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceContentResponse;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceFileLinkResponse;
-import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceManageContentResponse;
-import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceManageSummaryResponse;
+import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceLinkPreviewResponse;
 import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourceSummaryResponse;
+import kr.ac.tukorea.bandi.domain.resource.dto.response.ResourcePublicShareResponse;
 import kr.ac.tukorea.bandi.domain.resource.model.Resource;
 import kr.ac.tukorea.bandi.domain.resource.model.ResourceFile;
 import org.apache.ibatis.annotations.Param;
@@ -16,39 +13,62 @@ import java.util.Optional;
 
 public interface ResourceMapper {
 
-    Optional<Resource> lookupById(Long resourceId);
-
     Optional<Resource> lookupByIdForUpdate(Long resourceId);
 
-    Optional<Integer> lookupMaxRevisionForUpdate(Long resourceId);
+    Optional<Resource> lookupById(Long resourceId);
 
-    List<ResourceManageSummaryResponse> searchManageable(
-            ResourceManageSearchCondition condition);
+    List<ResourceSummaryResponse> search(@Param("keyword") String keyword,
+                                         @Param("limit") int limit,
+                                         @Param("offset") long offset);
 
-    Optional<ResourceManageContentResponse> lookupManageContent(Long resourceId);
+    long count(@Param("keyword") String keyword);
 
-    List<ResourceSummaryResponse> searchReadable(ResourceReadableSearchCondition condition);
+    Optional<ResourceDetailRow> lookupDetail(Long resourceId);
 
-    Optional<ResourceContentResponse> lookupReadableContent(
-            @Param("resourceId") Long resourceId,
-            @Param("memberTeamId") Long memberTeamId,
-            @Param("admin") boolean admin);
+    List<ResourceFileLinkResponse> searchFiles(Long resourceId);
 
-    boolean existsFilesInRevision(@Param("resourceId") Long resourceId,
-                                  @Param("revisionNo") int revisionNo);
+    List<ResourceLinkPreviewResponse> searchLinkPreviews(Long resourceId);
 
-    boolean existsReadableCurrentFile(@Param("resourceId") Long resourceId,
-                                      @Param("storedFileId") Long storedFileId,
-                                      @Param("memberTeamId") Long memberTeamId,
-                                      @Param("admin") boolean admin);
+    List<Long> searchPreviewImageFileIds(Long resourceId);
 
-    List<ResourceFileLinkResponse> searchCurrentFileLinks(Long resourceId);
+    boolean existsFile(@Param("resourceId") Long resourceId,
+                       @Param("storedFileId") Long storedFileId);
 
-    List<ResourceFileLinkResponse> searchFileLinks(Long resourceId);
+    boolean existsPreviewImage(@Param("resourceId") Long resourceId,
+                               @Param("storedFileId") Long storedFileId);
 
     int insert(Resource resource);
 
     int update(Resource resource);
 
+    int delete(@Param("resourceId") Long resourceId);
+
+    int removeFiles(Long resourceId);
+
     int insertFile(ResourceFile resourceFile);
+
+    int removeLinkPreviews(Long resourceId);
+
+    int insertLinkPreview(ResourceLinkPreviewRow preview);
+
+    Optional<String> lookupShareTokenForUpdate(Long resourceId);
+
+    Optional<ResourcePublicShareResponse> lookupPublicShare(String shareToken);
+
+    boolean existsShareToken(Long resourceId);
+
+    int updateShareToken(@Param("resourceId") Long resourceId,
+                         @Param("shareToken") String shareToken);
+
+    record ResourceDetailRow(Long resourceId, String title, String bodyMarkdown,
+                             String createdByName, String updatedByName,
+                             java.time.LocalDateTime createdDttm,
+                             java.time.LocalDateTime updatedDttm,
+                             Long createdByMemberId) {
+    }
+
+    record ResourceLinkPreviewRow(Long resourceId, String normalizedUrl, String urlHash,
+                                  String domain, String title, String description,
+                                  Long previewImageFileId, java.time.LocalDateTime fetchedDttm) {
+    }
 }

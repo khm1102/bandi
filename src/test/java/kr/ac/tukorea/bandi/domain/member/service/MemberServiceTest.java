@@ -5,12 +5,15 @@ import kr.ac.tukorea.bandi.domain.audit.model.AuditTargetType;
 import kr.ac.tukorea.bandi.domain.audit.service.AuditService;
 import kr.ac.tukorea.bandi.domain.member.dto.request.CohortChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPreRegisterParam;
+import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchCondition;
+import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchCondition;
 import kr.ac.tukorea.bandi.domain.member.dto.request.RoleChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.StatusChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.TeamChangeParam;
 import kr.ac.tukorea.bandi.domain.member.exception.ChangeReasonRequiredException;
 import kr.ac.tukorea.bandi.domain.member.exception.CohortNotFoundException;
+import kr.ac.tukorea.bandi.domain.member.exception.DuplicateCohortException;
 import kr.ac.tukorea.bandi.domain.member.exception.DuplicateStudentNoException;
 import kr.ac.tukorea.bandi.domain.member.exception.InactiveCohortException;
 import kr.ac.tukorea.bandi.domain.member.exception.InactiveTeamException;
@@ -21,13 +24,13 @@ import kr.ac.tukorea.bandi.domain.member.exception.NoChangeException;
 import kr.ac.tukorea.bandi.domain.member.exception.SelfRoleDemotionException;
 import kr.ac.tukorea.bandi.domain.member.exception.TeamNotFoundException;
 import kr.ac.tukorea.bandi.domain.member.mapper.CohortMapper;
+import kr.ac.tukorea.bandi.domain.member.mapper.ClubOfficerMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.MemberHistoryMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.MemberMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.TeamMapper;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.AcademicStatus;
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
-import kr.ac.tukorea.bandi.domain.member.model.CohortTerm;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
 import kr.ac.tukorea.bandi.domain.member.model.MemberCohortHistory;
 import kr.ac.tukorea.bandi.domain.member.model.MemberRoleHistory;
@@ -82,6 +85,8 @@ class MemberServiceTest {
     @Mock
     private MemberHistoryMapper memberHistoryMapper;
     @Mock
+    private ClubOfficerMapper clubOfficerMapper;
+    @Mock
     private AuditService auditService;
 
     private MemberService memberService;
@@ -91,7 +96,8 @@ class MemberServiceTest {
         // 이력의 changed_dttm을 단언할 수 있도록 시각을 고정한다 (컨벤션 9.5).
         Clock clock = Clock.fixed(FIXED_INSTANT, SEOUL);
         memberService = new MemberService(memberMapper, teamMapper,
-                cohortMapper, memberHistoryMapper, auditService, clock);
+                cohortMapper, memberHistoryMapper, clubOfficerMapper,
+                auditService, clock);
     }
 
     @Test
@@ -110,6 +116,54 @@ class MemberServiceTest {
         assertThat(captor.getValue().status()).isEqualTo(MemberStatus.ACTIVE);
     }
 
+    @Test
+    void 세션_권한_동기화를_위해_현재_멤버_권한을_조회한다() {
+        given(memberMapper.lookupById(TARGET_ID)).willReturn(Optional.of(
+                member(TARGET_ID, STAGE_TEAM_ID, ClubRole.LEADER, MemberStatus.ACTIVE)));
+
+        ClubRole role = memberService.lookupCurrentRole(TARGET_ID);
+
+        assertThat(role).isEqualTo(ClubRole.LEADER);
+    }
+
+    @Test
+    void 멤버_페이지는_목록과_같은_조건의_전체_건수로_메타데이터를_계산한다() {
+        given(memberMapper.searchPage(any())).willReturn(List.of(
+                member(TARGET_ID, STAGE_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
+        given(memberMapper.countByPageCondition(any())).willReturn(41L);
+        MemberPageSearchParam param = new MemberPageSearchParam("서준", STAGE_TEAM_ID,
+                COHORT_ID, MemberStatus.ACTIVE, ClubRole.MEMBER,
+                SsoLinkStatus.LINKED, 1, 20);
+
+        var result = memberService.searchMemberPage(param);
+
+        assertThat(result.items()).hasSize(1);
+        assertThat(result.page()).isEqualTo(1);
+        assertThat(result.totalElements()).isEqualTo(41);
+        assertThat(result.totalPages()).isEqualTo(3);
+        assertThat(result.hasPrevious()).isTrue();
+        assertThat(result.hasNext()).isTrue();
+        ArgumentCaptor<MemberPageSearchCondition> captor =
+                ArgumentCaptor.forClass(MemberPageSearchCondition.class);
+        verify(memberMapper).searchPage(captor.capture());
+        verify(memberMapper).countByPageCondition(captor.getValue());
+        assertThat(captor.getValue().offset()).isEqualTo(20);
+    }
+
+    @Test
+    void 멤버_통계는_현재_페이지가_아닌_전체_활성_데이터로_계산한다() {
+        given(memberMapper.countActive()).willReturn(42L);
+        given(memberMapper.countSsoVerificationRequired()).willReturn(5L);
+        given(cohortMapper.searchAll()).willReturn(List.of(cohort(),
+                new Cohort(NEW_COHORT_ID, "27-1기", false)));
+
+        var result = memberService.lookupMemberStats();
+
+        assertThat(result.activeMemberCount()).isEqualTo(42);
+        assertThat(result.activeCohortCount()).isEqualTo(1);
+        assertThat(result.ssoVerificationRequiredCount()).isEqualTo(5);
+    }
+
     private static Member member(Long memberId, Long teamId, ClubRole role, MemberStatus status) {
         return new Member(memberId, "2020184000", "이서준", "컴퓨터공학부", AcademicStatus.ENROLLED, null,
                 teamId, COHORT_ID, role, status, SsoLinkStatus.LINKED, null, null, ADMIN_ID);
@@ -120,12 +174,18 @@ class MemberServiceTest {
     }
 
     private static Cohort cohort() {
-        return new Cohort(COHORT_ID, "26-2기", (short) 2026, CohortTerm.SECOND, true);
+        return new Cohort(COHORT_ID, "26-2기", true);
     }
 
     private void givenActiveAdmin() {
         given(memberMapper.lookupById(ADMIN_ID))
                 .willReturn(Optional.of(member(ADMIN_ID, ACTOR_TEAM_ID, ClubRole.ADMIN, MemberStatus.ACTIVE)));
+    }
+
+    private void givenActiveAdminForUpdate() {
+        given(memberMapper.lookupByIdForUpdate(ADMIN_ID))
+                .willReturn(Optional.of(member(ADMIN_ID, ACTOR_TEAM_ID,
+                        ClubRole.ADMIN, MemberStatus.ACTIVE)));
     }
 
     private void givenNonAdminActor() {
@@ -175,11 +235,11 @@ class MemberServiceTest {
         @Test
         void 동시_등록으로_DB_UNIQUE가_충돌해도_학번_중복_예외로_변환한다() {
             // given
-            givenActiveAdmin();
             given(memberMapper.existsByStudentNo("2021184000")).willReturn(false);
             given(teamMapper.lookupById(ACTOR_TEAM_ID)).willReturn(Optional.of(activeTeam(ACTOR_TEAM_ID)));
             given(cohortMapper.lookupById(COHORT_ID)).willReturn(Optional.of(cohort()));
             given(memberMapper.insert(any())).willThrow(new DuplicateKeyException("uk_member_student_no"));
+            givenActiveAdmin();
 
             // when & then
             assertThatThrownBy(() -> memberService.preRegister(ADMIN_ID, param()))
@@ -233,8 +293,7 @@ class MemberServiceTest {
             given(memberMapper.existsByStudentNo("2021184000")).willReturn(false);
             given(teamMapper.lookupById(ACTOR_TEAM_ID)).willReturn(Optional.of(activeTeam(ACTOR_TEAM_ID)));
             given(cohortMapper.lookupById(COHORT_ID))
-                    .willReturn(Optional.of(new Cohort(COHORT_ID, "26-2기", (short) 2026,
-                            CohortTerm.SECOND, false)));
+                    .willReturn(Optional.of(new Cohort(COHORT_ID, "26-2기", false)));
 
             // when & then
             assertThatThrownBy(() -> memberService.preRegister(ADMIN_ID, param()))
@@ -246,12 +305,50 @@ class MemberServiceTest {
         void 활성_ADMIN이_아니면_멤버를_등록할_수_없다() {
             // given
             given(memberMapper.lookupById(ADMIN_ID))
-                    .willReturn(Optional.of(member(ADMIN_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
+                    .willReturn(Optional.of(member(ADMIN_ID, ACTOR_TEAM_ID,
+                            ClubRole.MEMBER, MemberStatus.ACTIVE)));
 
             // when & then
             assertThatThrownBy(() -> memberService.preRegister(ADMIN_ID, param()))
                     .isInstanceOf(MemberManagementForbiddenException.class);
             verify(memberMapper, never()).insert(any());
+        }
+    }
+
+    @Nested
+    @DisplayName("기수 추가")
+    class CreateCohort {
+
+        @Test
+        void ADMIN은_공백을_제거한_활성_기수를_추가할_수_있다() {
+            givenActiveAdmin();
+            given(cohortMapper.existsByName("1-2")).willReturn(false);
+
+            memberService.createCohort(ADMIN_ID, " 1-2 ");
+
+            ArgumentCaptor<Cohort> captor = ArgumentCaptor.forClass(Cohort.class);
+            verify(cohortMapper).insert(captor.capture());
+            assertThat(captor.getValue().getName()).isEqualTo("1-2");
+            assertThat(captor.getValue().isActive()).isTrue();
+        }
+
+        @Test
+        void 같은_기수는_추가할_수_없다() {
+            givenActiveAdmin();
+            given(cohortMapper.existsByName("1-2")).willReturn(true);
+
+            assertThatThrownBy(() -> memberService.createCohort(ADMIN_ID, "1-2"))
+                    .isInstanceOf(DuplicateCohortException.class);
+            verify(cohortMapper, never()).insert(any());
+        }
+
+        @Test
+        void 일반_멤버는_기수를_추가할_수_없다() {
+            givenNonAdminActor();
+
+            assertThatThrownBy(() -> memberService.createCohort(ADMIN_ID, "1-2"))
+                    .isInstanceOf(MemberManagementForbiddenException.class);
+            verify(cohortMapper, never()).insert(any());
         }
     }
 
@@ -264,8 +361,9 @@ class MemberServiceTest {
             // given
             given(memberMapper.lookupByIdForUpdate(TARGET_ID))
                     .willReturn(Optional.of(member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
+            given(memberMapper.lookupByIdForUpdate(ADMIN_ID))
+                    .willReturn(Optional.of(member(ADMIN_ID, ACTOR_TEAM_ID, ClubRole.ADMIN, MemberStatus.ACTIVE)));
             given(teamMapper.lookupById(STAGE_TEAM_ID)).willReturn(Optional.of(activeTeam(STAGE_TEAM_ID)));
-            givenActiveAdmin();
 
             // when
             memberService.changeTeam(ADMIN_ID, new TeamChangeParam(TARGET_ID, STAGE_TEAM_ID, REASON));
@@ -290,7 +388,8 @@ class MemberServiceTest {
             // given
             given(memberMapper.lookupByIdForUpdate(TARGET_ID))
                     .willReturn(Optional.of(member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
-            givenActiveAdmin();
+            given(memberMapper.lookupByIdForUpdate(ADMIN_ID))
+                    .willReturn(Optional.of(member(ADMIN_ID, ACTOR_TEAM_ID, ClubRole.ADMIN, MemberStatus.ACTIVE)));
 
             // when & then
             assertThatThrownBy(() -> memberService.changeTeam(ADMIN_ID,
@@ -312,12 +411,67 @@ class MemberServiceTest {
         void 존재하지_않는_멤버의_팀은_변경할_수_없다() {
             // given
             given(memberMapper.lookupByIdForUpdate(TARGET_ID)).willReturn(Optional.empty());
-            givenActiveAdmin();
+            given(memberMapper.lookupByIdForUpdate(ADMIN_ID))
+                    .willReturn(Optional.of(member(ADMIN_ID, ACTOR_TEAM_ID, ClubRole.ADMIN, MemberStatus.ACTIVE)));
 
             // when & then
             assertThatThrownBy(() -> memberService.changeTeam(ADMIN_ID,
                     new TeamChangeParam(TARGET_ID, STAGE_TEAM_ID, REASON)))
                     .isInstanceOf(MemberNotFoundException.class);
+        }
+
+        @Test
+        void 활성_멤버는_본인_팀을_변경할_수_있다() {
+            Member self = member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER,
+                    MemberStatus.ACTIVE);
+            given(memberMapper.lookupByIdForUpdate(TARGET_ID)).willReturn(Optional.of(self));
+            given(teamMapper.lookupById(STAGE_TEAM_ID)).willReturn(Optional.of(activeTeam(STAGE_TEAM_ID)));
+
+            memberService.changeTeam(TARGET_ID,
+                    new TeamChangeParam(TARGET_ID, STAGE_TEAM_ID, REASON));
+
+            verify(memberMapper).updateTeam(TARGET_ID, STAGE_TEAM_ID);
+        }
+
+        @Test
+        void 활성_팀장은_현재_팀의_멤버만_변경할_수_있다() {
+            Member leader = member(ADMIN_ID, ACTOR_TEAM_ID, ClubRole.LEADER,
+                    MemberStatus.ACTIVE);
+            given(memberMapper.lookupByIdForUpdate(ADMIN_ID)).willReturn(Optional.of(leader));
+            given(memberMapper.lookupByIdForUpdate(TARGET_ID)).willReturn(Optional.of(
+                    member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
+            given(teamMapper.lookupById(STAGE_TEAM_ID)).willReturn(Optional.of(activeTeam(STAGE_TEAM_ID)));
+
+            memberService.changeTeam(ADMIN_ID,
+                    new TeamChangeParam(TARGET_ID, STAGE_TEAM_ID, REASON));
+
+            verify(memberMapper).updateTeam(TARGET_ID, STAGE_TEAM_ID);
+        }
+
+        @Test
+        void 다른_팀_팀장은_멤버_팀을_변경할_수_없다() {
+            Member leader = member(ADMIN_ID, STAGE_TEAM_ID, ClubRole.LEADER,
+                    MemberStatus.ACTIVE);
+            given(memberMapper.lookupByIdForUpdate(ADMIN_ID)).willReturn(Optional.of(leader));
+            given(memberMapper.lookupByIdForUpdate(TARGET_ID)).willReturn(Optional.of(
+                    member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
+
+            assertThatThrownBy(() -> memberService.changeTeam(ADMIN_ID,
+                    new TeamChangeParam(TARGET_ID, STAGE_TEAM_ID, REASON)))
+                    .isInstanceOf(MemberManagementForbiddenException.class);
+            verify(memberMapper, never()).updateTeam(any(), any());
+        }
+
+        @Test
+        void 일반_멤버는_다른_멤버의_팀을_변경할_수_없다() {
+            given(memberMapper.lookupByIdForUpdate(ADMIN_ID)).willReturn(Optional.of(
+                    member(ADMIN_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
+            given(memberMapper.lookupByIdForUpdate(TARGET_ID)).willReturn(Optional.of(
+                    member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
+
+            assertThatThrownBy(() -> memberService.changeTeam(ADMIN_ID,
+                    new TeamChangeParam(TARGET_ID, STAGE_TEAM_ID, REASON)))
+                    .isInstanceOf(MemberManagementForbiddenException.class);
         }
     }
 
@@ -328,12 +482,11 @@ class MemberServiceTest {
         @Test
         void 기수를_변경하면_현재_기수와_변경_이력이_함께_저장된다() {
             // given
-            givenActiveAdmin();
+            givenActiveAdminForUpdate();
             given(memberMapper.lookupByIdForUpdate(TARGET_ID))
                     .willReturn(Optional.of(member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
             given(cohortMapper.lookupById(NEW_COHORT_ID))
-                    .willReturn(Optional.of(new Cohort(NEW_COHORT_ID, "27-1기", (short) 2027,
-                            CohortTerm.FIRST, true)));
+                    .willReturn(Optional.of(new Cohort(NEW_COHORT_ID, "27-1기", true)));
 
             // when
             memberService.changeCohort(ADMIN_ID,
@@ -354,17 +507,62 @@ class MemberServiceTest {
         @Test
         void 비활성_기수로는_변경할_수_없다() {
             // given
-            givenActiveAdmin();
+            givenActiveAdminForUpdate();
             given(memberMapper.lookupByIdForUpdate(TARGET_ID))
                     .willReturn(Optional.of(member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
             given(cohortMapper.lookupById(NEW_COHORT_ID))
-                    .willReturn(Optional.of(new Cohort(NEW_COHORT_ID, "27-1기", (short) 2027,
-                            CohortTerm.FIRST, false)));
+                    .willReturn(Optional.of(new Cohort(NEW_COHORT_ID, "27-1기", false)));
 
             // when & then
             assertThatThrownBy(() -> memberService.changeCohort(ADMIN_ID,
                     new CohortChangeParam(TARGET_ID, NEW_COHORT_ID, REASON)))
                     .isInstanceOf(InactiveCohortException.class);
+            verify(memberMapper, never()).updateCohort(any(), any());
+        }
+
+        @Test
+        void 팀장은_현재_소속_팀_멤버의_기수를_변경할_수_있다() {
+            // given
+            given(memberMapper.lookupByIdForUpdate(ADMIN_ID)).willReturn(Optional.of(
+                    member(ADMIN_ID, ACTOR_TEAM_ID, ClubRole.LEADER, MemberStatus.ACTIVE)));
+            given(memberMapper.lookupByIdForUpdate(TARGET_ID)).willReturn(Optional.of(
+                    member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
+            given(cohortMapper.lookupById(NEW_COHORT_ID))
+                    .willReturn(Optional.of(new Cohort(NEW_COHORT_ID, "2-1", true)));
+
+            // when
+            memberService.changeCohort(ADMIN_ID,
+                    new CohortChangeParam(TARGET_ID, NEW_COHORT_ID, REASON));
+
+            // then
+            verify(memberMapper).updateCohort(TARGET_ID, NEW_COHORT_ID);
+        }
+
+        @Test
+        void 팀장은_본인의_기수도_변경할_수_있다() {
+            given(memberMapper.lookupByIdForUpdate(ADMIN_ID)).willReturn(Optional.of(
+                    member(ADMIN_ID, ACTOR_TEAM_ID, ClubRole.LEADER, MemberStatus.ACTIVE)));
+            given(cohortMapper.lookupById(NEW_COHORT_ID))
+                    .willReturn(Optional.of(new Cohort(NEW_COHORT_ID, "2-1", true)));
+
+            memberService.changeCohort(ADMIN_ID,
+                    new CohortChangeParam(ADMIN_ID, NEW_COHORT_ID, REASON));
+
+            verify(memberMapper).updateCohort(ADMIN_ID, NEW_COHORT_ID);
+        }
+
+        @Test
+        void 팀장은_다른_팀_멤버의_기수를_변경할_수_없다() {
+            // given
+            given(memberMapper.lookupByIdForUpdate(ADMIN_ID)).willReturn(Optional.of(
+                    member(ADMIN_ID, ACTOR_TEAM_ID, ClubRole.LEADER, MemberStatus.ACTIVE)));
+            given(memberMapper.lookupByIdForUpdate(TARGET_ID)).willReturn(Optional.of(
+                    member(TARGET_ID, STAGE_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
+
+            // when & then
+            assertThatThrownBy(() -> memberService.changeCohort(ADMIN_ID,
+                    new CohortChangeParam(TARGET_ID, NEW_COHORT_ID, REASON)))
+                    .isInstanceOf(MemberManagementForbiddenException.class);
             verify(memberMapper, never()).updateCohort(any(), any());
         }
     }
@@ -485,6 +683,30 @@ class MemberServiceTest {
         }
 
         @Test
+        void 탈퇴_멤버를_활동_중으로_복구할_수_있다() {
+            // given
+            given(memberMapper.lookupByIdForUpdate(TARGET_ID)).willReturn(
+                    Optional.of(member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.WITHDRAWN)));
+            givenActiveAdmin();
+
+            // when
+            memberService.changeStatus(ADMIN_ID,
+                    new StatusChangeParam(TARGET_ID, MemberStatus.ACTIVE, REASON));
+
+            // then
+            verify(memberMapper).updateStatus(TARGET_ID, MemberStatus.ACTIVE);
+            ArgumentCaptor<MemberStatusHistory> captor = ArgumentCaptor.forClass(MemberStatusHistory.class);
+            verify(memberHistoryMapper).insertStatusHistory(captor.capture());
+            assertThat(captor.getValue().previousStatus()).isEqualTo(MemberStatus.WITHDRAWN);
+            assertThat(captor.getValue().newStatus()).isEqualTo(MemberStatus.ACTIVE);
+            assertThat(captor.getValue().reason()).isEqualTo(REASON);
+            assertThat(captor.getValue().changedByMemberId()).isEqualTo(ADMIN_ID);
+            verify(auditService).record(ADMIN_ID,
+                    AuditAction.MEMBER_STATUS_CHANGED,
+                    AuditTargetType.MEMBER, TARGET_ID, "멤버 상태 변경");
+        }
+
+        @Test
         void 같은_상태로_변경하면_예외가_발생한다() {
             // given
             given(memberMapper.lookupByIdForUpdate(TARGET_ID))
@@ -505,7 +727,10 @@ class MemberServiceTest {
         @Test
         void 활성_ADMIN이_아니면_팀을_변경할_수_없다() {
             // given
-            givenNonAdminActor();
+            given(memberMapper.lookupByIdForUpdate(ADMIN_ID)).willReturn(Optional.of(
+                    member(ADMIN_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
+            given(memberMapper.lookupByIdForUpdate(TARGET_ID)).willReturn(Optional.of(
+                    member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
 
             // when & then
             assertThatThrownBy(() -> memberService.changeTeam(ADMIN_ID,
@@ -515,9 +740,12 @@ class MemberServiceTest {
         }
 
         @Test
-        void 활성_ADMIN이_아니면_기수를_변경할_수_없다() {
+        void 일반_멤버는_기수를_변경할_수_없다() {
             // given
-            givenNonAdminActor();
+            given(memberMapper.lookupByIdForUpdate(ADMIN_ID)).willReturn(Optional.of(
+                    member(ADMIN_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
+            given(memberMapper.lookupByIdForUpdate(TARGET_ID)).willReturn(Optional.of(
+                    member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));
 
             // when & then
             assertThatThrownBy(() -> memberService.changeCohort(ADMIN_ID,

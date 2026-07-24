@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.ac.tukorea.bandi.domain.file.mapper.ProfilePhotoRetirementMapper">
+
+    <resultMap id="manifestResultMap" type="kr.ac.tukorea.bandi.domain.file.model.ProfilePhotoRetirementManifest">
+        <constructor>
+            <idArg column="member_profile_photo_retirement_manifest_id" javaType="java.lang.Long"/>
+            <arg column="stored_file_id" javaType="java.lang.Long"/>
+            <arg column="storage_scope_code" javaType="kr.ac.tukorea.bandi.domain.file.model.StorageScope"/>
+            <arg column="storage_key" javaType="java.lang.String"/>
+            <arg column="retirement_status_code" javaType="kr.ac.tukorea.bandi.domain.file.model.ProfilePhotoRetirementStatus"/>
+            <arg column="attempt_count" javaType="java.lang.Integer"/>
+            <arg column="failure_reason" javaType="java.lang.String"/>
+            <arg column="completed_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="created_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <sql id="manifestColumns">
+        member_profile_photo_retirement_manifest_id, stored_file_id,
+        storage_scope_code, storage_key, retirement_status_code, attempt_count,
+        failure_reason, completed_dttm, created_dttm, updated_dttm
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="manifestId">
+        INSERT INTO member_profile_photo_retirement_manifest (
+            stored_file_id, storage_scope_code, storage_key, retirement_status_code
+        ) VALUES (
+            #{storedFileId}, #{storageScope}, #{storageKey}, #{status}
+        )
+    </insert>
+
+    <select id="searchUncompleted" resultMap="manifestResultMap">
+        SELECT <include refid="manifestColumns"/>
+        FROM member_profile_photo_retirement_manifest
+        WHERE retirement_status_code IN ('PENDING', 'FAILED')
+        ORDER BY member_profile_photo_retirement_manifest_id
+    </select>
+
+    <update id="updateDeleted">
+        UPDATE member_profile_photo_retirement_manifest
+        SET retirement_status_code = 'DELETED',
+            attempt_count = attempt_count + 1,
+            failure_reason = NULL,
+            completed_dttm = #{completedDttm}
+        WHERE member_profile_photo_retirement_manifest_id = #{manifestId}
+    </update>
+
+    <update id="updateFailed">
+        UPDATE member_profile_photo_retirement_manifest
+        SET retirement_status_code = 'FAILED',
+            attempt_count = attempt_count + 1,
+            failure_reason = #{failureReason}
+        WHERE member_profile_photo_retirement_manifest_id = #{manifestId}
+    </update>
+</mapper>

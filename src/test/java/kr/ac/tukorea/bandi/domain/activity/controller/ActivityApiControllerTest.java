@@ -3,6 +3,8 @@ package kr.ac.tukorea.bandi.domain.activity.controller;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityFileAddParam;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityFileReplaceParam;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityManageSearchParam;
+import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityFinalApprovalRequest;
+import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordListSearchParam;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordSearchParam;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordWriteParam;
 import kr.ac.tukorea.bandi.domain.activity.model.ActivityFileRole;
@@ -12,6 +14,7 @@ import kr.ac.tukorea.bandi.global.config.SecurityWebMvcConfig;
 import kr.ac.tukorea.bandi.global.exception.ApiExceptionHandler;
 import kr.ac.tukorea.bandi.global.security.LoginMemberArgumentResolver;
 import kr.ac.tukorea.bandi.global.security.LoginPrincipal;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,7 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest({ActivityRecordApiController.class,
-        ActivityManagementApiController.class})
+        ActivityManagementApiController.class, ActivityReviewApiController.class})
 @AutoConfigureMockMvc(addFilters = false)
 @Import({ApiExceptionHandler.class, LoginMemberArgumentResolver.class,
         SecurityWebMvcConfig.class})
@@ -123,6 +126,40 @@ class ActivityApiControllerTest {
     }
 
     @Test
+    void HWPX_활동_내역서는_첨부_파일로_전송한다() throws Exception {
+        given(activityRecordService.openManageableDownload(ACTOR_ID,
+                RECORD_ID, FILE_ID)).willReturn(
+                new kr.ac.tukorea.bandi.global.response.FileDownloadResponse(
+                        "activity-report.hwpx", "application/hwp+zip", 4,
+                        new org.springframework.core.io.InputStreamResource(
+                                new java.io.ByteArrayInputStream(
+                                        new byte[]{1, 2, 3, 4}))));
+
+        mockMvc.perform(get("/api/activity-management/{recordId}/files/"
+                        + "{fileId}/download", RECORD_ID, FILE_ID))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition",
+                        org.hamcrest.Matchers.containsString("attachment")));
+    }
+
+    @Test
+    void 검수_화면도_HWPX를_첨부_다운로드로_전송한다() throws Exception {
+        given(activityRecordService.openReviewDownload(ACTOR_ID,
+                RECORD_ID, FILE_ID)).willReturn(
+                new kr.ac.tukorea.bandi.global.response.FileDownloadResponse(
+                        "activity-report.hwpx", "application/hwp+zip", 4,
+                        new org.springframework.core.io.InputStreamResource(
+                                new java.io.ByteArrayInputStream(
+                                        new byte[]{1, 2, 3, 4}))));
+
+        mockMvc.perform(get("/api/activity-reviews/{recordId}/files/"
+                        + "{fileId}/download", RECORD_ID, FILE_ID))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition",
+                        org.hamcrest.Matchers.containsString("attachment")));
+    }
+
+    @Test
     void 멤버가_자기_팀_활동_초안을_등록한다() throws Exception {
         given(activityRecordService.createDraft(any(), any())).willReturn(RECORD_ID);
 
@@ -170,22 +207,6 @@ class ActivityApiControllerTest {
     }
 
     @Test
-    void 팀장이_승인하거나_보완을_요청한다() throws Exception {
-        mockMvc.perform(post("/api/activity-management/{recordId}/approve",
-                        RECORD_ID))
-                .andExpect(status().isNoContent());
-        mockMvc.perform(post("/api/activity-management/{recordId}/revision-request",
-                        RECORD_ID)
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"comment\":\"네이비즘 시각이 보이게 올려주세요\"}"))
-                .andExpect(status().isNoContent());
-
-        verify(activityRecordService).approve(ACTOR_ID, RECORD_ID);
-        verify(activityRecordService).requestRevision(ACTOR_ID, RECORD_ID,
-                "네이비즘 시각이 보이게 올려주세요");
-    }
-
-    @Test
     void 관리_기록을_상태와_작성자로_검색한다() throws Exception {
         given(activityRecordService.searchManageable(any(), any()))
                 .willReturn(List.of());
@@ -202,12 +223,47 @@ class ActivityApiControllerTest {
 
     @Test
     void 보완_요청_문구가_비어_있으면_C001을_반환한다() throws Exception {
-        mockMvc.perform(post("/api/activity-management/{recordId}/revision-request",
+        mockMvc.perform(post("/api/activity-reviews/{recordId}/revision-request",
                         RECORD_ID)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"comment\":\" \"}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("C001"));
+    }
+
+    @Test
+    void 검수_목록과_2단계_승인_API를_제공한다() throws Exception {
+        given(activityRecordService.searchReview(any(), any()))
+                .willReturn(PageResponse.of(List.of(), 0, 20, 0));
+
+        mockMvc.perform(get("/api/activity-reviews").param("status", "SUBMITTED"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.pageSize").value(20));
+        mockMvc.perform(post("/api/activity-reviews/{recordId}/team-approve", RECORD_ID))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(post("/api/activity-reviews/{recordId}/final-approve", RECORD_ID)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"emergencyReason\":\"공연 당일 긴급 처리\"}"))
+                .andExpect(status().isNoContent());
+
+        verify(activityRecordService).searchReview(ACTOR_ID,
+                new ActivityRecordListSearchParam(null, null,
+                        ActivityRecordStatus.SUBMITTED, null, null, null, 0, 20));
+        verify(activityRecordService).teamApprove(ACTOR_ID, RECORD_ID);
+        verify(activityRecordService).finalApprove(ACTOR_ID, RECORD_ID,
+                new ActivityFinalApprovalRequest("공연 당일 긴급 처리").emergencyReason());
+    }
+
+    @Test
+    void 관리자_검수_CSV는_파일_응답으로_전송한다() throws Exception {
+        given(activityRecordService.exportReviewCsv(any(), any()))
+                .willReturn("\uFEFF제목\r\n기록".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+
+        mockMvc.perform(get("/api/activity-reviews/export"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Content-Disposition",
+                        org.hamcrest.Matchers.containsString("attachment")))
+                .andExpect(header().string("Cache-Control", "no-store"));
     }
 
     private String createBody() {

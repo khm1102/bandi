@@ -5,17 +5,18 @@ import kr.ac.tukorea.bandi.domain.member.mapper.MemberMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.TeamMapper;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
-import kr.ac.tukorea.bandi.domain.member.model.CohortTerm;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
 import kr.ac.tukorea.bandi.domain.member.model.MemberStatus;
 import kr.ac.tukorea.bandi.domain.member.model.SsoLinkStatus;
 import kr.ac.tukorea.bandi.domain.member.model.Team;
 import kr.ac.tukorea.bandi.domain.notice.dto.request.InternalNoticeManageSearchCondition;
 import kr.ac.tukorea.bandi.domain.notice.dto.request.InternalNoticeReadableSearchCondition;
+import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeManageSummaryResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeReadStatusResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeSummaryResponse;
 import kr.ac.tukorea.bandi.domain.notice.model.InternalNotice;
 import kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeAttachment;
+import kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeReadFilter;
 import kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeStatus;
 import kr.ac.tukorea.bandi.domain.notice.model.InternalNoticeTargetScope;
 import kr.ac.tukorea.bandi.global.annotation.MapperTest;
@@ -64,8 +65,7 @@ class InternalNoticeMapperTest {
         List<Team> teams = teamMapper.searchAll();
         stageTeamId = teamId(teams, "무대팀");
         operatorTeamId = teamId(teams, "오퍼팀");
-        Cohort cohort = new Cohort(null, "26-내부공지", (short) 2026,
-                CohortTerm.SECOND, true);
+        Cohort cohort = new Cohort(null, "26-내부공지", true);
         cohortMapper.insert(cohort);
         adminMemberId = insertMember("2026000001", "관리자", stageTeamId,
                 cohort.getCohortId(), ClubRole.ADMIN);
@@ -92,6 +92,14 @@ class InternalNoticeMapperTest {
                 .get()
                 .extracting("createdByName")
                 .isEqualTo("관리자");
+        List<InternalNoticeManageSummaryResponse> summaries =
+                internalNoticeMapper.searchManageable(
+                        new InternalNoticeManageSearchCondition(null, null, null,
+                                null, 0, 20));
+        assertThat(summaries).singleElement()
+                .extracting(InternalNoticeManageSummaryResponse::createdByName,
+                        InternalNoticeManageSummaryResponse::updatedByName)
+                .containsExactly("관리자", "관리자");
     }
 
     @Test
@@ -107,6 +115,8 @@ class InternalNoticeMapperTest {
 
         assertThat(memberResult).extracting(InternalNoticeSummaryResponse::title)
                 .containsExactlyInAnyOrder("전체 공지", "무대 공지");
+        assertThat(memberResult).extracting(InternalNoticeSummaryResponse::createdByName)
+                .containsOnly("관리자");
         assertThat(adminResult).extracting(InternalNoticeSummaryResponse::title)
                 .containsExactlyInAnyOrder("전체 공지", "무대 공지", "오퍼 공지");
     }
@@ -148,8 +158,30 @@ class InternalNoticeMapperTest {
 
         assertThat(result).extracting(InternalNoticeSummaryResponse::title)
                 .containsExactly("중요 안내");
+        assertThat(internalNoticeMapper.countReadable(condition)).isEqualTo(result.size());
         assertThat(result.get(0).read()).isTrue();
         assertThat(normal.getInternalNoticeId()).isNotNull();
+    }
+
+    @Test
+    void 미확인과_대상_범위_필터를_함께_적용한다() {
+        InternalNotice allNotice = publish(draft(InternalNoticeTargetScope.ALL,
+                null, "전체 미확인 공지"));
+        InternalNotice teamNotice = publish(draft(InternalNoticeTargetScope.TEAM,
+                stageTeamId, "팀 미확인 공지"));
+        internalNoticeMapper.upsertRead(allNotice.getInternalNoticeId(), stageMemberId, NOW);
+
+        InternalNoticeReadableSearchCondition condition =
+                new InternalNoticeReadableSearchCondition(null, NOW, stageMemberId,
+                        stageTeamId, false, InternalNoticeReadFilter.UNREAD,
+                        InternalNoticeTargetScope.TEAM, 0, 20);
+
+        List<InternalNoticeSummaryResponse> result =
+                internalNoticeMapper.searchReadable(condition);
+
+        assertThat(result).extracting(InternalNoticeSummaryResponse::title)
+                .containsExactly(teamNotice.getTitle());
+        assertThat(internalNoticeMapper.countReadable(condition)).isEqualTo(result.size());
     }
 
     @Test
@@ -169,6 +201,32 @@ class InternalNoticeMapperTest {
                 .findFirst().orElseThrow();
         assertThat(stageRead.firstReadDttm()).isEqualTo(first);
         assertThat(stageRead.lastReadDttm()).isEqualTo(NOW);
+    }
+
+    @Test
+    void 게시_중인_공지의_공유_토큰만_공개_조회하고_중단하면_즉시_숨긴다() {
+        InternalNotice notice = draft(InternalNoticeTargetScope.ALL, null, "공유 공지")
+                .publish(NOW.minusHours(1), NOW.plusDays(1), adminMemberId, NOW);
+        internalNoticeMapper.insert(notice);
+        String shareToken = "A0a1B2c3D4e5F6g7H8i9J0k1L2m3N4o5P6q7R8s9T0";
+
+        internalNoticeMapper.updateShareToken(notice.getInternalNoticeId(), shareToken);
+
+        assertThat(internalNoticeMapper.lookupShareTokenForUpdate(
+                notice.getInternalNoticeId())).contains(shareToken);
+        assertThat(internalNoticeMapper.lookupPublicShare(shareToken, NOW))
+                .isPresent()
+                .get()
+                .extracting("title")
+                .isEqualTo("공유 공지");
+        assertThat(internalNoticeMapper.lookupReadableContent(notice.getInternalNoticeId(),
+                NOW, stageTeamId, false)).isPresent().get()
+                .extracting("createdByMemberId")
+                .isEqualTo(adminMemberId);
+
+        internalNoticeMapper.updateShareToken(notice.getInternalNoticeId(), null);
+
+        assertThat(internalNoticeMapper.lookupPublicShare(shareToken, NOW)).isEmpty();
     }
 
     @Test
@@ -235,6 +293,23 @@ class InternalNoticeMapperTest {
                         null, 0, 20))).isEmpty();
         assertThat(internalNoticeMapper.searchReadable(
                 readableCondition(stageMemberId, stageTeamId, false))).isEmpty();
+    }
+
+    @Test
+    void 초안을_소프트_삭제하면_조회에서_제외하고_첨부_연결은_유지한다() {
+        InternalNotice notice = draft(InternalNoticeTargetScope.ALL, null, "삭제할 초안");
+        internalNoticeMapper.insert(notice);
+        Long fileId = insertStoredFile("초안.pdf", "c");
+        internalNoticeMapper.insertAttachment(InternalNoticeAttachment.create(
+                notice.getInternalNoticeId(), fileId, 0));
+
+        int affected = internalNoticeMapper.delete(notice.getInternalNoticeId(),
+                adminMemberId, NOW);
+
+        assertThat(affected).isEqualTo(1);
+        assertThat(internalNoticeMapper.lookupById(notice.getInternalNoticeId())).isEmpty();
+        assertThat(internalNoticeMapper.searchAttachmentFileIds(notice.getInternalNoticeId()))
+                .containsExactly(fileId);
     }
 
     private InternalNotice draft(InternalNoticeTargetScope scope, Long teamId,

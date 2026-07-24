@@ -26,7 +26,8 @@ public enum MemberStatus {
             case PRE_REGISTERED -> newStatus == REGISTRATION_CANCELLED;
             case ACTIVE -> newStatus == SUSPENDED || newStatus == WITHDRAWN;
             case SUSPENDED -> newStatus == ACTIVE || newStatus == WITHDRAWN;
-            case WITHDRAWN, REGISTRATION_CANCELLED -> false;
+            case WITHDRAWN -> newStatus == ACTIVE;
+            case REGISTRATION_CANCELLED -> false;
         };
     }
 }

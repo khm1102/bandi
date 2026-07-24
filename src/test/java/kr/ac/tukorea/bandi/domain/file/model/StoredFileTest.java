@@ -97,7 +97,7 @@ class StoredFileTest {
         source.markReady("private-etag");
 
         StoredFile promoted = source.createPublicPromotion(
-                "public-notice/2026/07/22222222-2222-2222-2222-222222222222",
+                "resource/2026/07/22222222-2222-2222-2222-222222222222",
                 2L);
 
         assertThat(source.getStorageScope()).isEqualTo(StorageScope.PRIVATE);
@@ -107,6 +107,17 @@ class StoredFileTest {
         assertThat(promoted.getStorageKey()).isNotEqualTo(source.getStorageKey());
         assertThat(promoted.getSha256Hash()).isEqualTo(source.getSha256Hash());
         assertThat(promoted.getUploadedByMemberId()).isEqualTo(2L);
+    }
+
+    @Test
+    void 프로필_사진은_PRIVATE_전용_목적으로_생성한다() {
+        StoredFile profile = StoredFile.pendingProfileImage("me.png",
+                "member-profile/2026/07/photo", "image/png", 12L, SHA256, 1L);
+        profile.markReady("etag-1");
+
+        profile.validateProfileImage();
+
+        assertThat(profile.getPurpose()).isEqualTo(FilePurpose.PROFILE_IMAGE);
     }
 
     @Test
@@ -132,7 +143,7 @@ class StoredFileTest {
         StoredFile file = StoredFile.pending(
                 "poster.png",
                 StorageScope.PUBLIC,
-                "public-notice/2026/07/33333333-3333-3333-3333-333333333333",
+                "resource/2026/07/33333333-3333-3333-3333-333333333333",
                 "image/png",
                 12L,
                 SHA256,

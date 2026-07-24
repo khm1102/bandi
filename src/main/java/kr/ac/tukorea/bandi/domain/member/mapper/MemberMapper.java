@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.domain.member.mapper;
 
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchCondition;
+import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchCondition;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
 import kr.ac.tukorea.bandi.domain.member.model.MemberSchoolConnection;
@@ -25,6 +26,17 @@ public interface MemberMapper {
 
     List<Member> searchByCondition(MemberSearchCondition condition);
 
+    List<Member> searchPage(MemberPageSearchCondition condition);
+
+    long countByPageCondition(MemberPageSearchCondition condition);
+
+    long countActive();
+
+    long countSsoVerificationRequired();
+
+    List<Member> searchActiveByKeyword(@Param("keyword") String keyword,
+                                       @Param("limit") int limit);
+
     /**
      * 활성 운영진의 식별자를 잠금 조회한다. 마지막 운영진 보호 규칙(정본 5.4)이
      * 동시 요청에서도 성립하도록 검증 전에 해당 행을 잠근다.
@@ -44,4 +56,7 @@ public interface MemberMapper {
     int updateStatus(@Param("memberId") Long memberId, @Param("status") MemberStatus status);
 
     int updateSchoolConnection(MemberSchoolConnection connection);
+
+    int updateProfilePhoto(@Param("memberId") Long memberId,
+                           @Param("profilePhotoFileId") Long profilePhotoFileId);
 }

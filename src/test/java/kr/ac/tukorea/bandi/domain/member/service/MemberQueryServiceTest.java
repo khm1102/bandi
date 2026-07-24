@@ -8,13 +8,13 @@ import kr.ac.tukorea.bandi.domain.member.dto.response.MemberResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.TeamResponse;
 import kr.ac.tukorea.bandi.domain.member.exception.MemberNotFoundException;
 import kr.ac.tukorea.bandi.domain.member.mapper.CohortMapper;
+import kr.ac.tukorea.bandi.domain.member.mapper.ClubOfficerMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.MemberHistoryMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.MemberMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.TeamMapper;
 import kr.ac.tukorea.bandi.domain.member.model.AcademicStatus;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
-import kr.ac.tukorea.bandi.domain.member.model.CohortTerm;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
 import kr.ac.tukorea.bandi.domain.member.model.MemberCohortHistory;
 import kr.ac.tukorea.bandi.domain.member.model.MemberRoleHistory;
@@ -58,6 +58,8 @@ class MemberQueryServiceTest {
     @Mock
     private MemberHistoryMapper memberHistoryMapper;
     @Mock
+    private ClubOfficerMapper clubOfficerMapper;
+    @Mock
     private AuditService auditService;
 
     private MemberService memberService;
@@ -65,7 +67,7 @@ class MemberQueryServiceTest {
     @BeforeEach
     void setUp() {
         memberService = new MemberService(memberMapper, teamMapper,
-                cohortMapper, memberHistoryMapper, auditService,
+                cohortMapper, memberHistoryMapper, clubOfficerMapper, auditService,
                 Clock.systemUTC());
     }
 
@@ -151,10 +153,8 @@ class MemberQueryServiceTest {
     @Test
     void 활성_기수만_조회한다() {
         given(cohortMapper.searchAll()).willReturn(List.of(
-                new Cohort(1L, "26-2기", (short) 2026,
-                        CohortTerm.SECOND, true),
-                new Cohort(2L, "25-1기", (short) 2025,
-                        CohortTerm.FIRST, false)));
+                new Cohort(1L, "26-2기", true),
+                new Cohort(2L, "25-1기", false)));
 
         List<CohortResponse> result = memberService.searchCohorts(true);
 

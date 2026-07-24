@@ -17,6 +17,7 @@ public record InternalNoticeManageContentResponse(
         LocalDateTime publishStartDttm,
         LocalDateTime publishEndDttm,
         String createdByName,
+        String publishedByName,
         String updatedByName,
         LocalDateTime updatedDttm
 ) {

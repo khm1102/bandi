@@ -5,6 +5,8 @@ import kr.ac.tukorea.bandi.domain.audit.model.AuditTargetType;
 import kr.ac.tukorea.bandi.domain.audit.service.AuditService;
 import kr.ac.tukorea.bandi.domain.member.dto.request.CohortChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPreRegisterParam;
+import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchCondition;
+import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchCondition;
 import kr.ac.tukorea.bandi.domain.member.dto.request.RoleChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.StatusChangeParam;
@@ -12,20 +14,25 @@ import kr.ac.tukorea.bandi.domain.member.dto.request.TeamChangeParam;
 import kr.ac.tukorea.bandi.domain.member.dto.response.CohortResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberHistoryResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.MemberResponse;
+import kr.ac.tukorea.bandi.domain.member.dto.response.MemberStatsResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.SchoolConnectionResponse;
 import kr.ac.tukorea.bandi.domain.member.dto.response.TeamResponse;
 import kr.ac.tukorea.bandi.domain.member.exception.ChangeReasonRequiredException;
 import kr.ac.tukorea.bandi.domain.member.exception.CohortNotFoundException;
+import kr.ac.tukorea.bandi.domain.member.exception.ClubPresidentUnavailableException;
 import kr.ac.tukorea.bandi.domain.member.exception.DuplicateStudentNoException;
+import kr.ac.tukorea.bandi.domain.member.exception.DuplicateCohortException;
 import kr.ac.tukorea.bandi.domain.member.exception.LastActiveAdminException;
 import kr.ac.tukorea.bandi.domain.member.exception.MemberManagementForbiddenException;
 import kr.ac.tukorea.bandi.domain.member.exception.MemberNotFoundException;
 import kr.ac.tukorea.bandi.domain.member.exception.SchoolMemberNotRegisteredException;
 import kr.ac.tukorea.bandi.domain.member.exception.TeamNotFoundException;
 import kr.ac.tukorea.bandi.domain.member.mapper.CohortMapper;
+import kr.ac.tukorea.bandi.domain.member.mapper.ClubOfficerMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.MemberHistoryMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.MemberMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.TeamMapper;
+import kr.ac.tukorea.bandi.domain.member.model.ClubOfficerPosition;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
@@ -42,11 +49,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 /**
  * 멤버 등록과 팀·기수·권한·상태 변경.
@@ -65,6 +74,7 @@ public class MemberService {
     private final TeamMapper teamMapper;
     private final CohortMapper cohortMapper;
     private final MemberHistoryMapper memberHistoryMapper;
+    private final ClubOfficerMapper clubOfficerMapper;
     private final AuditService auditService;
     private final Clock clock;
 
@@ -72,6 +82,12 @@ public class MemberService {
         Member member = memberMapper.lookupById(memberId)
                 .orElseThrow(() -> new MemberNotFoundException(memberId));
         return MemberAccessContext.from(member);
+    }
+
+    public ClubRole lookupCurrentRole(Long memberId) {
+        return memberMapper.lookupById(memberId)
+                .orElseThrow(() -> new MemberNotFoundException(memberId))
+                .getRole();
     }
 
     public void validateActiveTeam(Long teamId) {
@@ -85,11 +101,53 @@ public class MemberService {
                 .toList();
     }
 
+    public String lookupActivePresidentName() {
+        return lookupActivePresidentNameIfPresent()
+                .orElseThrow(ClubPresidentUnavailableException::new);
+    }
+
+    public Optional<String> lookupActivePresidentNameIfPresent() {
+        return clubOfficerMapper.lookupActiveMemberNameByPosition(
+                ClubOfficerPosition.PRESIDENT);
+    }
+
+    public List<ActivityReportParticipantLookup> searchActivityReportParticipants(
+            String keyword) {
+        return memberMapper.searchActiveByKeyword(keyword, 10).stream()
+                .map(member -> new ActivityReportParticipantLookup(member.getName(),
+                        member.getDepartment(), member.getStudentNo()))
+                .toList();
+    }
+
+    public record ActivityReportParticipantLookup(
+            String name,
+            String department,
+            String studentNo
+    ) {
+    }
+
     public List<MemberResponse> searchMembers(
             MemberSearchCondition condition) {
         return memberMapper.searchByCondition(condition).stream()
                 .map(MemberResponse::from)
                 .toList();
+    }
+
+    public PageResponse<MemberResponse> searchMemberPage(MemberPageSearchParam param) {
+        MemberPageSearchCondition condition = MemberPageSearchCondition.from(param);
+        List<MemberResponse> items = memberMapper.searchPage(condition).stream()
+                .map(MemberResponse::from)
+                .toList();
+        return PageResponse.of(items, param.page(), param.pageSize(),
+                memberMapper.countByPageCondition(condition));
+    }
+
+    public MemberStatsResponse lookupMemberStats() {
+        long activeCohortCount = cohortMapper.searchAll().stream()
+                .filter(Cohort::isActive)
+                .count();
+        return new MemberStatsResponse(memberMapper.countActive(), activeCohortCount,
+                memberMapper.countSsoVerificationRequired());
     }
 
     public MemberResponse lookupMember(Long memberId) {
@@ -120,6 +178,22 @@ public class MemberService {
     }
 
     @Transactional
+    public CohortResponse createCohort(Long actorMemberId, String name) {
+        validateActiveAdmin(actorMemberId);
+        Cohort cohort = Cohort.create(name);
+        if (cohortMapper.existsByName(cohort.getName())) {
+            throw new DuplicateCohortException();
+        }
+        try {
+            cohortMapper.insert(cohort);
+        } catch (DuplicateKeyException exception) {
+            throw new DuplicateCohortException();
+        }
+        log.info("기수 추가 - cohortId={}, actorMemberId={}", cohort.getCohortId(), actorMemberId);
+        return CohortResponse.from(cohort);
+    }
+
+    @Transactional
     public Long preRegister(Long actorMemberId, MemberPreRegisterParam param) {
         validateActiveAdmin(actorMemberId);
         if (memberMapper.existsByStudentNo(param.studentNo())) {
@@ -144,8 +218,14 @@ public class MemberService {
     @Transactional
     public void changeTeam(Long actorMemberId, TeamChangeParam param) {
         validateReason(param.reason());
-        validateActiveAdmin(actorMemberId);
-        Member member = lockMember(param.memberId());
+        Member actor = lockMember(actorMemberId);
+        Member member = Objects.equals(actorMemberId, param.memberId())
+                ? actor : lockMember(param.memberId());
+        MemberAccessContext access = MemberAccessContext.from(actor);
+        if (!access.canChangeOwnTeam(member.getMemberId())
+                && !access.canManageTeam(member.getTeamId())) {
+            throw new MemberManagementForbiddenException(actorMemberId);
+        }
         member.validateTeamChangeTo(param.newTeamId());
         findAssignableTeam(param.newTeamId());
 
@@ -162,8 +242,13 @@ public class MemberService {
     @Transactional
     public void changeCohort(Long actorMemberId, CohortChangeParam param) {
         validateReason(param.reason());
-        validateActiveAdmin(actorMemberId);
-        Member member = lockMember(param.memberId());
+        Member actor = lockMember(actorMemberId);
+        Member member = Objects.equals(actorMemberId, param.memberId())
+                ? actor : lockMember(param.memberId());
+        MemberAccessContext access = MemberAccessContext.from(actor);
+        if (!access.canManageGlobal() && !access.canManageTeam(member.getTeamId())) {
+            throw new MemberManagementForbiddenException(actorMemberId);
+        }
         member.validateCohortChangeTo(param.newCohortId());
         findAssignableCohort(param.newCohortId());
 

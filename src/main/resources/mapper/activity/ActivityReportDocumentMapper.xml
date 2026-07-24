@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.ac.tukorea.bandi.domain.activity.mapper.ActivityReportDocumentMapper">
+
+    <resultMap id="documentMap" type="kr.ac.tukorea.bandi.domain.activity.model.ActivityReportDocumentRecord">
+        <constructor>
+            <idArg column="activity_report_document_id" javaType="java.lang.Long"/>
+            <arg column="activity_record_id" javaType="java.lang.Long"/>
+            <arg column="representative" javaType="java.lang.String"/>
+            <arg column="location" javaType="java.lang.String"/>
+            <arg column="created_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <resultMap id="participantMap" type="kr.ac.tukorea.bandi.domain.activity.model.ActivityReportParticipantRecord">
+        <constructor>
+            <idArg column="activity_report_participant_id" javaType="java.lang.Long"/>
+            <arg column="activity_report_document_id" javaType="java.lang.Long"/>
+            <arg column="display_order" javaType="_int"/>
+            <arg column="name" javaType="java.lang.String"/>
+            <arg column="department" javaType="java.lang.String"/>
+            <arg column="student_no" javaType="java.lang.String"/>
+            <arg column="note" javaType="java.lang.String"/>
+            <arg column="created_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <select id="lookupByActivityRecordId" resultMap="documentMap">
+        SELECT activity_report_document_id, activity_record_id, representative,
+               location, created_dttm, updated_dttm
+        FROM activity_report_document
+        WHERE activity_record_id = #{activityRecordId}
+    </select>
+
+    <select id="searchParticipants" resultMap="participantMap">
+        SELECT activity_report_participant_id, activity_report_document_id,
+               display_order, name, department, student_no, note,
+               created_dttm, updated_dttm
+        FROM activity_report_participant
+        WHERE activity_report_document_id = #{activityReportDocumentId}
+        ORDER BY display_order
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="activityReportDocumentId">
+        INSERT INTO activity_report_document (
+            activity_record_id, representative, location
+        ) VALUES (
+            #{activityRecordId}, #{representative}, #{location}
+        )
+    </insert>
+
+    <update id="update">
+        UPDATE activity_report_document
+        SET representative = #{representative},
+            location = #{location}
+        WHERE activity_report_document_id = #{activityReportDocumentId}
+    </update>
+
+    <insert id="insertParticipant" useGeneratedKeys="true"
+            keyProperty="activityReportParticipantId">
+        INSERT INTO activity_report_participant (
+            activity_report_document_id, display_order, name,
+            department, student_no, note
+        ) VALUES (
+            #{activityReportDocumentId}, #{displayOrder}, #{name},
+            #{department}, #{studentNo}, #{note}
+        )
+    </insert>
+
+    <delete id="removeParticipants">
+        DELETE FROM activity_report_participant
+        WHERE activity_report_document_id = #{activityReportDocumentId}
+    </delete>
+</mapper>

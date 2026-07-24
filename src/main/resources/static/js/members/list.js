@@ -1,11 +1,14 @@
 import {ApiError, get, patch, post} from '../common/api.js';
-import {all, bindPageActions, element, lookup, readValue} from '../common/dom.js';
-import {openModal} from '../common/modal.js';
+import {all, bindPageActions, debounce, element, lookup, readValue} from '../common/dom.js';
+import {renderPagination, readPageFromUrl, setUrlPage, writeUrl, normalizePage} from '../common/pagination.js';
+import {closeModal, openModal} from '../common/modal.js';
 import {showToast} from '../common/toast.js';
 import {badge, closeActionModal} from '../common/view.js';
 
 const ACTIONS = Object.freeze({
     ADD_MEMBER: 'member-add',
+    OPEN_COHORT_MODAL: 'cohort-add-open',
+    ADD_COHORT: 'cohort-add',
     SAVE_ROLE: 'member-role-save',
     MANAGE_OPEN: 'member-manage-open',
     SAVE_CHANGE: 'member-change-save',
@@ -44,9 +47,17 @@ const STATUS_TRANSITIONS = Object.freeze({
     PRE_REGISTERED: ['REGISTRATION_CANCELLED'],
     ACTIVE: ['SUSPENDED', 'WITHDRAWN'],
     SUSPENDED: ['ACTIVE', 'WITHDRAWN'],
-    WITHDRAWN: [],
+    WITHDRAWN: ['ACTIVE'],
     REGISTRATION_CANCELLED: [],
 });
+const FILTER_LABELS = Object.freeze({
+    team: '팀',
+    cohort: '기수',
+    status: '활동 상태',
+    role: '역할',
+    sso: 'SSO 상태',
+});
+const PAGE_SIZE = 20;
 
 let teamsById = new Map();
 let cohortsById = new Map();
@@ -55,6 +66,10 @@ let teams = [];
 let cohorts = [];
 let pendingRoleChange = null;
 let pendingMemberChange = null;
+let activeMemberFilter = null;
+let requestGeneration = 0;
+const pagination = lookup('[data-pagination]');
+const searchInput = lookup('[data-member-search]');
 
 function errorMessage(error) {
     if (error instanceof ApiError && error.fieldErrors.length > 0) {
@@ -113,6 +128,7 @@ function appendMemberRow(member) {
             Array.from(member.name)[0] || '?';
     lookup('[data-member-name]', row).textContent = member.name;
     lookup('[data-member-student-no]', row).textContent = member.studentNo;
+    lookup('[data-member-phone]', row).textContent = member.phoneNumber || '—';
     lookup('[data-member-cohort]', row).appendChild(badge(
             cohortsById.get(member.cohortId)?.name || '미분류', 'info'));
     lookup('[data-member-team]', row).textContent =
@@ -127,55 +143,210 @@ function appendMemberRow(member) {
             ROLE_LABELS[member.role] || member.role,
             ROLE_TONES[member.role] || 'neutral'));
     prepareRoleButtons(row, member.role);
+    const manageButton = lookup('[data-page-action="member-manage-open"]', row);
+    if (member.status === 'WITHDRAWN') {
+        manageButton.textContent = '복구';
+        manageButton.setAttribute('aria-label', `${member.name} 멤버 복구`);
+    }
     lookup('[data-member-list]').appendChild(row);
 }
 
-function renderStats(members, cohorts) {
+function renderStats(stats) {
     lookup('[data-stat-value="active-members"]').textContent =
-            members.filter((member) => member.status === 'ACTIVE').length;
-    lookup('[data-stat-value="active-cohorts"]').textContent = cohorts.length;
+            stats.activeMemberCount;
+    lookup('[data-stat-value="active-cohorts"]').textContent = stats.activeCohortCount;
     lookup('[data-stat-delta="active-cohort-names"]').textContent =
             cohorts.length > 0 ? cohorts.map((cohort) => cohort.name).join(' · ')
                 : '운영 중인 기수가 없습니다';
     lookup('[data-stat-value="waiting-sso"]').textContent =
-            members.filter((member) => member.ssoLinkStatus !== 'LINKED')
-                    .length;
+            stats.ssoVerificationRequiredCount;
 }
 
-function renderMembers(members) {
+function renderMembers(members, filtered) {
     clearRows();
     if (members.length === 0) {
-        setState('등록된 멤버가 없습니다',
-                '멤버를 사전 등록하면 학교 SSO 연결을 시작할 수 있습니다.');
+        setState(filtered ? '조건에 맞는 멤버가 없습니다' : '등록된 멤버가 없습니다',
+                filtered ? '검색어나 필터를 초기화해 보세요.'
+                    : '멤버를 사전 등록하면 학교 SSO 연결을 시작할 수 있습니다.');
         return;
     }
     lookup('[data-member-state]').hidden = true;
     members.forEach(appendMemberRow);
 }
 
-async function loadMembers() {
+function readUrlState() {
+    const params = new URLSearchParams(window.location.search);
+    return {
+        params,
+        query: params.get('q') || '',
+        team: params.get('team') || '',
+        cohort: params.get('cohort') || '',
+        status: params.get('status') || '',
+        role: params.get('role') || '',
+        sso: params.get('sso') || '',
+        page: readPageFromUrl(params),
+    };
+}
+
+function syncControls(urlState) {
+    searchInput.value = urlState.query;
+    ['team', 'cohort', 'status', 'role', 'sso'].forEach((key) => {
+        lookup(`[data-member-filter="${key}"]`).value = urlState[key];
+    });
+    lookup('[data-member-filter-reset]').classList.toggle('hidden',
+            !Boolean(urlState.query || urlState.team || urlState.cohort
+                    || urlState.status || urlState.role || urlState.sso));
+    syncMobileFilterLabels();
+}
+
+function syncMobileFilterLabels() {
+    all('[data-member-filter-label]').forEach((label) => {
+        const filter = label.dataset.memberFilterLabel;
+        const select = lookup(`[data-member-filter="${filter}"]`);
+        label.textContent = select.selectedOptions[0]?.textContent || '선택';
+    });
+}
+
+function openMemberFilterPicker(trigger) {
+    const filter = trigger.dataset.memberFilterPicker;
+    const select = lookup(`[data-member-filter="${filter}"]`);
+    const optionList = lookup('[data-member-filter-options]');
+    activeMemberFilter = filter;
+    lookup('[data-member-filter-picker-description]').textContent =
+            `${FILTER_LABELS[filter]}을 선택해 주세요.`;
+    optionList.replaceChildren();
+    Array.from(select.options).forEach((option) => {
+        const selected = option.value === select.value;
+        const item = element('button', `min-h-11 rounded-md border px-4 text-left text-sm font-bold transition-colors ${selected ? 'border-primary bg-accent text-accent-foreground' : 'bg-card hover:bg-secondary'}`,
+                option.textContent);
+        item.type = 'button';
+        item.dataset.memberFilterOption = option.value;
+        item.setAttribute('role', 'option');
+        item.setAttribute('aria-selected', String(selected));
+        optionList.appendChild(item);
+    });
+    openModal('memberFilterPickerModal', trigger);
+    optionList.querySelector('[data-member-filter-option]')?.focus();
+}
+
+function selectMemberFilterOption(button) {
+    if (!activeMemberFilter) {
+        return;
+    }
+    const filter = activeMemberFilter;
+    const select = lookup(`[data-member-filter="${filter}"]`);
+    select.value = button.dataset.memberFilterOption;
+    activeMemberFilter = null;
+    closeModal(document.getElementById('memberFilterPickerModal'));
+    replaceFilters({[filter]: select.value});
+}
+
+function replaceFilters(changes) {
+    const urlState = readUrlState();
+    Object.entries(changes).forEach(([key, value]) => {
+        if (value) {
+            urlState.params.set(key, value);
+        } else {
+            urlState.params.delete(key);
+        }
+    });
+    setUrlPage(urlState.params, 0);
+    writeUrl(urlState.params, false);
+    loadMembers();
+}
+
+function changePage(page) {
+    const urlState = readUrlState();
+    setUrlPage(urlState.params, page);
+    writeUrl(urlState.params, true);
+    loadMembers(true);
+}
+
+async function loadMembers(focus = false) {
+    const urlState = readUrlState();
+    syncControls(urlState);
+    const generation = ++requestGeneration;
     setState('멤버 목록을 불러오는 중입니다', '잠시만 기다려 주세요.');
     clearRows();
     try {
-        const [members, nextTeams, nextCohorts] = await Promise.all([
-            get('/api/members'),
-            get('/api/members/reference/teams'),
-            get('/api/members/reference/cohorts'),
-        ]);
-        teams = nextTeams;
-        cohorts = nextCohorts;
-        membersById = new Map(members.map((member) => [member.memberId,
+        const response = await get('/api/members', {
+            keyword: urlState.query,
+            teamId: urlState.team,
+            cohortId: urlState.cohort,
+            status: urlState.status,
+            role: urlState.role,
+            ssoLinkStatus: urlState.sso,
+            page: urlState.page,
+            pageSize: PAGE_SIZE,
+        });
+        if (generation !== requestGeneration) {
+            return;
+        }
+        const normalized = normalizePage(response, urlState.page);
+        if (normalized !== urlState.page) {
+            setUrlPage(urlState.params, normalized);
+            writeUrl(urlState.params, false);
+            await loadMembers(focus);
+            return;
+        }
+        membersById = new Map(response.items.map((member) => [member.memberId,
             member]));
-        teamsById = new Map(teams.map((team) => [team.teamId, team]));
-        cohortsById = new Map(cohorts.map((cohort) => [cohort.cohortId,
-            cohort]));
-        setSelectOptions('mbTeam', teams, 'teamId');
-        setSelectOptions('mbCohort', cohorts, 'cohortId');
-        renderStats(members, cohorts);
-        renderMembers(members);
+        renderMembers(response.items, Boolean(urlState.query || urlState.team
+                || urlState.cohort || urlState.status || urlState.role || urlState.sso));
+        if (response.totalElements > 0) {
+            renderPagination(pagination, response, changePage);
+        } else {
+            pagination.classList.add('hidden');
+        }
+        if (focus && response.items.length > 0) {
+            lookup('[data-member-list] tr:not([data-member-state]) button')?.focus({preventScroll: true});
+            lookup('[data-member-list]').scrollIntoView({
+                behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                    ? 'auto' : 'smooth',
+                block: 'start',
+            });
+        }
     } catch (error) {
-        setState('멤버 목록을 불러오지 못했습니다', errorMessage(error), true);
+        if (generation === requestGeneration) {
+            setState('멤버 목록을 불러오지 못했습니다', errorMessage(error), true);
+        }
     }
+}
+
+function appendFilterOptions(selector, items, idKey) {
+    const select = lookup(selector);
+    items.forEach((item) => {
+        const option = element('option', '', item.name);
+        option.value = String(item[idKey]);
+        select.appendChild(option);
+    });
+}
+
+async function refreshReferences() {
+    const [nextTeams, nextCohorts, stats] = await Promise.all([
+        get('/api/members/reference/teams'),
+        get('/api/members/reference/cohorts'),
+        get('/api/members/stats'),
+    ]);
+    teams = nextTeams;
+    cohorts = nextCohorts;
+    teamsById = new Map(teams.map((team) => [team.teamId, team]));
+    cohortsById = new Map(cohorts.map((cohort) => [cohort.cohortId, cohort]));
+    setSelectOptions('mbTeam', teams, 'teamId');
+    setSelectOptions('mbCohort', cohorts, 'cohortId');
+    ['team', 'cohort'].forEach((filter) => {
+        const select = lookup(`[data-member-filter="${filter}"]`);
+        const placeholder = select.firstElementChild;
+        select.replaceChildren(placeholder);
+    });
+    appendFilterOptions('[data-member-filter="team"]', teams, 'teamId');
+    appendFilterOptions('[data-member-filter="cohort"]', cohorts, 'cohortId');
+    renderStats(stats);
+}
+
+async function initialize() {
+    await refreshReferences();
+    await loadMembers();
 }
 
 function resetMemberForm() {
@@ -202,6 +373,30 @@ async function addMember(trigger) {
         await loadMembers();
     } catch (error) {
         setInlineError('[data-member-form-error]', errorMessage(error));
+    } finally {
+        trigger.disabled = false;
+    }
+}
+
+function openCohortModal(trigger) {
+    document.getElementById('cohortName').value = '';
+    setInlineError('[data-cohort-form-error]', '');
+    openModal('cohortModal', trigger);
+    document.getElementById('cohortName').focus();
+}
+
+async function addCohort(trigger) {
+    const name = readValue('cohortName');
+    setInlineError('[data-cohort-form-error]', '');
+    trigger.disabled = true;
+    try {
+        const cohort = await post('/api/members/cohorts', {name});
+        closeActionModal(trigger);
+        await refreshReferences();
+        await loadMembers();
+        showToast(`${cohort.name} 기수를 추가했어요.`);
+    } catch (error) {
+        setInlineError('[data-cohort-form-error]', errorMessage(error));
     } finally {
         trigger.disabled = false;
     }
@@ -284,7 +479,8 @@ function prepareMemberChange(trigger) {
     pendingMemberChange = {...member};
     lookup('[data-member-change-summary]').textContent =
             `${member.name} · ${teamsById.get(member.teamId)?.name || '미배정'} · ${STATUS_LABELS[member.status]}`;
-    document.getElementById('memberChangeType').value = 'team';
+    document.getElementById('memberChangeType').value = member.status === 'WITHDRAWN'
+        ? 'status' : 'team';
     document.getElementById('memberChangeReason').value = '';
     setInlineError('[data-member-change-error]', '');
     updateChangeOptions();
@@ -404,6 +600,28 @@ async function showMemberHistory(trigger) {
 }
 
 lookup('[data-member-retry]').addEventListener('click', loadMembers);
+searchInput.addEventListener('input', debounce(() => {
+    replaceFilters({q: searchInput.value.trim()});
+}, 300));
+all('[data-member-filter]').forEach((select) => {
+    select.addEventListener('change', () => {
+        replaceFilters({[select.dataset.memberFilter]: select.value});
+    });
+});
+all('[data-member-filter-picker]').forEach((trigger) => {
+    trigger.addEventListener('click', () => openMemberFilterPicker(trigger));
+});
+lookup('[data-member-filter-options]').addEventListener('click', (event) => {
+    const option = event.target.closest('[data-member-filter-option]');
+    if (option) {
+        selectMemberFilterOption(option);
+    }
+});
+lookup('[data-member-filter-reset]').addEventListener('click', () => {
+    writeUrl(new URLSearchParams(), false);
+    loadMembers();
+});
+window.addEventListener('popstate', () => loadMembers(true));
 lookup('[data-member-list]').addEventListener('click', (event) => {
     const button = event.target.closest('[data-member-role]');
     if (button && !button.disabled) {
@@ -415,10 +633,14 @@ document.getElementById('memberChangeType')
 
 bindPageActions({
     [ACTIONS.ADD_MEMBER]: addMember,
+    [ACTIONS.OPEN_COHORT_MODAL]: openCohortModal,
+    [ACTIONS.ADD_COHORT]: addCohort,
     [ACTIONS.SAVE_ROLE]: saveRole,
     [ACTIONS.MANAGE_OPEN]: prepareMemberChange,
     [ACTIONS.SAVE_CHANGE]: saveMemberChange,
     [ACTIONS.HISTORY_OPEN]: showMemberHistory,
 });
 
-loadMembers();
+initialize().catch((error) => {
+    setState('멤버 관리 화면을 준비하지 못했습니다', errorMessage(error), true);
+});

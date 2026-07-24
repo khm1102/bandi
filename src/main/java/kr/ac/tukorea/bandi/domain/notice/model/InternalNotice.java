@@ -109,6 +109,20 @@ public class InternalNotice {
                 publishedByMemberId);
     }
 
+    public InternalNotice returnToDraft(Long actorMemberId) {
+        if (!status.canReturnToDraft()) {
+            throw new InvalidInternalNoticeStateException(status);
+        }
+        return copy(targetScope, teamId, title, body, InternalNoticeStatus.DRAFT,
+                important, null, null, actorMemberId, null);
+    }
+
+    public void validateDeletable() {
+        if (!status.canDelete()) {
+            throw new InvalidInternalNoticeStateException(status);
+        }
+    }
+
     public boolean isPubliclyVisible(LocalDateTime currentDttm) {
         if (!status.canBePublic() || currentDttm == null || publishStartDttm == null) {
             return false;

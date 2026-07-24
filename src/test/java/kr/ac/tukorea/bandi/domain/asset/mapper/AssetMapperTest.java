@@ -5,11 +5,14 @@ import kr.ac.tukorea.bandi.domain.asset.model.AssetOwnerType;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetTrackingType;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetUnit;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetStatus;
+import kr.ac.tukorea.bandi.domain.asset.dto.request.AssetSearchCondition;
 import kr.ac.tukorea.bandi.global.annotation.MapperTest;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
+import java.time.LocalDateTime;
 
 @MapperTest
 class AssetMapperTest {
@@ -83,5 +86,40 @@ class AssetMapperTest {
                 });
         assertThat(assetMapper.searchHistoriesByItemId(item.getAssetItemId()))
                 .isEmpty();
+    }
+
+    @Test
+    void 품목을_페이지_단위로_조회하고_삭제_상태를_분리한다() {
+        AssetItem active = AssetItem.register("가방", "PROP",
+                AssetTrackingType.QUANTITY, AssetOwnerType.CLUB, null, null,
+                1, "창고", null, null);
+        AssetItem deleted = AssetItem.register("조명", "LIGHTING",
+                AssetTrackingType.QUANTITY, AssetOwnerType.CLUB, null, null,
+                1, "장비실", null, null);
+        assetMapper.insertItem(active);
+        assetMapper.insertItem(deleted);
+        assetMapper.deleteItem(deleted.getAssetItemId(),
+                LocalDateTime.of(2026, 7, 24, 12, 0));
+
+        AssetSearchCondition activeCondition = new AssetSearchCondition(
+                null, null, null, null, false, 0, 20);
+        AssetSearchCondition deletedCondition = new AssetSearchCondition(
+                null, null, null, null, true, 0, 20);
+
+        assertThat(assetMapper.searchItems(activeCondition))
+                .extracting(AssetItem::getAssetItemId)
+                .contains(active.getAssetItemId())
+                .doesNotContain(deleted.getAssetItemId());
+        assertThat(assetMapper.countItems(activeCondition)).isPositive();
+        assertThat(assetMapper.searchItems(deletedCondition))
+                .extracting(AssetItem::getAssetItemId)
+                .contains(deleted.getAssetItemId());
+        assertThat(assetMapper.lookupDeletedItemByIdForUpdate(
+                deleted.getAssetItemId())).isPresent();
+
+        assetMapper.restoreItem(deleted.getAssetItemId());
+
+        assertThat(assetMapper.lookupItemById(deleted.getAssetItemId()))
+                .isPresent();
     }
 }

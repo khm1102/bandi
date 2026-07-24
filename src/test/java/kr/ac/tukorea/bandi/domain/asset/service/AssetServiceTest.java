@@ -11,6 +11,8 @@ import kr.ac.tukorea.bandi.domain.asset.model.AssetOwnerType;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetStatus;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetTrackingType;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetUnit;
+import kr.ac.tukorea.bandi.domain.audit.service.AuditService;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 import kr.ac.tukorea.bandi.domain.file.service.FileService;
 import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
@@ -44,12 +46,14 @@ class AssetServiceTest {
     private MemberService memberService;
     @Mock
     private FileService fileService;
+    @Mock
+    private AuditService auditService;
 
     private AssetService assetService;
 
     @BeforeEach
     void setUp() {
-        assetService = new AssetService(assetMapper, memberService, fileService,
+        assetService = new AssetService(assetMapper, memberService, fileService, auditService,
                 Clock.fixed(Instant.parse("2026-07-19T05:00:00Z"),
                         ZoneOffset.UTC));
         given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(
@@ -69,7 +73,7 @@ class AssetServiceTest {
         ArgumentCaptor<AssetHistory> captor =
                 ArgumentCaptor.forClass(AssetHistory.class);
         verify(assetMapper).updateItem(org.mockito.ArgumentMatchers.any());
-        verify(fileService).validatePrivateReadyOwnedBy(30L, ACTOR_ID);
+        verify(fileService).validatePrivateImageReadyOwnedBy(30L, ACTOR_ID);
         verify(assetMapper, org.mockito.Mockito.times(2))
                 .insertHistory(captor.capture());
         assertThat(captor.getAllValues()).extracting(AssetHistory::action)
@@ -88,6 +92,87 @@ class AssetServiceTest {
                 .isInstanceOf(AssetAccessDeniedException.class);
         verify(assetMapper, never()).updateItem(
                 org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void 새_사진을_지정하지_않고_수정하면_기존_사진을_유지한다() {
+        AssetItem item = new AssetItem(ITEM_ID, "케이블", "EQUIPMENT",
+                AssetTrackingType.QUANTITY, AssetOwnerType.CLUB, null, null,
+                10, "창고", AssetStatus.AVAILABLE, 30L, null);
+        given(assetMapper.lookupItemByIdForUpdate(ITEM_ID))
+                .willReturn(Optional.of(item));
+
+        assetService.updateItem(ACTOR_ID, ITEM_ID,
+                new AssetItemUpdateParam("전원 케이블", "CABLE",
+                        AssetOwnerType.CLUB, null, null, 10,
+                        "창고", null, "이름 정리"));
+
+        ArgumentCaptor<AssetItem> captor = ArgumentCaptor.forClass(AssetItem.class);
+        verify(assetMapper).updateItem(captor.capture());
+        assertThat(captor.getValue().getPhotoFileId()).isEqualTo(30L);
+        verify(fileService, never()).validatePrivateImageReadyOwnedBy(
+                org.mockito.ArgumentMatchers.anyLong(),
+                org.mockito.ArgumentMatchers.anyLong());
+    }
+
+    @Test
+    void 관리자는_품목을_소프트_삭제하고_이력과_감사_로그를_남긴다() {
+        given(assetMapper.lookupItemByIdForUpdate(ITEM_ID))
+                .willReturn(Optional.of(quantityItem()));
+
+        assetService.deleteItem(ACTOR_ID, ITEM_ID);
+
+        verify(assetMapper).deleteItem(ITEM_ID, java.time.LocalDateTime.of(
+                2026, 7, 19, 5, 0));
+        verify(assetMapper).insertHistory(org.mockito.ArgumentMatchers.argThat(history ->
+                history.action() == AssetAction.DELETE));
+        verify(auditService).record(ACTOR_ID,
+                kr.ac.tukorea.bandi.domain.audit.model.AuditAction.ASSET_DELETED,
+                kr.ac.tukorea.bandi.domain.audit.model.AuditTargetType.ASSET,
+                ITEM_ID, "소품·장비 품목을 삭제했습니다.");
+    }
+
+    @Test
+    void 관리자는_삭제된_품목을_복구하고_이력과_감사_로그를_남긴다() {
+        given(assetMapper.lookupDeletedItemByIdForUpdate(ITEM_ID))
+                .willReturn(Optional.of(quantityItem()));
+
+        assetService.restoreItem(ACTOR_ID, ITEM_ID);
+
+        verify(assetMapper).restoreItem(ITEM_ID);
+        verify(assetMapper).insertHistory(org.mockito.ArgumentMatchers.argThat(history ->
+                history.action() == AssetAction.RESTORE));
+        verify(auditService).record(ACTOR_ID,
+                kr.ac.tukorea.bandi.domain.audit.model.AuditAction.ASSET_RESTORED,
+                kr.ac.tukorea.bandi.domain.audit.model.AuditTargetType.ASSET,
+                ITEM_ID, "소품·장비 품목을 복구했습니다.");
+    }
+
+    @Test
+    void 삭제된_품목_목록은_관리자만_조회할_수_있다() {
+        given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(
+                new MemberAccessContext(ACTOR_ID, 3L, false, false, true));
+
+        assertThatThrownBy(() -> assetService.searchItems(ACTOR_ID,
+                new kr.ac.tukorea.bandi.domain.asset.dto.request.AssetSearchCondition(
+                        null, null, null, null, true, 0, 20)))
+                .isInstanceOf(AssetAccessDeniedException.class);
+        verify(assetMapper, never()).searchItems(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void 전역_관리자가_아니면_품목을_삭제하거나_복구할_수_없다() {
+        given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(
+                new MemberAccessContext(ACTOR_ID, 3L, false, false, true));
+
+        assertThatThrownBy(() -> assetService.deleteItem(ACTOR_ID, ITEM_ID))
+                .isInstanceOf(AssetAccessDeniedException.class);
+        assertThatThrownBy(() -> assetService.restoreItem(ACTOR_ID, ITEM_ID))
+                .isInstanceOf(AssetAccessDeniedException.class);
+
+        verify(assetMapper, never()).deleteItem(ITEM_ID,
+                java.time.LocalDateTime.of(2026, 7, 19, 5, 0));
+        verify(assetMapper, never()).restoreItem(ITEM_ID);
     }
 
     @Test

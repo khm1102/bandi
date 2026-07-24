@@ -6,6 +6,8 @@ import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityManageSearchCondi
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityManageSearchParam;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordSearchCondition;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordSearchParam;
+import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordListSearchCondition;
+import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordListSearchParam;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordUpdateParam;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordWriteParam;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityFileLinkResponse;
@@ -14,6 +16,7 @@ import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordDetailResp
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordManageContentResponse;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordManageDetailResponse;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordSummaryResponse;
+import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityReviewCsvRow;
 import kr.ac.tukorea.bandi.domain.activity.exception.ActivityRecordAccessDeniedException;
 import kr.ac.tukorea.bandi.domain.activity.exception.ActivityRecordFileNotFoundException;
 import kr.ac.tukorea.bandi.domain.activity.exception.InvalidActivityRecordException;
@@ -23,6 +26,7 @@ import kr.ac.tukorea.bandi.domain.activity.model.ActivityRecord;
 import kr.ac.tukorea.bandi.domain.activity.model.ActivityRecordFile;
 import kr.ac.tukorea.bandi.domain.activity.model.ActivityRecordRevision;
 import kr.ac.tukorea.bandi.domain.activity.model.ActivityRecordStatus;
+import kr.ac.tukorea.bandi.domain.activity.model.ActivityRecordType;
 import kr.ac.tukorea.bandi.domain.activity.model.ActivityReviewHistory;
 import kr.ac.tukorea.bandi.domain.file.dto.response.FileReferenceResponse;
 import kr.ac.tukorea.bandi.domain.file.service.FileAccessDecision;
@@ -149,6 +153,34 @@ class ActivityRecordServiceTest {
     }
 
     @Test
+    void 서버가_생성한_HWPX를_문서_파일로_연결한다() {
+        given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(memberContext());
+        given(activityRecordMapper.lookupByIdForUpdate(RECORD_ID))
+                .willReturn(Optional.of(draft(ACTOR_ID)));
+        given(fileService.lookupPrivateReadyForUpdate(FILE_ID)).willReturn(
+                new FileReferenceResponse(FILE_ID, "activity.hwpx",
+                        "application/hwp+zip", 2048L, ACTOR_ID));
+        given(activityRecordMapper.existsCurrentStoredFile(RECORD_ID, FILE_ID))
+                .willReturn(false);
+        given(activityRecordMapper.lookupNextDisplayOrder(
+                RECORD_ID, ActivityFileRole.DOCUMENT)).willReturn(0);
+
+        activityRecordService.attachGeneratedFile(ACTOR_ID, RECORD_ID, FILE_ID,
+                ActivityFileRole.DOCUMENT);
+
+        verify(activityRecordMapper).insertFile(any());
+    }
+
+    @Test
+    void 일반_파일_연결_API로_DOCUMENT_역할을_추가하지_못한다() {
+        assertThatThrownBy(() -> activityRecordService.addFile(ACTOR_ID,
+                new ActivityFileAddParam(RECORD_ID, FILE_ID,
+                        ActivityFileRole.DOCUMENT)))
+                .isInstanceOf(InvalidActivityRecordException.class);
+        verify(activityRecordMapper, never()).insertFile(any());
+    }
+
+    @Test
     void 이미지가_아니거나_현재_중복인_파일은_추가하지_않는다() {
         given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(memberContext());
         given(activityRecordMapper.lookupByIdForUpdate(RECORD_ID))
@@ -214,12 +246,29 @@ class ActivityRecordServiceTest {
     }
 
     @Test
-    void 증빙_사진이_없으면_제출할_수_없다() {
+    void 간단_활동_기록은_증빙_사진_없이_제출할_수_있다() {
         given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(memberContext());
         given(activityRecordMapper.lookupByIdForUpdate(RECORD_ID))
                 .willReturn(Optional.of(draft(ACTOR_ID)));
+        given(activityRecordMapper.existsReportDocument(RECORD_ID)).willReturn(false);
+        given(activityRecordMapper.lookupMaxRevisionNo(RECORD_ID))
+                .willReturn(Optional.empty());
+
+        activityRecordService.submit(ACTOR_ID, RECORD_ID, null);
+
+        verify(activityRecordMapper).insertRevision(any());
+    }
+
+    @Test
+    void 한글_내역서는_인증사진과_생성문서가_모두_있어야_제출할_수_있다() {
+        given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(memberContext());
+        given(activityRecordMapper.lookupByIdForUpdate(RECORD_ID))
+                .willReturn(Optional.of(draft(ACTOR_ID)));
+        given(activityRecordMapper.existsReportDocument(RECORD_ID)).willReturn(true);
         given(activityRecordMapper.countCurrentFiles(
-                RECORD_ID, ActivityFileRole.EVIDENCE)).willReturn(0);
+                RECORD_ID, ActivityFileRole.EVIDENCE)).willReturn(1);
+        given(activityRecordMapper.countCurrentFiles(
+                RECORD_ID, ActivityFileRole.DOCUMENT)).willReturn(0);
 
         assertThatThrownBy(() -> activityRecordService.submit(
                 ACTOR_ID, RECORD_ID, null))
@@ -234,8 +283,6 @@ class ActivityRecordServiceTest {
         given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(memberContext());
         given(activityRecordMapper.lookupByIdForUpdate(RECORD_ID))
                 .willReturn(Optional.of(draft));
-        given(activityRecordMapper.countCurrentFiles(
-                RECORD_ID, ActivityFileRole.EVIDENCE)).willReturn(1);
         given(activityRecordMapper.lookupMaxRevisionNo(RECORD_ID))
                 .willReturn(Optional.empty());
 
@@ -258,8 +305,6 @@ class ActivityRecordServiceTest {
         given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(memberContext());
         given(activityRecordMapper.lookupByIdForUpdate(RECORD_ID))
                 .willReturn(Optional.of(draft(ACTOR_ID)));
-        given(activityRecordMapper.countCurrentFiles(
-                RECORD_ID, ActivityFileRole.EVIDENCE)).willReturn(1);
         given(activityRecordMapper.lookupMaxRevisionNo(RECORD_ID))
                 .willReturn(Optional.of(Integer.MAX_VALUE));
 
@@ -277,7 +322,7 @@ class ActivityRecordServiceTest {
         given(activityRecordMapper.lookupByIdForUpdate(RECORD_ID))
                 .willReturn(Optional.of(submitted(OTHER_MEMBER_ID)));
 
-        activityRecordService.approve(ACTOR_ID, RECORD_ID);
+        activityRecordService.teamApprove(ACTOR_ID, RECORD_ID);
 
         verify(activityRecordMapper).update(any());
         given(activityRecordMapper.lookupByIdForUpdate(RECORD_ID))
@@ -291,25 +336,69 @@ class ActivityRecordServiceTest {
     }
 
     @Test
+    void 팀장은_자기팀_기록을_1차_승인하고_관리자만_최종_승인한다() {
+        given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(leaderContext());
+        given(activityRecordMapper.lookupByIdForUpdate(RECORD_ID))
+                .willReturn(Optional.of(submitted(OTHER_MEMBER_ID)));
+
+        activityRecordService.teamApprove(ACTOR_ID, RECORD_ID);
+
+        ArgumentCaptor<ActivityRecord> teamApprovalCaptor =
+                ArgumentCaptor.forClass(ActivityRecord.class);
+        verify(activityRecordMapper).update(teamApprovalCaptor.capture());
+        assertThat(teamApprovalCaptor.getValue().getStatus())
+                .isEqualTo(ActivityRecordStatus.TEAM_APPROVED);
+
+        given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(adminContext());
+        given(activityRecordMapper.lookupByIdForUpdate(RECORD_ID))
+                .willReturn(Optional.of(submitted(OTHER_MEMBER_ID)
+                        .teamApprove(OTHER_MEMBER_ID, NOW.minusMinutes(30))));
+        activityRecordService.finalApprove(ACTOR_ID, RECORD_ID, null);
+    }
+
+    @Test
+    void 관리자의_긴급_최종승인은_사유가_필수이며_본인_기록도_승인할_수_있다() {
+        given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(adminContext());
+        given(activityRecordMapper.lookupByIdForUpdate(RECORD_ID))
+                .willReturn(Optional.of(submitted(OTHER_MEMBER_ID)));
+
+        assertThatThrownBy(() -> activityRecordService.finalApprove(
+                ACTOR_ID, RECORD_ID, " "))
+                .isInstanceOf(InvalidActivityRecordException.class);
+
+        given(activityRecordMapper.lookupByIdForUpdate(RECORD_ID))
+                .willReturn(Optional.of(submitted(ACTOR_ID)));
+        activityRecordService.finalApprove(ACTOR_ID, RECORD_ID, "관리자 직접 확인");
+        verify(activityRecordMapper, org.mockito.Mockito.times(1)).update(any());
+    }
+
+    @Test
     void MEMBER는_검수할_수_없고_LEADER는_다른_팀을_검수할_수_없다() {
         given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(memberContext());
         given(activityRecordMapper.lookupByIdForUpdate(RECORD_ID))
                 .willReturn(Optional.of(submitted(OTHER_MEMBER_ID)));
-        assertThatThrownBy(() -> activityRecordService.approve(ACTOR_ID, RECORD_ID))
+        assertThatThrownBy(() -> activityRecordService.teamApprove(ACTOR_ID, RECORD_ID))
+                .isInstanceOf(ActivityRecordAccessDeniedException.class);
+
+        given(activityRecordMapper.lookupByIdForUpdate(RECORD_ID))
+                .willReturn(Optional.of(submitted(ACTOR_ID)));
+        assertThatThrownBy(() -> activityRecordService.teamApprove(ACTOR_ID, RECORD_ID))
                 .isInstanceOf(ActivityRecordAccessDeniedException.class);
 
         given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(leaderContext());
         given(activityRecordMapper.lookupByIdForUpdate(RECORD_ID))
                 .willReturn(Optional.of(submittedForTeam(OPERATOR_TEAM_ID)));
-        assertThatThrownBy(() -> activityRecordService.approve(ACTOR_ID, RECORD_ID))
+        assertThatThrownBy(() -> activityRecordService.teamApprove(ACTOR_ID, RECORD_ID))
                 .isInstanceOf(ActivityRecordAccessDeniedException.class);
     }
 
     @Test
-    void 팀장이_기록을_보관하면_상태_이력을_남긴다() {
-        given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(leaderContext());
+    void 관리자만_최종_승인_기록을_보관하고_상태_이력을_남긴다() {
+        given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(adminContext());
         given(activityRecordMapper.lookupByIdForUpdate(RECORD_ID))
-                .willReturn(Optional.of(draft(OTHER_MEMBER_ID)));
+                .willReturn(Optional.of(submitted(OTHER_MEMBER_ID)
+                        .teamApprove(OTHER_MEMBER_ID, NOW.minusMinutes(30))
+                        .finalApprove(3L, NOW.minusMinutes(10))));
 
         activityRecordService.archive(ACTOR_ID, RECORD_ID);
 
@@ -317,9 +406,52 @@ class ActivityRecordServiceTest {
                 ArgumentCaptor.forClass(ActivityReviewHistory.class);
         verify(activityRecordMapper).insertReviewHistory(historyCaptor.capture());
         assertThat(historyCaptor.getValue().getPreviousStatus())
-                .isEqualTo(ActivityRecordStatus.DRAFT);
+                .isEqualTo(ActivityRecordStatus.APPROVED);
         assertThat(historyCaptor.getValue().getNewStatus())
                 .isEqualTo(ActivityRecordStatus.ARCHIVED);
+    }
+
+    @Test
+    void 검수_목록은_TEAM장에게_자기_팀만_제공하고_MEMBER는_차단한다() {
+        ActivityRecordListSearchParam param = new ActivityRecordListSearchParam(
+                null, OPERATOR_TEAM_ID, null, null, null, null, 0, 20);
+        given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(leaderContext());
+        given(activityRecordMapper.searchReview(any())).willReturn(List.of());
+        given(activityRecordMapper.countReview(any())).willReturn(0L);
+
+        activityRecordService.searchReview(ACTOR_ID, param);
+
+        ArgumentCaptor<ActivityRecordListSearchCondition> conditionCaptor =
+                ArgumentCaptor.forClass(ActivityRecordListSearchCondition.class);
+        verify(activityRecordMapper).searchReview(conditionCaptor.capture());
+        assertThat(conditionCaptor.getValue().teamId()).isEqualTo(STAGE_TEAM_ID);
+
+        given(memberService.lookupAccessContext(OTHER_MEMBER_ID)).willReturn(
+                new MemberAccessContext(OTHER_MEMBER_ID, STAGE_TEAM_ID,
+                        false, false, true));
+        assertThatThrownBy(() -> activityRecordService.searchReview(
+                OTHER_MEMBER_ID, param))
+                .isInstanceOf(ActivityRecordAccessDeniedException.class);
+    }
+
+    @Test
+    void 관리자_CSV는_전체_필터를_사용하고_수식_문자열을_무해화한다() {
+        ActivityRecordListSearchParam param = new ActivityRecordListSearchParam(
+                "=HYPERLINK()", null, ActivityRecordStatus.SUBMITTED,
+                ActivityRecordType.SIMPLE, null, null, 0, 20);
+        given(memberService.lookupAccessContext(ACTOR_ID)).willReturn(adminContext());
+        given(activityRecordMapper.searchReviewCsv(any())).willReturn(List.of(
+                new ActivityReviewCsvRow("=제목", ActivityRecordType.SIMPLE,
+                        "무대팀", "작성자", NOW, 3,
+                        ActivityRecordStatus.SUBMITTED, "검수자", "@확인",
+                        false)));
+
+        String csv = new String(activityRecordService.exportReviewCsv(ACTOR_ID, param),
+                java.nio.charset.StandardCharsets.UTF_8);
+
+        assertThat(csv).startsWith("\uFEFF제목,형식");
+        assertThat(csv).contains("\"'=제목\"");
+        assertThat(csv).contains("\"'@확인\"");
     }
 
     @Test
@@ -504,14 +636,15 @@ class ActivityRecordServiceTest {
     private ActivityRecordSummaryResponse summary() {
         return new ActivityRecordSummaryResponse(RECORD_ID, STAGE_TEAM_ID,
                 "무대팀", NOW.minusHours(2), "1막 연습", 8,
-                ActivityRecordStatus.APPROVED, "작성자", FILE_ID, NOW);
+                ActivityRecordStatus.APPROVED, ActivityRecordType.SIMPLE,
+                "작성자", FILE_ID, null, NOW);
     }
 
     private ActivityRecordManageContentResponse manageContent(Long creatorId) {
         return new ActivityRecordManageContentResponse(RECORD_ID, STAGE_TEAM_ID,
                 "무대팀", NOW.minusHours(2), "1막 연습", "런스루", 8,
                 ActivityRecordStatus.DRAFT, creatorId, "작성자", "작성자",
-                null, null, NOW);
+                null, null, NOW, false);
     }
 
     private ActivityRecordContentResponse approvedContent() {

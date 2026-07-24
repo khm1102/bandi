@@ -2,10 +2,12 @@ package kr.ac.tukorea.bandi.domain.activity.mapper;
 
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityManageSearchCondition;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordSearchCondition;
+import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordListSearchCondition;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityFileLinkResponse;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordContentResponse;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordManageContentResponse;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordSummaryResponse;
+import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityReviewCsvRow;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRevisionResponse;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityReviewHistoryResponse;
 import kr.ac.tukorea.bandi.domain.activity.model.ActivityFileRole;
@@ -30,6 +32,20 @@ public interface ActivityRecordMapper {
 
     List<ActivityRecordSummaryResponse> searchManageable(ActivityManageSearchCondition condition);
 
+    List<ActivityRecordSummaryResponse> searchMine(ActivityRecordListSearchCondition condition);
+
+    long countMine(ActivityRecordListSearchCondition condition);
+
+    List<ActivityRecordSummaryResponse> searchArchive(ActivityRecordListSearchCondition condition);
+
+    long countArchive(ActivityRecordListSearchCondition condition);
+
+    List<ActivityRecordSummaryResponse> searchReview(ActivityRecordListSearchCondition condition);
+
+    long countReview(ActivityRecordListSearchCondition condition);
+
+    List<ActivityReviewCsvRow> searchReviewCsv(ActivityRecordListSearchCondition condition);
+
     Optional<ActivityRecordContentResponse> lookupApprovedContent(Long activityRecordId);
 
     Optional<ActivityRecordManageContentResponse> lookupManageContent(Long activityRecordId);
@@ -51,6 +67,8 @@ public interface ActivityRecordMapper {
 
     int countCurrentFiles(@Param("activityRecordId") Long activityRecordId,
                           @Param("fileRole") ActivityFileRole fileRole);
+
+    boolean existsReportDocument(Long activityRecordId);
 
     Optional<Integer> lookupMaxRevisionNo(Long activityRecordId);
 

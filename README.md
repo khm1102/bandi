@@ -1,6 +1,7 @@
 # bandi
 
-연극 동아리 통합 관리 시스템 (SSR 웹). 단원·공연·회비·일정 관리와 공개 관람 신청 화면을 제공한다. 1차 기능과 스키마 기준선은 확정됐으며 온보딩은 후속 범위다.
+연극 동아리 통합 관리 시스템 (SSR 웹). 단원·일정·공지·자료·활동 기록·소품과
+권한을 관리한다. 1차 기능과 스키마 기준선은 확정됐으며 온보딩은 후속 범위다.
 
 ## 스택
 
@@ -8,9 +9,9 @@
 |---|---|---|
 | 백엔드 | Spring Boot 3.5.x · Java 17 | **war 패키징** (JSP는 실행형 jar 미지원) |
 | 뷰 | **JSP + JSTL + 태그 파일** | Thymeleaf에서 전환 (2026-07) — 컨벤션 12장 |
-| 스타일 | Tailwind CSS v4 (Play CDN) + shadcn 토큰 | 화이트/네이비/민트 팔레트 — `docs/design-guide.md` |
+| 스타일 | Tailwind CSS v4 (Play CDN) + shadcn 토큰 | 화이트/네이비/버건디 팔레트 — `docs/design-guide.md` |
 | DB | MySQL 8.4 (Docker) · MyBatis · Flyway | 호스트 포트 **3307** |
-| 파일 저장 | MinIO | 내부 파일 비공개·공개 콘텐츠 버킷 분리 |
+| 파일 저장 | 로컬 영구 볼륨 | `FILE_STORAGE_ROOT` 아래 private/public 분리 |
 | 인증 | 세션 기반 (spring-session-jdbc) | JWT 아님 — 확정 사항 |
 
 ## 시작하기
@@ -23,7 +24,6 @@ docker compose up -d        # MySQL 8.4 (3307, bandi/bandi1234, 스키마 bandi�
 
 | URL | 설명 |
 |---|---|
-| `http://localhost:8080/style-guide` | 디자인 시스템 데모 (dev 전용) — 화면 작업 시 여기서 복사 |
 | `http://localhost:8080/docs` | Swagger UI (prod 비활성) |
 
 빌드/테스트: `./gradlew build` (Docker MySQL이 떠 있어야 통과 — 커밋 전 필수 게이트)
@@ -32,7 +32,15 @@ docker compose up -d        # MySQL 8.4 (3307, bandi/bandi1234, 스키마 bandi�
 
 `dev`(로컬 개발 기본, 미지정 시 자동) / `prod` 2단계 + 테스트 전용 `test`. DB 접속값은 `.env`에서 로딩한다(`DB_HOST`/`DB_PORT`/`DB_USERNAME`/`DB_PASSWORD`). 상세: 컨벤션 17장.
 
-파일 저장은 MinIO를 사용한다. 설정 키는 `MINIO_ENDPOINT`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `MINIO_PRIVATE_BUCKET`, `MINIO_PUBLIC_BUCKET`이며 로컬 더미값은 `.env.example`을 따른다. MinIO 컨테이너·버킷 초기화와 Java SDK는 파일 저장 기능 PR에서 함께 추가한다.
+파일 저장은 `FILE_STORAGE_ROOT` 아래의 로컬 영구 볼륨을 사용한다. Spring Boot가
+권한을 확인한 뒤 파일을 직접 스트리밍하며, MinIO·S3 호환 저장소·presigned URL은
+사용하지 않는다. 운영 기본 경로는 `/data/bandi`다.
+
+## 팀 공유 테스트 서버
+
+중앙 Cloudflare Tunnel 뒤에서 동작하는 `app + MySQL` 테스트 서버 구성은
+[docs/test-server-deployment.md](docs/test-server-deployment.md)를 따른다. Tunnel 토큰과
+서버 환경값은 이 저장소에 넣지 않는다.
 
 ## 현재 상태 / 임시 결정 (로그인 기능 도입 시 해소)
 
@@ -64,7 +72,6 @@ src/main/resources
 | [docs/design-guide.md](docs/design-guide.md) | 디자인 시스템 정본 — 토큰·타이포·셸·컴포넌트 명세·레시피 |
 | [docs/feature-spec.md](docs/feature-spec.md) | 1차 기능 범위와 구현 순서 정본 |
 | [docs/database-schema.md](docs/database-schema.md) | 테이블·제약·트랜잭션·마이그레이션 순서 정본 |
-| [docs/performance-operations-plan.md](docs/performance-operations-plan.md) | 공연 제작·홍보·관람 운영 상세 |
 | [docs/member-onboarding-plan.md](docs/member-onboarding-plan.md) | 후속 온보딩 설계 기록 (1차 구현 제외) |
 | [AGENTS.md](AGENTS.md) | AI 에이전트 공통 규약 (MUST 규칙·TDD·DoD·금지 목록) |
 

@@ -33,6 +33,29 @@ class CalendarEventTest {
     }
 
     @Test
+    void 선택한_표시_색상으로_일정을_생성한다() {
+        CalendarEvent event = CalendarEvent.create(4L, "무대 연습", "전체 장면 연습",
+                START, END, false, "학생회관 소극장", CalendarEventColor.MINT, 1L);
+
+        assertThat(event.getColorCode()).isEqualTo(CalendarEventColor.MINT);
+    }
+
+    @Test
+    void 표시_색상이_없으면_네이비를_기본값으로_사용한다() {
+        CalendarEvent event = CalendarEvent.create(4L, "무대 연습", "전체 장면 연습",
+                START, END, false, "학생회관 소극장", 1L);
+
+        assertThat(event.getColorCode()).isEqualTo(CalendarEventColor.NAVY);
+    }
+
+    @Test
+    void 표시_색상은_필수다() {
+        assertThatThrownBy(() -> CalendarEvent.create(4L, "무대 연습", "전체 장면 연습",
+                START, END, false, "학생회관 소극장", null, 1L))
+                .isInstanceOf(InvalidCalendarEventException.class);
+    }
+
+    @Test
     void 종료가_시작보다_빠른_일정은_생성할_수_없다() {
         assertThatThrownBy(() -> CalendarEvent.create(4L, "무대 연습", "전체 장면 연습",
                 END, START, false, "학생회관 소극장", 1L))
@@ -40,7 +63,18 @@ class CalendarEventTest {
     }
 
     @Test
+    void 종료가_시작과_같은_일정은_생성할_수_없다() {
+        assertThatThrownBy(() -> CalendarEvent.create(4L, "무대 연습", "전체 장면 연습",
+                START, START, false, "학생회관 소극장", 1L))
+                .isInstanceOf(InvalidCalendarEventException.class);
+    }
+
+    @Test
     void 제목은_필수이고_150자를_넘을_수_없다() {
+        CalendarEvent boundary = CalendarEvent.create(4L, "가".repeat(150), null,
+                START, END, false, null, 1L);
+
+        assertThat(boundary.getTitle()).hasSize(150);
         assertThatThrownBy(() -> CalendarEvent.create(4L, " ", "전체 장면 연습",
                 START, END, false, "학생회관 소극장", 1L))
                 .isInstanceOf(InvalidCalendarEventException.class);
@@ -50,31 +84,38 @@ class CalendarEventTest {
     }
 
     @Test
-    void 장소는_필수이고_200자를_넘을_수_없다() {
-        assertThatThrownBy(() -> CalendarEvent.create(4L, "무대 연습", "전체 장면 연습",
-                START, END, false, " ", 1L))
-                .isInstanceOf(InvalidCalendarEventException.class);
+    void 장소와_설명은_입력하지_않아도_된다() {
+        CalendarEvent event = CalendarEvent.create(4L, "무대 연습", null,
+                START, END, false, null, 1L);
+
+        assertThat(event.getDescription()).isNull();
+        assertThat(event.getPlace()).isNull();
+    }
+
+    @Test
+    void 장소는_200자를_넘을_수_없다() {
         assertThatThrownBy(() -> CalendarEvent.create(4L, "무대 연습", "전체 장면 연습",
                 START, END, false, "가".repeat(201), 1L))
                 .isInstanceOf(InvalidCalendarEventException.class);
     }
 
     @Test
-    void 설명은_필수다() {
-        assertThatThrownBy(() -> CalendarEvent.create(4L, "무대 연습", " ",
-                START, END, false, "학생회관 소극장", 1L))
-                .isInstanceOf(InvalidCalendarEventException.class);
-    }
-
-    @Test
-    void 종일_일정도_동일한_기간_규칙으로_생성한다() {
+    void 종일_일정은_자정부터_다음날_자정까지의_배타적_종료를_사용한다() {
         LocalDateTime dayStart = LocalDateTime.of(2026, 7, 20, 0, 0);
-        LocalDateTime dayEnd = LocalDateTime.of(2026, 7, 20, 23, 59, 59);
+        LocalDateTime dayEnd = LocalDateTime.of(2026, 7, 21, 0, 0);
 
         CalendarEvent event = CalendarEvent.create(null, "공연일", "정기공연",
                 dayStart, dayEnd, true, "학생회관 소극장", 1L);
 
         assertThat(event.isAllDay()).isTrue();
+        assertThat(event.getEndDttm()).isEqualTo(dayEnd);
+    }
+
+    @Test
+    void 종일_일정의_시작과_종료는_자정이어야_한다() {
+        assertThatThrownBy(() -> CalendarEvent.create(null, "공연일", null,
+                START, END, true, null, 1L))
+                .isInstanceOf(InvalidCalendarEventException.class);
     }
 
     @Test
@@ -88,6 +129,14 @@ class CalendarEventTest {
         assertThat(changed.getCreatedByMemberId()).isEqualTo(1L);
         assertThat(changed.getUpdatedByMemberId()).isEqualTo(2L);
         assertThat(changed.getTeamId()).isEqualTo(5L);
+    }
+
+    @Test
+    void 수정할_표시_색상을_선택할_수_있다() {
+        CalendarEvent changed = persisted().change(4L, "무대 연습", "전체 장면 연습",
+                START, END, false, "학생회관 소극장", CalendarEventColor.PLUM, 2L);
+
+        assertThat(changed.getColorCode()).isEqualTo(CalendarEventColor.PLUM);
     }
 
     private CalendarEvent persisted() {

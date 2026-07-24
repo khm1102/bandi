@@ -7,7 +7,7 @@ import org.springframework.http.HttpStatus;
 /**
  * 에러의 단일 출처 (컨벤션 9.4).
  * 코드 접두사는 feature별 고정 — C 공통, A auth, M member, CA calendar, FI file,
- * PN public notice, NI internal notice, RS resource, AR activity record,
+ * NI internal notice, RS resource, AR activity,
  * AS asset, AU audit.
  * message는 사용자에게 그대로 보여줄 문장으로 작성하고 내부 사정을 노출하지 않는다.
  */
@@ -39,6 +39,7 @@ public enum ErrorCode {
     INACTIVE_COHORT(HttpStatus.BAD_REQUEST, "M012", "비활성화된 기수에는 멤버를 배정할 수 없습니다."),
     INVALID_MEMBER_STATUS_TRANSITION(HttpStatus.CONFLICT, "M013", "현재 상태에서는 요청한 상태로 변경할 수 없습니다."),
     SCHOOL_IDENTITY_MISMATCH(HttpStatus.CONFLICT, "M014", "학교 인증 정보와 등록 정보가 일치하지 않습니다."),
+    CLUB_PRESIDENT_UNAVAILABLE(HttpStatus.CONFLICT, "M015", "현재 회장이 등록되지 않아 문서를 만들 수 없습니다."),
 
     // auth (A)
     SCHOOL_MEMBER_NOT_REGISTERED(HttpStatus.FORBIDDEN, "A001", "등록된 동아리 멤버가 아닙니다."),
@@ -48,6 +49,7 @@ public enum ErrorCode {
     SCHOOL_CREDENTIALS_INVALID(HttpStatus.UNAUTHORIZED, "A005", "학교 계정 정보를 확인해 주세요."),
     SCHOOL_SSO_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "A006", "학교 인증 시스템에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요."),
     SCHOOL_SSO_RESPONSE_CHANGED(HttpStatus.BAD_GATEWAY, "A007", "학교 인증 응답을 확인할 수 없습니다. 운영진에게 문의해 주세요."),
+    SCHOOL_LOGIN_RATE_LIMITED(HttpStatus.TOO_MANY_REQUESTS, "A008", "로그인 시도가 많습니다. 15분 후 다시 시도해 주세요."),
 
     // file (FI)
     INVALID_FILE(HttpStatus.BAD_REQUEST, "FI001", "업로드할 수 없는 파일입니다."),
@@ -61,10 +63,6 @@ public enum ErrorCode {
     // calendar (CA)
     CALENDAR_EVENT_NOT_FOUND(HttpStatus.NOT_FOUND, "CA001", "존재하지 않는 일정입니다."),
 
-    // public notice (PN)
-    PUBLIC_NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "PN001", "존재하지 않는 공시입니다."),
-    INVALID_PUBLIC_NOTICE_STATE(HttpStatus.CONFLICT, "PN002", "현재 상태에서는 요청한 공시 작업을 처리할 수 없습니다."),
-
     // internal notice (NI)
     INTERNAL_NOTICE_NOT_FOUND(HttpStatus.NOT_FOUND, "NI001", "존재하지 않는 공지입니다."),
     INVALID_INTERNAL_NOTICE_STATE(HttpStatus.CONFLICT, "NI002", "현재 상태에서는 요청한 공지 작업을 처리할 수 없습니다."),
@@ -73,10 +71,11 @@ public enum ErrorCode {
     RESOURCE_NOT_FOUND(HttpStatus.NOT_FOUND, "RS001", "존재하지 않는 자료입니다."),
     INVALID_RESOURCE_STATE(HttpStatus.CONFLICT, "RS002", "현재 상태에서는 요청한 자료 작업을 처리할 수 없습니다."),
 
-    // activity record (AR)
+    // activity (AR)
     ACTIVITY_RECORD_NOT_FOUND(HttpStatus.NOT_FOUND, "AR001", "존재하지 않는 활동 기록입니다."),
     INVALID_ACTIVITY_RECORD_STATE(HttpStatus.CONFLICT, "AR002", "현재 상태에서는 요청한 활동 기록 작업을 처리할 수 없습니다."),
     ACTIVITY_RECORD_FILE_NOT_FOUND(HttpStatus.NOT_FOUND, "AR003", "존재하지 않는 활동 기록 파일입니다."),
+    INVALID_ACTIVITY_REPORT_DOCUMENT(HttpStatus.BAD_REQUEST, "AR004", "활동 내역서 입력값이 올바르지 않습니다."),
 
     // asset (AS)
     ASSET_ITEM_NOT_FOUND(HttpStatus.NOT_FOUND, "AS001", "존재하지 않는 소품·장비 품목입니다."),

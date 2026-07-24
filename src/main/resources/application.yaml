@@ -37,9 +37,18 @@ bandi:
   storage:
     root: ${FILE_STORAGE_ROOT:/data/bandi}
     max-upload-bytes: ${FILE_STORAGE_MAX_UPLOAD_BYTES:524288000}
+  profile-photo-retirement:
+    mode: ${PROFILE_PHOTO_RETIREMENT_MODE:DISABLED}
+  resource-link-preview-retirement:
+    mode: ${RESOURCE_LINK_PREVIEW_RETIREMENT_MODE:DISABLED}
   school-sso:
     login-page-url: "https://ksc.tukorea.ac.kr/sso/login_stand.jsp"
     login-process-url: "https://ksc.tukorea.ac.kr/sso/login_proc.jsp?returnurl=null"
     connect-timeout: 5s
     request-timeout: 15s
     user-agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36"
+  school-login-attempt:
+    max-failures: ${SCHOOL_LOGIN_MAX_FAILURES:5}
+    failure-window: ${SCHOOL_LOGIN_FAILURE_WINDOW:15m}
+    cooldown: ${SCHOOL_LOGIN_COOLDOWN:15m}
+    hash-secret: ${LOGIN_ATTEMPT_HASH_SECRET:}

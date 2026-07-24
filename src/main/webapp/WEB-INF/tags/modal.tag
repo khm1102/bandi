@@ -4,13 +4,16 @@
 <%@ attribute name="title" required="true" %>
 <%@ attribute name="description" %>
 <%@ attribute name="footer" fragment="true" %>
+<%@ attribute name="size" %>
+<%@ attribute name="mobileFullscreen" type="java.lang.Boolean" %>
 <c:set var="descriptionId" value="${id}Description"/>
-<div id="${id}" class="fixed inset-0 z-50 hidden items-center justify-center bg-sidebar/50 p-4 backdrop-blur-sm md:p-6"
-     data-modal-back aria-hidden="true">
-    <div class="max-h-full w-full max-w-lg overflow-y-auto overscroll-contain rounded-xl bg-card shadow-xl"
+<c:set var="resolvedSize" value="${empty size ? 'md' : size}"/>
+<div id="${id}" class="bandi-modal-backdrop fixed inset-0 z-50 hidden items-center justify-center bg-sidebar/50 backdrop-blur-sm"
+     data-modal-back data-mobile-fullscreen="${mobileFullscreen}" aria-hidden="true">
+    <div class="bandi-modal-panel max-h-full w-full overflow-y-auto overscroll-contain bg-card shadow-xl"
          role="dialog" aria-modal="true" aria-labelledby="${id}Title"
          aria-describedby="${not empty description ? descriptionId : ''}"
-         data-modal-panel tabindex="-1">
+         data-modal-panel data-modal-size="${resolvedSize}" tabindex="-1">
         <header class="flex items-start gap-3 border-b px-6 py-5">
             <div class="min-w-0">
                 <h2 id="${id}Title" class="text-base font-extrabold"><c:out value="${title}"/></h2>

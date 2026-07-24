@@ -1,10 +1,10 @@
 package kr.ac.tukorea.bandi.domain.member.mapper;
 
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchCondition;
+import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchCondition;
 import kr.ac.tukorea.bandi.domain.member.model.AcademicStatus;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
-import kr.ac.tukorea.bandi.domain.member.model.CohortTerm;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
 import kr.ac.tukorea.bandi.domain.member.model.MemberSchoolConnection;
 import kr.ac.tukorea.bandi.domain.member.model.MemberStatus;
@@ -56,11 +56,11 @@ class MemberMapperTest {
         actorTeamId = teams.get(2).getTeamId();
         stageTeamId = teams.get(3).getTeamId();
 
-        Cohort cohort = new Cohort(null, "26-2기", (short) 2026, CohortTerm.SECOND, true);
+        Cohort cohort = new Cohort(null, "26-2기", true);
         cohortMapper.insert(cohort);
         cohortId = cohort.getCohortId();
 
-        Cohort newCohort = new Cohort(null, "27-1기", (short) 2027, CohortTerm.FIRST, true);
+        Cohort newCohort = new Cohort(null, "27-1기", true);
         cohortMapper.insert(newCohort);
         newCohortId = newCohort.getCohortId();
     }
@@ -156,6 +156,45 @@ class MemberMapperTest {
     }
 
     @Test
+    void 멤버_페이지와_전체_건수는_같은_다중_필터를_적용한다() {
+        Member linked = new Member(null, "2020184000", "이서준", null,
+                AcademicStatus.ENROLLED, null, actorTeamId, cohortId,
+                ClubRole.MEMBER, MemberStatus.ACTIVE, SsoLinkStatus.LINKED,
+                null, null, null);
+        memberMapper.insert(linked);
+        memberMapper.insert(preRegistered("2021184001", stageTeamId));
+        MemberPageSearchCondition condition = new MemberPageSearchCondition(
+                "서준", actorTeamId, cohortId, MemberStatus.ACTIVE,
+                ClubRole.MEMBER, SsoLinkStatus.LINKED, 0, 20);
+
+        List<Member> result = memberMapper.searchPage(condition);
+
+        assertThat(result).extracting(Member::getMemberId)
+                .containsExactly(linked.getMemberId());
+        assertThat(memberMapper.countByPageCondition(condition)).isEqualTo(result.size());
+    }
+
+    @Test
+    void 활동_내역서_참여자_검색은_활성_멤버만_지정한_수만큼_반환한다() {
+        Member first = new Member(null, "2020184000", "김현민", "컴퓨터공학부",
+                AcademicStatus.ENROLLED, null, actorTeamId, cohortId,
+                ClubRole.MEMBER, MemberStatus.ACTIVE, SsoLinkStatus.LINKED,
+                null, null, null);
+        Member second = new Member(null, "2020184001", "김현우", "디자인공학부",
+                AcademicStatus.ENROLLED, null, actorTeamId, cohortId,
+                ClubRole.MEMBER, MemberStatus.ACTIVE, SsoLinkStatus.LINKED,
+                null, null, null);
+        memberMapper.insert(first);
+        memberMapper.insert(second);
+        memberMapper.insert(preRegistered("2020184002", actorTeamId));
+
+        List<Member> result = memberMapper.searchActiveByKeyword("김현", 1);
+
+        assertThat(result).hasSize(1)
+                .allMatch(member -> member.getStatus() == MemberStatus.ACTIVE);
+    }
+
+    @Test
     void 팀을_변경하면_현재_팀이_갱신된다() {
         // given
         Member member = preRegistered("2021184000", actorTeamId);
@@ -230,7 +269,7 @@ class MemberMapperTest {
         memberMapper.insert(member);
         LocalDateTime verifiedAt = LocalDateTime.of(2026, 7, 18, 17, 30);
         MemberSchoolConnection connection = new MemberSchoolConnection(
-                member.getMemberId(), "컴퓨터공학부", AcademicStatus.ENROLLED, verifiedAt,
+                member.getMemberId(), "컴퓨터공학부", "01012345678", AcademicStatus.ENROLLED, verifiedAt,
                 MemberStatus.ACTIVE, SsoLinkStatus.LINKED, verifiedAt, verifiedAt,
                 SchoolConnectionOutcome.AUTHENTICATED);
 
@@ -243,6 +282,7 @@ class MemberMapperTest {
                 .get()
                 .satisfies(found -> {
                     assertThat(found.getDepartment()).isEqualTo("컴퓨터공학부");
+                    assertThat(found.getPhoneNumber()).isEqualTo("01012345678");
                     assertThat(found.getAcademicStatus()).isEqualTo(AcademicStatus.ENROLLED);
                     assertThat(found.getAcademicStatusVerifiedDttm()).isEqualTo(verifiedAt);
                     assertThat(found.getStatus()).isEqualTo(MemberStatus.ACTIVE);
@@ -250,6 +290,28 @@ class MemberMapperTest {
                     assertThat(found.getSsoLinkedDttm()).isEqualTo(verifiedAt);
                     assertThat(found.getLastLoginDttm()).isEqualTo(verifiedAt);
                 });
+    }
+
+    @Test
+    void SSO에_전화번호가_없으면_기존_전화번호를_보존한다() {
+        Member member = preRegistered("2021184000", actorTeamId);
+        memberMapper.insert(member);
+        LocalDateTime verifiedAt = LocalDateTime.of(2026, 7, 18, 17, 30);
+        memberMapper.updateSchoolConnection(new MemberSchoolConnection(
+                member.getMemberId(), "컴퓨터공학부", "01012345678", AcademicStatus.ENROLLED,
+                verifiedAt, MemberStatus.ACTIVE, SsoLinkStatus.LINKED, verifiedAt,
+                verifiedAt, SchoolConnectionOutcome.AUTHENTICATED));
+
+        memberMapper.updateSchoolConnection(new MemberSchoolConnection(
+                member.getMemberId(), "컴퓨터공학부", AcademicStatus.ENROLLED,
+                verifiedAt.plusDays(1), MemberStatus.ACTIVE, SsoLinkStatus.LINKED,
+                verifiedAt, verifiedAt.plusDays(1), SchoolConnectionOutcome.AUTHENTICATED));
+
+        assertThat(memberMapper.lookupById(member.getMemberId()))
+                .isPresent()
+                .get()
+                .extracting(Member::getPhoneNumber)
+                .isEqualTo("01012345678");
     }
 
     @Test

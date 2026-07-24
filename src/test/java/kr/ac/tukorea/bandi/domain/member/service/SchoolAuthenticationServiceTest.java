@@ -6,8 +6,10 @@ import kr.ac.tukorea.bandi.domain.member.dto.response.AuthenticatedMemberRespons
 import kr.ac.tukorea.bandi.domain.member.dto.response.SchoolConnectionResponse;
 import kr.ac.tukorea.bandi.domain.member.exception.MemberLoginDeniedException;
 import kr.ac.tukorea.bandi.domain.member.exception.SchoolAcademicStatusDeniedException;
+import kr.ac.tukorea.bandi.domain.member.exception.SchoolCredentialsInvalidException;
 import kr.ac.tukorea.bandi.domain.member.exception.SchoolIdentityMismatchException;
 import kr.ac.tukorea.bandi.domain.member.exception.SchoolIdentityReviewRequiredException;
+import kr.ac.tukorea.bandi.domain.member.exception.SchoolLoginRateLimitedException;
 import kr.ac.tukorea.bandi.domain.member.model.AcademicStatus;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.SchoolConnectionOutcome;
@@ -34,12 +36,15 @@ class SchoolAuthenticationServiceTest {
     private SchoolSsoClient schoolSsoClient;
     @Mock
     private MemberService memberService;
+    @Mock
+    private SchoolLoginAttemptService schoolLoginAttemptService;
 
     private SchoolAuthenticationService schoolAuthenticationService;
 
     @BeforeEach
     void setUp() {
-        schoolAuthenticationService = new SchoolAuthenticationService(schoolSsoClient, memberService);
+        schoolAuthenticationService = new SchoolAuthenticationService(
+                schoolSsoClient, memberService, schoolLoginAttemptService);
     }
 
     @Test
@@ -58,6 +63,7 @@ class SchoolAuthenticationServiceTest {
         assertThat(response.teamId()).isEqualTo(3L);
         assertThat(response.role()).isEqualTo(ClubRole.MEMBER);
         verify(memberService).connectSchoolIdentity(identity);
+        verify(schoolLoginAttemptService).clearFailures(credentials.studentNo());
     }
 
     @Test
@@ -94,6 +100,35 @@ class SchoolAuthenticationServiceTest {
     @Test
     void 활동_중지나_탈퇴_멤버는_로그인을_거부한다() {
         assertDenied(SchoolConnectionOutcome.MEMBER_STATUS_DENIED, MemberLoginDeniedException.class);
+    }
+
+    @Test
+    void 다섯번째_학교_자격증명_실패에서는_대기_예외를_반환한다() {
+        // given
+        SchoolCredentials credentials = new SchoolCredentials("2021184000", "wrong-password");
+        given(schoolSsoClient.authenticate(credentials))
+                .willThrow(new SchoolCredentialsInvalidException());
+        given(schoolLoginAttemptService.recordFailure(credentials.studentNo()))
+                .willReturn(true);
+
+        // when & then
+        assertThatThrownBy(() -> schoolAuthenticationService.authenticate(credentials))
+                .isInstanceOf(SchoolLoginRateLimitedException.class);
+        verify(schoolLoginAttemptService).recordFailure(credentials.studentNo());
+        verifyNoInteractions(memberService);
+    }
+
+    @Test
+    void 대기_중이면_학교_SSO에_요청하지_않는다() {
+        // given
+        SchoolCredentials credentials = new SchoolCredentials("2021184000", "school-password");
+        org.mockito.Mockito.doThrow(new SchoolLoginRateLimitedException())
+                .when(schoolLoginAttemptService).assertAllowed(credentials.studentNo());
+
+        // when & then
+        assertThatThrownBy(() -> schoolAuthenticationService.authenticate(credentials))
+                .isInstanceOf(SchoolLoginRateLimitedException.class);
+        verifyNoInteractions(schoolSsoClient, memberService);
     }
 
     @Test
