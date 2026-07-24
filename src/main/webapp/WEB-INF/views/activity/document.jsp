@@ -2,7 +2,7 @@
 <%@ taglib prefix="c" uri="jakarta.tags.core" %>
 <%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
 <%@ taglib prefix="t" tagdir="/WEB-INF/tags" %>
-<c:set var="input" value="min-h-11 w-full rounded-md border border-input bg-card px-3 text-sm transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20"/>
+<c:set var="input" value="min-h-11 w-full rounded-md border border-input bg-card px-3 text-base transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm"/>
 <c:set var="label" value="mb-1.5 block text-sm font-bold text-foreground"/>
 <c:url var="documentApiUrl" value="/api/activity-report-documents"/>
 <t:layout title="활동 내역서 만들기" active="activity" role="${role}" scriptPath="activity/document">
@@ -43,6 +43,12 @@
             <section class="border-t py-6" aria-labelledby="activityReportBasicTitle">
                 <h2 id="activityReportBasicTitle" class="text-lg font-black">기본 정보</h2>
                 <div class="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div class="md:col-span-2">
+                        <form:label path="title" cssClass="${label}">활동 기록 제목 <span class="text-destructive">*</span></form:label>
+                        <form:input path="title" cssClass="${input}" maxlength="150" aria-describedby="titleHelp titleError"/>
+                        <p id="titleHelp" class="mt-1.5 text-xs text-muted-foreground">목록에서 활동을 구분하는 제목입니다. HWPX 양식의 제목 형식은 바뀌지 않습니다.</p>
+                        <p id="titleError" class="mt-1 hidden text-xs text-destructive" data-field-error="title"></p>
+                    </div>
                     <div>
                         <form:label path="representative" cssClass="${label}">대표자 <span class="text-destructive">*</span></form:label>
                         <form:input path="representative" cssClass="${input}" maxlength="20" autocomplete="name" aria-describedby="representativeHelp representativeError"/>
@@ -82,7 +88,7 @@
                     <h2 id="activityReportContentTitle" class="text-lg font-black">활동 내용</h2>
                     <span class="text-xs tabular-nums text-muted-foreground" data-content-count>0 / 300자</span>
                 </div>
-                <form:textarea path="content" cssClass="mt-4 min-h-44 w-full resize-y rounded-md border border-input bg-card px-3 py-3 text-sm leading-6 focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20" maxlength="300" aria-describedby="contentError"/>
+                <form:textarea path="content" cssClass="mt-4 min-h-44 w-full resize-y rounded-md border border-input bg-card px-3 py-3 text-base leading-6 focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm" maxlength="300" aria-describedby="contentError"/>
                 <p id="contentError" class="mt-1 hidden text-xs text-destructive" data-field-error="content"></p>
             </section>
 

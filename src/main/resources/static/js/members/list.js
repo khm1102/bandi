@@ -1,7 +1,7 @@
 import {ApiError, get, patch, post} from '../common/api.js';
 import {all, bindPageActions, debounce, element, lookup, readValue} from '../common/dom.js';
 import {renderPagination, readPageFromUrl, setUrlPage, writeUrl, normalizePage} from '../common/pagination.js';
-import {openModal} from '../common/modal.js';
+import {closeModal, openModal} from '../common/modal.js';
 import {showToast} from '../common/toast.js';
 import {badge, closeActionModal} from '../common/view.js';
 
@@ -48,6 +48,13 @@ const STATUS_TRANSITIONS = Object.freeze({
     WITHDRAWN: [],
     REGISTRATION_CANCELLED: [],
 });
+const FILTER_LABELS = Object.freeze({
+    team: '팀',
+    cohort: '기수',
+    status: '활동 상태',
+    role: '역할',
+    sso: 'SSO 상태',
+});
 const PAGE_SIZE = 20;
 
 let teamsById = new Map();
@@ -57,6 +64,7 @@ let teams = [];
 let cohorts = [];
 let pendingRoleChange = null;
 let pendingMemberChange = null;
+let activeMemberFilter = null;
 let requestGeneration = 0;
 const pagination = lookup('[data-pagination]');
 const searchInput = lookup('[data-member-search]');
@@ -180,6 +188,49 @@ function syncControls(urlState) {
     lookup('[data-member-filter-reset]').classList.toggle('hidden',
             !Boolean(urlState.query || urlState.team || urlState.cohort
                     || urlState.status || urlState.role || urlState.sso));
+    syncMobileFilterLabels();
+}
+
+function syncMobileFilterLabels() {
+    all('[data-member-filter-label]').forEach((label) => {
+        const filter = label.dataset.memberFilterLabel;
+        const select = lookup(`[data-member-filter="${filter}"]`);
+        label.textContent = select.selectedOptions[0]?.textContent || '선택';
+    });
+}
+
+function openMemberFilterPicker(trigger) {
+    const filter = trigger.dataset.memberFilterPicker;
+    const select = lookup(`[data-member-filter="${filter}"]`);
+    const optionList = lookup('[data-member-filter-options]');
+    activeMemberFilter = filter;
+    lookup('[data-member-filter-picker-description]').textContent =
+            `${FILTER_LABELS[filter]}을 선택해 주세요.`;
+    optionList.replaceChildren();
+    Array.from(select.options).forEach((option) => {
+        const selected = option.value === select.value;
+        const item = element('button', `min-h-11 rounded-md border px-4 text-left text-sm font-bold transition-colors ${selected ? 'border-primary bg-accent text-accent-foreground' : 'bg-card hover:bg-secondary'}`,
+                option.textContent);
+        item.type = 'button';
+        item.dataset.memberFilterOption = option.value;
+        item.setAttribute('role', 'option');
+        item.setAttribute('aria-selected', String(selected));
+        optionList.appendChild(item);
+    });
+    openModal('memberFilterPickerModal', trigger);
+    optionList.querySelector('[data-member-filter-option]')?.focus();
+}
+
+function selectMemberFilterOption(button) {
+    if (!activeMemberFilter) {
+        return;
+    }
+    const filter = activeMemberFilter;
+    const select = lookup(`[data-member-filter="${filter}"]`);
+    select.value = button.dataset.memberFilterOption;
+    activeMemberFilter = null;
+    closeModal(document.getElementById('memberFilterPickerModal'));
+    replaceFilters({[filter]: select.value});
 }
 
 function replaceFilters(changes) {
@@ -241,7 +292,11 @@ async function loadMembers(focus = false) {
         }
         if (focus && response.items.length > 0) {
             lookup('[data-member-list] tr:not([data-member-state]) button')?.focus({preventScroll: true});
-            lookup('[data-member-list]').scrollIntoView({behavior: 'smooth', block: 'start'});
+            lookup('[data-member-list]').scrollIntoView({
+                behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+                    ? 'auto' : 'smooth',
+                block: 'start',
+            });
         }
     } catch (error) {
         if (generation === requestGeneration) {
@@ -510,6 +565,15 @@ all('[data-member-filter]').forEach((select) => {
     select.addEventListener('change', () => {
         replaceFilters({[select.dataset.memberFilter]: select.value});
     });
+});
+all('[data-member-filter-picker]').forEach((trigger) => {
+    trigger.addEventListener('click', () => openMemberFilterPicker(trigger));
+});
+lookup('[data-member-filter-options]').addEventListener('click', (event) => {
+    const option = event.target.closest('[data-member-filter-option]');
+    if (option) {
+        selectMemberFilterOption(option);
+    }
 });
 lookup('[data-member-filter-reset]').addEventListener('click', () => {
     writeUrl(new URLSearchParams(), false);

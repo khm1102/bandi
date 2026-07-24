@@ -10,6 +10,9 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public record ActivityReportDocumentRequest(
+        @NotBlank(message = "{activity.report.title.required}")
+        @Size(max = 150, message = "{activity.report.title.size}")
+        String title,
         @NotBlank(message = "{activity.report.representative.required}")
         @Size(max = 20, message = "{activity.report.representative.size}")
         String representative,
@@ -27,7 +30,7 @@ public record ActivityReportDocumentRequest(
 ) {
 
     public ActivityReportDocument toModel() {
-        return ActivityReportDocument.create(representative, location, activityAt,
+        return ActivityReportDocument.create(title, representative, location, activityAt,
                 content, participants.stream()
                         .map(ActivityReportParticipantRequest::toModel)
                         .toList());

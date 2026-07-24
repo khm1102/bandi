@@ -53,7 +53,7 @@ class ActivityReportHwpxGeneratorTest {
                         "학과" + index, "202600" + index, index == 14 ? "외부인" : ""))
                 .toList();
         ActivityReportDocument document = ActivityReportDocument.create(
-                "대표<&>", "장소 & 강당", LocalDateTime.of(2026, 2, 11, 16, 30),
+                "대본 리딩", "대표<&>", "장소 & 강당", LocalDateTime.of(2026, 2, 11, 16, 30),
                 "첫 줄\n둘째 줄 <확인>", participants);
         byte[] photo = photoProcessor.normalize(new ActivityReportPhotoParam(
                 png(300, 600), "image/png"));
@@ -74,7 +74,7 @@ class ActivityReportHwpxGeneratorTest {
     @Test
     void 한_명_완성본의_총계는_두_자리로_표시한다() throws Exception {
         ActivityReportDocument document = ActivityReportDocument.create(
-                "대표", "장소", LocalDateTime.of(2026, 11, 3, 9, 5), "내용",
+                "활동 기록", "대표", "장소", LocalDateTime.of(2026, 11, 3, 9, 5), "내용",
                 List.of(new ActivityReportParticipant("참여자", null, null, null)));
 
         String section = readEntries(generator.generate(document, "회장",
@@ -89,7 +89,7 @@ class ActivityReportHwpxGeneratorTest {
     @Test
     void 완성본_사진_개체는_회전과_반전_없이_생성한다() throws Exception {
         ActivityReportDocument document = ActivityReportDocument.create(
-                "대표", "장소", LocalDateTime.of(2026, 7, 24, 0, 5), "내용",
+                "활동 기록", "대표", "장소", LocalDateTime.of(2026, 7, 24, 0, 5), "내용",
                 List.of(new ActivityReportParticipant("참여자", null, null, null)));
 
         String section = readEntries(generator.generate(document, "회장",

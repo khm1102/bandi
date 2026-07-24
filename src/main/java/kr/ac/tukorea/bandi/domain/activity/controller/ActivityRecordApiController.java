@@ -1,10 +1,12 @@
 package kr.ac.tukorea.bandi.domain.activity.controller;
 
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordSearchParam;
+import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordListSearchParam;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordDetailResponse;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordSummaryResponse;
 import kr.ac.tukorea.bandi.domain.activity.service.ActivityRecordService;
 import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import kr.ac.tukorea.bandi.global.swagger.ActivityRecordApiDocs;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,12 @@ import java.util.List;
 public class ActivityRecordApiController implements ActivityRecordApiDocs {
 
     private final ActivityRecordService activityRecordService;
+
+    @Override
+    public ResponseEntity<PageResponse<ActivityRecordSummaryResponse>> searchArchive(
+            Long memberId, ActivityRecordListSearchParam param) {
+        return ResponseEntity.ok(activityRecordService.searchArchive(memberId, param));
+    }
 
     @Override
     public ResponseEntity<List<ActivityRecordSummaryResponse>> search(

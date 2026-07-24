@@ -20,13 +20,25 @@ class ActivityReportDocumentTest {
                 "김현민", "컴퓨터공학부", "2025591010", "");
 
         ActivityReportDocument document = ActivityReportDocument.create(
-                "김현민", "종합관 120호", ACTIVITY_AT, "대본 리딩을 진행했습니다.",
+                "대본 리딩", "김현민", "종합관 120호", ACTIVITY_AT, "대본 리딩을 진행했습니다.",
                 List.of(participant));
 
         assertThat(document.representative()).isEqualTo("김현민");
         assertThat(document.location()).isEqualTo("종합관 120호");
         assertThat(document.activityAt()).isEqualTo(ACTIVITY_AT);
         assertThat(document.participants()).containsExactly(participant);
+    }
+
+    @Test
+    void 활동_기록_제목을_내역서_양식_정보와_별도로_보존한다() {
+        ActivityReportParticipant participant = new ActivityReportParticipant(
+                "김현민", null, null, null);
+
+        ActivityReportDocument document = ActivityReportDocument.create(
+                "여름방학 대본 리딩", "김현민", "종합관 120호", ACTIVITY_AT,
+                "대본 리딩을 진행했습니다.", List.of(participant));
+
+        assertThat(document.recordTitle()).isEqualTo("여름방학 대본 리딩");
     }
 
     @Test
@@ -38,14 +50,14 @@ class ActivityReportDocumentTest {
                 .toList();
 
         ActivityReportDocument document = ActivityReportDocument.create(
-                "대표자", "장소", ACTIVITY_AT, "활동 내용", fourteen);
+                "활동 기록", "대표자", "장소", ACTIVITY_AT, "활동 내용", fourteen);
 
         assertThat(document.participants()).hasSize(14);
         assertThatThrownBy(() -> ActivityReportDocument.create(
-                "대표자", "장소", ACTIVITY_AT, "활동 내용", List.of()))
+                "활동 기록", "대표자", "장소", ACTIVITY_AT, "활동 내용", List.of()))
                 .isInstanceOf(InvalidActivityReportDocumentException.class);
         assertThatThrownBy(() -> ActivityReportDocument.create(
-                "대표자", "장소", ACTIVITY_AT, "활동 내용",
+                "활동 기록", "대표자", "장소", ACTIVITY_AT, "활동 내용",
                 java.util.stream.Stream.concat(fourteen.stream(),
                                 java.util.stream.Stream.of(fourteen.get(0)))
                         .toList()))
@@ -58,16 +70,22 @@ class ActivityReportDocumentTest {
                 "김현민", null, null, null);
 
         assertThatThrownBy(() -> ActivityReportDocument.create(
-                " ", "장소", ACTIVITY_AT, "내용", List.of(participant)))
+                "활동 기록", " ", "장소", ACTIVITY_AT, "내용", List.of(participant)))
                 .isInstanceOf(InvalidActivityReportDocumentException.class);
         assertThatThrownBy(() -> ActivityReportDocument.create(
-                "가".repeat(21), "장소", ACTIVITY_AT, "내용", List.of(participant)))
+                "활동 기록", "가".repeat(21), "장소", ACTIVITY_AT, "내용", List.of(participant)))
                 .isInstanceOf(InvalidActivityReportDocumentException.class);
         assertThatThrownBy(() -> ActivityReportDocument.create(
-                "대표", "가".repeat(51), ACTIVITY_AT, "내용", List.of(participant)))
+                "활동 기록", "대표", "가".repeat(51), ACTIVITY_AT, "내용", List.of(participant)))
                 .isInstanceOf(InvalidActivityReportDocumentException.class);
         assertThatThrownBy(() -> ActivityReportDocument.create(
-                "대표", "장소", ACTIVITY_AT, "가".repeat(301), List.of(participant)))
+                "활동 기록", "대표", "장소", ACTIVITY_AT, "가".repeat(301), List.of(participant)))
+                .isInstanceOf(InvalidActivityReportDocumentException.class);
+        assertThatThrownBy(() -> ActivityReportDocument.create(
+                " ", "대표", "장소", ACTIVITY_AT, "내용", List.of(participant)))
+                .isInstanceOf(InvalidActivityReportDocumentException.class);
+        assertThatThrownBy(() -> ActivityReportDocument.create(
+                "가".repeat(151), "대표", "장소", ACTIVITY_AT, "내용", List.of(participant)))
                 .isInstanceOf(InvalidActivityReportDocumentException.class);
     }
 

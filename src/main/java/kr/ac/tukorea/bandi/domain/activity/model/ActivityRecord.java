@@ -83,8 +83,19 @@ public class ActivityRecord {
                 null, null);
     }
 
-    public ActivityRecord approve(Long reviewerMemberId, LocalDateTime currentDttm) {
-        if (!status.canReview()) {
+    public ActivityRecord teamApprove(Long reviewerMemberId, LocalDateTime currentDttm) {
+        if (!status.canTeamApprove()) {
+            throw new InvalidActivityRecordStateException(status);
+        }
+        validateActorTime(reviewerMemberId, currentDttm);
+        return copy(activityDttm, title, body, participantCount,
+                ActivityRecordStatus.TEAM_APPROVED, reviewerMemberId, submittedDttm,
+                currentDttm, reviewerMemberId);
+    }
+
+    public ActivityRecord finalApprove(Long reviewerMemberId,
+                                       LocalDateTime currentDttm) {
+        if (!status.canFinalApprove()) {
             throw new InvalidActivityRecordStateException(status);
         }
         validateActorTime(reviewerMemberId, currentDttm);
@@ -95,7 +106,7 @@ public class ActivityRecord {
 
     public ActivityRecord requestRevision(Long reviewerMemberId,
                                           LocalDateTime currentDttm) {
-        if (!status.canReview()) {
+        if (!status.canRequestRevision()) {
             throw new InvalidActivityRecordStateException(status);
         }
         validateActorTime(reviewerMemberId, currentDttm);
@@ -157,7 +168,7 @@ public class ActivityRecord {
                     && targetReviewedDttm == null && reviewerId == null;
             case SUBMITTED -> targetSubmittedDttm != null
                     && targetReviewedDttm == null && reviewerId == null;
-            case APPROVED, REVISION_REQUESTED -> targetSubmittedDttm != null
+            case TEAM_APPROVED, APPROVED, REVISION_REQUESTED -> targetSubmittedDttm != null
                     && targetReviewedDttm != null && reviewerId != null;
             case ARCHIVED -> true;
         };

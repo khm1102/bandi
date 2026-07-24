@@ -89,12 +89,18 @@ HWPX 문서를 임시 저장할 때 현재 회장 이름으로 결과 파일을 
 기존·미지정 일정의 기본값은 `NAVY`다. 색상은 일정의 보조 구분 정보이므로 팀 범위와
 제목을 함께 표시한다.
 
-HWPX 활동 내역서는 `activity_record`를 검수 상태의 정본으로 사용한다. 사진은
+HWPX 활동 내역서는 `activity_record`를 검수 상태의 정본으로 사용한다. 간단 기록은
+사진 없이 제출할 수 있지만 HWPX 기록은 `EVIDENCE`와 `DOCUMENT` 현재 파일이 모두 있어야
+제출할 수 있다. 검수 상태는 `DRAFT`, `SUBMITTED`, `TEAM_APPROVED`, `APPROVED`,
+`REVISION_REQUESTED`, `ARCHIVED`이며, `activity_review_history`가 팀장 1차 승인·관리자
+최종 승인·긴급 승인 사유를 기록한다. 사용자가 입력한
+활동 기록 제목은 `activity_record.title`에 저장하며, 월별 고정 HWPX 양식 제목과 분리한다. 사진은
 `activity_record_file.file_role_code = 'EVIDENCE'`, 생성 문서는 `DOCUMENT`로 연결하며
 두 바이너리 모두 `stored_file` 메타데이터와 로컬 private 저장소에 보관한다. 대표자·장소와
 참여자 입력은 문서 재생성을 위해 별도 테이블에 저장한다. `임시 저장`은 `DRAFT`,
-`검수 요청`은 기존 활동 기록의 `SUBMITTED` 전이를 사용하고 운영진 검토·수정 요청·승인은
-기존 활동 기록 검수 흐름을 그대로 따른다.
+`검수 요청`은 `SUBMITTED` 전이를 사용한다. 팀장은 소속 팀 기록만 1차 승인하고, 관리자는
+전체 팀 기록을 최종 승인하거나 긴급 승인할 수 있다. 팀장은 본인 기록을 1차 검수할 수 없고,
+관리자는 본인이 작성한 기록도 최종 검수·보관할 수 있다.
 
 ## 4. 소품·장비
 

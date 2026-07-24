@@ -49,8 +49,10 @@
             <arg column="title" javaType="java.lang.String"/>
             <arg column="participant_count" javaType="_int"/>
             <arg column="status_code" javaType="kr.ac.tukorea.bandi.domain.activity.model.ActivityRecordStatus"/>
+            <arg column="record_type" javaType="kr.ac.tukorea.bandi.domain.activity.model.ActivityRecordType"/>
             <arg column="created_by_name" javaType="java.lang.String"/>
             <arg column="representative_stored_file_id" javaType="java.lang.Long"/>
+            <arg column="document_stored_file_id" javaType="java.lang.Long"/>
             <arg column="updated_dttm" javaType="java.time.LocalDateTime"/>
         </constructor>
     </resultMap>
@@ -119,6 +121,11 @@
         r.title,
         r.participant_count,
         r.status_code,
+        CASE WHEN EXISTS(
+            SELECT 1
+            FROM activity_report_document document
+            WHERE document.activity_record_id = r.activity_record_id
+        ) THEN 'HWPX' ELSE 'SIMPLE' END AS record_type,
         creator.name AS created_by_name,
         (
             SELECT f.stored_file_id
@@ -129,7 +136,57 @@
             ORDER BY f.display_order, f.activity_record_file_id
             LIMIT 1
         ) AS representative_stored_file_id,
+        (
+            SELECT f.stored_file_id
+            FROM activity_record_file f
+            WHERE f.activity_record_id = r.activity_record_id
+              AND f.file_role_code = 'DOCUMENT'
+              AND f.replaced_dttm IS NULL
+            ORDER BY f.display_order, f.activity_record_file_id
+            LIMIT 1
+        ) AS document_stored_file_id,
         r.updated_dttm
+    </sql>
+
+    <sql id="recordListCondition">
+        r.deleted_dttm IS NULL
+        <if test="keyword != null">
+          AND (r.title LIKE CONCAT('%', #{keyword}, '%')
+               OR r.body LIKE CONCAT('%', #{keyword}, '%'))
+        </if>
+        <if test="teamId != null">
+          AND r.team_id = #{teamId}
+        </if>
+        <if test="createdByMemberId != null">
+          AND r.created_by_member_id = #{createdByMemberId}
+        </if>
+        <if test="status != null">
+          AND r.status_code = #{status}
+        </if>
+        <if test="recordType != null">
+          <choose>
+            <when test="recordType.name() == 'HWPX'">
+              AND EXISTS(
+                  SELECT 1
+                  FROM activity_report_document document
+                  WHERE document.activity_record_id = r.activity_record_id
+              )
+            </when>
+            <otherwise>
+              AND NOT EXISTS(
+                  SELECT 1
+                  FROM activity_report_document document
+                  WHERE document.activity_record_id = r.activity_record_id
+              )
+            </otherwise>
+          </choose>
+        </if>
+        <if test="rangeStart != null">
+          AND r.activity_dttm &gt;= #{rangeStart}
+        </if>
+        <if test="rangeEnd != null">
+          AND r.activity_dttm &lt; #{rangeEnd}
+        </if>
     </sql>
 
     <select id="lookupById" resultMap="recordMap">
@@ -196,6 +253,97 @@
         LIMIT #{limit} OFFSET #{offset}
     </select>
 
+    <select id="searchMine" resultMap="summaryMap">
+        SELECT <include refid="summaryColumns"/>
+        FROM activity_record r
+        JOIN team t ON t.team_id = r.team_id
+        JOIN member creator ON creator.member_id = r.created_by_member_id
+        WHERE <include refid="recordListCondition"/>
+        ORDER BY r.updated_dttm DESC, r.activity_record_id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countMine" resultType="long">
+        SELECT COUNT(*)
+        FROM activity_record r
+        WHERE <include refid="recordListCondition"/>
+    </select>
+
+    <select id="searchArchive" resultMap="summaryMap">
+        SELECT <include refid="summaryColumns"/>
+        FROM activity_record r
+        JOIN team t ON t.team_id = r.team_id
+        JOIN member creator ON creator.member_id = r.created_by_member_id
+        WHERE <include refid="recordListCondition"/>
+          AND r.status_code IN ('APPROVED', 'ARCHIVED')
+        ORDER BY r.activity_dttm DESC, r.activity_record_id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countArchive" resultType="long">
+        SELECT COUNT(*)
+        FROM activity_record r
+        WHERE <include refid="recordListCondition"/>
+          AND r.status_code IN ('APPROVED', 'ARCHIVED')
+    </select>
+
+    <select id="searchReview" resultMap="summaryMap">
+        SELECT <include refid="summaryColumns"/>
+        FROM activity_record r
+        JOIN team t ON t.team_id = r.team_id
+        JOIN member creator ON creator.member_id = r.created_by_member_id
+        WHERE <include refid="recordListCondition"/>
+          AND r.status_code &lt;&gt; 'DRAFT'
+        ORDER BY r.updated_dttm DESC, r.activity_record_id DESC
+        LIMIT #{limit} OFFSET #{offset}
+    </select>
+
+    <select id="countReview" resultType="long">
+        SELECT COUNT(*)
+        FROM activity_record r
+        WHERE <include refid="recordListCondition"/>
+          AND r.status_code &lt;&gt; 'DRAFT'
+    </select>
+
+    <select id="searchReviewCsv"
+            resultType="kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityReviewCsvRow">
+        SELECT r.title,
+               CASE WHEN EXISTS(
+                   SELECT 1
+                   FROM activity_report_document document
+                   WHERE document.activity_record_id = r.activity_record_id
+               ) THEN 'HWPX' ELSE 'SIMPLE' END AS record_type,
+               t.name AS team_name,
+               creator.name AS created_by_name,
+               r.activity_dttm,
+               r.participant_count,
+               r.status_code,
+               latest_reviewer.name AS latest_reviewer_name,
+               latest_history.comment AS latest_review_comment,
+               EXISTS(
+                   SELECT 1
+                   FROM activity_report_document document
+                   WHERE document.activity_record_id = r.activity_record_id
+               ) AS report_document
+        FROM activity_record r
+        JOIN team t ON t.team_id = r.team_id
+        JOIN member creator ON creator.member_id = r.created_by_member_id
+        LEFT JOIN activity_review_history latest_history
+          ON latest_history.activity_review_history_id = (
+              SELECT history.activity_review_history_id
+              FROM activity_review_history history
+              WHERE history.activity_record_id = r.activity_record_id
+              ORDER BY history.reviewed_dttm DESC,
+                       history.activity_review_history_id DESC
+              LIMIT 1
+          )
+        LEFT JOIN member latest_reviewer
+          ON latest_reviewer.member_id = latest_history.reviewed_by_member_id
+        WHERE <include refid="recordListCondition"/>
+          AND r.status_code &lt;&gt; 'DRAFT'
+        ORDER BY r.updated_dttm DESC, r.activity_record_id DESC
+    </select>
+
     <select id="lookupApprovedContent" resultMap="contentMap">
         SELECT r.activity_record_id, r.team_id, t.name AS team_name,
                r.activity_dttm, r.title, r.body, r.participant_count,
@@ -204,7 +352,7 @@
         JOIN team t ON t.team_id = r.team_id
         JOIN member creator ON creator.member_id = r.created_by_member_id
         WHERE r.activity_record_id = #{activityRecordId}
-          AND r.status_code = 'APPROVED'
+          AND r.status_code IN ('APPROVED', 'ARCHIVED')
           AND r.deleted_dttm IS NULL
     </select>
 
@@ -281,7 +429,7 @@
             JOIN activity_record_file file
               ON file.activity_record_id = record.activity_record_id
             WHERE record.activity_record_id = #{activityRecordId}
-              AND record.status_code = 'APPROVED'
+              AND record.status_code IN ('APPROVED', 'ARCHIVED')
               AND record.deleted_dttm IS NULL
               AND file.stored_file_id = #{storedFileId}
               AND file.replaced_dttm IS NULL
@@ -302,6 +450,14 @@
         WHERE activity_record_id = #{activityRecordId}
           AND file_role_code = #{fileRole}
           AND replaced_dttm IS NULL
+    </select>
+
+    <select id="existsReportDocument" resultType="boolean">
+        SELECT EXISTS(
+            SELECT 1
+            FROM activity_report_document
+            WHERE activity_record_id = #{activityRecordId}
+        )
     </select>
 
     <select id="lookupMaxRevisionNo" resultType="int">

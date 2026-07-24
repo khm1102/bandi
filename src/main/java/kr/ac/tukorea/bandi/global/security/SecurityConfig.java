@@ -10,6 +10,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
 import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
@@ -23,6 +24,7 @@ public class SecurityConfig {
     private final SchoolAuthenticationProvider authenticationProvider;
     private final SchoolLoginFailureHandler loginFailureHandler;
     private final ApiSecurityFailureHandler apiSecurityFailureHandler;
+    private final MemberAuthenticationRefreshFilter memberAuthenticationRefreshFilter;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http)
@@ -31,6 +33,7 @@ public class SecurityConfig {
                 PathPatternRequestMatcher.withDefaults().matcher("/api/**");
         RequestCache requestCache = requestCache();
         http.authenticationProvider(authenticationProvider);
+        http.addFilterAfter(memberAuthenticationRefreshFilter, SecurityContextHolderFilter.class);
         http.authorizeHttpRequests(authorize -> authorize
                 .dispatcherTypeMatchers(DispatcherType.FORWARD,
                         DispatcherType.ERROR).permitAll()
@@ -55,6 +58,10 @@ public class SecurityConfig {
                 .requestMatchers("/profile")
                 .authenticated()
                 .requestMatchers("/team-members", "/api/members/team-members")
+                .hasAnyRole("LEADER", "ADMIN")
+                .requestMatchers("/activity/archive", "/activity/archive/**",
+                        "/activity/review", "/activity/review/**",
+                        "/api/activity-reviews/**")
                 .hasAnyRole("LEADER", "ADMIN")
                 .requestMatchers("/notices/write", "/notices/*/edit",
                         "/notices/manage", "/notices/manage/**")

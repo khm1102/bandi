@@ -14,6 +14,8 @@ import kr.ac.tukorea.bandi.domain.activity.model.ActivityReportParticipant;
 import kr.ac.tukorea.bandi.domain.activity.model.ActivityRecordStatus;
 import kr.ac.tukorea.bandi.domain.activity.model.ActivityFileRole;
 import kr.ac.tukorea.bandi.domain.activity.model.ActivityReportDocumentRecord;
+import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordWriteParam;
+import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordUpdateParam;
 import kr.ac.tukorea.bandi.domain.file.service.FileService;
 import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
@@ -21,6 +23,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.ArgumentCaptor;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.test.util.ReflectionTestUtils;
@@ -104,7 +107,7 @@ class ActivityReportDocumentServiceTest {
 
     @Test
     void 임시_저장하면_활동_기록과_입력값_사진_HWPX를_함께_저장한다() {
-        ActivityReportDocument document = document();
+        ActivityReportDocument document = document("여름방학 대본 리딩");
         byte[] source = {1, 2, 3};
         byte[] normalized = {4, 5, 6};
         byte[] hwpx = {7, 8, 9};
@@ -135,6 +138,10 @@ class ActivityReportDocumentServiceTest {
                 kr.ac.tukorea.bandi.domain.activity.model.ActivityFileRole.DOCUMENT);
         verify(activityReportDocumentMapper).insert(any());
         verify(activityReportDocumentMapper).insertParticipant(any());
+        ArgumentCaptor<ActivityRecordWriteParam> writeParamCaptor =
+                ArgumentCaptor.forClass(ActivityRecordWriteParam.class);
+        verify(activityRecordService).createDraft(eq(11L), writeParamCaptor.capture());
+        assertThat(writeParamCaptor.getValue().title()).isEqualTo("여름방학 대본 리딩");
     }
 
     @Test
@@ -169,7 +176,10 @@ class ActivityReportDocumentServiceTest {
                 11L, 21L, document, null);
 
         assertThat(result.documentStoredFileId()).isEqualTo(33L);
-        verify(activityRecordService).update(eq(11L), any());
+        ArgumentCaptor<ActivityRecordUpdateParam> updateParamCaptor =
+                ArgumentCaptor.forClass(ActivityRecordUpdateParam.class);
+        verify(activityRecordService).update(eq(11L), updateParamCaptor.capture());
+        assertThat(updateParamCaptor.getValue().title()).isEqualTo("대본 리딩 기록");
         verify(activityRecordService).replaceGeneratedFile(11L, 52L, 33L,
                 ActivityFileRole.DOCUMENT);
         verify(activityReportDocumentMapper).update(any());
@@ -177,7 +187,11 @@ class ActivityReportDocumentServiceTest {
     }
 
     private ActivityReportDocument document() {
-        return ActivityReportDocument.create("대표", "장소",
+        return document("대본 리딩 기록");
+    }
+
+    private ActivityReportDocument document(String recordTitle) {
+        return ActivityReportDocument.create(recordTitle, "대표", "장소",
                 LocalDateTime.of(2026, 2, 11, 16, 30), "내용",
                 List.of(new ActivityReportParticipant("참여자", null, null, null)));
     }

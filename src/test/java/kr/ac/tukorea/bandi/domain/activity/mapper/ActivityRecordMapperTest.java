@@ -97,7 +97,7 @@ class ActivityRecordMapperTest {
     void HWPX_활동_내역서_입력값과_참여자를_활동_기록에_연결한다() {
         ActivityRecord activityRecord = insertDraft(stageTeamId, "7월 활동 내역서");
         ActivityReportDocument document = ActivityReportDocument.create(
-                "대표자", "종합관", NOW, "활동 내용",
+                "활동 기록", "대표자", "종합관", NOW, "활동 내용",
                 List.of(new ActivityReportParticipant("김현민", "컴퓨터공학부",
                         "2025591010", null)));
         ActivityReportDocumentRecord saved = ActivityReportDocumentRecord.create(
@@ -155,7 +155,7 @@ class ActivityRecordMapperTest {
         mapper.insertReviewHistory(ActivityReviewHistory.change(record.getActivityRecordId(),
                 ActivityRecordStatus.DRAFT, ActivityRecordStatus.SUBMITTED,
                 null, memberId, NOW.minusHours(1)));
-        ActivityRecord approved = submitted.approve(adminId, NOW);
+        ActivityRecord approved = submitted.finalApprove(adminId, NOW);
         mapper.update(approved);
         mapper.insertReviewHistory(ActivityReviewHistory.change(record.getActivityRecordId(),
                 ActivityRecordStatus.SUBMITTED, ActivityRecordStatus.APPROVED,
@@ -241,7 +241,7 @@ class ActivityRecordMapperTest {
                 fileId, ActivityFileRole.EVIDENCE, 0, memberId));
         ActivityRecord submitted = record.submit(memberId, NOW.minusHours(1));
         mapper.update(submitted);
-        mapper.update(submitted.approve(adminId, NOW));
+        mapper.update(submitted.finalApprove(adminId, NOW));
         return record;
     }
 

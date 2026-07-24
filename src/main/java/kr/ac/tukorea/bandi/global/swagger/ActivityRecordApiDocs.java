@@ -6,6 +6,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordDetailResponse;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordSummaryResponse;
+import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordListSearchParam;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
+import org.springdoc.core.annotations.ParameterObject;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +24,12 @@ import java.util.List;
 @Tag(name = ApiTag.ACTIVITY, description = "승인된 활동 기록 열람 API")
 @SecurityRequirement(name = OpenApiConfig.SESSION_COOKIE_SCHEME)
 public interface ActivityRecordApiDocs {
+
+    @Operation(summary = "최종 승인 활동 기록 아카이브 목록")
+    @GetMapping("/archive")
+    ResponseEntity<PageResponse<ActivityRecordSummaryResponse>> searchArchive(
+            @Parameter(hidden = true) @LoginMember Long memberId,
+            @ParameterObject ActivityRecordListSearchParam param);
 
     @Operation(summary = "승인된 활동 기록 목록 조회")
     @GetMapping

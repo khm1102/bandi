@@ -28,7 +28,7 @@ class ActivityReportDocumentRecordTest {
     }
 
     private ActivityReportDocument document() {
-        return ActivityReportDocument.create("대표자", "종합관",
+        return ActivityReportDocument.create("활동 기록", "대표자", "종합관",
                 LocalDateTime.of(2026, 7, 23, 20, 0), "활동 내용",
                 List.of(new ActivityReportParticipant("참여자", null, null, null)));
     }

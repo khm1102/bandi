@@ -83,6 +83,12 @@ public class MemberService {
         return MemberAccessContext.from(member);
     }
 
+    public ClubRole lookupCurrentRole(Long memberId) {
+        return memberMapper.lookupById(memberId)
+                .orElseThrow(() -> new MemberNotFoundException(memberId))
+                .getRole();
+    }
+
     public void validateActiveTeam(Long teamId) {
         findAssignableTeam(teamId);
     }

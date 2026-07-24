@@ -86,6 +86,7 @@ class ActivityReportDocumentApiControllerTest {
         MockMultipartFile request = new MockMultipartFile("request", "",
                 MediaType.APPLICATION_JSON_VALUE, """
                 {
+                  "title": "대본 리딩",
                   "representative": "김현민",
                   "location": "종합관",
                   "activityAt": "2026-02-11T16:30:00",
@@ -117,7 +118,7 @@ class ActivityReportDocumentApiControllerTest {
     @Test
     void 저장된_활동_내역서_입력값을_조회한다() throws Exception {
         given(service.lookupDraft(ACTOR_ID, 21L)).willReturn(
-                new ActivityReportDocumentDraftResponse(21L, "김현민", "종합관",
+                new ActivityReportDocumentDraftResponse(21L, "대본 리딩", "김현민", "종합관",
                         LocalDateTime.of(2026, 2, 11, 16, 30), "활동 내용",
                         List.of(new ActivityReportParticipantResponse("김현민",
                                 "컴퓨터공학부", "2025591010", "")),
@@ -129,6 +130,7 @@ class ActivityReportDocumentApiControllerTest {
                 .andExpect(content().json("""
                         {
                           "activityRecordId": 21,
+                          "title": "대본 리딩",
                           "representative": "김현민",
                           "status": "DRAFT",
                           "photoStoredFileId": 41,
@@ -146,6 +148,7 @@ class ActivityReportDocumentApiControllerTest {
         MockMultipartFile request = new MockMultipartFile("request", "",
                 MediaType.APPLICATION_JSON_VALUE, """
                 {
+                  "title": "수정한 대본 리딩",
                   "representative": "김현민",
                   "location": "종합관",
                   "activityAt": "2026-02-11T16:30:00",
@@ -173,6 +176,26 @@ class ActivityReportDocumentApiControllerTest {
                 MediaType.APPLICATION_JSON_VALUE, "{}".getBytes());
 
         mockMvc.perform(multipart("/api/activity-report-documents").file(request))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void 활동_기록_제목이_없으면_잘못된_요청으로_응답한다() throws Exception {
+        MockMultipartFile request = new MockMultipartFile("request", "",
+                MediaType.APPLICATION_JSON_VALUE, """
+                {
+                  "representative": "김현민",
+                  "location": "종합관",
+                  "activityAt": "2026-02-11T16:30:00",
+                  "content": "활동 내용",
+                  "participants": [{"name": "김현민"}]
+                }
+                """.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        MockMultipartFile photo = new MockMultipartFile("photo", "activity.png",
+                MediaType.IMAGE_PNG_VALUE, new byte[]{1, 2, 3});
+
+        mockMvc.perform(multipart("/api/activity-report-documents")
+                        .file(request).file(photo))
                 .andExpect(status().isBadRequest());
     }
 

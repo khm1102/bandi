@@ -66,7 +66,7 @@ function renderFiles() {
                 '본문 이미지'));
         }
         const remove = element('button',
-            'min-h-9 shrink-0 rounded-md px-2 text-xs font-bold text-destructive hover:bg-destructive-soft',
+            'min-h-11 shrink-0 rounded-md px-2 text-xs font-bold text-destructive hover:bg-destructive-soft md:min-h-9',
             '제거');
         remove.type = 'button';
         remove.dataset.removeResourceFileId = String(file.storedFileId);
