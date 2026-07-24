@@ -26,19 +26,19 @@
         <section class="overflow-hidden rounded-lg border bg-card" aria-labelledby="calendarPeriodTitle">
             <div class="border-b px-4 py-4 md:px-5">
                 <div class="flex flex-col gap-4 lg:flex-row lg:items-center">
-                    <div class="flex min-w-0 items-center gap-2">
+                    <div class="flex min-w-0 flex-wrap items-center gap-2">
                         <button type="button" class="min-h-11 rounded-md border bg-card px-3 text-sm font-bold hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring" data-calendar-action="today">오늘</button>
                         <div class="flex" aria-label="기간 이동">
                             <button type="button" class="flex size-11 items-center justify-center rounded-l-md border bg-card text-lg hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring" data-calendar-action="previous" aria-label="이전 기간">‹</button>
                             <button type="button" class="flex size-11 items-center justify-center rounded-r-md border border-l-0 bg-card text-lg hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring" data-calendar-action="next" aria-label="다음 기간">›</button>
                         </div>
-                        <h2 id="calendarPeriodTitle" class="min-w-0 truncate text-lg font-black tracking-tight" data-calendar-title>기간을 불러오는 중</h2>
+                        <h2 id="calendarPeriodTitle" class="order-3 w-full truncate text-lg font-black tracking-tight md:order-none md:w-auto md:flex-1" data-calendar-title>기간을 불러오는 중</h2>
                     </div>
                     <div class="flex flex-1 flex-col gap-3 md:flex-row md:items-end lg:justify-end">
                         <div class="flex rounded-md border bg-secondary p-1" role="group" aria-label="캘린더 보기">
-                            <button type="button" class="min-h-9 rounded-sm bg-card px-3 text-sm font-bold" data-calendar-view="dayGridMonth" aria-pressed="true">월</button>
-                            <button type="button" class="min-h-9 rounded-sm px-3 text-sm font-bold text-muted-foreground" data-calendar-view="timeGridWeek" aria-pressed="false">주</button>
-                            <button type="button" class="min-h-9 rounded-sm px-3 text-sm font-bold text-muted-foreground" data-calendar-view="listWeek" aria-pressed="false">목록</button>
+                            <button type="button" class="min-h-11 min-w-11 rounded-sm bg-card px-3 text-sm font-bold" data-calendar-view="dayGridMonth" aria-pressed="true">월</button>
+                            <button type="button" class="min-h-11 min-w-11 rounded-sm px-3 text-sm font-bold text-muted-foreground" data-calendar-view="timeGridWeek" aria-pressed="false">주</button>
+                            <button type="button" class="min-h-11 min-w-11 rounded-sm px-3 text-sm font-bold text-muted-foreground" data-calendar-view="listWeek" aria-pressed="false">목록</button>
                         </div>
                         <div class="min-w-52">
                             <label class="sr-only" for="calendarTeamFilter">표시할 팀</label>
@@ -177,7 +177,7 @@
                             </div>
                             <div>
                                 <label class="${label}" for="ceDescription">설명</label>
-                                <textarea class="min-h-28 w-full resize-y rounded-md border border-input bg-card px-3 py-2.5 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20" id="ceDescription" placeholder="준비물이나 진행 내용을 입력하세요"></textarea>
+                                <textarea class="min-h-28 w-full resize-y rounded-md border border-input bg-card px-3 py-2.5 text-base focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm" id="ceDescription" placeholder="준비물이나 진행 내용을 입력하세요"></textarea>
                             </div>
                         </div>
                     </details>

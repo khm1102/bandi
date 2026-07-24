@@ -8,15 +8,16 @@ import jakarta.validation.Valid;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityFileAddRequest;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityFileReplaceRequest;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityManageFilter;
+import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordListSearchParam;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordCreateRequest;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordUpdateRequest;
-import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRevisionRequest;
 import kr.ac.tukorea.bandi.domain.activity.dto.request.ActivitySubmitRequest;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordCreatedResponse;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordManageDetailResponse;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivityRecordSummaryResponse;
 import kr.ac.tukorea.bandi.domain.activity.dto.response.ActivitySubmissionResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 import org.springframework.core.io.Resource;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.ResponseEntity;
@@ -35,6 +36,12 @@ import java.util.List;
 @Tag(name = ApiTag.ACTIVITY, description = "활동 기록 작성·제출·검토 API")
 @SecurityRequirement(name = OpenApiConfig.SESSION_COOKIE_SCHEME)
 public interface ActivityManagementApiDocs {
+
+    @Operation(summary = "내 활동 기록 목록 조회")
+    @GetMapping("/mine")
+    ResponseEntity<PageResponse<ActivityRecordSummaryResponse>> searchMine(
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
+            @ParameterObject ActivityRecordListSearchParam param);
 
     @Operation(summary = "관리 가능한 활동 기록 목록 조회")
     @GetMapping
@@ -93,22 +100,4 @@ public interface ActivityManagementApiDocs {
             @PathVariable Long activityRecordId,
             @Valid @RequestBody ActivitySubmitRequest request);
 
-    @Operation(summary = "활동 기록 승인")
-    @PostMapping("/{activityRecordId}/approve")
-    ResponseEntity<Void> approve(
-            @Parameter(hidden = true) @LoginMember Long actorMemberId,
-            @PathVariable Long activityRecordId);
-
-    @Operation(summary = "활동 기록 보완 요청")
-    @PostMapping("/{activityRecordId}/revision-request")
-    ResponseEntity<Void> requestRevision(
-            @Parameter(hidden = true) @LoginMember Long actorMemberId,
-            @PathVariable Long activityRecordId,
-            @Valid @RequestBody ActivityRevisionRequest request);
-
-    @Operation(summary = "활동 기록 보관")
-    @PostMapping("/{activityRecordId}/archive")
-    ResponseEntity<Void> archive(
-            @Parameter(hidden = true) @LoginMember Long actorMemberId,
-            @PathVariable Long activityRecordId);
 }

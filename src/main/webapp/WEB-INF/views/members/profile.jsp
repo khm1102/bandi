@@ -40,9 +40,9 @@
                 <h2 class="text-lg font-extrabold">소속 팀 변경</h2>
                 <p class="mt-1 text-sm leading-6 text-muted-foreground">변경 즉시 반영되며 사유와 변경 이력이 남아요.</p>
                 <label class="mt-4 block text-sm font-bold" for="profileTeam">새 소속 팀</label>
-                <select id="profileTeam" class="mt-2 min-h-11 w-full rounded-md border border-input bg-card px-3 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20" data-profile-team-select required></select>
+                <select id="profileTeam" class="mt-2 min-h-11 w-full rounded-md border border-input bg-card px-3 text-base focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm" data-profile-team-select required></select>
                 <label class="mt-4 block text-sm font-bold" for="profileTeamReason">변경 사유</label>
-                <textarea id="profileTeamReason" class="mt-2 min-h-28 w-full resize-y rounded-md border border-input bg-card px-3 py-2.5 text-sm focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20" maxlength="500" data-profile-team-reason required placeholder="예) 이번 학기 팀 이동"></textarea>
+                <textarea id="profileTeamReason" class="mt-2 min-h-28 w-full resize-y rounded-md border border-input bg-card px-3 py-2.5 text-base focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm" maxlength="500" data-profile-team-reason required placeholder="예) 이번 학기 팀 이동"></textarea>
                 <p class="mt-2 hidden text-sm text-destructive" data-profile-team-error role="alert"></p>
                 <button type="submit" class="mt-4 inline-flex min-h-11 items-center justify-center rounded-md bg-primary px-4 text-sm font-bold text-primary-foreground transition-colors hover:bg-primary-strong" data-profile-team-submit>소속 팀 변경</button>
             </form>

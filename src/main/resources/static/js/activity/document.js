@@ -273,12 +273,16 @@ function handleSearchKeydown(event) {
 
 function validateForm() {
     clearErrors();
+    const title = document.getElementById('title').value.trim();
     const representative = document.getElementById('representative').value.trim();
     const location = document.getElementById('location').value.trim();
     const activityAt = readDateTimeValue('activityAt');
     const content = contentInput.value.trim();
     const participants = collectParticipants();
     const errors = [];
+    if (!title) {
+        errors.push(['title', '활동 기록 제목을 입력해 주세요.']);
+    }
     if (!representative) {
         errors.push(['representative', '대표자를 입력해 주세요.']);
     }
@@ -310,7 +314,7 @@ function validateForm() {
         target?.focus();
         return null;
     }
-    return {representative, location, activityAt, content, participants};
+    return {title, representative, location, activityAt, content, participants};
 }
 
 function filenameOrFallback(result, fallback) {
@@ -486,7 +490,7 @@ function resetForm() {
     lastDownloadFilename = '';
     dirty = false;
     window.history.replaceState({}, '', '/activity-documents');
-    document.getElementById('representative').focus();
+    document.getElementById('title').focus();
 }
 
 form?.addEventListener('submit', (event) => event.preventDefault());
@@ -579,6 +583,7 @@ async function loadSavedDraft() {
         savedRecordId = draft.activityRecordId;
         savedDocumentFileId = draft.documentStoredFileId;
         lastDownloadFilename = draft.documentOriginalName;
+        document.getElementById('title').value = draft.title || '';
         document.getElementById('representative').value = draft.representative;
         document.getElementById('location').value = draft.location;
         setDateTimeValue('activityAt', draft.activityAt?.slice(0, 16) || '');

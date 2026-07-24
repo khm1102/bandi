@@ -196,6 +196,24 @@ class SecurityConfigTest {
     }
 
     @Test
+    void 일반_멤버는_활동_승인_기록과_검수_화면에_접근할_수_없다() throws Exception {
+        for (String path : new String[]{"/activity/archive", "/activity/review"}) {
+            mockMvc.perform(get(path).with(user("member").roles("MEMBER")))
+                    .andExpect(status().isForbidden());
+        }
+    }
+
+    @Test
+    void 팀장과_운영진은_활동_승인_기록과_검수_화면에_접근할_수_있다() throws Exception {
+        for (String role : new String[]{"LEADER", "ADMIN"}) {
+            for (String path : new String[]{"/activity/archive", "/activity/review"}) {
+                mockMvc.perform(get(path).with(user("operator").roles(role)))
+                        .andExpect(status().isOk());
+            }
+        }
+    }
+
+    @Test
     void 공지_관리_API는_팀장과_운영진만_접근한다() throws Exception {
         mockMvc.perform(get("/api/internal-notice-management/test")
                         .with(user("member").roles("MEMBER")))
@@ -253,7 +271,8 @@ class SecurityTestController {
             "/api/members/1/profile-photo", "/api/members/team-members",
             "/api/internal-notice-management/test", "/notices/manage",
             "/notices/manage/1", "/activity-documents",
-            "/api/activity-report-documents/blank", "/share/test"})
+            "/api/activity-report-documents/blank", "/activity/archive",
+            "/activity/review", "/share/test"})
     ResponseEntity<Void> page() {
         return ResponseEntity.ok().build();
     }

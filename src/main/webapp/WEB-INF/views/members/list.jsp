@@ -25,19 +25,20 @@
         <details class="mt-3" data-member-filter-details open>
             <summary class="flex min-h-11 cursor-pointer items-center text-sm font-bold md:hidden">상세 필터</summary>
             <div class="grid gap-3 pt-3 sm:grid-cols-2 lg:grid-cols-5 md:pt-0">
-                <select class="${input}" data-member-filter="team" aria-label="팀 필터"><option value="">전체 팀</option></select>
-                <select class="${input}" data-member-filter="cohort" aria-label="기수 필터"><option value="">전체 기수</option></select>
-                <select class="${input}" data-member-filter="status" aria-label="활동 상태 필터"><option value="">전체 활동 상태</option><option value="PRE_REGISTERED">사전 등록</option><option value="ACTIVE">활동 중</option><option value="SUSPENDED">활동 중지</option><option value="WITHDRAWN">탈퇴</option><option value="REGISTRATION_CANCELLED">등록 취소</option></select>
-                <select class="${input}" data-member-filter="role" aria-label="역할 필터"><option value="">전체 역할</option><option value="MEMBER">일반 부원</option><option value="LEADER">팀장</option><option value="ADMIN">운영진</option></select>
-                <select class="${input}" data-member-filter="sso" aria-label="SSO 상태 필터"><option value="">전체 SSO 상태</option><option value="WAITING">연결 대기</option><option value="LINKED">연결 완료</option><option value="REVIEW_REQUIRED">확인 필요</option></select>
+                <div><button type="button" class="flex min-h-11 w-full items-center justify-between rounded-md border border-input bg-card px-3 text-left text-base md:hidden" data-member-filter-picker="team" aria-haspopup="dialog" aria-controls="memberFilterPickerModal"><span>팀</span><span class="text-muted-foreground" data-member-filter-label="team">전체 팀</span></button><select class="${input} hidden md:block" data-member-filter="team" aria-label="팀 필터"><option value="">전체 팀</option></select></div>
+                <div><button type="button" class="flex min-h-11 w-full items-center justify-between rounded-md border border-input bg-card px-3 text-left text-base md:hidden" data-member-filter-picker="cohort" aria-haspopup="dialog" aria-controls="memberFilterPickerModal"><span>기수</span><span class="text-muted-foreground" data-member-filter-label="cohort">전체 기수</span></button><select class="${input} hidden md:block" data-member-filter="cohort" aria-label="기수 필터"><option value="">전체 기수</option></select></div>
+                <div><button type="button" class="flex min-h-11 w-full items-center justify-between rounded-md border border-input bg-card px-3 text-left text-base md:hidden" data-member-filter-picker="status" aria-haspopup="dialog" aria-controls="memberFilterPickerModal"><span>활동 상태</span><span class="text-muted-foreground" data-member-filter-label="status">전체 활동 상태</span></button><select class="${input} hidden md:block" data-member-filter="status" aria-label="활동 상태 필터"><option value="">전체 활동 상태</option><option value="PRE_REGISTERED">사전 등록</option><option value="ACTIVE">활동 중</option><option value="SUSPENDED">활동 중지</option><option value="WITHDRAWN">탈퇴</option><option value="REGISTRATION_CANCELLED">등록 취소</option></select></div>
+                <div><button type="button" class="flex min-h-11 w-full items-center justify-between rounded-md border border-input bg-card px-3 text-left text-base md:hidden" data-member-filter-picker="role" aria-haspopup="dialog" aria-controls="memberFilterPickerModal"><span>역할</span><span class="text-muted-foreground" data-member-filter-label="role">전체 역할</span></button><select class="${input} hidden md:block" data-member-filter="role" aria-label="역할 필터"><option value="">전체 역할</option><option value="MEMBER">일반 부원</option><option value="LEADER">팀장</option><option value="ADMIN">운영진</option></select></div>
+                <div><button type="button" class="flex min-h-11 w-full items-center justify-between rounded-md border border-input bg-card px-3 text-left text-base md:hidden" data-member-filter-picker="sso" aria-haspopup="dialog" aria-controls="memberFilterPickerModal"><span>SSO 상태</span><span class="text-muted-foreground" data-member-filter-label="sso">전체 SSO 상태</span></button><select class="${input} hidden md:block" data-member-filter="sso" aria-label="SSO 상태 필터"><option value="">전체 SSO 상태</option><option value="WAITING">연결 대기</option><option value="LINKED">연결 완료</option><option value="REVIEW_REQUIRED">확인 필요</option></select></div>
             </div>
         </details>
         <button type="button" class="mt-3 hidden min-h-11 rounded-md border px-4 text-sm font-bold" data-member-filter-reset>필터 초기화</button>
     </section>
 
     <div class="rounded-lg border bg-card">
-        <t:dataTable caption="멤버와 권한 목록">
-            <thead><tr><th>이름</th><th>학번</th><th>기수</th><th>소속 팀</th><th>활동 상태</th><th>SSO 연결</th><th>역할</th><th class="text-right">권한 변경</th><th class="text-right">관리</th></tr></thead>
+        <p class="border-b px-4 py-2 text-xs text-muted-foreground md:hidden">표를 좌우로 밀어 권한과 관리 항목을 확인하세요.</p>
+        <t:dataTable caption="멤버와 권한 목록" cssClass="min-w-max">
+            <thead><tr><th class="min-w-40">이름</th><th>학번</th><th>기수</th><th>소속 팀</th><th>활동 상태</th><th>SSO 연결</th><th>역할</th><th class="text-right">권한 변경</th><th class="text-right">관리</th></tr></thead>
             <tbody data-member-list>
             <tr data-member-state>
                 <td colspan="9" class="px-5 py-11 text-center">
@@ -53,13 +54,13 @@
 
     <template data-member-row-template>
         <tr>
-            <td><span class="flex items-center gap-2"><span data-member-avatar class="flex size-7 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-foreground"></span><b data-member-name></b></span></td>
-            <td data-member-student-no></td>
-            <td data-member-cohort></td>
-            <td data-member-team></td>
-            <td data-member-status></td>
-            <td data-member-sso></td>
-            <td data-member-role-cell></td>
+            <td class="min-w-40 whitespace-nowrap"><span class="flex items-center gap-2"><span data-member-avatar class="flex size-7 items-center justify-center rounded-full bg-primary text-xs font-black text-primary-foreground"></span><b data-member-name></b></span></td>
+            <td class="whitespace-nowrap" data-member-student-no></td>
+            <td class="whitespace-nowrap" data-member-cohort></td>
+            <td class="whitespace-nowrap" data-member-team></td>
+            <td class="whitespace-nowrap" data-member-status></td>
+            <td class="whitespace-nowrap" data-member-sso></td>
+            <td class="whitespace-nowrap" data-member-role-cell></td>
             <td class="text-right"><span class="inline-flex rounded-lg border bg-secondary p-0.5"><button type="button" data-member-role="MEMBER" class="${segOff}">일반 부원</button><button type="button" data-member-role="LEADER" class="${segOff}">팀장</button><button type="button" data-member-role="ADMIN" class="${segOff}">운영진</button></span></td>
             <td class="text-right"><span class="inline-flex gap-1"><button type="button" data-page-action="member-manage-open" class="min-h-11 rounded-md border bg-card px-3 text-xs font-bold hover:bg-secondary">변경</button><button type="button" data-page-action="member-history-open" class="min-h-11 rounded-md border bg-card px-3 text-xs font-bold hover:bg-secondary">이력</button></span></td>
         </tr>
@@ -85,7 +86,7 @@
         <jsp:body>
             <p class="rounded-md bg-secondary px-3 py-2.5 text-sm font-bold" data-member-role-summary></p>
             <label class="${label} mt-4" for="memberRoleReason">변경 사유 <span class="text-accent-foreground">*</span></label>
-            <textarea class="min-h-28 w-full resize-y rounded-md border border-input bg-card px-3 py-2.5 text-sm transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20" id="memberRoleReason" maxlength="500" placeholder="예) 2026-1학기 팀장 지정"></textarea>
+            <textarea class="min-h-28 w-full resize-y rounded-md border border-input bg-card px-3 py-2.5 text-base transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm" id="memberRoleReason" maxlength="500" placeholder="예) 2026-1학기 팀장 지정"></textarea>
             <p class="mt-2 hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-xs text-destructive" data-member-role-error role="alert"></p>
         </jsp:body>
     </t:modal>
@@ -99,12 +100,18 @@
                 <div><label class="${label}" for="memberChangeValue">변경 값 *</label><select class="${input}" id="memberChangeValue"></select></div>
             </div>
             <label class="${label} mt-4" for="memberChangeReason">변경 사유 *</label>
-            <textarea class="min-h-28 w-full resize-y rounded-md border border-input bg-card px-3 py-2.5 text-sm transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20" id="memberChangeReason" maxlength="500" placeholder="예) 2026-1학기 팀 배정 변경"></textarea>
+            <textarea class="min-h-28 w-full resize-y rounded-md border border-input bg-card px-3 py-2.5 text-base transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 md:text-sm" id="memberChangeReason" maxlength="500" placeholder="예) 2026-1학기 팀 배정 변경"></textarea>
             <p class="mt-2 hidden rounded-md border border-destructive bg-destructive-soft px-3 py-2.5 text-xs text-destructive" data-member-change-error role="alert"></p>
         </jsp:body>
     </t:modal>
 
     <t:modal id="memberHistoryModal" title="멤버 변경 이력" description="팀·기수·권한·활동 상태 변경 기록을 확인합니다.">
         <jsp:body><div data-member-history class="flex flex-col gap-2" aria-live="polite"></div></jsp:body>
+    </t:modal>
+    <t:modal id="memberFilterPickerModal" title="필터 선택" mobileFullscreen="true">
+        <jsp:body>
+            <p class="text-sm text-muted-foreground" data-member-filter-picker-description></p>
+            <div class="mt-4 flex flex-col gap-2" role="listbox" data-member-filter-options></div>
+        </jsp:body>
     </t:modal>
 </t:layout>

@@ -7,6 +7,7 @@ import java.util.List;
 
 public record ActivityReportDocumentDraftResponse(
         Long activityRecordId,
+        String title,
         String representative,
         String location,
         LocalDateTime activityAt,

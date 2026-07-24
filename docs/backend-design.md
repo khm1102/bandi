@@ -89,13 +89,19 @@ Controller → Service → Mapper → Model
   사용자가 선택한 마지막 날 다음 날 00:00이다. `colorCode`는 제한된 일정 표시 팔레트
   (`NAVY`, `MINT`, `BLUE`, `PLUM`, `AMBER`, `ROSE`)이며, 생략한 이전 API 클라이언트는
   생성 시 `NAVY`, 수정 시 기존 값을 사용한다.
+- `/activity`, `/activity/review`, `/activity/archive`와 각각의 활동 기록 API는 내 기록,
+  팀장·관리자 2단계 검수, 최종 승인 아카이브를 분리한다. 팀장은 자기 팀의 1차 승인만,
+  관리자는 최종 승인·긴급 승인·CSV 내보내기를 수행한다. 팀장만 작성자 자기 1차 검수를
+  차단하며, 관리자는 본인 기록도 최종 검수·보관할 수 있다.
 - `/activity-documents`와 `/api/activity-report-documents/**`는 모든 인증 멤버에게
-  활동 내역서 HWPX 임시 저장·수정·검수 요청과 빈 양식 다운로드를 제공한다. 입력 JSON은
-  재생성용 문서 테이블에 저장하고, 정규화한 사진과 생성 HWPX는 `FileService`를 통해
+  활동 내역서 HWPX 임시 저장·수정·검수 요청과 빈 양식 다운로드를 제공한다. 입력 JSON의
+  활동 기록 제목은 `activity_record.title`에 저장하고, 재생성용 대표자·장소·참여자 값은
+  문서 테이블에 저장한다. 정규화한 사진과 생성 HWPX는 `FileService`를 통해
   private 파일로 보관한 뒤 `activity_record_file`의 `EVIDENCE`, `DOCUMENT` 역할로 연결한다.
-- 임시 저장은 `activity_record`의 `DRAFT` 상태를 만들며 검수 요청은 기존 `SUBMITTED`
-  전이를 사용한다. 운영진은 기존 활동 기록 관리 API에서 입력 요약과 사진·HWPX를 확인하고
-  승인 또는 수정 요청한다. 수정 가능한 상태에서는 HWPX와 선택적으로 사진을 교체한다.
+- 임시 저장은 `activity_record`의 `DRAFT` 상태를 만들며 검수 요청은 `SUBMITTED` 전이를
+  사용한다. 팀장 승인(`TEAM_APPROVED`) 뒤에 관리자 최종 승인(`APPROVED`)을 거치고,
+  긴급 최종 승인은 사유를 `activity_review_history.comment`에 남긴다. 수정 가능한 상태에서는
+  HWPX와 선택적으로 사진을 교체한다.
 - HWPX 엔진은 개인정보가 제거된 런타임 정본을 복사하고 namespace-aware XML DOM으로
   이름이 지정된 표 셀만 수정한다. 외부 DTD·스키마·엔티티는 비활성화하고, 사용자 문자열은
   text node로 삽입한다. 사진은 JPEG·PNG만 허용하며 EXIF 방향 적용과 메타데이터 제거 후

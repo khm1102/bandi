@@ -117,6 +117,16 @@ class MemberServiceTest {
     }
 
     @Test
+    void 세션_권한_동기화를_위해_현재_멤버_권한을_조회한다() {
+        given(memberMapper.lookupById(TARGET_ID)).willReturn(Optional.of(
+                member(TARGET_ID, STAGE_TEAM_ID, ClubRole.LEADER, MemberStatus.ACTIVE)));
+
+        ClubRole role = memberService.lookupCurrentRole(TARGET_ID);
+
+        assertThat(role).isEqualTo(ClubRole.LEADER);
+    }
+
+    @Test
     void 멤버_페이지는_목록과_같은_조건의_전체_건수로_메타데이터를_계산한다() {
         given(memberMapper.searchPage(any())).willReturn(List.of(
                 member(TARGET_ID, STAGE_TEAM_ID, ClubRole.MEMBER, MemberStatus.ACTIVE)));

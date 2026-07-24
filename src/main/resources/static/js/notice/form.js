@@ -86,7 +86,7 @@ function renderAttachments() {
             row.appendChild(element('span', 'shrink-0 text-xs text-muted-foreground', '본문 이미지'));
         }
         const remove = element('button',
-            'min-h-9 shrink-0 rounded-md px-2 text-xs font-bold text-destructive hover:bg-destructive-soft',
+            'min-h-11 shrink-0 rounded-md px-2 text-xs font-bold text-destructive hover:bg-destructive-soft md:min-h-9',
             '제거');
         remove.type = 'button';
         remove.dataset.removeAttachmentId = String(file.storedFileId);
@@ -100,7 +100,7 @@ function renderAttachments() {
         row.appendChild(element('span', 'min-w-0 flex-1 truncate text-sm font-semibold', file.name));
         row.appendChild(element('span', 'shrink-0 text-xs text-muted-foreground', '업로드 대기'));
         const remove = element('button',
-            'min-h-9 shrink-0 rounded-md px-2 text-xs font-bold text-destructive hover:bg-destructive-soft',
+            'min-h-11 shrink-0 rounded-md px-2 text-xs font-bold text-destructive hover:bg-destructive-soft md:min-h-9',
             '제거');
         remove.type = 'button';
         remove.dataset.removePendingAttachmentIndex = String(index);

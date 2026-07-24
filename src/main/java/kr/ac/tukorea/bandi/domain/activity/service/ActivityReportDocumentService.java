@@ -85,8 +85,7 @@ public class ActivityReportDocumentService {
                 + "_반디_동아리_활동_내역서.hwpx";
         Long activityRecordId = activityRecordService.createDraft(actorMemberId,
                 new ActivityRecordWriteParam(access.teamId(), document.activityAt(),
-                        document.activityAt().getMonthValue()
-                                + "월 [ 반디 ] 동아리 활동 내역서",
+                        document.recordTitle(),
                         document.content(), document.participants().size()));
         Long photoStoredFileId = upload(actorMemberId, "activity-report",
                 "activity-photo.png", normalizedPhoto);
@@ -116,7 +115,7 @@ public class ActivityReportDocumentService {
         ActivityFileResponse photo = currentFile(detail, ActivityFileRole.EVIDENCE);
         ActivityFileResponse hwpx = currentFile(detail, ActivityFileRole.DOCUMENT);
         return new ActivityReportDocumentDraftResponse(activityRecordId,
-                document.getRepresentative(), document.getLocation(),
+                detail.title(), document.getRepresentative(), document.getLocation(),
                 detail.activityDttm(), detail.body(),
                 activityReportDocumentMapper.searchParticipants(
                                 document.getActivityReportDocumentId()).stream()
@@ -152,8 +151,7 @@ public class ActivityReportDocumentService {
         activityRecordService.update(actorMemberId,
                 new kr.ac.tukorea.bandi.domain.activity.dto.request.ActivityRecordUpdateParam(
                         activityRecordId, document.activityAt(),
-                        document.activityAt().getMonthValue()
-                                + "월 [ 반디 ] 동아리 활동 내역서",
+                        document.recordTitle(),
                         document.content(), document.participants().size()));
         if (photo != null) {
             Long photoStoredFileId = upload(actorMemberId, "activity-report",

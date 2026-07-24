@@ -51,4 +51,25 @@ class ActivityControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(model().attribute("presidentConfigured", false));
     }
+
+    @Test
+    void 활동_기록_내목록_검수_아카이브_화면을_분리해_렌더링한다() throws Exception {
+        mockMvc.perform(get("/activity"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("activity/list"));
+        mockMvc.perform(get("/activity/review"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("activity/review"));
+        mockMvc.perform(get("/activity/review/{activityRecordId}", 12L))
+                .andExpect(status().isOk())
+                .andExpect(view().name("activity/review-detail"))
+                .andExpect(model().attribute("activityRecordId", 12L));
+        mockMvc.perform(get("/activity/archive"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("activity/archive"));
+        mockMvc.perform(get("/activity/archive/{activityRecordId}", 12L))
+                .andExpect(status().isOk())
+                .andExpect(view().name("activity/archive-detail"))
+                .andExpect(model().attribute("activityRecordId", 12L));
+    }
 }

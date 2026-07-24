@@ -3,6 +3,7 @@ package kr.ac.tukorea.bandi.domain.activity.model;
 public enum ActivityRecordStatus {
     DRAFT,
     SUBMITTED,
+    TEAM_APPROVED,
     APPROVED,
     REVISION_REQUESTED,
     ARCHIVED;
@@ -15,12 +16,20 @@ public enum ActivityRecordStatus {
         return this == DRAFT || this == REVISION_REQUESTED;
     }
 
-    public boolean canReview() {
+    public boolean canTeamApprove() {
         return this == SUBMITTED;
     }
 
+    public boolean canFinalApprove() {
+        return this == TEAM_APPROVED || this == SUBMITTED;
+    }
+
+    public boolean canRequestRevision() {
+        return this == SUBMITTED || this == TEAM_APPROVED;
+    }
+
     public boolean canArchive() {
-        return this != ARCHIVED;
+        return this == APPROVED;
     }
 
     public boolean isReadable() {

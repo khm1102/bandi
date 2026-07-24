@@ -59,19 +59,22 @@ class ActivityRecordTest {
     }
 
     @Test
-    void 제출_기록을_승인하면_검수자와_시각을_기록한다() {
-        ActivityRecord approved = draft().submit(ACTOR_ID, NOW.minusHours(1))
-                .approve(REVIEWER_ID, NOW);
+    void 팀장_1차_승인_뒤_관리자가_최종_승인하면_각_단계를_기록한다() {
+        ActivityRecord teamApproved = draft().submit(ACTOR_ID, NOW.minusHours(2))
+                .teamApprove(REVIEWER_ID, NOW.minusHours(1));
+        ActivityRecord approved = teamApproved.finalApprove(3L, NOW);
 
+        assertThat(teamApproved.getStatus()).isEqualTo(ActivityRecordStatus.TEAM_APPROVED);
         assertThat(approved.getStatus()).isEqualTo(ActivityRecordStatus.APPROVED);
-        assertThat(approved.getReviewedByMemberId()).isEqualTo(REVIEWER_ID);
+        assertThat(approved.getReviewedByMemberId()).isEqualTo(3L);
         assertThat(approved.getReviewedDttm()).isEqualTo(NOW);
     }
 
     @Test
     void 제출_기록에_보완을_요청하면_다시_수정하고_재제출할_수_있다() {
         ActivityRecord requested = draft().submit(ACTOR_ID, NOW.minusHours(2))
-                .requestRevision(REVIEWER_ID, NOW.minusHours(1));
+                .teamApprove(REVIEWER_ID, NOW.minusHours(1))
+                .requestRevision(3L, NOW.minusMinutes(30));
 
         ActivityRecord edited = requested.edit(ACTIVITY_DTTM.plusDays(1),
                 "보완 연습", "보완 내용", 9, ACTOR_ID);
@@ -85,17 +88,21 @@ class ActivityRecordTest {
 
     @Test
     void 승인이나_초안은_검수할_수_없다() {
-        assertThatThrownBy(() -> draft().approve(REVIEWER_ID, NOW))
+        assertThatThrownBy(() -> draft().teamApprove(REVIEWER_ID, NOW))
                 .isInstanceOf(InvalidActivityRecordStateException.class);
         ActivityRecord approved = draft().submit(ACTOR_ID, NOW.minusHours(1))
-                .approve(REVIEWER_ID, NOW);
+                .teamApprove(REVIEWER_ID, NOW)
+                .finalApprove(3L, NOW.plusMinutes(1));
         assertThatThrownBy(() -> approved.requestRevision(REVIEWER_ID, NOW))
                 .isInstanceOf(InvalidActivityRecordStateException.class);
     }
 
     @Test
     void 보관한_기록은_수정하거나_제출할_수_없다() {
-        ActivityRecord archived = draft().archive(ACTOR_ID);
+        ActivityRecord archived = draft().submit(ACTOR_ID, NOW.minusHours(2))
+                .teamApprove(REVIEWER_ID, NOW.minusHours(1))
+                .finalApprove(3L, NOW)
+                .archive(3L);
 
         assertThat(archived.getStatus()).isEqualTo(ActivityRecordStatus.ARCHIVED);
         assertThatThrownBy(() -> archived.edit(ACTIVITY_DTTM, "수정",

@@ -32,10 +32,11 @@
     </div>
 
     <div class="rounded-lg border bg-card" data-asset-region aria-busy="true">
-        <t:dataTable caption="소품과 장비 재고 목록">
+        <p class="border-b px-4 py-2 text-xs text-muted-foreground md:hidden">표를 좌우로 밀어 재고, 위치와 작업을 확인하세요.</p>
+        <t:dataTable caption="소품과 장비 재고 목록" cssClass="min-w-max">
             <thead>
             <tr>
-                <th>품목</th>
+                <th class="min-w-52">품목</th>
                 <th>분류</th>
                 <th>재고</th>
                 <th>보관 위치</th>
@@ -51,9 +52,9 @@
 
     <template data-asset-actions-template>
         <div class="flex justify-end gap-2">
-            <t:button variant="outline" size="compact" pageAction="asset-detail">상세</t:button>
+            <t:button variant="outline" pageAction="asset-detail">상세</t:button>
             <c:if test="${canAdmin}">
-                <t:button size="compact" pageAction="asset-edit">수정</t:button>
+                <t:button pageAction="asset-edit">수정</t:button>
             </c:if>
         </div>
     </template>
@@ -121,7 +122,7 @@
                     </div>
                     <div>
                         <label class="${label}" for="assetPhoto">품목 사진</label>
-                        <input class="block min-h-11 w-full rounded-md border border-input bg-card px-3 py-2 text-sm" id="assetPhoto" name="photo" type="file" accept="image/*">
+                        <input class="block min-h-11 w-full rounded-md border border-input bg-card px-3 py-2 text-base md:text-sm" id="assetPhoto" name="photo" type="file" accept="image/*">
                         <p class="mt-1 text-xs text-muted-foreground">새 파일을 선택한 경우에만 기존 사진을 교체합니다.</p>
                     </div>
                     <div>
