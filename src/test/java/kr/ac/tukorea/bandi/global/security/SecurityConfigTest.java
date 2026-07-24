@@ -51,6 +51,14 @@ class SecurityConfigTest {
     }
 
     @Test
+    void PWA_정적_리소스는_비로그인도_리다이렉트_없이_받는다() throws Exception {
+        for (String path : new String[]{"/manifest.webmanifest", "/service-worker.js"}) {
+            mockMvc.perform(get(path))
+                    .andExpect(status().isOk());
+        }
+    }
+
+    @Test
     void 온보딩_안내는_모든_로그인_멤버에게_열리고_비로그인은_로그인으로_이동한다() throws Exception {
         mockMvc.perform(get("/onboarding"))
                 .andExpect(status().is3xxRedirection())
@@ -324,7 +332,8 @@ class SecurityTestController {
             "/api/internal-notice-management/test", "/notices/manage",
             "/notices/manage/1", "/activity-documents",
             "/api/activity-report-documents/blank", "/activity/archive",
-            "/activity/review", "/share/test"})
+            "/activity/review", "/share/test", "/manifest.webmanifest",
+            "/service-worker.js"})
     ResponseEntity<Void> page() {
         return ResponseEntity.ok().build();
     }

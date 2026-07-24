@@ -57,6 +57,23 @@ class SafeSavedRequestAuthenticationSuccessHandlerTest {
         assertThat(response.getRedirectedUrl()).isEqualTo("/dashboard");
     }
 
+    @Test
+    void 서비스_워커와_매니페스트_요청은_대시보드로_복귀한다() throws Exception {
+        for (String path : new String[]{"/service-worker.js", "/manifest.webmanifest"}) {
+            RequestCache requestCache = Mockito.mock(RequestCache.class);
+            SavedRequest savedRequest = Mockito.mock(SavedRequest.class);
+            MockHttpServletRequest request = request();
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            given(requestCache.getRequest(request, response)).willReturn(savedRequest);
+            given(savedRequest.getRedirectUrl()).willReturn("http://localhost" + path);
+
+            new SafeSavedRequestAuthenticationSuccessHandler(requestCache)
+                    .onAuthenticationSuccess(request, response, null);
+
+            assertThat(response.getRedirectedUrl()).isEqualTo("/dashboard");
+        }
+    }
+
     private MockHttpServletRequest request() {
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setServerName("localhost");
