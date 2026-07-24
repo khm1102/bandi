@@ -53,11 +53,15 @@ public class SecurityConfig {
                         "/api/members/*/profile-photo",
                         "/api/members/reference/teams")
                 .authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/members/reference/cohorts")
+                .hasAnyRole("LEADER", "ADMIN")
                 .requestMatchers("/api/members/me/**")
                 .authenticated()
                 .requestMatchers("/profile")
                 .authenticated()
                 .requestMatchers("/team-members", "/api/members/team-members")
+                .hasRole("LEADER")
+                .requestMatchers(HttpMethod.PATCH, "/api/members/*/cohort")
                 .hasAnyRole("LEADER", "ADMIN")
                 .requestMatchers("/activity/archive", "/activity/archive/**",
                         "/activity/review", "/activity/review/**",

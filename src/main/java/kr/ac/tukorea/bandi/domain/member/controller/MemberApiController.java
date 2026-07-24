@@ -1,6 +1,7 @@
 package kr.ac.tukorea.bandi.domain.member.controller;
 
 import kr.ac.tukorea.bandi.domain.member.dto.request.CohortChangeRequest;
+import kr.ac.tukorea.bandi.domain.member.dto.request.CohortCreateRequest;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPreRegisterRequest;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPageSearchParam;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchFilter;
@@ -130,6 +131,15 @@ public class MemberApiController implements MemberApiDocs {
                 request.toParam());
         return ResponseEntity.created(URI.create("/api/members/" + memberId))
                 .body(new MemberCreatedResponse(memberId));
+    }
+
+    @Override
+    public ResponseEntity<CohortResponse> createCohort(
+            @LoginMember Long actorMemberId, CohortCreateRequest request) {
+        CohortResponse response = memberService.createCohort(actorMemberId,
+                request.normalizedName());
+        return ResponseEntity.created(URI.create("/api/members/reference/cohorts/"
+                + response.cohortId())).body(response);
     }
 
     @Override

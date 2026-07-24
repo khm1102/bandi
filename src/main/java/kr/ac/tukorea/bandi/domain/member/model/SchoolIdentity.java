@@ -10,7 +10,8 @@ public record SchoolIdentity(
         String studentNo,
         String name,
         String department,
-        AcademicStatus academicStatus
+        AcademicStatus academicStatus,
+        String phoneNumber
 ) {
 
     public SchoolIdentity {
@@ -18,6 +19,12 @@ public record SchoolIdentity(
         name = normalizeName(requireText(name, "name"));
         department = normalizeNullable(department);
         Objects.requireNonNull(academicStatus, "academicStatus");
+        phoneNumber = normalizePhoneNumber(phoneNumber);
+    }
+
+    public SchoolIdentity(String studentNo, String name, String department,
+                          AcademicStatus academicStatus) {
+        this(studentNo, name, department, academicStatus, null);
     }
 
     public boolean hasSameStudentNo(String registeredStudentNo) {
@@ -50,5 +57,13 @@ public record SchoolIdentity(
             return null;
         }
         return value.trim();
+    }
+
+    private static String normalizePhoneNumber(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        String digits = value.replaceAll("\\D", "");
+        return digits.matches("01[016789]\\d{7,8}") ? digits : null;
     }
 }

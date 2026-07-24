@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import kr.ac.tukorea.bandi.domain.member.dto.request.CohortChangeRequest;
+import kr.ac.tukorea.bandi.domain.member.dto.request.CohortCreateRequest;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberPreRegisterRequest;
 import kr.ac.tukorea.bandi.domain.member.dto.request.MemberSearchFilter;
 import kr.ac.tukorea.bandi.domain.member.dto.request.RoleChangeRequest;
@@ -111,6 +112,12 @@ public interface MemberApiDocs {
     ResponseEntity<MemberCreatedResponse> preRegister(
             @Parameter(hidden = true) @LoginMember Long actorMemberId,
             @Valid @RequestBody MemberPreRegisterRequest request);
+
+    @Operation(summary = "기수 추가")
+    @PostMapping("/cohorts")
+    ResponseEntity<CohortResponse> createCohort(
+            @Parameter(hidden = true) @LoginMember Long actorMemberId,
+            @Valid @RequestBody CohortCreateRequest request);
 
     @Operation(summary = "멤버 팀 변경")
     @PatchMapping("/{memberId}/team")

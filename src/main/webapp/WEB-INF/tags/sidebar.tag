@@ -49,6 +49,8 @@
             <a href="<c:url value='/activity/review'/>" class="${navBase} ${active == 'activity-review' ? navOn : navOff}" aria-current="${active == 'activity-review' ? 'page' : 'false'}">
                 <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>활동 기록 검수
             </a>
+        </sec:authorize>
+        <sec:authorize access="hasRole('LEADER')">
             <a href="<c:url value='/team-members'/>" class="${navBase} ${active == 'team-members' ? navOn : navOff}" aria-current="${active == 'team-members' ? 'page' : 'false'}">
                 <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>팀 멤버 관리
             </a>

@@ -13,7 +13,6 @@ import kr.ac.tukorea.bandi.domain.member.mapper.MemberMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.TeamMapper;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
-import kr.ac.tukorea.bandi.domain.member.model.CohortTerm;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
 import kr.ac.tukorea.bandi.domain.member.model.MemberStatus;
 import kr.ac.tukorea.bandi.domain.member.model.SsoLinkStatus;
@@ -79,8 +78,7 @@ class ActivityRecordServiceTransactionTest {
         Long teamId = teamMapper.searchAll().stream()
                 .filter(team -> team.getName().equals("무대팀"))
                 .findFirst().orElseThrow().getTeamId();
-        Cohort cohort = new Cohort(null, "활동트랜잭션기수", (short) 2995,
-                CohortTerm.FIRST, true);
+        Cohort cohort = new Cohort(null, "활동트랜잭션기수", true);
         cohortMapper.insert(cohort);
         cohortId = cohort.getCohortId();
         Member member = new Member(null, "2995000001", "활동작성자", null,

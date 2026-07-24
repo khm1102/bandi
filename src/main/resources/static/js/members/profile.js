@@ -100,6 +100,7 @@ function render(nextProfile) {
     setText('[data-profile-team]', profile.teamName);
     setText('[data-profile-role]', ROLE_LABELS[profile.role] || profile.role);
     setText('[data-profile-department]', profile.department);
+    setText('[data-profile-phone-number]', profile.phoneNumber);
     setText('[data-profile-academic-status]',
             ACADEMIC_STATUS_LABELS[profile.academicStatus] || profile.academicStatus);
     setText('[data-profile-sso-status]', SSO_LABELS[profile.ssoLinkStatus]

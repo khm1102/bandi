@@ -5,7 +5,6 @@ import kr.ac.tukorea.bandi.domain.member.mapper.MemberMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.TeamMapper;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
-import kr.ac.tukorea.bandi.domain.member.model.CohortTerm;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
 import kr.ac.tukorea.bandi.domain.member.model.MemberStatus;
 import kr.ac.tukorea.bandi.domain.member.model.SsoLinkStatus;
@@ -66,8 +65,7 @@ class InternalNoticeMapperTest {
         List<Team> teams = teamMapper.searchAll();
         stageTeamId = teamId(teams, "무대팀");
         operatorTeamId = teamId(teams, "오퍼팀");
-        Cohort cohort = new Cohort(null, "26-내부공지", (short) 2026,
-                CohortTerm.SECOND, true);
+        Cohort cohort = new Cohort(null, "26-내부공지", true);
         cohortMapper.insert(cohort);
         adminMemberId = insertMember("2026000001", "관리자", stageTeamId,
                 cohort.getCohortId(), ClubRole.ADMIN);

@@ -8,7 +8,6 @@ import kr.ac.tukorea.bandi.domain.member.mapper.MemberMapper;
 import kr.ac.tukorea.bandi.domain.member.mapper.TeamMapper;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
-import kr.ac.tukorea.bandi.domain.member.model.CohortTerm;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
 import kr.ac.tukorea.bandi.domain.member.model.MemberStatus;
 import kr.ac.tukorea.bandi.domain.member.model.SsoLinkStatus;
@@ -58,8 +57,7 @@ class AuditLogMapperTest {
 
     private Long insertActor() {
         Long teamId = teamMapper.searchAll().get(0).getTeamId();
-        Cohort cohort = new Cohort(null, "26-감사", (short) 2027,
-                CohortTerm.FIRST, true);
+        Cohort cohort = new Cohort(null, "26-감사", true);
         cohortMapper.insert(cohort);
         Member actor = new Member(null, "2027000941", "감사 운영진",
                 null, null, null, teamId, cohort.getCohortId(),

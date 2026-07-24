@@ -21,6 +21,7 @@ import kr.ac.tukorea.bandi.domain.member.exception.ChangeReasonRequiredException
 import kr.ac.tukorea.bandi.domain.member.exception.CohortNotFoundException;
 import kr.ac.tukorea.bandi.domain.member.exception.ClubPresidentUnavailableException;
 import kr.ac.tukorea.bandi.domain.member.exception.DuplicateStudentNoException;
+import kr.ac.tukorea.bandi.domain.member.exception.DuplicateCohortException;
 import kr.ac.tukorea.bandi.domain.member.exception.LastActiveAdminException;
 import kr.ac.tukorea.bandi.domain.member.exception.MemberManagementForbiddenException;
 import kr.ac.tukorea.bandi.domain.member.exception.MemberNotFoundException;
@@ -177,6 +178,22 @@ public class MemberService {
     }
 
     @Transactional
+    public CohortResponse createCohort(Long actorMemberId, String name) {
+        validateActiveAdmin(actorMemberId);
+        Cohort cohort = Cohort.create(name);
+        if (cohortMapper.existsByName(cohort.getName())) {
+            throw new DuplicateCohortException();
+        }
+        try {
+            cohortMapper.insert(cohort);
+        } catch (DuplicateKeyException exception) {
+            throw new DuplicateCohortException();
+        }
+        log.info("기수 추가 - cohortId={}, actorMemberId={}", cohort.getCohortId(), actorMemberId);
+        return CohortResponse.from(cohort);
+    }
+
+    @Transactional
     public Long preRegister(Long actorMemberId, MemberPreRegisterParam param) {
         validateActiveAdmin(actorMemberId);
         if (memberMapper.existsByStudentNo(param.studentNo())) {
@@ -225,8 +242,13 @@ public class MemberService {
     @Transactional
     public void changeCohort(Long actorMemberId, CohortChangeParam param) {
         validateReason(param.reason());
-        validateActiveAdmin(actorMemberId);
-        Member member = lockMember(param.memberId());
+        Member actor = lockMember(actorMemberId);
+        Member member = Objects.equals(actorMemberId, param.memberId())
+                ? actor : lockMember(param.memberId());
+        MemberAccessContext access = MemberAccessContext.from(actor);
+        if (!access.canManageGlobal() && !access.canManageTeam(member.getTeamId())) {
+            throw new MemberManagementForbiddenException(actorMemberId);
+        }
         member.validateCohortChangeTo(param.newCohortId());
         findAssignableCohort(param.newCohortId());
 

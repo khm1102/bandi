@@ -22,6 +22,10 @@ class TukoreaSsoHtmlParser {
             "class=\"profile_02\"[^>]*>\\s*<p>\\s*([^<]+?)\\s*</p>", Pattern.DOTALL);
     private static final Pattern SCRIPT = Pattern.compile(
             "<script\\b[^>]*>(.*?)</script>", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+    private static final Pattern WRITE_INFORMATION = Pattern.compile(
+            "id\\s*=\\s*[\\\"']writeinfor[\\\"']", Pattern.CASE_INSENSITIVE);
+    private static final Pattern MOBILE_PHONE = Pattern.compile(
+            "(?<!\\d)(01[016789][\\s-]?\\d{3,4}[\\s-]?\\d{4})(?!\\d)");
 
     String extractEncryptionKey(String html) {
         return find(KEY, html).orElseThrow(SchoolSsoResponseChangedException::new);
@@ -47,7 +51,8 @@ class TukoreaSsoHtmlParser {
         String department = find(DEPARTMENT, html)
                 .map(this::normalizeDepartment)
                 .orElse(null);
-        return new SchoolIdentity(studentNo, name, department, AcademicStatus.fromPortalLabel(academicLabel));
+        return new SchoolIdentity(studentNo, name, department,
+                AcademicStatus.fromPortalLabel(academicLabel), findPhoneNumber(html).orElse(null));
     }
 
     private Optional<String> findNameInIdentityScript(String html) {
@@ -60,6 +65,16 @@ class TukoreaSsoHtmlParser {
             return find(NAME, script);
         }
         return Optional.empty();
+    }
+
+    private Optional<String> findPhoneNumber(String html) {
+        Matcher sectionMatcher = WRITE_INFORMATION.matcher(html == null ? "" : html);
+        if (!sectionMatcher.find()) {
+            return Optional.empty();
+        }
+        int end = Math.min(html.length(), sectionMatcher.start() + 12_000);
+        Matcher phoneMatcher = MOBILE_PHONE.matcher(html.substring(sectionMatcher.start(), end));
+        return phoneMatcher.find() ? Optional.of(phoneMatcher.group(1)) : Optional.empty();
     }
 
     private Optional<String> find(Pattern pattern, String html) {

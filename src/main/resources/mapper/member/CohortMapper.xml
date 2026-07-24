@@ -8,30 +8,20 @@
         <constructor>
             <idArg column="cohort_id" javaType="java.lang.Long"/>
             <arg column="name" javaType="java.lang.String"/>
-            <arg column="admission_year" javaType="_short"/>
-            <arg column="term_code" javaType="kr.ac.tukorea.bandi.domain.member.model.CohortTerm"/>
             <arg column="is_active" javaType="_boolean"/>
         </constructor>
     </resultMap>
 
     <select id="lookupById" resultMap="cohortResultMap">
-        SELECT cohort_id, name, admission_year, term_code, is_active
+        SELECT cohort_id, name, is_active
         FROM cohort
         WHERE cohort_id = #{cohortId}
     </select>
 
     <select id="searchAll" resultMap="cohortResultMap">
-        SELECT cohort_id, name, admission_year, term_code, is_active
+        SELECT cohort_id, name, is_active
         FROM cohort
-        ORDER BY admission_year DESC, term_code DESC
-    </select>
-
-    <select id="existsByAdmissionYearAndTermCode" resultType="boolean">
-        SELECT EXISTS(
-            SELECT 1 FROM cohort
-            WHERE admission_year = #{admissionYear}
-              AND term_code = #{termCode}
-        )
+        ORDER BY cohort_id DESC
     </select>
 
     <select id="existsByName" resultType="boolean">
@@ -41,7 +31,7 @@
     </select>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="cohortId">
-        INSERT INTO cohort (name, admission_year, term_code, is_active)
-        VALUES (#{name}, #{admissionYear}, #{termCode}, #{active})
+        INSERT INTO cohort (name, is_active)
+        VALUES (#{name}, #{active})
     </insert>
 </mapper>

@@ -44,7 +44,25 @@ class TukoreaSsoHtmlParserTest {
         assertThat(identity.name()).isEqualTo("김하늘");
         assertThat(identity.department()).isEqualTo("컴퓨터공학부");
         assertThat(identity.academicStatus()).isEqualTo(AcademicStatus.ENROLLED);
+        assertThat(identity.phoneNumber()).isEqualTo("01012345678");
         assertThat(identity.toString()).doesNotContain("010-1234-5678", "test@example.com");
+    }
+
+    @Test
+    void writeinfor의_형식에_맞지_않는_전화번호는_무시한다() {
+        String html = """
+                <script>
+                  var loginId = "2021184000";
+                  var name = "김하늘";
+                  var groupName = "재학생";
+                </script>
+                <div class="profile_02"><p>컴퓨터공학부(학생)</p></div>
+                <div id="writeinfor">연락처 미등록</div>
+                """;
+
+        SchoolIdentity identity = parser.extractIdentity(html);
+
+        assertThat(identity.phoneNumber()).isNull();
     }
 
     @Test

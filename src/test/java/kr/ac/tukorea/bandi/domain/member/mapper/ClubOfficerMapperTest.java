@@ -3,7 +3,6 @@ package kr.ac.tukorea.bandi.domain.member.mapper;
 import kr.ac.tukorea.bandi.domain.member.model.ClubOfficerPosition;
 import kr.ac.tukorea.bandi.domain.member.model.ClubRole;
 import kr.ac.tukorea.bandi.domain.member.model.Cohort;
-import kr.ac.tukorea.bandi.domain.member.model.CohortTerm;
 import kr.ac.tukorea.bandi.domain.member.model.Member;
 import kr.ac.tukorea.bandi.domain.member.model.MemberStatus;
 import kr.ac.tukorea.bandi.domain.member.model.SsoLinkStatus;
@@ -40,8 +39,7 @@ class ClubOfficerMapperTest {
     @BeforeEach
     void setUp() throws Exception {
         Team team = teamMapper.searchAll().get(0);
-        Cohort cohort = new Cohort(null, "활동문서 테스트 기수", (short) 2026,
-                CohortTerm.FIRST, true);
+        Cohort cohort = new Cohort(null, "활동문서 테스트 기수", true);
         cohortMapper.insert(cohort);
         president = new Member(null, "2026000001", "원동연", "공연예술학과",
                 null, null, team.getTeamId(), cohort.getCohortId(),

@@ -16,6 +16,7 @@
             <arg column="student_no" javaType="java.lang.String"/>
             <arg column="name" javaType="java.lang.String"/>
             <arg column="department" javaType="java.lang.String"/>
+            <arg column="phone_number" javaType="java.lang.String"/>
             <arg column="academic_status_code" javaType="kr.ac.tukorea.bandi.domain.member.model.AcademicStatus"/>
             <arg column="academic_status_verified_dttm" javaType="java.time.LocalDateTime"/>
             <arg column="team_id" javaType="java.lang.Long"/>
@@ -31,7 +32,7 @@
     </resultMap>
 
     <sql id="memberColumns">
-        member_id, student_no, name, department, academic_status_code, academic_status_verified_dttm,
+        member_id, student_no, name, department, phone_number, academic_status_code, academic_status_verified_dttm,
         team_id, cohort_id, role_code, member_status_code, sso_link_status_code,
         sso_linked_dttm, last_login_dttm, registered_by_member_id, profile_photo_file_id
     </sql>
@@ -165,11 +166,11 @@
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="memberId">
         INSERT INTO member (
-            student_no, name, department, academic_status_code, academic_status_verified_dttm,
+            student_no, name, department, phone_number, academic_status_code, academic_status_verified_dttm,
             team_id, cohort_id, role_code, member_status_code, sso_link_status_code,
             sso_linked_dttm, last_login_dttm, registered_by_member_id, profile_photo_file_id
         ) VALUES (
-            #{studentNo}, #{name}, #{department}, #{academicStatus}, #{academicStatusVerifiedDttm},
+            #{studentNo}, #{name}, #{department}, #{phoneNumber}, #{academicStatus}, #{academicStatusVerifiedDttm},
             #{teamId}, #{cohortId}, #{role}, #{status}, #{ssoLinkStatus},
             #{ssoLinkedDttm}, #{lastLoginDttm}, #{registeredByMemberId}, #{profilePhotoFileId}
         )
@@ -202,6 +203,9 @@
     <update id="updateSchoolConnection">
         UPDATE member
         SET department = #{department},
+            <if test="phoneNumber != null">
+                phone_number = #{phoneNumber},
+            </if>
             academic_status_code = #{academicStatus},
             academic_status_verified_dttm = #{academicStatusVerifiedDttm},
             member_status_code = #{memberStatus},
