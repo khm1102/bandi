@@ -34,7 +34,7 @@
 
 | 태그 | 용도 | 구조 |
 |---|---|---|
-| `<t:layout title active crumb>` | 관리자 화면 전부 | 네이비 사이드바(`w-56`, lg 미만 접근 가능한 서랍 내비) + 스티키 탑바 + `max-w-6xl` 반응형 본문 |
+| `<t:layout title active crumb>` | 관리자 화면 전부 | 네이비 사이드바(`w-56`, lg 미만 접근 가능한 서랍 내비) + 스티키 탑바 + `max-w-screen-2xl` 안에서 중앙 정렬하는 반응형 본문 |
 | `<t:layoutPublic title>` | 오류 등 비인증 화면 | 네이비 상단 내비(header.tag) + `max-w-5xl` 본문 + footer.tag |
 | `<t:layoutAuth title>` | 로그인 | 데스크톱은 네이비 동아리 소개 패널 + `max-w-md` 폼의 분할 셸, 모바일은 폼에 집중하는 단일 열 |
 

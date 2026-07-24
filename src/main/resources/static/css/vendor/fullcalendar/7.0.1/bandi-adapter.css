@@ -24,7 +24,7 @@
     --fc-classic-strong-border: var(--input);
     --fc-classic-highlight: var(--accent);
     --fc-classic-today: var(--accent);
-    min-height: 32rem;
+    min-height: 28rem;
 }
 
 [data-calendar-shell] button:focus-visible,

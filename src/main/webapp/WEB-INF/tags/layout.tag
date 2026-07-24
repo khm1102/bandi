@@ -35,7 +35,9 @@
             <p class="hidden text-xs font-semibold text-muted-foreground md:block">반디 / <b class="font-extrabold text-foreground"><c:out value="${empty crumb ? title : crumb}"/></b></p>
         </header>
         <main id="mainContent" class="w-full p-4 md:p-6 lg:p-7" tabindex="-1">
-            <jsp:doBody/>
+            <div class="mx-auto w-full max-w-screen-2xl">
+                <jsp:doBody/>
+            </div>
         </main>
     </div>
 </div>
