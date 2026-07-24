@@ -21,6 +21,10 @@ import org.springframework.security.web.savedrequest.RequestCache;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private static final String[] NON_NAVIGATION_PATH_PREFIXES = {
+            "/api/", "/css/", "/images/", "/js/", "/webjars/"
+    };
+
     private final SchoolAuthenticationProvider authenticationProvider;
     private final SchoolLoginFailureHandler loginFailureHandler;
     private final ApiSecurityFailureHandler apiSecurityFailureHandler;
@@ -39,6 +43,8 @@ public class SecurityConfig {
                         DispatcherType.ERROR).permitAll()
                 .requestMatchers(PathRequest.toStaticResources()
                         .atCommonLocations()).permitAll()
+                .requestMatchers("/manifest.webmanifest", "/service-worker.js")
+                .permitAll()
                 .requestMatchers("/", "/login", "/error", "/performances/**", "/reserve/**", "/docs/**",
                         "/api-docs/**", "/swagger-ui/**").permitAll()
                 .requestMatchers("/share/**").permitAll()
@@ -109,8 +115,23 @@ public class SecurityConfig {
                 return false;
             }
             String path = request.getRequestURI().substring(request.getContextPath().length());
-            return !path.equals("/login") && !path.equals("/logout");
+            return isNavigationPath(path);
         });
         return requestCache;
+    }
+
+    private boolean isNavigationPath(String path) {
+        if (path.equals("/login") || path.equals("/logout")
+                || path.equals("/manifest.webmanifest")
+                || path.equals("/service-worker.js")
+                || path.equals("/favicon.ico")) {
+            return false;
+        }
+        for (String nonNavigationPathPrefix : NON_NAVIGATION_PATH_PREFIXES) {
+            if (path.startsWith(nonNavigationPathPrefix)) {
+                return false;
+            }
+        }
+        return true;
     }
 }

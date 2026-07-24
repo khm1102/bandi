@@ -15,6 +15,9 @@ public class SafeSavedRequestAuthenticationSuccessHandler
         implements AuthenticationSuccessHandler {
 
     private static final String DEFAULT_TARGET_URL = "/dashboard";
+    private static final String[] STATIC_PATH_PREFIXES = {
+            "/api/", "/css/", "/images/", "/js/", "/webjars/"
+    };
 
     private final RequestCache requestCache;
 
@@ -58,7 +61,18 @@ public class SafeSavedRequestAuthenticationSuccessHandler
         if (path == null || !path.startsWith("/")) {
             return false;
         }
-        return !path.equals("/login") && !path.equals("/logout");
+        if (path.equals("/login") || path.equals("/logout")
+                || path.equals("/manifest.webmanifest")
+                || path.equals("/service-worker.js")
+                || path.equals("/favicon.ico")) {
+            return false;
+        }
+        for (String staticPathPrefix : STATIC_PATH_PREFIXES) {
+            if (path.startsWith(staticPathPrefix)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private boolean isSameOrigin(HttpServletRequest request, URI redirectUri) {

@@ -19,9 +19,9 @@
 <c:if test="${not empty robots}"><meta name="robots" content="<c:out value='${robots}'/>"></c:if>
 <c:if test="${not empty openGraphTitle}"><meta property="og:title" content="<c:out value='${openGraphTitle}'/>"></c:if>
 <c:if test="${not empty openGraphDescription}"><meta property="og:description" content="<c:out value='${openGraphDescription}'/>"></c:if>
-<link rel="icon" href="<c:url value='/images/bandi-icon.png'/>" type="image/png" sizes="any">
+<link rel="icon" href="<c:url value='/images/favicon.svg'/>" type="image/svg+xml">
 <link rel="manifest" href="<c:url value='/manifest.webmanifest'/>">
-<link rel="apple-touch-icon" href="<c:url value='/images/bandi-icon.png'/>">
+<link rel="apple-touch-icon" href="<c:url value='/images/pwa-192.png'/>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800;900&display=swap" rel="stylesheet">
