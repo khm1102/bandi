@@ -165,7 +165,7 @@ async function loadDashboard() {
         }).then(renderSchedules),
         get('/api/internal-notices', {page: 0, pageSize: 100})
                 .then((response) => renderNotices(response.items)),
-        get('/api/assets').then(renderAssets),
+        get('/api/assets').then((response) => renderAssets(response.items)),
     ]).catch(() => {
         showState('[data-dashboard-schedule-state]', '일부 정보를 불러오지 못했습니다',
                 '잠시 후 새로고침해 주세요.', true);

@@ -51,6 +51,31 @@ class SecurityConfigTest {
     }
 
     @Test
+    void 온보딩_안내는_모든_로그인_멤버에게_열리고_비로그인은_로그인으로_이동한다() throws Exception {
+        mockMvc.perform(get("/onboarding"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("http://localhost/login"));
+        for (String role : new String[]{"MEMBER", "LEADER", "ADMIN"}) {
+            mockMvc.perform(get("/onboarding").with(user("member").roles(role)))
+                    .andExpect(status().isOk());
+        }
+    }
+
+    @Test
+    void 개인정보_안내와_운영_문의는_모든_로그인_멤버에게_열리고_비로그인은_로그인으로_이동한다()
+            throws Exception {
+        for (String path : new String[]{"/privacy", "/support"}) {
+            mockMvc.perform(get(path))
+                    .andExpect(status().is3xxRedirection())
+                    .andExpect(redirectedUrl("http://localhost/login"));
+            for (String role : new String[]{"MEMBER", "LEADER", "ADMIN"}) {
+                mockMvc.perform(get(path).with(user("member").roles(role)))
+                        .andExpect(status().isOk());
+            }
+        }
+    }
+
+    @Test
     void 공개_공유_페이지는_비로그인도_열고_공유_API는_인증과_CSRF를_요구한다()
             throws Exception {
         mockMvc.perform(get("/share/test"))
@@ -295,6 +320,7 @@ class SecurityTestController {
             "/api/members/reference/cohorts",
             "/profile", "/team-members", "/api/members/me/profile",
             "/api/members/1/profile-photo", "/api/members/team-members",
+            "/onboarding", "/privacy", "/support",
             "/api/internal-notice-management/test", "/notices/manage",
             "/notices/manage/1", "/activity-documents",
             "/api/activity-report-documents/blank", "/activity/archive",

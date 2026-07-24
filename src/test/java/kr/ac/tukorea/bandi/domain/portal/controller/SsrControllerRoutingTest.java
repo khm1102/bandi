@@ -5,8 +5,10 @@ import kr.ac.tukorea.bandi.domain.activity.service.ActivityReportDocumentService
 import kr.ac.tukorea.bandi.domain.asset.controller.AssetController;
 import kr.ac.tukorea.bandi.domain.calendar.controller.CalendarController;
 import kr.ac.tukorea.bandi.domain.dashboard.controller.DashboardController;
+import kr.ac.tukorea.bandi.domain.guide.controller.GuideController;
 import kr.ac.tukorea.bandi.domain.member.controller.MemberController;
 import kr.ac.tukorea.bandi.domain.notice.controller.NoticeController;
+import kr.ac.tukorea.bandi.domain.onboarding.controller.OnboardingController;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeDetailResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeDetailViewResponse;
 import kr.ac.tukorea.bandi.domain.notice.dto.response.InternalNoticeManageDetailResponse;
@@ -44,7 +46,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest({DashboardController.class, CalendarController.class,
         ResourceController.class, ActivityController.class, AssetController.class,
-        MemberController.class, NoticeController.class})
+        MemberController.class, NoticeController.class, OnboardingController.class,
+        GuideController.class})
 @AutoConfigureMockMvc(addFilters = false)
 @Import(LoginViewModelAdvice.class)
 @ActiveProfiles("test")
@@ -60,6 +63,9 @@ class SsrControllerRoutingTest {
             Map.entry("members", "members/list"),
             Map.entry("profile", "members/profile"),
             Map.entry("team-members", "members/team-members"),
+            Map.entry("onboarding", "onboarding/index"),
+            Map.entry("privacy", "guide/privacy"),
+            Map.entry("support", "guide/support"),
             Map.entry("notices", "notice/list"),
             Map.entry("notices/write", "notice/form"),
             Map.entry("notices/manage", "notice/manage-list"));
@@ -85,7 +91,7 @@ class SsrControllerRoutingTest {
     @ParameterizedTest
     @ValueSource(strings = {"dashboard", "calendar", "resources", "activity",
             "resources/write", "props", "members", "profile", "team-members", "notices", "notices/write",
-            "notices/manage"})
+            "notices/manage", "onboarding", "privacy", "support"})
     void 유지되는_내부_화면이_렌더링된다(String page) throws Exception {
         LoginPrincipal principal = new LoginPrincipal(1L, "ADMIN");
         SecurityContextHolder.getContext().setAuthentication(
