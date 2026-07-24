@@ -111,8 +111,7 @@ jobs:
           }
           for attempt in $(seq 1 30); do
             if compose ps --status running --services app | grep -qx 'app' \
-              && compose logs --no-log-prefix --tail=200 app | grep -q 'Started .* in'; then
-              compose exec -T app sh -c 'test -d /data/bandi && test -w /data/bandi'
+              && compose exec -T app sh -c 'test -d /data/bandi && test -w /data/bandi && grep -q "Started .* in" /app/logs/bandi.log'; then
               exit 0
             fi
             sleep 5
