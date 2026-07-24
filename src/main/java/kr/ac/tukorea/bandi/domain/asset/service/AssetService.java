@@ -19,11 +19,15 @@ import kr.ac.tukorea.bandi.domain.asset.model.AssetItem;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetTrackingType;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetStatus;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetUnit;
+import kr.ac.tukorea.bandi.domain.audit.model.AuditAction;
+import kr.ac.tukorea.bandi.domain.audit.model.AuditTargetType;
+import kr.ac.tukorea.bandi.domain.audit.service.AuditService;
 import kr.ac.tukorea.bandi.domain.member.service.MemberAccessContext;
 import kr.ac.tukorea.bandi.domain.member.service.MemberService;
 import kr.ac.tukorea.bandi.domain.file.service.FileService;
 import kr.ac.tukorea.bandi.domain.file.service.FileAccessDecision;
 import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -42,13 +46,14 @@ public class AssetService {
     private final AssetMapper assetMapper;
     private final MemberService memberService;
     private final FileService fileService;
+    private final AuditService auditService;
     private final Clock clock;
 
     @Transactional
     public Long registerItem(Long actorMemberId, AssetItemCreateParam param) {
         validateAdmin(actorMemberId);
         if (param.photoFileId() != null) {
-            fileService.validatePrivateReadyOwnedBy(param.photoFileId(), actorMemberId);
+            fileService.validatePrivateImageReadyOwnedBy(param.photoFileId(), actorMemberId);
         }
         AssetItem item = AssetItem.register(param.name(), param.categoryCode(),
                 param.trackingType(), param.ownerType(), param.ownerMemberId(),
@@ -79,12 +84,22 @@ public class AssetService {
         return unit.getAssetUnitId();
     }
 
-    public List<AssetItemResponse> searchItems(Long actorMemberId,
-                                                AssetSearchCondition condition) {
+    public PageResponse<AssetItemResponse> searchItems(Long actorMemberId,
+                                                        AssetSearchCondition condition) {
         validateInternal(actorMemberId);
-        return assetMapper.searchItems(condition).stream()
+        if (condition.deleted()) {
+            validateAdmin(actorMemberId);
+        }
+        List<AssetItemResponse> items = assetMapper.searchItems(condition).stream()
                 .map(AssetItemResponse::from)
                 .toList();
+        return PageResponse.of(items, condition.page(), condition.pageSize(),
+                assetMapper.countItems(condition));
+    }
+
+    public AssetItemResponse lookupItem(Long actorMemberId, Long assetItemId) {
+        validateInternal(actorMemberId);
+        return AssetItemResponse.from(findItem(assetItemId));
     }
 
     public List<AssetUnitResponse> searchUnits(Long actorMemberId,
@@ -122,12 +137,14 @@ public class AssetService {
         validateAdmin(actorMemberId);
         AssetItem current = lockItem(assetItemId);
         if (param.photoFileId() != null) {
-            fileService.validatePrivateReadyOwnedBy(param.photoFileId(), actorMemberId);
+            fileService.validatePrivateImageReadyOwnedBy(param.photoFileId(), actorMemberId);
         }
+        Long photoFileId = param.photoFileId() == null
+                ? current.getPhotoFileId() : param.photoFileId();
         AssetItem changed = current.edit(param.name(), param.categoryCode(),
                 param.ownerType(), param.ownerMemberId(),
                 param.externalOwnerName(), param.totalQuantity(),
-                param.storageLocation(), param.photoFileId(), param.note());
+                param.storageLocation(), photoFileId, param.note());
         assetMapper.updateItem(changed);
         if (current.getTotalQuantity() != changed.getTotalQuantity()) {
             assetMapper.insertHistory(new AssetHistory(null, assetItemId,
@@ -186,6 +203,35 @@ public class AssetService {
                     AssetAction.MOVE, 1, current.getStatus(),
                     changed.getStatus(), param.note(), actorMemberId, now()));
         }
+    }
+
+    @Transactional
+    public void deleteItem(Long actorMemberId, Long assetItemId) {
+        validateAdmin(actorMemberId);
+        AssetItem item = lockItem(assetItemId);
+        LocalDateTime deletedDttm = now();
+        assetMapper.deleteItem(assetItemId, deletedDttm);
+        assetMapper.insertHistory(new AssetHistory(null, assetItemId, null,
+                AssetAction.DELETE, item.getTotalQuantity(), item.getStatus(),
+                item.getStatus(), "품목을 삭제했습니다.", actorMemberId,
+                deletedDttm));
+        auditService.record(actorMemberId, AuditAction.ASSET_DELETED,
+                AuditTargetType.ASSET, assetItemId, "소품·장비 품목을 삭제했습니다.");
+    }
+
+    @Transactional
+    public void restoreItem(Long actorMemberId, Long assetItemId) {
+        validateAdmin(actorMemberId);
+        AssetItem item = assetMapper.lookupDeletedItemByIdForUpdate(assetItemId)
+                .orElseThrow(() -> new AssetItemNotFoundException(assetItemId));
+        LocalDateTime restoredDttm = now();
+        assetMapper.restoreItem(assetItemId);
+        assetMapper.insertHistory(new AssetHistory(null, assetItemId, null,
+                AssetAction.RESTORE, item.getTotalQuantity(), item.getStatus(),
+                item.getStatus(), "품목을 복구했습니다.", actorMemberId,
+                restoredDttm));
+        auditService.record(actorMemberId, AuditAction.ASSET_RESTORED,
+                AuditTargetType.ASSET, assetItemId, "소품·장비 품목을 복구했습니다.");
     }
 
     private AssetItem lockItem(Long assetItemId) {

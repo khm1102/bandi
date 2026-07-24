@@ -109,6 +109,14 @@ Controller → Service → Mapper → Model
   1600×1200 흰 캔버스 안에 비율을 유지해 배치한다.
 - 현재 회장 이름은 `activity`가 `MemberService`를 통해 조회한다. 회장 미설정 또는 비활성
   상태에서는 빈 양식과 완성본을 모두 409로 차단한다.
+- `/props`와 `/api/assets`는 품목명·분류·상태·관리 방식·삭제 여부 조건을 받는 20건 단위
+  `PageResponse` 목록을 제공한다. 삭제됨 조회와 등록·수정·삭제·복구는 `ADMIN`만 수행하고,
+  일반 로그인 멤버는 현재 품목과 사진을 조회한다. 삭제는 `asset_item.deleted_dttm`을 기록하고
+  `asset_history`와 `audit_log`에 남기며, 복구는 삭제 시각을 해제한다.
+- `/props/new`, `/props/{id}`, `/props/{id}/edit`는 각각 등록·상세·수정 전용 SSR 페이지다.
+  품목 사진은 한 장이며 `FileService`가 private `GENERAL` 이미지인지와 업로더 소유권을
+  검증한다. 새 사진을 먼저 저장·검증한 뒤 사진 연결을 바꾸며, 새 사진을 지정하지 않은 수정은
+  기존 연결을 유지한다.
 
 ## 5. 후속 범위
 

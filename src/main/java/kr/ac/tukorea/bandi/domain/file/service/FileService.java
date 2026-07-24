@@ -21,6 +21,8 @@ public class FileService {
     private static final long NOTICE_INLINE_IMAGE_MAX_BYTES = 10L * 1024 * 1024;
     private static final Set<String> NOTICE_INLINE_IMAGE_CONTENT_TYPES = Set.of(
             "image/jpeg", "image/png", "image/webp");
+    private static final Set<String> ASSET_IMAGE_CONTENT_TYPES = Set.of(
+            "image/jpeg", "image/png", "image/webp");
 
     private final FileContentInspector inspector;
     private final StorageKeyGenerator keyGenerator;
@@ -118,6 +120,16 @@ public class FileService {
         StoredFile file = lookupPrivateStoredFile(storedFileId);
         if (!file.isUploadedBy(memberId)) {
             throw new FileAccessDeniedException();
+        }
+    }
+
+    public void validatePrivateImageReadyOwnedBy(Long storedFileId, Long memberId) {
+        StoredFile file = lookupPrivateStoredFile(storedFileId);
+        if (!file.isUploadedBy(memberId)) {
+            throw new FileAccessDeniedException();
+        }
+        if (!ASSET_IMAGE_CONTENT_TYPES.contains(file.getContentType())) {
+            throw new InvalidFileException("contentType");
         }
     }
 
