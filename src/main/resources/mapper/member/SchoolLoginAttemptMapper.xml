@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="kr.ac.tukorea.bandi.domain.member.mapper.SchoolLoginAttemptMapper">
+
+    <resultMap id="schoolLoginAttemptResultMap"
+               type="kr.ac.tukorea.bandi.domain.member.model.SchoolLoginAttempt">
+        <constructor>
+            <arg column="student_no_hash" javaType="java.lang.String"/>
+            <arg column="failure_count" javaType="int"/>
+            <arg column="first_failure_dttm" javaType="java.time.LocalDateTime"/>
+            <arg column="blocked_until_dttm" javaType="java.time.LocalDateTime"/>
+        </constructor>
+    </resultMap>
+
+    <select id="lookupByStudentNoHashForUpdate" resultMap="schoolLoginAttemptResultMap">
+        SELECT student_no_hash, failure_count, first_failure_dttm, blocked_until_dttm
+        FROM school_login_attempt
+        WHERE student_no_hash = #{studentNoHash}
+        FOR UPDATE
+    </select>
+
+    <insert id="insertIfAbsent">
+        INSERT INTO school_login_attempt (
+            student_no_hash, failure_count, first_failure_dttm, blocked_until_dttm
+        ) VALUES (
+            #{studentNoHash}, 0, NULL, NULL
+        ) ON DUPLICATE KEY UPDATE
+            student_no_hash = VALUES(student_no_hash)
+    </insert>
+
+    <update id="update">
+        UPDATE school_login_attempt
+        SET failure_count = #{failureCount},
+            first_failure_dttm = #{firstFailureDttm},
+            blocked_until_dttm = #{blockedUntilDttm}
+        WHERE student_no_hash = #{studentNoHash}
+    </update>
+
+    <delete id="removeByStudentNoHash">
+        DELETE FROM school_login_attempt
+        WHERE student_no_hash = #{studentNoHash}
+    </delete>
+</mapper>

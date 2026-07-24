@@ -16,7 +16,7 @@
 </head>
 <body data-user-role="<c:out value='${empty role ? "member" : role}'/>">
 <a href="#mainContent" class="fixed left-4 top-4 z-50 -translate-y-24 rounded-md bg-primary px-4 py-2 text-sm font-bold text-primary-foreground transition-transform focus:translate-y-0">본문으로 바로가기</a>
-<div class="min-h-screen lg:flex">
+<div class="min-h-dvh lg:flex">
     <header class="sticky top-0 z-30 flex h-14 items-center border-b bg-card px-4 lg:hidden">
         <a href="<c:url value='/dashboard'/>" class="flex min-h-11 items-center gap-2.5 font-black">
             <img src="<c:url value='/images/bandi-icon.png'/>" class="h-8 w-auto rounded-md object-contain" alt="반디">

@@ -219,14 +219,21 @@ class MemberTest {
         }
 
         @Test
-        void 탈퇴와_등록_취소는_종료_상태라_다른_상태로_바꿀_수_없다() {
+        void 탈퇴_멤버는_활동_중으로_복구할_수_있다() {
             // given
             Member withdrawn = savedMember(1L, ClubRole.MEMBER, MemberStatus.WITHDRAWN);
+
+            // when & then
+            assertThatCode(() -> withdrawn.validateManagementStatusChangeTo(MemberStatus.ACTIVE))
+                    .doesNotThrowAnyException();
+        }
+
+        @Test
+        void 등록_취소는_종료_상태라_다른_상태로_바꿀_수_없다() {
+            // given
             Member cancelled = savedMember(2L, ClubRole.MEMBER, MemberStatus.REGISTRATION_CANCELLED);
 
             // when & then
-            assertThatThrownBy(() -> withdrawn.validateManagementStatusChangeTo(MemberStatus.ACTIVE))
-                    .isInstanceOf(InvalidMemberStatusTransitionException.class);
             assertThatThrownBy(() -> cancelled.validateManagementStatusChangeTo(MemberStatus.PRE_REGISTERED))
                     .isInstanceOf(InvalidMemberStatusTransitionException.class);
         }

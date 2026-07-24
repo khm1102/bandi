@@ -49,6 +49,7 @@ public enum ErrorCode {
     SCHOOL_CREDENTIALS_INVALID(HttpStatus.UNAUTHORIZED, "A005", "학교 계정 정보를 확인해 주세요."),
     SCHOOL_SSO_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "A006", "학교 인증 시스템에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요."),
     SCHOOL_SSO_RESPONSE_CHANGED(HttpStatus.BAD_GATEWAY, "A007", "학교 인증 응답을 확인할 수 없습니다. 운영진에게 문의해 주세요."),
+    SCHOOL_LOGIN_RATE_LIMITED(HttpStatus.TOO_MANY_REQUESTS, "A008", "로그인 시도가 많습니다. 15분 후 다시 시도해 주세요."),
 
     // file (FI)
     INVALID_FILE(HttpStatus.BAD_REQUEST, "FI001", "업로드할 수 없는 파일입니다."),

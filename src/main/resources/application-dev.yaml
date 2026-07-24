@@ -13,3 +13,5 @@ spring:
 bandi:
   storage:
     root: ${FILE_STORAGE_ROOT:${java.io.tmpdir}}
+  school-login-attempt:
+    hash-secret: ${LOGIN_ATTEMPT_HASH_SECRET:local-development-only-secret}

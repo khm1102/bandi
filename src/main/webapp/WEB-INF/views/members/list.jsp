@@ -103,7 +103,7 @@
         </jsp:body>
     </t:modal>
 
-    <t:modal id="memberManageModal" title="멤버 정보 변경" description="팀, 기수 또는 활동 상태 중 한 항목씩 변경합니다.">
+    <t:modal id="memberManageModal" title="멤버 정보 변경" description="팀, 기수 또는 활동 상태 중 한 항목씩 변경합니다. 탈퇴 멤버는 활동 중으로 복구할 수 있습니다.">
         <jsp:attribute name="footer"><t:button variant="outline" action="close-modal">취소</t:button><t:button pageAction="member-change-save">변경</t:button></jsp:attribute>
         <jsp:body>
             <p class="rounded-md bg-secondary px-3 py-2.5 text-sm font-bold" data-member-change-summary></p>

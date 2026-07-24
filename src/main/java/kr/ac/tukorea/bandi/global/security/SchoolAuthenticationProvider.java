@@ -47,6 +47,7 @@ public class SchoolAuthenticationProvider implements AuthenticationProvider {
     private String loginErrorCode(ErrorCode errorCode) {
         return switch (errorCode) {
             case SCHOOL_CREDENTIALS_INVALID -> "bad-credentials";
+            case SCHOOL_LOGIN_RATE_LIMITED -> "login-rate-limited";
             case SCHOOL_MEMBER_NOT_REGISTERED -> "member-not-registered";
             case SCHOOL_IDENTITY_REVIEW_REQUIRED,
                  SCHOOL_IDENTITY_MISMATCH -> "link-pending";
