@@ -683,6 +683,30 @@ class MemberServiceTest {
         }
 
         @Test
+        void 탈퇴_멤버를_활동_중으로_복구할_수_있다() {
+            // given
+            given(memberMapper.lookupByIdForUpdate(TARGET_ID)).willReturn(
+                    Optional.of(member(TARGET_ID, ACTOR_TEAM_ID, ClubRole.MEMBER, MemberStatus.WITHDRAWN)));
+            givenActiveAdmin();
+
+            // when
+            memberService.changeStatus(ADMIN_ID,
+                    new StatusChangeParam(TARGET_ID, MemberStatus.ACTIVE, REASON));
+
+            // then
+            verify(memberMapper).updateStatus(TARGET_ID, MemberStatus.ACTIVE);
+            ArgumentCaptor<MemberStatusHistory> captor = ArgumentCaptor.forClass(MemberStatusHistory.class);
+            verify(memberHistoryMapper).insertStatusHistory(captor.capture());
+            assertThat(captor.getValue().previousStatus()).isEqualTo(MemberStatus.WITHDRAWN);
+            assertThat(captor.getValue().newStatus()).isEqualTo(MemberStatus.ACTIVE);
+            assertThat(captor.getValue().reason()).isEqualTo(REASON);
+            assertThat(captor.getValue().changedByMemberId()).isEqualTo(ADMIN_ID);
+            verify(auditService).record(ADMIN_ID,
+                    AuditAction.MEMBER_STATUS_CHANGED,
+                    AuditTargetType.MEMBER, TARGET_ID, "멤버 상태 변경");
+        }
+
+        @Test
         void 같은_상태로_변경하면_예외가_발생한다() {
             // given
             given(memberMapper.lookupByIdForUpdate(TARGET_ID))

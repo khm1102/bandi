@@ -6,7 +6,9 @@ import kr.ac.tukorea.bandi.domain.member.dto.response.AuthenticatedMemberRespons
 import kr.ac.tukorea.bandi.domain.member.dto.response.SchoolConnectionResponse;
 import kr.ac.tukorea.bandi.domain.member.exception.MemberLoginDeniedException;
 import kr.ac.tukorea.bandi.domain.member.exception.SchoolAcademicStatusDeniedException;
+import kr.ac.tukorea.bandi.domain.member.exception.SchoolCredentialsInvalidException;
 import kr.ac.tukorea.bandi.domain.member.exception.SchoolIdentityReviewRequiredException;
+import kr.ac.tukorea.bandi.domain.member.exception.SchoolLoginRateLimitedException;
 import kr.ac.tukorea.bandi.domain.member.model.SchoolIdentity;
 import kr.ac.tukorea.bandi.global.security.LoginPrincipal;
 import kr.ac.tukorea.bandi.global.security.SchoolLoginAuthenticator;
@@ -19,9 +21,12 @@ public class SchoolAuthenticationService implements SchoolLoginAuthenticator {
 
     private final SchoolSsoClient schoolSsoClient;
     private final MemberService memberService;
+    private final SchoolLoginAttemptService schoolLoginAttemptService;
 
     public AuthenticatedMemberResponse authenticate(SchoolCredentials credentials) {
-        SchoolIdentity identity = schoolSsoClient.authenticate(credentials);
+        schoolLoginAttemptService.assertAllowed(credentials.studentNo());
+        SchoolIdentity identity = authenticateSchool(credentials);
+        schoolLoginAttemptService.clearFailures(credentials.studentNo());
         identity.validateStudentNo(credentials.studentNo());
         SchoolConnectionResponse connection = memberService.connectSchoolIdentity(identity);
         return switch (connection.outcome()) {
@@ -30,6 +35,17 @@ public class SchoolAuthenticationService implements SchoolLoginAuthenticator {
             case IDENTITY_REVIEW_REQUIRED -> throw new SchoolIdentityReviewRequiredException();
             case MEMBER_STATUS_DENIED -> throw new MemberLoginDeniedException();
         };
+    }
+
+    private SchoolIdentity authenticateSchool(SchoolCredentials credentials) {
+        try {
+            return schoolSsoClient.authenticate(credentials);
+        } catch (SchoolCredentialsInvalidException exception) {
+            if (schoolLoginAttemptService.recordFailure(credentials.studentNo())) {
+                throw new SchoolLoginRateLimitedException();
+            }
+            throw exception;
+        }
     }
 
     @Override

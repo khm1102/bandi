@@ -29,10 +29,13 @@
 | `member_status_history` | 활동 상태 변경 이력 |
 | `member_cohort_history` | 기수 변경 이력 |
 | `club_officer` | 권한과 독립된 현재 동아리 직책 담당자 |
+| `school_login_attempt` | HMAC 학번 해시 기준 학교 포털 자격증명 실패 제한 상태 |
 
 현재 멤버는 하나의 팀만 참조한다. 학번은 재사용하지 않으며, 역할과 상태 변경은
 이력 테이블에도 기록한다. `cohort`는 `name`과 `is_active`만 가지는 문자열 기준정보로,
 기존 기수와 이력을 보존하기 위해 삭제·비활성화하지 않고 신규 추가만 허용한다.
+`WITHDRAWN`은 멤버 행과 상태 이력을 보존하는 논리 상태이며, `ADMIN`이 사유와 함께
+`ACTIVE`로 복구할 수 있다. `REGISTRATION_CANCELLED`는 복구하지 않는다.
 `member.phone_number`는 학교 SSO에서 받은 숫자만 저장하며, SSO 응답에 유효한 번호가 없으면
 기존 값을 지우지 않는다. 이 값은 본인 프로필, 전체 멤버 관리 `ADMIN`, 현재 팀 멤버 관리
 `LEADER`에게만 반환하며, 공지·자료·공유 응답에는 포함하지 않는다.
@@ -40,6 +43,10 @@
 `club_officer.position_code`는 현재 `PRESIDENT`만 허용하며 직책별 한 명만 존재한다.
 활동 내역서 생성은 이 테이블이 참조하는 활성 멤버 이름을 매 요청마다 조회한다.
 HWPX 문서를 임시 저장할 때 현재 회장 이름으로 결과 파일을 생성한다.
+
+`school_login_attempt.student_no_hash`에는 학번 원문이 아닌 서버 비밀값으로 만든
+HMAC-SHA-256 값만 보관한다. 최근 15분 실패 횟수가 5회가 되면 `blocked_until_dttm`까지
+학교 SSO 호출을 막고, 성공 인증·실패 창 만료 시 행을 하드 삭제해 실패 상태를 보존하지 않는다.
 
 ## 3. 일정과 콘텐츠
 

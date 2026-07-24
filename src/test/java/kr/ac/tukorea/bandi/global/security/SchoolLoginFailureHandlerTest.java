@@ -38,4 +38,18 @@ class SchoolLoginFailureHandlerTest {
         assertThat(response.getRedirectedUrl()).isEqualTo(
                 "/login?error=bad-credentials");
     }
+
+    @Test
+    void 로그인_제한_오류를_로그인_화면으로_전달한다() throws Exception {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        SchoolLoginAuthenticationException exception =
+                new SchoolLoginAuthenticationException(
+                        "login-rate-limited", new RuntimeException());
+
+        failureHandler.onAuthenticationFailure(request, response, exception);
+
+        assertThat(response.getRedirectedUrl()).isEqualTo(
+                "/login?error=login-rate-limited");
+    }
 }

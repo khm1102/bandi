@@ -47,7 +47,7 @@ const STATUS_TRANSITIONS = Object.freeze({
     PRE_REGISTERED: ['REGISTRATION_CANCELLED'],
     ACTIVE: ['SUSPENDED', 'WITHDRAWN'],
     SUSPENDED: ['ACTIVE', 'WITHDRAWN'],
-    WITHDRAWN: [],
+    WITHDRAWN: ['ACTIVE'],
     REGISTRATION_CANCELLED: [],
 });
 const FILTER_LABELS = Object.freeze({
@@ -143,6 +143,11 @@ function appendMemberRow(member) {
             ROLE_LABELS[member.role] || member.role,
             ROLE_TONES[member.role] || 'neutral'));
     prepareRoleButtons(row, member.role);
+    const manageButton = lookup('[data-page-action="member-manage-open"]', row);
+    if (member.status === 'WITHDRAWN') {
+        manageButton.textContent = '복구';
+        manageButton.setAttribute('aria-label', `${member.name} 멤버 복구`);
+    }
     lookup('[data-member-list]').appendChild(row);
 }
 
@@ -474,7 +479,8 @@ function prepareMemberChange(trigger) {
     pendingMemberChange = {...member};
     lookup('[data-member-change-summary]').textContent =
             `${member.name} · ${teamsById.get(member.teamId)?.name || '미배정'} · ${STATUS_LABELS[member.status]}`;
-    document.getElementById('memberChangeType').value = 'team';
+    document.getElementById('memberChangeType').value = member.status === 'WITHDRAWN'
+        ? 'status' : 'team';
     document.getElementById('memberChangeReason').value = '';
     setInlineError('[data-member-change-error]', '');
     updateChangeOptions();

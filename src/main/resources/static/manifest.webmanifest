@@ -1,0 +1,26 @@
+{
+    "id": "./",
+    "name": "반디 동아리 통합관리시스템",
+    "short_name": "반디",
+    "description": "한국공학대학교 연극 동아리 반디의 내부 운영 공간입니다.",
+    "lang": "ko",
+    "start_url": "./dashboard",
+    "scope": "./",
+    "display": "standalone",
+    "background_color": "#f4f7f9",
+    "theme_color": "#1a0e0e",
+    "icons": [
+        {
+            "src": "./images/bandi-icon.png",
+            "sizes": "366x278",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "./images/favicon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ]
+}

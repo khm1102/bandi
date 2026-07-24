@@ -76,6 +76,7 @@ class AuthenticationControllerTest {
     @CsvSource({
             "school-unavailable, 학교 로그인 서비스 장애",
             "bad-credentials, 학교 계정 확인 필요",
+            "login-rate-limited, 로그인 잠시 제한",
             "member-not-registered, 멤버 사전 등록 필요",
             "link-pending, 학교 계정 연결 대기",
             "academic-restricted, 학적 상태 확인 필요",

@@ -10,3 +10,5 @@ bandi:
   storage:
     root: ${java.io.tmpdir}
     max-upload-bytes: 524288000
+  school-login-attempt:
+    hash-secret: test-hmac-secret

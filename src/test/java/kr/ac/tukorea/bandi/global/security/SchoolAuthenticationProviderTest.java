@@ -52,6 +52,7 @@ class SchoolAuthenticationProviderTest {
     @ParameterizedTest
     @CsvSource({
             "SCHOOL_CREDENTIALS_INVALID,bad-credentials",
+            "SCHOOL_LOGIN_RATE_LIMITED,login-rate-limited",
             "SCHOOL_MEMBER_NOT_REGISTERED,member-not-registered",
             "SCHOOL_IDENTITY_REVIEW_REQUIRED,link-pending",
             "SCHOOL_ACADEMIC_STATUS_DENIED,academic-restricted",

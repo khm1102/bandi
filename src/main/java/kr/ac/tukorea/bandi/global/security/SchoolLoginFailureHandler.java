@@ -16,6 +16,7 @@ public class SchoolLoginFailureHandler implements AuthenticationFailureHandler {
     private static final String DEFAULT_ERROR_CODE = "bad-credentials";
     private static final Set<String> ERROR_CODES = Set.of(
             DEFAULT_ERROR_CODE,
+            "login-rate-limited",
             "school-unavailable",
             "member-not-registered",
             "link-pending",
