@@ -3,6 +3,8 @@ services:
     image: mysql:8.4
     restart: unless-stopped
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "${MYSQL_HOST_BIND_ADDRESS:-127.0.0.1}:3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?MYSQL_ROOT_PASSWORD is required}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-bandi}
@@ -21,6 +23,7 @@ services:
       - bandi-test
 
   app:
+    container_name: bandi-test-app
     build:
       context: .
       dockerfile: Dockerfile
@@ -43,10 +46,15 @@ services:
         condition: service_healthy
     networks:
       - bandi-test
+      - bandi-test-network
 
 networks:
   bandi-test:
     driver: bridge
+
+  bandi-test-network:
+    external: true
+    name: bandi-test-network
 
 volumes:
   bandi-test-mysql-data:

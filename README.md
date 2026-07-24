@@ -38,9 +38,9 @@ docker compose up -d        # MySQL 8.4 (3307, bandi/bandi1234, 스키마 bandi�
 
 ## 팀 공유 테스트 서버
 
-Cloudflare Tunnel을 사용하는 `app + MySQL + cloudflared` 테스트 서버 구성은
-[docs/test-server-deployment.md](docs/test-server-deployment.md)를 따른다. 실제 토큰과
-서버 환경값은 Git에 넣지 않고 `.env.test`에서 관리한다.
+중앙 Cloudflare Tunnel 뒤에서 동작하는 `app + MySQL` 테스트 서버 구성은
+[docs/test-server-deployment.md](docs/test-server-deployment.md)를 따른다. Tunnel 토큰과
+서버 환경값은 이 저장소에 넣지 않는다.
 
 ## 현재 상태 / 임시 결정 (로그인 기능 도입 시 해소)
 
