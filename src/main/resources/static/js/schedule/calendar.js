@@ -332,6 +332,7 @@ function createCalendar() {
         initialView: initialView(),
         headerToolbar: false,
         height: 'auto',
+        aspectRatio: 1.6,
         dayMaxEvents: 3,
         nowIndicator: true,
         selectable: currentUserRole !== 'member',
