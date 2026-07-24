@@ -13,6 +13,7 @@ import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetUnitResponse;
 import kr.ac.tukorea.bandi.domain.asset.dto.response.AssetHistoryResponse;
 import kr.ac.tukorea.bandi.domain.asset.service.AssetService;
 import kr.ac.tukorea.bandi.global.response.FileDownloadResponse;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 import kr.ac.tukorea.bandi.global.security.LoginMember;
 import kr.ac.tukorea.bandi.global.swagger.AssetApiDocs;
 import lombok.RequiredArgsConstructor;
@@ -34,12 +35,21 @@ public class AssetApiController implements AssetApiDocs {
     private final AssetService assetService;
 
     @Override
-    public ResponseEntity<List<AssetItemResponse>> searchItems(
+    public ResponseEntity<PageResponse<AssetItemResponse>> searchItems(
             @LoginMember Long actorMemberId, String keyword,
-            String categoryCode, AssetSearchFilter filter) {
+            String categoryCode, AssetSearchFilter filter, boolean deleted,
+            int page, int pageSize) {
         return ResponseEntity.ok(assetService.searchItems(actorMemberId,
                 new AssetSearchCondition(keyword, categoryCode,
-                        filter.trackingType(), filter.status())));
+                        filter.trackingType(), filter.status(), deleted, page,
+                        pageSize)));
+    }
+
+    @Override
+    public ResponseEntity<AssetItemResponse> lookupItem(
+            @LoginMember Long actorMemberId, Long assetItemId) {
+        return ResponseEntity.ok(assetService.lookupItem(actorMemberId,
+                assetItemId));
     }
 
     @Override
@@ -77,6 +87,20 @@ public class AssetApiController implements AssetApiDocs {
             AssetItemUpdateRequest request) {
         assetService.updateItem(actorMemberId, assetItemId,
                 request.toParam());
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public ResponseEntity<Void> deleteItem(
+            @LoginMember Long actorMemberId, Long assetItemId) {
+        assetService.deleteItem(actorMemberId, assetItemId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @Override
+    public ResponseEntity<Void> restoreItem(
+            @LoginMember Long actorMemberId, Long assetItemId) {
+        assetService.restoreItem(actorMemberId, assetItemId);
         return ResponseEntity.noContent().build();
     }
 

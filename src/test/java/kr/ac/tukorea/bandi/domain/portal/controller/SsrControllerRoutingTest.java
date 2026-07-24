@@ -134,6 +134,21 @@ class SsrControllerRoutingTest {
     }
 
     @Test
+    void 소품_등록_상세와_수정_화면이_렌더링된다() throws Exception {
+        authenticate();
+
+        mockMvc.perform(get("/props/new"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("props/form"));
+        mockMvc.perform(get("/props/10"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("props/detail"));
+        mockMvc.perform(get("/props/10/edit"))
+                .andExpect(status().isOk())
+                .andExpect(view().name("props/form"));
+    }
+
+    @Test
     void 공지_관리_상세는_화면용_DTO로_렌더링된다() throws Exception {
         authenticate();
         given(internalNoticeService.lookupManageable(1L, 10L))

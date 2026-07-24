@@ -242,6 +242,32 @@ class FileServiceTest {
     }
 
     @Test
+    void 이미지가_아닌_비공개_파일은_소품_사진으로_연결할_수_없다() {
+        StoredFile source = StoredFile.pending("manual.pdf", StorageScope.PRIVATE,
+                PRIVATE_KEY, "application/pdf", CONTENT.length, "abc123", MEMBER_ID);
+        source.markReady("etag-1");
+        assignId(source, PRIVATE_FILE_ID);
+        given(metadataService.lookup(PRIVATE_FILE_ID)).willReturn(source);
+
+        assertThatThrownBy(() -> fileService.validatePrivateImageReadyOwnedBy(
+                PRIVATE_FILE_ID, MEMBER_ID))
+                .isInstanceOf(InvalidFileException.class);
+    }
+
+    @Test
+    void 지원하지_않는_이미지_형식은_소품_사진으로_연결할_수_없다() {
+        StoredFile source = StoredFile.pending("animated.gif", StorageScope.PRIVATE,
+                PRIVATE_KEY, "image/gif", CONTENT.length, "abc123", MEMBER_ID);
+        source.markReady("etag-1");
+        assignId(source, PRIVATE_FILE_ID);
+        given(metadataService.lookup(PRIVATE_FILE_ID)).willReturn(source);
+
+        assertThatThrownBy(() -> fileService.validatePrivateImageReadyOwnedBy(
+                PRIVATE_FILE_ID, MEMBER_ID))
+                .isInstanceOf(InvalidFileException.class);
+    }
+
+    @Test
     void PENDING_파일은_업무_레코드에_연결할_수_없다() {
         StoredFile source = pendingPrivate(PRIVATE_KEY);
         assignId(source, PRIVATE_FILE_ID);

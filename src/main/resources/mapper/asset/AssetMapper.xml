@@ -52,11 +52,16 @@
         total_quantity, storage_location, status_code, photo_file_id, note
     </sql>
 
-    <select id="searchItems" resultMap="itemMap">
-        SELECT <include refid="itemColumns"/>
-        FROM asset_item
+    <sql id="searchItemsWhere">
         <where>
-            deleted_dttm IS NULL
+            <choose>
+                <when test="deleted">
+                    deleted_dttm IS NOT NULL
+                </when>
+                <otherwise>
+                    deleted_dttm IS NULL
+                </otherwise>
+            </choose>
             <if test="keyword != null">
                 AND (name LIKE CONCAT('%', #{keyword}, '%')
                     OR storage_location LIKE CONCAT('%', #{keyword}, '%'))
@@ -71,7 +76,20 @@
                 AND status_code = #{status}
             </if>
         </where>
+    </sql>
+
+    <select id="searchItems" resultMap="itemMap">
+        SELECT <include refid="itemColumns"/>
+        FROM asset_item
+        <include refid="searchItemsWhere"/>
         ORDER BY name, asset_item_id
+        LIMIT #{pageSize} OFFSET #{offset}
+    </select>
+
+    <select id="countItems" resultType="long">
+        SELECT COUNT(*)
+        FROM asset_item
+        <include refid="searchItemsWhere"/>
     </select>
 
     <select id="searchUnitsByItemId" resultMap="unitMap">
@@ -104,6 +122,14 @@
         FROM asset_item
         WHERE asset_item_id = #{assetItemId}
           AND deleted_dttm IS NULL
+    </select>
+
+    <select id="lookupDeletedItemByIdForUpdate" resultMap="itemMap">
+        SELECT <include refid="itemColumns"/>
+        FROM asset_item
+        WHERE asset_item_id = #{assetItemId}
+          AND deleted_dttm IS NOT NULL
+        FOR UPDATE
     </select>
 
     <select id="lookupUnitByIdForUpdate" resultMap="unitMap">
@@ -162,6 +188,20 @@
         UPDATE asset_unit
         SET status_code = #{status}, storage_location = #{storageLocation}
         WHERE asset_unit_id = #{assetUnitId}
+    </update>
+
+    <update id="deleteItem">
+        UPDATE asset_item
+        SET deleted_dttm = #{deletedDttm}
+        WHERE asset_item_id = #{assetItemId}
+          AND deleted_dttm IS NULL
+    </update>
+
+    <update id="restoreItem">
+        UPDATE asset_item
+        SET deleted_dttm = NULL
+        WHERE asset_item_id = #{assetItemId}
+          AND deleted_dttm IS NOT NULL
     </update>
 
 </mapper>

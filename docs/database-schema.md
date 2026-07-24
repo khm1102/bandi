@@ -110,11 +110,15 @@ HWPX 활동 내역서는 `activity_record`를 검수 상태의 정본으로 사�
 
 | 테이블 | 책임 |
 | --- | --- |
-| `asset_item` | 수량형 품목과 기본 정보 |
+| `asset_item` | 수량형 품목과 기본 정보, 선택 사진 연결과 소프트 삭제 시각 |
 | `asset_unit` | 개별 관리 장비 |
-| `asset_history` | 상태·위치 변경 이력 |
+| `asset_history` | 상태·위치 변경과 품목 삭제·복구 이력 |
 
-사진 연결은 `asset_item.photo_file_id`로 선택적으로 보관한다.
+사진 연결은 `asset_item.photo_file_id`로 선택적으로 보관한다. 사진 바이너리는
+`stored_file`의 private 로컬 저장 키에 두며 DB에는 저장하지 않는다. `asset_item.deleted_dttm`이
+NULL이 아닌 품목은 일반 조회·상세·사진 전송에서 제외한다. 관리자가 복구하면 삭제 시각만
+해제하고 개별 장비, 상태 이력, 사진 연결은 그대로 유지한다. `asset_history.action_code`는
+등록·수량 조정·이동·대여·반납·수리·분실·폐기 외에 `DELETE`, `RESTORE`를 기록할 수 있다.
 
 ## 5. 파일과 감사
 

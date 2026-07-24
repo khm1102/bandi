@@ -44,4 +44,4 @@ document.addEventListener('click', (event) => {
         confirmedTrigger = confirmedSource;
         confirmedSource.click();
     }
-});
+}, {capture: true});

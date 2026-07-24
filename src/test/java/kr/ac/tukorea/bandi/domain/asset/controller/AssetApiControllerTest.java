@@ -8,6 +8,7 @@ import kr.ac.tukorea.bandi.domain.asset.model.AssetOwnerType;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetStatus;
 import kr.ac.tukorea.bandi.domain.asset.model.AssetTrackingType;
 import kr.ac.tukorea.bandi.domain.asset.service.AssetService;
+import kr.ac.tukorea.bandi.global.response.PageResponse;
 import kr.ac.tukorea.bandi.global.config.SecurityWebMvcConfig;
 import kr.ac.tukorea.bandi.global.exception.ApiExceptionHandler;
 import kr.ac.tukorea.bandi.global.security.LoginMemberArgumentResolver;
@@ -34,6 +35,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -70,16 +72,44 @@ class AssetApiControllerTest {
 
     @Test
     void 품목을_검색한다() throws Exception {
-        given(assetService.searchItems(any(), any())).willReturn(List.of());
+        given(assetService.searchItems(any(), any())).willReturn(
+                PageResponse.of(List.of(), 0, 20, 0));
 
         mockMvc.perform(get("/api/assets")
-                        .param("keyword", "케이블")
-                        .param("trackingType", "QUANTITY"))
+                .param("keyword", "케이블")
+                .param("trackingType", "QUANTITY"))
                 .andExpect(status().isOk());
 
         verify(assetService).searchItems(ACTOR_ID,
                 new AssetSearchCondition("케이블", null,
-                        AssetTrackingType.QUANTITY, null));
+                        AssetTrackingType.QUANTITY, null, false, 0, 20));
+    }
+
+    @Test
+    void 품목_상세를_조회한다() throws Exception {
+        given(assetService.lookupItem(ACTOR_ID, 20L)).willReturn(
+                new kr.ac.tukorea.bandi.domain.asset.dto.response.AssetItemResponse(
+                        20L, "유선 마이크", "AUDIO", AssetTrackingType.QUANTITY,
+                        AssetOwnerType.CLUB, null, null, 1, "창고 A",
+                        AssetStatus.AVAILABLE, null, null));
+
+        mockMvc.perform(get("/api/assets/{assetItemId}", 20L))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.assetItemId").value(20))
+                .andExpect(jsonPath("$.name").value("유선 마이크"));
+
+        verify(assetService).lookupItem(ACTOR_ID, 20L);
+    }
+
+    @Test
+    void 품목을_소프트_삭제하고_복구한다() throws Exception {
+        mockMvc.perform(delete("/api/assets/{assetItemId}", 20L))
+                .andExpect(status().isNoContent());
+        mockMvc.perform(post("/api/assets/{assetItemId}/restore", 20L))
+                .andExpect(status().isNoContent());
+
+        verify(assetService).deleteItem(ACTOR_ID, 20L);
+        verify(assetService).restoreItem(ACTOR_ID, 20L);
     }
 
     @Test
