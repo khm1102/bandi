@@ -1,12 +1,12 @@
 # bandi 디자인 가이드
 
-> 초기 화면 프로토타입에서 확정한 화이트/네이비/민트 방향을 유지한다
+> 화이트 캔버스, 버건디 주색, 와인 사이드바 방향을 유지한다
 > 규칙 등급·스타일링 방식은 코딩 컨벤션 13장을 따른다. 이 문서는 "무슨 값·무슨 조합을 쓰는가"의 정본이다.
 
 ## 1. 아이덴티티
 
-- **화이트 캔버스 + 네이비 셸 + 민트 포인트.** 콘텐츠 영역은 밝고 조용하게, 좌측 사이드바(관리자)와 상단 내비(공개)는 딥 네이비, 행동 유도와 활성 상태만 민트.
-- **민트 위 글자는 흰색이 아니라 다크 네이비(`--primary-foreground: #08251f`)다.** 민트는 밝은 색이라 흰 글자는 대비가 부족하다. hover 시에는 AA 대비를 확보한 `primary-strong` + 흰 글자로 전환한다.
+- **화이트 캔버스 + 와인 셸 + 버건디 포인트.** 콘텐츠 영역은 밝고 조용하게, 좌측 사이드바(관리자)와 상단 내비(공개)는 딥 와인, 행동 유도와 활성 상태만 버건디.
+- **버건디 위 글자는 흰색(`--primary-foreground: #ffffff`)을 사용한다.** `primary`와 `primary-strong` 모두 흰색 글자와 AA 대비를 확보한다.
 - 카드는 그림자 없이 보더로 구분한다. 그림자는 부유 요소(모달, 토스트)와 데스크톱 인증 셸에만 `shadow-xl`/`shadow-lg`.
 
 ## 2. 색상 토큰 (tokens.css — 공유 자원)
@@ -15,28 +15,28 @@
 |---|---|---|
 | `background` / `foreground` | `#f4f7f9` / `#102235` | 페이지 바탕 / 기본 글자 |
 | `card` | `#ffffff` | 카드·패널·탑바 |
-| `primary` / `primary-foreground` | `#2cc7a5` / `#08251f` | 주 버튼, 활성 내비, 선택 상태 |
-| `primary-strong` | `#0b715f` | primary hover (흰 글자 대비 5.93:1) |
+| `primary` / `primary-foreground` | `#8e0015` / `#ffffff` | 주 버튼, 활성 내비, 선택 상태 |
+| `primary-strong` | `#6f0011` | primary hover |
 | `secondary` / `muted` | `#f5f8fa` | 서브 배경, 테이블 헤더, hover 배경 |
 | `muted-foreground` | `#56697c` | 보조 텍스트·라벨 (페이지 바탕 대비 5.26:1) |
-| `accent` / `accent-foreground` | `#e9fbf6` / `#0f6f5d` | 민트 소프트 배경 / 링크·아이콘·강조 텍스트 |
+| `accent` / `accent-foreground` | `#f9eaed` / `#7a0012` | 버건디 소프트 배경 / 링크·아이콘·강조 텍스트 |
 | `success` / `success-soft` | `#087054` / `#e8f8f2` | 완료·납부·긍정 |
 | `warning` / `warning-soft` | `#80530a` / `#fff6e6` | 확인 필요 |
 | `destructive` / `destructive-soft` | `#a63c4d` / `#fff0f2` | 삭제·미납·오류 |
 | `info` / `info-soft` | `#315f8f` / `#edf4fb` | 공지·중립 정보 |
-| `border` / `input` / `ring` | `#dfe7ec` / `#dfe7ec` / `#2cc7a5` | 보더 / 입력 보더 / 포커스 링 |
-| `sidebar` 계열 | `#0b1f33` 외 | 네이비 셸 전용 (아래 3장) |
+| `border` / `input` / `ring` | `#dfe7ec` / `#dfe7ec` / `#8e0015` | 보더 / 입력 보더 / 포커스 링 |
+| `sidebar` 계열 | `#1a0e0e` 외 | 와인 셸 전용 (아래 3장) |
 
 - 상태 표시는 항상 **`*-soft` 배경 + 본색 글자** 조합 (배지·배너). 본색 배경 + 흰 글자는 버튼(destructive)에만.
-- **팀 태그용 저채도 5색은 보류** — 팀 기능 확정 시 아래 후보로 토큰화한다: `#6b8499`(연출) `#527eaa`(무대) `#2cc7a5`(운영) `#b7984e`(디자인) `#7b8fa1`(영상)
+- **팀 태그용 저채도 5색은 보류** — 팀 기능 확정 시 아래 후보로 토큰화한다: `#6b8499`(연출) `#527eaa`(무대) `#8e0015`(운영) `#b7984e`(디자인) `#7b8fa1`(영상)
 
 ## 3. 셸 (레이아웃 태그 3종)
 
 | 태그 | 용도 | 구조 |
 |---|---|---|
-| `<t:layout title active crumb>` | 관리자 화면 전부 | 네이비 사이드바(`w-56`, lg 미만 접근 가능한 서랍 내비) + 스티키 탑바 + `max-w-screen-2xl` 안에서 중앙 정렬하는 반응형 본문 |
-| `<t:layoutPublic title>` | 오류 등 비인증 화면 | 네이비 상단 내비(header.tag) + `max-w-5xl` 본문 + footer.tag |
-| `<t:layoutAuth title>` | 로그인 | 데스크톱은 네이비 동아리 소개 패널 + `max-w-md` 폼의 분할 셸, 모바일은 폼에 집중하는 단일 열 |
+| `<t:layout title active crumb>` | 관리자 화면 전부 | 와인 사이드바(`w-56`, lg 미만 접근 가능한 서랍 내비) + 스티키 탑바 + `max-w-screen-2xl` 안에서 중앙 정렬하는 반응형 본문 |
+| `<t:layoutPublic title>` | 오류 등 비인증 화면 | 와인 상단 내비(header.tag) + `max-w-5xl` 본문 + footer.tag |
+| `<t:layoutAuth title>` | 로그인 | 데스크톱은 와인 동아리 소개 패널 + `max-w-md` 폼의 분할 셸, 모바일은 폼에 집중하는 단일 열 |
 
 - 공통 `<head>`(폰트·tokens.css·Tailwind `@theme` 매핑)는 `head.tag` 한 곳에만 있다 — **공유 자원(22.5)**
 - 사이드바 내비 항목은 feature 확정 시 `layout.tag`에 추가하고, 페이지에서 `active="{key}"`로 활성 표시

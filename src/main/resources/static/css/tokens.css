@@ -1,5 +1,5 @@
 /* shadcn 디자인 토큰 — 라이트 전용 (컨벤션 13.2, 공유 자원 — 22.5)
-   팔레트: 화이트/네이비/민트 (근거: docs/design-guide.md, 레퍼런스 목업의 DESIGN OVERRIDE 섹션)
+   팔레트: 화이트/버건디/와인 사이드바 (근거: docs/design-guide.md)
    값 변경은 이 파일에서만. 새 토큰 추가 시 WEB-INF/tags/head.tag의 @theme inline 매핑에도 함께 추가한다. */
 :root {
     --radius: 0.75rem;
@@ -11,17 +11,17 @@
     --popover: #ffffff;
     --popover-foreground: #102235;
 
-    /* 주색(민트) — 민트 위 글자는 흰색이 아니라 다크 네이비. hover는 primary-strong + 흰 글자 */
-    --primary: #2cc7a5;
-    --primary-foreground: #08251f;
-    --primary-strong: #0b715f;
+    /* 주색(버건디) — 주 행동·활성 상태에는 흰색 글자를 사용한다. */
+    --primary: #8e0015;
+    --primary-foreground: #ffffff;
+    --primary-strong: #6f0011;
 
     --secondary: #f5f8fa;
     --secondary-foreground: #102235;
     --muted: #f5f8fa;
     --muted-foreground: #56697c;
-    --accent: #e9fbf6;
-    --accent-foreground: #0f6f5d;
+    --accent: #f9eaed;
+    --accent-foreground: #7a0012;
 
     /* 상태색 — 배지/배너는 *-soft 배경 + 본색 글자 조합 */
     --destructive: #a63c4d;
@@ -36,14 +36,14 @@
 
     --border: #dfe7ec;
     --input: #dfe7ec;
-    --ring: #2cc7a5;
+    --ring: #8e0015;
 
-    /* 네이비 셸 (사이드바/공개 내비/스테이지 바) */
-    --sidebar: #0b1f33;
-    --sidebar-foreground: #c7d3dc;
-    --sidebar-accent: #14304a;
+    /* 와인 셸 (사이드바/공개 내비/스테이지 바) */
+    --sidebar: #1a0e0e;
+    --sidebar-foreground: #f2dfe1;
+    --sidebar-accent: #3a1a1d;
     --sidebar-accent-foreground: #ffffff;
-    --sidebar-muted: #aebdca;
+    --sidebar-muted: #d9bdc3;
     --sidebar-border: rgba(255, 255, 255, .10);
 }
 

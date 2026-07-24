@@ -15,7 +15,7 @@
     <div class="mx-auto grid w-full max-w-6xl overflow-hidden bg-card lg:grid-cols-[0.92fr_1.08fr] lg:rounded-xl lg:border lg:shadow-xl">
         <section class="relative hidden overflow-hidden bg-sidebar p-12 text-sidebar-foreground lg:flex lg:flex-col" aria-label="반디 소개">
             <div class="relative flex items-center gap-3">
-                <span class="flex size-11 items-center justify-center rounded-lg bg-primary text-xl font-black text-primary-foreground">B</span>
+                <img src="<c:url value='/images/bandi-icon.png'/>" class="h-11 w-auto rounded-lg object-contain" alt="반디">
                 <span>
                     <b class="block text-lg font-black tracking-tight text-white">반디</b>
                     <span class="block text-xs font-semibold text-sidebar-muted">연극 동아리 통합관리시스템</span>
@@ -38,7 +38,7 @@
         <section class="flex min-h-screen min-w-0 items-center px-4 py-10 md:px-8 lg:min-h-0 lg:px-16 lg:py-12" aria-label="${title} 영역">
             <div class="mx-auto min-w-0 w-full max-w-md">
                 <div class="mb-9 flex items-center gap-3 lg:hidden">
-                    <span class="flex size-11 items-center justify-center rounded-lg bg-primary text-xl font-black text-primary-foreground">B</span>
+                    <img src="<c:url value='/images/bandi-icon.png'/>" class="h-11 w-auto rounded-lg object-contain" alt="반디">
                     <span>
                         <b class="block text-lg font-black tracking-tight">반디</b>
                         <span class="block text-xs font-semibold text-muted-foreground">연극 동아리 통합관리시스템</span>
