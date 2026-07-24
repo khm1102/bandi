@@ -44,16 +44,6 @@ services:
     networks:
       - bandi-test
 
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    restart: unless-stopped
-    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN:?CLOUDFLARE_TUNNEL_TOKEN is required}
-    depends_on:
-      app:
-        condition: service_started
-    networks:
-      - bandi-test
-
 networks:
   bandi-test:
     driver: bridge

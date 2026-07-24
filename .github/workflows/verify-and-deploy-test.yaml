@@ -92,7 +92,8 @@ jobs:
         run: |
           set -euo pipefail
           # mysql 서비스와 named volume은 기존 테스트 데이터를 보존하기 위해 건드리지 않는다.
-          docker compose --env-file "$DEPLOY_ENV_FILE" -f docker-compose.test.yaml up -d --no-deps --build app cloudflared
+          # Cloudflare Tunnel은 별도 인프라에서 운영하므로 이 배포 범위에 포함하지 않는다.
+          docker compose --env-file "$DEPLOY_ENV_FILE" -f docker-compose.test.yaml up -d --no-deps --build app
 
       - name: 컨테이너 기동 확인
         run: |
@@ -101,7 +102,6 @@ jobs:
             services="$(docker compose --env-file "$DEPLOY_ENV_FILE" -f docker-compose.test.yaml ps --status running --services || true)"
             if printf '%s\n' "$services" | grep -qx 'mysql'
               && printf '%s\n' "$services" | grep -qx 'app'
-              && printf '%s\n' "$services" | grep -qx 'cloudflared'
               && docker compose --env-file "$DEPLOY_ENV_FILE" -f docker-compose.test.yaml logs --no-log-prefix --tail=200 app | grep -q 'Started .* in'; then
               docker compose --env-file "$DEPLOY_ENV_FILE" -f docker-compose.test.yaml exec -T app sh -c 'test -d /data/bandi && test -w /data/bandi'
               exit 0
