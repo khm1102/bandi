@@ -19,7 +19,7 @@
 <c:if test="${not empty robots}"><meta name="robots" content="<c:out value='${robots}'/>"></c:if>
 <c:if test="${not empty openGraphTitle}"><meta property="og:title" content="<c:out value='${openGraphTitle}'/>"></c:if>
 <c:if test="${not empty openGraphDescription}"><meta property="og:description" content="<c:out value='${openGraphDescription}'/>"></c:if>
-<link rel="icon" href="<c:url value='/images/favicon.svg'/>" type="image/svg+xml">
+<link rel="icon" href="<c:url value='/images/pwa-192.png'/>" type="image/png" sizes="192x192">
 <link rel="manifest" href="<c:url value='/manifest.webmanifest'/>">
 <link rel="apple-touch-icon" href="<c:url value='/images/pwa-192.png'/>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
