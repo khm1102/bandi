@@ -1,0 +1,45 @@
+# Bandi Proprietary License
+
+Copyright (c) 2026 김현민. All Rights Reserved.
+
+## 1. Ownership
+
+The Bandi software, source code, documentation, designs, logos, images, database
+schemas, and other repository materials (collectively, the "Materials") are the
+exclusive property of 김현민 unless a separate written agreement states otherwise.
+
+## 2. No License Granted
+
+No permission is granted to use, copy, modify, distribute, publish, sublicense,
+sell, rent, host, reverse engineer, or create derivative works from the Materials.
+Any use requires the prior written permission of 김현민.
+
+## 3. Contributor Recognition
+
+Only an individual whose contribution is verifiably included in this repository's
+GitHub commit history and merged into a maintained branch is recognized as an
+actual participant in the Bandi project.
+
+Recognition of a contribution does not transfer ownership of the Materials or
+grant any license to the project as a whole. A recognized contributor may only
+describe their own factual contribution in a personal portfolio; they may not
+reuse, redistribute, commercialize, or present the Materials as their own work
+without prior written permission from 김현민.
+
+## 4. Prohibited Claims and Use by Non-Contributors
+
+Any person who is not recognized under Section 3 must not claim to have
+participated in, developed, designed, or operated Bandi. They must not use the
+Materials, in whole or in part, for a portfolio, personal project, commercial
+activity, presentation, publication, or any other purpose without prior written
+permission from 김현민.
+
+## 5. Third-Party Materials
+
+Third-party libraries, fonts, and other materials included in this repository
+remain subject to their respective licenses. Those licenses do not grant rights
+to Bandi-specific Materials.
+
+## 6. Contact
+
+For permission requests, contact the copyright holder, 김현민.
